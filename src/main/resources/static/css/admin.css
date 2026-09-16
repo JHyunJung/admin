@@ -1,2 +1,17 @@
-:root { --fa-sidebar-w: 240px; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif; }
+:root { --fa-sidebar-w: 232px; --fa-topbar-h: 48px; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif; background: #f5f6f8; }
+.fa-shell { display: flex; min-height: 100vh; }
+.fa-sidebar { width: var(--fa-sidebar-w); flex: 0 0 var(--fa-sidebar-w); background: #1f2937; color: #e5e7eb; }
+.fa-brand { font-weight: 700; font-size: 1.05rem; border-bottom: 1px solid #374151; }
+.fa-group { letter-spacing: .06em; margin-top: .75rem; }
+.fa-link { color: #d1d5db; text-decoration: none; font-size: .92rem; }
+.fa-link:hover { background: #374151; color: #fff; }
+.fa-link.active { background: #2563eb; color: #fff; }
+.fa-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fa-topbar { height: var(--fa-topbar-h); background: #fff; border-bottom: 1px solid #e5e7eb; }
+.fa-content { flex: 1; }
+.fa-table td, .fa-table th { white-space: nowrap; }
+.fa-detail th { width: 220px; background: #f9fafb; }
+.fa-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
+.fa-pre { white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto; }
+@media (max-width: 900px) { .fa-sidebar { display: none; } }

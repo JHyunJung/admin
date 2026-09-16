@@ -1,0 +1,12 @@
+<nav xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+     class="fa-sidebar" th:fragment="sidebar"
+     th:with="isSuper=${#authorization.expression('hasRole(''SUPER'')')},
+              groups=${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(@menuRegistry.itemsFor(isSuper))}">
+  <div class="fa-brand px-3 py-3">FIDO Admin</div>
+  <div th:each="g : ${groups}" class="mb-2">
+    <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
+    <a th:each="m : ${g.value}" th:href="@{${m.href}}" th:text="${m.title}"
+       th:classappend="${currentPath == m.href} ? 'active' : ''"
+       class="fa-link d-block px-3 py-1">메뉴</a>
+  </div>
+</nav>

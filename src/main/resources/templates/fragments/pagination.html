@@ -1,0 +1,14 @@
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="pagination(page, baseUrl)" th:if="${page.totalPages > 1}"
+     th:with="start=${T(java.lang.Math).max(0, page.number - 4)}, end=${T(java.lang.Math).min(page.totalPages - 1, page.number + 4)}, qs=${searchQs ?: ''}">
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+      <a class="page-link" th:href="@{${baseUrl + '?page=' + (page.number - 1) + qs}}">이전</a>
+    </li>
+    <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}" th:classappend="${i == page.number} ? 'active'">
+      <a class="page-link" th:href="@{${baseUrl + '?page=' + i + qs}}" th:text="${i + 1}">1</a>
+    </li>
+    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+      <a class="page-link" th:href="@{${baseUrl + '?page=' + (page.number + 1) + qs}}">다음</a>
+    </li>
+  </ul>
+</nav>

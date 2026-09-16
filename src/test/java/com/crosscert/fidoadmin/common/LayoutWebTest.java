@@ -1,0 +1,60 @@
+package com.crosscert.fidoadmin.common;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.config.CurrentPathAdvice;
+import com.crosscert.fidoadmin.config.SecurityConfig;
+import com.crosscert.fidoadmin.config.WebMvcConfig;
+import com.crosscert.fidoadmin.dashboard.DashboardController;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(controllers = DashboardController.class)
+@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class})
+class LayoutWebTest {
+
+    @Autowired MockMvc mvc;
+
+    @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
+    @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
+    @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
+    @MockitoBean com.crosscert.fidoadmin.auth.ManagerUserDetailsService uds;
+
+    static ManagerUserDetails user(long companyIdx) {
+        return new ManagerUserDetails(1L, "u", null, "홍길동", companyIdx, "KB", true, true);
+    }
+
+    @Test void anonymousRedirectsToLogin() throws Exception {
+        mvc.perform(get("/")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
+    }
+
+    @Test void superSeesSystemMenu() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("/system/props")))
+            .andExpect(content().string(containsString("홍길동")));
+    }
+
+    @Test void companyDoesNotSeeSystemMenu() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("/system/props"))))
+            .andExpect(content().string(containsString("/appids")));
+    }
+
+    @Test void companyGetsForbiddenOnSuperUrl() throws Exception {
+        mvc.perform(get("/companies").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
+            .andExpect(status().isForbidden());
+    }
+}

@@ -27,7 +27,7 @@ public class SecurityConfig {
                                            LoginFailureHandler failure, AppLogoutSuccessHandler logout) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/error", "/webjars/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
+                .requestMatchers("/login", "/error/**", "/webjars/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
                 .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**").hasRole("SUPER")
                 .anyRequest().authenticated())
             .formLogin(form -> form
