@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.PageRequest;
@@ -33,14 +34,21 @@ public class SearchForm {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) private LocalDate toDate;
 
     public Pageable toPageable(Sort defaultSort) {
+        return toPageable(defaultSort, Set.of());
+    }
+
+    /**
+     * 정렬은 화면별 허용 목록으로만 받는다. 형태만 검사하면 `doesNotExist` 처럼
+     * 문법은 맞지만 매핑되지 않은 속성이 조회 시 예외가 되어 500 이 된다.
+     * 허용 목록에 없으면 조용히 기본 정렬로 되돌린다.
+     */
+    public Pageable toPageable(Sort defaultSort, Set<String> sortableProperties) {
         int s = size <= 0 ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
         Sort sortObj = defaultSort;
         if (sort != null && !sort.isBlank()) {
             String[] parts = sort.split(",", 2);
             String property = parts[0].trim();
-            // 사용자 입력이므로 속성명 형태를 제한한다. 매핑되지 않은 이름은 조회 시
-            // 예외가 되어 500 이 되므로, 형식이 어긋나면 기본 정렬로 되돌린다.
-            if (SORTABLE.matcher(property).matches()) {
+            if (SORTABLE.matcher(property).matches() && sortableProperties.contains(property)) {
                 Sort.Direction dir = parts.length > 1 && "asc".equalsIgnoreCase(parts[1].trim())
                     ? Sort.Direction.ASC : Sort.Direction.DESC;
                 sortObj = Sort.by(dir, property);

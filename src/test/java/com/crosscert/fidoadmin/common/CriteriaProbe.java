@@ -21,6 +21,37 @@ final class CriteriaProbe {
 
     private CriteriaProbe() {}
 
+    /** spec 을 평가하며 root 에서 내려간 경로 조각을 순서대로 돌려준다. */
+    static List<String> pathStepsFor(Specification<CcfaLicense> spec) {
+        List<String> steps = new ArrayList<>();
+        if (spec == null) return steps;
+
+        Predicate dummy = proxy(Predicate.class, (m, args) -> m.getName().equals("getExpressions") ? List.of() : null);
+        CriteriaBuilder cb = proxy(CriteriaBuilder.class, (m, args) -> dummy);
+        CriteriaQuery<?> query = proxy(CriteriaQuery.class, (m, args) -> null);
+        Root<?> root = proxy(Root.class, (m, args) -> {
+            if (m.getName().equals("get") && args != null && args.length == 1) {
+                steps.add(String.valueOf(args[0]));
+                return recordingPath(steps);
+            }
+            return null;
+        });
+
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Predicate ignored = spec.toPredicate((Root) root, (CriteriaQuery) query, cb);
+        return steps;
+    }
+
+    private static Path<?> recordingPath(List<String> steps) {
+        return proxy(Path.class, (m, args) -> {
+            if (m.getName().equals("get") && args != null && args.length == 1) {
+                steps.add(String.valueOf(args[0]));
+                return recordingPath(steps);
+            }
+            return null;
+        });
+    }
+
     /** spec 이 만든 조건 중 attr 에 걸린 등치 값을 돌려준다. 없으면 null. */
     static Long equalsValueFor(Specification<CcfaLicense> spec, String attr) {
         if (spec == null) return null;

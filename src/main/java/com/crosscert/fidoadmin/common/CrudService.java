@@ -34,6 +34,11 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     public abstract String idOf(E entity);
     protected abstract String tableName();
     public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "idx"); }
+    /**
+     * 정렬을 허용할 속성 이름. 기본은 PK 뿐이며, 화면에서 필요한 컬럼을 더한다.
+     * 목록에 없는 값이 들어오면 기본 정렬로 되돌아간다(매핑되지 않은 속성으로 인한 500 방지).
+     */
+    public java.util.Set<String> sortableProperties() { return java.util.Set.of("idx"); }
     protected void applyDefaults(E entity) {}
     protected void touchCreated(E entity, LocalDateTime now) {}
     protected void touchUpdated(E entity, LocalDateTime now) {}

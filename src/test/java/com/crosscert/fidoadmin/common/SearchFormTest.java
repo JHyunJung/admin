@@ -36,7 +36,8 @@ class SearchFormTest {
     @Test void pageableParsesSortParam() {
         SearchForm f = new SearchForm();
         f.setSort("companyName,asc");
-        assertThat(f.toPageable(Sort.unsorted()).getSort().getOrderFor("companyName").getDirection())
+        assertThat(f.toPageable(Sort.unsorted(), java.util.Set.of("companyName"))
+                .getSort().getOrderFor("companyName").getDirection())
             .isEqualTo(Sort.Direction.ASC);
     }
 
@@ -54,5 +55,22 @@ class SearchFormTest {
         assertThat(f.fromDateTime()).isEqualTo(LocalDate.of(2026, 9, 1).atStartOfDay());
         assertThat(f.toDateTimeExclusive()).isEqualTo(LocalDate.of(2026, 10, 1).atStartOfDay());
         assertThat(new SearchForm().fromDateTime()).isNull();
+    }
+    /**
+     * 문법은 맞지만 매핑되지 않은 속성(doesNotExist)은 조회 시 예외가 되어 500 이 된다.
+     * 허용 목록에 없으면 기본 정렬로 되돌아가야 한다.
+     */
+    @Test void unknownSortPropertyFallsBackToDefault() {
+        SearchForm f = new SearchForm();
+        f.setSort("doesNotExist,asc");
+        var pageable = f.toPageable(Sort.by(Sort.Direction.DESC, "idx"), java.util.Set.of("idx"));
+        assertThat(pageable.getSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));
+    }
+
+    @Test void allowedSortPropertyIsApplied() {
+        SearchForm f = new SearchForm();
+        f.setSort("companyName,asc");
+        var pageable = f.toPageable(Sort.by(Sort.Direction.DESC, "idx"), java.util.Set.of("idx", "companyName"));
+        assertThat(pageable.getSort()).isEqualTo(Sort.by(Sort.Direction.ASC, "companyName"));
     }
 }

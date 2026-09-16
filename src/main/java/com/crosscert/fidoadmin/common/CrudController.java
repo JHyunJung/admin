@@ -39,7 +39,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
 
     @GetMapping
     public String list(@ModelAttribute("search") S search, Model model) {
-        Page<E> page = service().search(search, search.toPageable(service().defaultSort()));
+        Page<E> page = service().search(search, search.toPageable(service().defaultSort(), service().sortableProperties()));
         model.addAttribute("page", page);
         model.addAttribute("searchQs", search.toQueryString());
         model.addAttribute("basePath", basePath());
