@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: fido-admin
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: Asia/Seoul
+        default_batch_fetch_size: 50
+  thymeleaf:
+    cache: true
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 1d
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m
+fido-admin:
+  page-size: 20
+  password-fail-limit: 5
