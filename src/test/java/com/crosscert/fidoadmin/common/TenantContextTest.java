@@ -36,4 +36,12 @@ class TenantContextTest {
         assertThat(TenantContext.current()).isEmpty();
         assertThatThrownBy(TenantContext::require).isInstanceOf(IllegalStateException.class);
     }
+
+    /** null COMPANY_IDX 를 0 으로 보정하면 ROLE_SUPER 로 권한이 상승한다. 거부해야 한다. */
+    @Test void nullCompanyIdxIsRejectedInsteadOfBecomingSuper() {
+        assertThatThrownBy(() ->
+            new com.crosscert.fidoadmin.auth.ManagerUserDetails(
+                1L, "broken", null, "이름", null, "회사", true, true))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
 }

@@ -35,9 +35,14 @@ class AuditLoggerTest {
         assertThat(row.getIp()).isEqualTo("10.0.0.5");
         assertThat(row.getUa()).isEqualTo("Mozilla/5.0");
         assertThat(row.getCreatedtime()).isNotNull();
+        // 필드 경계를 <길이>:<값>| 로 명시해 "|" 가 값에 들어와도 모호해지지 않게 한다.
         String expected = Sha256PasswordEncoder.sha256Hex(
-            "1|KB국민은행|UPDATE|kbadmin|KB운영자|APPID UPDATE 1|10.0.0.5|Mozilla/5.0|" + row.getCreatedtime());
+            f("1") + f("KB국민은행") + f("UPDATE") + f("kbadmin") + f("KB운영자")
+                + f("APPID UPDATE 1") + f("10.0.0.5") + f("Mozilla/5.0")
+                + f(row.getCreatedtime().toString()));
         assertThat(row.getIntergrityHash()).isEqualTo(expected);
+        // 저장된 행에서 재계산해도 같은 값이어야 한다(무결성 검증 가능).
+        assertThat(AuditLogger.integrityHash(row)).isEqualTo(expected);
     }
 
     @Test
@@ -55,5 +60,57 @@ class AuditLoggerTest {
     void swallowsWriterFailure() {
         doThrow(new RuntimeException("db down")).when(writer).write(any());
         logger.log(actor, AuditType.DELETE, "m", "1.1.1.1", "ua"); // 예외가 전파되지 않아야 한다
+    }
+
+    /**
+     * CCFA_AUDIT_LOG 는 모든 VARCHAR2 가 BYTE 의미(NLS_LENGTH_SEMANTICS=BYTE)다.
+     * 한글은 UTF-8 에서 3바이트이므로 문자 수로 자르면 ORA-12899 로 INSERT 가 실패하고,
+     * AuditLogger 가 예외를 삼키는 탓에 감사 기록이 통째로 사라진다.
+     */
+    @Test
+    void truncatesByUtf8BytesNotChars() {
+        String longKorean = "가".repeat(200);   // 600 bytes
+        ManagerUserDetails koreanActor =
+            new ManagerUserDetails(1L, "kbadmin", null, longKorean, 1L, longKorean, true, true);
+
+        logger.log(koreanActor, AuditType.UPDATE, longKorean, "10.0.0.5", longKorean);
+
+        ArgumentCaptor<CcfaAuditLog> captor = ArgumentCaptor.forClass(CcfaAuditLog.class);
+        verify(writer).write(captor.capture());
+        CcfaAuditLog row = captor.getValue();
+        assertThat(utf8Len(row.getUserName())).isLessThanOrEqualTo(32);
+        assertThat(utf8Len(row.getCompanyName())).isLessThanOrEqualTo(512);
+        assertThat(utf8Len(row.getMessage())).isLessThanOrEqualTo(4000);
+        assertThat(utf8Len(row.getUa())).isLessThanOrEqualTo(2048);
+        // 문자가 중간에서 깨지지 않아야 한다
+        assertThat(row.getUserName()).doesNotContain("�").endsWith("가");
+    }
+
+    /** 구분자 "|" 가 값에 들어와도 필드 경계가 흐려지지 않아야 한다. */
+    @Test
+    void hashIsUnambiguousWhenValuesContainSeparator() {
+        ManagerUserDetails a =
+            new ManagerUserDetails(1L, "u", null, "alice|admin", 1L, "c", true, true);
+        ManagerUserDetails b =
+            new ManagerUserDetails(1L, "u", null, "alice", 1L, "c", true, true);
+
+        logger.log(a, AuditType.UPDATE, "UPDATE 1", "1.1.1.1", "ua");
+        logger.log(b, AuditType.UPDATE, "admin|UPDATE 1", "1.1.1.1", "ua");
+
+        ArgumentCaptor<CcfaAuditLog> captor = ArgumentCaptor.forClass(CcfaAuditLog.class);
+        verify(writer, org.mockito.Mockito.times(2)).write(captor.capture());
+        var rows = captor.getAllValues();
+        rows.get(1).setCreatedtime(rows.get(0).getCreatedtime()); // 시각 차이 배제
+        assertThat(AuditLogger.integrityHash(rows.get(0)))
+            .isNotEqualTo(AuditLogger.integrityHash(rows.get(1)));
+    }
+
+    /** 해시 인코딩 계약을 테스트 쪽에서 독립적으로 재현한다. */
+    private static String f(String v) {
+        return (v == null || v.isEmpty()) ? "-|" : v.length() + ":" + v + "|";
+    }
+
+    private static int utf8Len(String s) {
+        return s == null ? 0 : s.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
     }
 }

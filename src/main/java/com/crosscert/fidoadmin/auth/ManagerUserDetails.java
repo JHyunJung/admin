@@ -28,7 +28,12 @@ public class ManagerUserDetails implements UserDetails {
         this.userId = userId;
         this.password = password;
         this.userNm = userNm;
-        this.companyIdx = companyIdx == null ? 0L : companyIdx;
+        // null 을 0 으로 바꾸면 ROLE_SUPER 가 되어 권한이 상승한다.
+        // CCFA_MANAGER.COMPANY_IDX 는 NOT NULL 이므로 null 은 비정상 상태로 보고 거부한다.
+        if (companyIdx == null) {
+            throw new IllegalArgumentException("COMPANY_IDX 가 없는 계정으로는 로그인할 수 없습니다: " + userId);
+        }
+        this.companyIdx = companyIdx;
         this.companyName = companyName;
         this.enabled = enabled;
         this.accountNonLocked = accountNonLocked;
