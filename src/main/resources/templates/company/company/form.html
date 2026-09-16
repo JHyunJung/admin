@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '고객사 등록' : '고객사 수정'">고객사</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '고객사 등록' : '고객사 수정'">고객사</h1>
+  <form th:action="${isNew} ? @{/companies} : @{/companies/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasGlobalErrors()}">
+      <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">이름 <span class="text-danger">*</span></label>
+        <input th:field="*{companyName}" class="form-control" th:classappend="${#fields.hasErrors('companyName')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{companyName}"></div>
+      </div>
+      <div class="col-md-3"><label class="form-label">유형</label><input th:field="*{companyType}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">벤더코드</label><input th:field="*{vendorCode}" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">담당자/이메일</label><input th:field="*{contact}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">전화</label><input th:field="*{contactPhone}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">전화2</label><input th:field="*{contactPhone2}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">주소</label><input th:field="*{contactAddr}" class="form-control"></div>
+      <div class="col-md-3">
+        <label class="form-label">사용 <span class="text-danger">*</span></label>
+        <select th:field="*{enableType}" class="form-select"><option value="Y">Y</option><option value="N">N</option></select>
+      </div>
+      <div class="col-md-3"><label class="form-label">최대 앱 ID</label><input type="number" min="0" th:field="*{maxAppid}" class="form-control"><div class="invalid-feedback d-block" th:errors="*{maxAppid}"></div></div>
+      <div class="col-md-3"><label class="form-label">최대 앱 서버</label><input type="number" min="0" th:field="*{maxAppserver}" class="form-control"><div class="invalid-feedback d-block" th:errors="*{maxAppserver}"></div></div>
+      <div class="col-md-3"><label class="form-label">최대 사용자</label><input type="number" min="0" th:field="*{maxUser}" class="form-control"><div class="invalid-feedback d-block" th:errors="*{maxUser}"></div></div>
+      <div class="col-md-6"><label class="form-label">시작일시</label><input type="datetime-local" th:field="*{starttime}" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">종료일시</label><input type="datetime-local" th:field="*{endtime}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">비고</label><textarea th:field="*{etc}" rows="3" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/companies} : @{/companies/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

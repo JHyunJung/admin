@@ -19,4 +19,6 @@ public interface CcfaManagerRepository extends AdminRepository<CcfaManager, Long
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select m from CcfaManager m where m.userId = :userId")
     Optional<CcfaManager> findByUserIdForUpdate(@Param("userId") String userId);
+
+    long countByCompanyIdx(Long companyIdx);
 }
