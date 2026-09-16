@@ -1,15 +1,14 @@
 package com.crosscert.fidoadmin.manager.repository;
 
+import com.crosscert.fidoadmin.common.AdminRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
 import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface CcfaManagerRepository extends JpaRepository<CcfaManager, Long>, JpaSpecificationExecutor<CcfaManager> {
+public interface CcfaManagerRepository extends AdminRepository<CcfaManager, Long> {
     Optional<CcfaManager> findByUserId(String userId);
 
     /**
