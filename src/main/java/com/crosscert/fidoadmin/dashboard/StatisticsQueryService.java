@@ -40,9 +40,10 @@ public class StatisticsQueryService {
     }
 
     @Transactional(readOnly = true)
+    /** COMPANY 역할은 전달값과 무관하게 자기 고객사로 강제한다. */
     public List<String> serviceNames(Long companyIdx) {
         Map<String, Object> p = new HashMap<>();
-        p.put("companyIdx", companyIdx);
+        p.put("companyIdx", TenantContext.isSuper() ? companyIdx : TenantContext.companyIdx());
         return jdbc.queryForList(
             "SELECT DISTINCT SERVICE_NAME FROM FIDO_STATISTICS WHERE (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx) ORDER BY SERVICE_NAME",
             p, String.class);
