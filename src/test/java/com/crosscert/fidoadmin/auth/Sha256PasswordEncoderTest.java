@@ -30,6 +30,8 @@ class Sha256PasswordEncoderTest {
 
     @Test
     void sha256HexHandlesKorean() {
-        assertThat(Sha256PasswordEncoder.sha256Hex("한글")).hasSize(64).matches("[0-9a-f]+");
+        // printf '%s' '한글' | shasum -a 256 — UTF-8 인코딩을 고정한다
+        assertThat(Sha256PasswordEncoder.sha256Hex("한글"))
+            .isEqualTo("bd87f9bb68b67d2fa1cb82b6751820e946d5b1316d25d5fd96512fb4be44a2a8");
     }
 }
