@@ -1,10 +1,74 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>대시보드</title></head>
 <body>
 <main>
   <h1 class="h4 mb-3">대시보드</h1>
-  <p class="text-secondary">통계 화면은 Task 11 에서 구현한다.</p>
+  <form method="get" th:action="@{/}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto" sec:authorize="hasRole('SUPER')">
+      <label class="form-label small mb-0">고객사</label>
+      <select name="companyIdx" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}" th:selected="${search.companyIdx == c.idx}"></option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">서비스</label>
+      <select name="serviceName" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="s : ${serviceNames}" th:value="${s}" th:text="${s}" th:selected="${search.serviceName == s}"></option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">집계 단위</label>
+      <select name="groupby" class="form-select form-select-sm">
+        <option th:each="g : ${groupbys}" th:value="${g}" th:text="${g}" th:selected="${search.groupby == g}"></option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">시작일</label><input type="date" name="fromDate" th:value="${search.fromDate}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">종료일</label><input type="date" name="toDate" th:value="${search.toDate}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">조회</button></div>
+  </form>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">인증 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.authS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.authF(), 0, 'COMMA')}">0</span></div><div class="small text-secondary" th:text="|성공률 ${totals.authSuccessRate()}%|"></div></div></div>
+    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">등록 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.regS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.regF(), 0, 'COMMA')}">0</span></div></div></div>
+    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">해지 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.deregS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.deregF(), 0, 'COMMA')}">0</span></div></div></div>
+    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">거래확인 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.tcS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.tcF(), 0, 'COMMA')}">0</span></div></div></div>
+  </div>
+
+  <div class="bg-white border rounded p-3">
+    <div class="small text-secondary mb-2">일별 인증·등록 추이</div>
+    <canvas id="dailyChart" height="90"></canvas>
+    <p class="text-secondary small mb-0 mt-2" th:if="${#lists.isEmpty(daily)}">기간 내 통계가 없습니다.</p>
+  </div>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    window.__daily = /*[[${daily}]]*/ [];
+    /*]]>*/
+  </script>
+  <script th:src="@{/webjars/chart.js/dist/chart.umd.js}"></script>
+  <script>
+    (function () {
+      var rows = window.__daily || [];
+      var el = document.getElementById('dailyChart');
+      if (!el || !rows.length || typeof Chart === 'undefined') return;
+      new Chart(el, {
+        type: 'line',
+        data: {
+          labels: rows.map(function (r) { return r.date; }),
+          datasets: [
+            { label: '인증 성공', data: rows.map(function (r) { return r.authS; }), borderColor: '#2563eb', tension: .2 },
+            { label: '인증 실패', data: rows.map(function (r) { return r.authF; }), borderColor: '#dc2626', tension: .2 },
+            { label: '등록 성공', data: rows.map(function (r) { return r.regS; }), borderColor: '#16a34a', tension: .2 }
+          ]
+        },
+        options: { responsive: true, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true } } }
+      });
+    })();
+  </script>
 </main>
 </body>
 </html>

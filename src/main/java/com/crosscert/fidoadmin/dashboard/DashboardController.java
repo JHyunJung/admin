@@ -1,10 +1,34 @@
 package com.crosscert.fidoadmin.dashboard;
 
+import com.crosscert.fidoadmin.common.TenantContext;
+import com.crosscert.fidoadmin.company.service.CompanyLookup;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 @Controller
+@RequiredArgsConstructor
 public class DashboardController {
+
+    private final StatisticsQueryService stats;
+    private final CompanyLookup companies;
+
     @GetMapping("/")
-    public String index() { return "dashboard/index"; }
+    public String index(@ModelAttribute("search") DashboardSearchForm search, Model model) {
+        List<String> groupbys = stats.groupbys();
+        if ((search.getGroupby() == null || search.getGroupby().isBlank()) && !groupbys.isEmpty()) {
+            search.setGroupby(groupbys.get(0));
+        }
+        Long companyForNames = TenantContext.isSuper() ? search.getCompanyIdx() : TenantContext.companyIdx();
+        List<DailyStat> daily = search.getGroupby() == null ? List.of() : stats.daily(search);
+        model.addAttribute("groupbys", groupbys);
+        model.addAttribute("serviceNames", stats.serviceNames(companyForNames));
+        model.addAttribute("daily", daily);
+        model.addAttribute("totals", StatTotals.of(daily));
+        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        return "dashboard/index";
+    }
 }
