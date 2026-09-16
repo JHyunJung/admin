@@ -3,6 +3,22 @@
 -- 계정: superuser / Admin1234!  (COMPANY_IDX 0, SUPER)
 --       kbadmin   / Company1234! (COMPANY_IDX 1, COMPANY)
 -- ============================================================
+-- 안전장치: 오류 발생 시 즉시 중단(운영 DB 오적용 시 뒤 구문이 실행되지 않도록).
+WHENEVER SQLERROR EXIT SQL.SQLCODE ROLLBACK
+WHENEVER OSERROR EXIT FAILURE ROLLBACK
+
+-- 대상 검증: 로컬 검증용 FREEPDB1 이 아니면 ORA-20999 로 중단한다.
+DECLARE
+  v_db VARCHAR2(128);
+BEGIN
+  SELECT SYS_CONTEXT('USERENV', 'DB_NAME') INTO v_db FROM DUAL;
+  IF UPPER(v_db) != 'FREE' THEN
+    RAISE_APPLICATION_ERROR(-20999,
+      '중단: 로컬 검증 전용 스크립트다. 대상 DB_NAME=' || v_db || ' (기대값 FREE)');
+  END IF;
+END;
+/
+
 ALTER SESSION SET CONTAINER = FREEPDB1;
 ALTER SESSION SET CURRENT_SCHEMA = KBFIDO;
 
