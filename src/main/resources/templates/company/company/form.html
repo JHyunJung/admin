@@ -6,8 +6,9 @@
   <h1 class="h4 mb-3" th:text="${isNew} ? '고객사 등록' : '고객사 수정'">고객사</h1>
   <form th:action="${isNew} ? @{/companies} : @{/companies/{id}(id=${id})}" th:object="${form}" method="post"
         class="bg-white border rounded p-3" style="max-width: 760px;">
-    <div class="alert alert-danger py-2" th:if="${#fields.hasGlobalErrors()}">
-      <div th:each="e : ${#fields.globalErrors()}" th:text="${e}"></div>
+    <!-- 필드별 메시지를 모두 표시하지 않으면 길이 초과 등에서 이유 없이 저장이 안 되는 것처럼 보인다. -->
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
     </div>
     <div class="row g-3">
       <div class="col-md-6">

@@ -65,6 +65,31 @@ class CompanyControllerWebTest {
             .andExpect(view().name("company/company/form"));
     }
 
+    /**
+     * 길이 초과처럼 companyName 이외의 필드에서 검증이 실패해도 이유가 화면에 보여야 한다.
+     * 전에는 companyName·수량 필드만 메시지를 렌더링해, 저장이 조용히 실패하는 것처럼 보였다.
+     */
+    @Test void validationErrorOnAnyFieldIsShownToUser() throws Exception {
+        mvc.perform(post("/companies").with(user(superUser)).with(csrf())
+                .param("companyName", "정상이름").param("enableType", "Y")
+                .param("vendorCode", "a".repeat(21))   // VARCHAR2(20)
+                .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("company/company/form"))
+            .andExpect(content().string(containsString("바이트를 넘을 수 없습니다")));
+    }
+
+    /** 한글은 1자가 3바이트다. 문자 수로 검증하면 저장 단계에서 ORA-12899 가 난다. */
+    @Test void koreanNameOverByteLimitIsRejectedWithMessage() throws Exception {
+        mvc.perform(post("/companies").with(user(superUser)).with(csrf())
+                .param("companyName", "가".repeat(86))  // 258 bytes > 256
+                .param("enableType", "Y")
+                .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("company/company/form"))
+            .andExpect(content().string(containsString("바이트를 넘을 수 없습니다")));
+    }
+
     @Test void createRedirectsToDetail() throws Exception {
         CcfaCompany saved = new CcfaCompany(); saved.setIdx(77L);
         when(service.create(any())).thenReturn(saved);
