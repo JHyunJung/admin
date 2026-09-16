@@ -13,13 +13,28 @@ public final class Specs {
 
     public static <E> Specification<E> eq(String attr, Object value) {
         if (value == null || (value instanceof String s && s.isBlank())) return null;
-        return (root, q, cb) -> cb.equal(root.get(attr), value);
+        return (root, q, cb) -> cb.equal(path(root, attr), value);
     }
 
     public static <E> Specification<E> like(String attr, String value) {
         if (value == null || value.isBlank()) return null;
         String pattern = "%" + value.trim().toLowerCase() + "%";
-        return (root, q, cb) -> cb.like(cb.lower(root.get(attr)), pattern);
+        return (root, q, cb) -> cb.like(cb.lower(path(root, attr)), pattern);
+    }
+
+    /**
+     * "id.companyIdx" 처럼 점으로 구분된 경로를 단계별로 해석한다.
+     * CCFA_SYSTEM_PROP·통계 테이블은 테넌트 키가 @EmbeddedId 안에 있어
+     * root.get("id.companyIdx") 로는 해석되지 않는다.
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> jakarta.persistence.criteria.Path<T> path(
+            jakarta.persistence.criteria.Path<?> root, String attr) {
+        jakarta.persistence.criteria.Path<?> p = root;
+        for (String part : attr.split("\\.")) {
+            p = p.get(part);
+        }
+        return (jakarta.persistence.criteria.Path<T>) p;
     }
 
     public static <E> Specification<E> between(String attr, LocalDateTime from, LocalDateTime toExclusive) {

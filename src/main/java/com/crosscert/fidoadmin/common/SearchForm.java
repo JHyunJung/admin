@@ -20,6 +20,10 @@ public class SearchForm {
     public static final int DEFAULT_SIZE = 20;
     public static final int MAX_SIZE = 200;
 
+    /** 정렬 속성명 허용 형태(자바 식별자, 점 경로 허용). 그 밖은 기본 정렬로 되돌린다. */
+    private static final java.util.regex.Pattern SORTABLE =
+        java.util.regex.Pattern.compile("[A-Za-z_][A-Za-z0-9_]{0,63}(\\.[A-Za-z_][A-Za-z0-9_]{0,63}){0,3}");
+
     private int page = 0;
     private int size = DEFAULT_SIZE;
     /** "속성,asc|desc" */
@@ -33,9 +37,14 @@ public class SearchForm {
         Sort sortObj = defaultSort;
         if (sort != null && !sort.isBlank()) {
             String[] parts = sort.split(",", 2);
-            Sort.Direction dir = parts.length > 1 && "asc".equalsIgnoreCase(parts[1].trim())
-                ? Sort.Direction.ASC : Sort.Direction.DESC;
-            sortObj = Sort.by(dir, parts[0].trim());
+            String property = parts[0].trim();
+            // 사용자 입력이므로 속성명 형태를 제한한다. 매핑되지 않은 이름은 조회 시
+            // 예외가 되어 500 이 되므로, 형식이 어긋나면 기본 정렬로 되돌린다.
+            if (SORTABLE.matcher(property).matches()) {
+                Sort.Direction dir = parts.length > 1 && "asc".equalsIgnoreCase(parts[1].trim())
+                    ? Sort.Direction.ASC : Sort.Direction.DESC;
+                sortObj = Sort.by(dir, property);
+            }
         }
         return PageRequest.of(Math.max(page, 0), s, sortObj);
     }

@@ -25,6 +25,11 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     protected abstract S newSearchForm();
     protected abstract F newForm();
     protected abstract F toForm(E entity);
+    /**
+     * 폼 → 신규 엔티티. 반드시 새 인스턴스를 만들고, 식별자(IDX 등)는 절대 폼 값으로 채우지 않는다.
+     * 식별자가 채워진 엔티티를 넘기면 repository.save() 가 INSERT 가 아니라 MERGE 로 동작해
+     * 기존 행을 덮어쓸 수 있다(할당형 PK 테이블에서 특히 위험).
+     */
     protected abstract E toEntity(F form);
     protected abstract void applyForm(F form, E entity);
     /** 폼 화면에 필요한 선택 목록 등. */

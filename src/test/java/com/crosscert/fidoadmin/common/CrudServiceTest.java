@@ -168,4 +168,26 @@ class CrudServiceTest {
     private static Long companyIdxEqualsIn(Specification<CcfaLicense> spec) {
         return CriteriaProbe.equalsValueFor(spec, "companyIdx");
     }
+    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용이어야 한다(설계 3.3). */
+    @Test void globalTableIsSuperOnly() {
+        CrudService<CcfaLicense, Long, SearchForm> global = new CrudService<>(repo, audit) {
+            @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }
+            @Override protected String companyIdxAttribute() { return null; }
+            @Override protected Long companyIdxOf(CcfaLicense e) { return null; }
+            @Override protected void setCompanyIdx(CcfaLicense e, Long c) {}
+            @Override public String idOf(CcfaLicense e) { return "1"; }
+            @Override protected String tableName() { return "CCFA_MENU"; }
+        };
+
+        login(1L);
+        assertThatThrownBy(() -> global.search(new SearchForm(), PageRequest.of(0, 20, Sort.by("idx"))))
+            .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+        assertThatThrownBy(() -> global.get(1L))
+            .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+
+        login(0L);
+        when(repo.findAll(any(Specification.class), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(java.util.List.of()));
+        global.search(new SearchForm(), PageRequest.of(0, 20, Sort.by("idx")));
+    }
 }

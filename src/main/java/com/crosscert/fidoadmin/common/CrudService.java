@@ -40,8 +40,21 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     protected void beforeDelete(E entity) {}
 
     // ---- 공개 API ----
+    /**
+     * COMPANY_IDX 가 없는 테이블(메타·시스템 정보 등)은 SUPER 전용이다(설계 3.3).
+     * SecurityConfig 의 URL 허용 목록만으로는 새 화면이 추가될 때 누락될 수 있어
+     * 서비스 계층에서도 막는다.
+     */
+    protected void requireSuperForGlobalTable() {
+        if (companyIdxAttribute() == null && !TenantContext.isSuper()) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                tableName() + " 은 최고 관리자 전용입니다");
+        }
+    }
+
     @Transactional(readOnly = true)
     public Page<E> search(S form, Pageable pageable) {
+        requireSuperForGlobalTable();
         Specification<E> spec = toSpecification(form);
         String attr = companyIdxAttribute();
         if (attr != null) {
@@ -53,6 +66,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 
     @Transactional(readOnly = true)
     public E get(ID id) {
+        requireSuperForGlobalTable();
         E e = repository.findById(id).orElseThrow(() -> new EntityNotFoundException(tableName() + " " + id));
         checkTenant(e);
         return e;
@@ -60,6 +74,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 
     @Transactional
     public E create(E entity) {
+        requireSuperForGlobalTable();
         if (companyIdxAttribute() != null && !TenantContext.isSuper()) {
             setCompanyIdx(entity, TenantContext.companyIdx());
         }

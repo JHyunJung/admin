@@ -21,4 +21,9 @@ class SpecsTest {
         Specification<Object> s = Specs.all(null, null);
         assertThat(s.toPredicate(mock(Root.class), mock(CriteriaQuery.class), mock(CriteriaBuilder.class))).isNull();
     }
+    /** @EmbeddedId 안의 테넌트 키("id.companyIdx")도 해석돼야 한다. */
+    @Test void eqResolvesDottedPath() {
+        var spec = Specs.<com.crosscert.fidoadmin.company.entity.CcfaLicense>eq("id.companyIdx", 3L);
+        assertThat(spec).isNotNull();
+    }
 }
