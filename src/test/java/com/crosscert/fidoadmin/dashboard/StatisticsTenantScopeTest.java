@@ -73,6 +73,38 @@ class StatisticsTenantScopeTest {
         assertThat(capturedCompanyIdx()).isEqualTo(2L);
     }
 
+    /** `?fromDate=` 처럼 빈 값이 오면 필드 기본값이 null 로 덮여 NPE(500)가 났다. */
+    @Test
+    void blankDatesFallBackInsteadOfThrowing() {
+        login(1L);
+        when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
+            .thenReturn(List.of());
+
+        DashboardSearchForm f = form(null);
+        f.setFromDate(null);
+        f.setToDate(null);
+
+        service.daily(f); // 예외가 나지 않아야 한다
+
+        ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
+        verify(jdbc).query(anyString(), params.capture(), any(org.springframework.jdbc.core.RowMapper.class));
+        assertThat(params.getValue().get("from")).isNotNull();
+        assertThat(params.getValue().get("to")).isNotNull();
+    }
+
+    /** 집계 단위 목록도 COMPANY 역할에게는 자기 고객사 것만 보여야 한다. */
+    @Test
+    void groupbysAreTenantScopedForCompanyRole() {
+        login(1L);
+        when(jdbc.queryForList(anyString(), any(Map.class), any(Class.class))).thenReturn(List.of("day"));
+
+        service.groupbys();
+
+        ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
+        verify(jdbc).queryForList(anyString(), params.capture(), any(Class.class));
+        assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);
+    }
+
     @Test
     void superWithoutChoiceSeesAllCompanies() {
         login(0L);

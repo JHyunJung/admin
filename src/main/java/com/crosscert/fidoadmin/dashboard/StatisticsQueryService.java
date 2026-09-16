@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.dashboard;
 
 import com.crosscert.fidoadmin.common.TenantContext;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +21,22 @@ public class StatisticsQueryService {
 
     private final NamedParameterJdbcTemplate jdbc;
 
+    /** 최대 조회 기간. 지나치게 넓은 범위로 전 기간을 훑지 않도록 제한한다. */
+    static final int MAX_RANGE_DAYS = 366;
+
+    /**
+     * 집계 단위 목록. COMPANY 역할에게는 자기 고객사에 존재하는 값만 보여준다.
+     * 전역 조회로 두면 다른 고객사의 집계 단위가 노출되고, 첫 값을 기본으로 고르는 탓에
+     * 자기 데이터가 있는데도 0 으로 보이는 문제가 생긴다.
+     */
     @Transactional(readOnly = true)
     public List<String> groupbys() {
-        return jdbc.getJdbcTemplate().queryForList("SELECT DISTINCT GROUPBY FROM FIDO_STATISTICS ORDER BY GROUPBY", String.class);
+        Map<String, Object> p = new HashMap<>();
+        p.put("companyIdx", TenantContext.isSuper() ? null : TenantContext.companyIdx());
+        return jdbc.queryForList(
+            "SELECT DISTINCT GROUPBY FROM FIDO_STATISTICS"
+                + " WHERE (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx) ORDER BY GROUPBY",
+            p, String.class);
     }
 
     @Transactional(readOnly = true)
@@ -37,10 +51,20 @@ public class StatisticsQueryService {
     @Transactional(readOnly = true)
     public List<DailyStat> daily(DashboardSearchForm f) {
         Long companyIdx = TenantContext.isSuper() ? f.getCompanyIdx() : TenantContext.companyIdx();
+        // 빈 값(?fromDate=)은 필드 기본값을 덮어써 null 이 되므로 여기서 다시 채운다.
+        // 뒤집힌 범위는 빈 결과 대신 정상 범위로 바로잡고, 과도하게 넓은 범위는 제한한다.
+        LocalDate to = f.getToDate() == null ? LocalDate.now() : f.getToDate();
+        LocalDate from = f.getFromDate() == null ? to.minusDays(29) : f.getFromDate();
+        if (from.isAfter(to)) {
+            LocalDate tmp = from; from = to; to = tmp;
+        }
+        if (from.isBefore(to.minusDays(MAX_RANGE_DAYS))) {
+            from = to.minusDays(MAX_RANGE_DAYS);
+        }
         Map<String, Object> p = new HashMap<>();
         p.put("groupby", f.getGroupby());
-        p.put("from", Timestamp.valueOf(f.getFromDate().atStartOfDay()));
-        p.put("to", Timestamp.valueOf(f.getToDate().plusDays(1).atStartOfDay()));
+        p.put("from", Timestamp.valueOf(from.atStartOfDay()));
+        p.put("to", Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
         p.put("companyIdx", companyIdx);
         p.put("serviceName", f.getServiceName() == null || f.getServiceName().isBlank() ? null : f.getServiceName());
         String sql = """
