@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.auth;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -51,4 +52,17 @@ public class ManagerUserDetails implements UserDetails {
     @Override public boolean isCredentialsNonExpired() { return true; }
     @Override public boolean isEnabled() { return enabled; }
     public void eraseCredentials() { this.password = null; }
+
+    /**
+     * 동시 세션 제어(maximumSessions)는 SessionRegistry 가 principal 의 equals/hashCode 로
+     * 세션을 묶는다. 이것이 없으면 로그인할 때마다 다른 사용자로 취급되어 세션 1개 제한이 무력화된다.
+     * 비밀번호·잠금 상태 같은 가변 값은 제외하고 불변 식별자만 사용한다.
+     */
+    @Override public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ManagerUserDetails other)) return false;
+        return Objects.equals(idx, other.idx) && Objects.equals(userId, other.userId);
+    }
+
+    @Override public int hashCode() { return Objects.hash(idx, userId); }
 }

@@ -40,9 +40,19 @@ public class LoginAttemptService {
             .orElse(defaultFailLimit);
     }
 
+    /**
+     * Spring Security 의 UsernamePasswordAuthenticationFilter 가 username 을 trim 하므로
+     * 집계 쪽도 같은 정규화를 해야 한다. 그러지 않으면 " kbadmin" 처럼 공백을 붙여
+     * 실제 계정의 비밀번호를 시도하면서 잠금 카운터만 피해 갈 수 있다.
+     */
+    static String normalize(String userId) {
+        return userId == null ? null : userId.trim();
+    }
+
     @Transactional
-    public void onSuccess(String userId) {
-        managers.findByUserId(userId).ifPresent(m -> {
+    public void onSuccess(String rawUserId) {
+        String userId = normalize(rawUserId);
+        managers.findByUserIdForUpdate(userId).ifPresent(m -> {
             LocalDateTime now = LocalDateTime.now();
             m.setLogin("ON-LINE");
             m.setLastAccess(now);
@@ -56,8 +66,9 @@ public class LoginAttemptService {
     }
 
     @Transactional
-    public void onFailure(String userId) {
-        managers.findByUserId(userId).ifPresent(m -> {
+    public void onFailure(String rawUserId) {
+        String userId = normalize(rawUserId);
+        managers.findByUserIdForUpdate(userId).ifPresent(m -> {
             LocalDateTime now = LocalDateTime.now();
             CcfaManagerPwPolicy p = policyOrNew(userId, now);
             long cnt = (p.getPwFailCnt() == null ? 0L : p.getPwFailCnt()) + 1;
@@ -74,7 +85,8 @@ public class LoginAttemptService {
     }
 
     @Transactional
-    public void onLogout(String userId) {
+    public void onLogout(String rawUserId) {
+        String userId = normalize(rawUserId);
         managers.findByUserId(userId).ifPresent(m -> {
             m.setLogin("OFF-LINE");
             m.setUpdatedtime(LocalDateTime.now());
@@ -83,7 +95,9 @@ public class LoginAttemptService {
     }
 
     @Transactional
-    public void unlock(String userId) {
+    public void unlock(String rawUserId) {
+        String userId = normalize(rawUserId);
+        managers.findByUserIdForUpdate(userId);
         LocalDateTime now = LocalDateTime.now();
         CcfaManagerPwPolicy p = policyOrNew(userId, now);
         p.setAccountLock("N");

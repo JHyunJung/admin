@@ -12,10 +12,8 @@
   <div class="card shadow-sm">
     <div class="card-body p-4">
       <h1 class="h4 mb-4 text-center">FIDO Admin</h1>
-      <div class="alert alert-danger py-2" th:if="${param.error != null and param.error[0] == 'bad'}">아이디 또는 비밀번호가 올바르지 않습니다.</div>
-      <div class="alert alert-danger py-2" th:if="${param.error != null and param.error[0] == 'locked'}">비밀번호 실패 횟수 초과로 잠긴 계정입니다. 관리자에게 문의하세요.</div>
-      <div class="alert alert-warning py-2" th:if="${param.error != null and param.error[0] == 'disabled'}">비활성 상태의 계정입니다.</div>
-      <div class="alert alert-danger py-2" th:if="${param.error != null and param.error[0] == 'error'}">로그인 처리 중 오류가 발생했습니다.</div>
+      <!-- 계정 존재 여부·잠금·비활성 여부가 드러나지 않도록 실패 사유를 구분하지 않는다. -->
+      <div class="alert alert-danger py-2" th:if="${param.error != null}">로그인할 수 없습니다. 아이디와 비밀번호를 확인하세요.</div>
       <div class="alert alert-info py-2" th:if="${param.logout != null}">로그아웃되었습니다.</div>
       <div class="alert alert-warning py-2" th:if="${param.expired != null}">다른 곳에서 로그인되어 세션이 종료되었습니다.</div>
       <form th:action="@{/login}" method="post">

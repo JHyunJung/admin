@@ -29,7 +29,23 @@ class LoginAttemptServiceTest {
     @BeforeEach void setUp() {
         manager.setUserId("kbadmin");
         when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager));
+        when(managers.findByUserIdForUpdate("kbadmin")).thenReturn(Optional.of(manager));
         when(props.findById(new CcfaSystemPropId("PW_FAIL_LIMIT", 0L))).thenReturn(Optional.empty());
+    }
+
+    /**
+     * Spring Security 의 UsernamePasswordAuthenticationFilter 는 username 을 trim 한다.
+     * 실패 집계가 원문을 그대로 쓰면 " kbadmin" 으로 kbadmin 의 비밀번호를 무제한 시도하면서도
+     * 잠금 카운터는 올라가지 않는다. 같은 정규화를 적용해야 한다.
+     */
+    @Test void failureNormalizesUsernameSoLockoutCannotBeBypassed() {
+        CcfaManagerPwPolicy policy = new CcfaManagerPwPolicy();
+        policy.setUserId("kbadmin"); policy.setPwFailCnt(0L); policy.setAccountLock("N");
+        when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.of(policy));
+
+        service.onFailure("  kbadmin  ");
+
+        assertThat(policy.getPwFailCnt()).isEqualTo(1L);
     }
 
     @Test void successResetsCounterAndMarksOnline() {
@@ -72,7 +88,7 @@ class LoginAttemptServiceTest {
     }
 
     @Test void failureForUnknownUserDoesNothing() {
-        when(managers.findByUserId("nobody")).thenReturn(Optional.empty());
+        when(managers.findByUserIdForUpdate("nobody")).thenReturn(Optional.empty());
         service.onFailure("nobody");
         verify(policies, org.mockito.Mockito.never()).save(any());
     }
