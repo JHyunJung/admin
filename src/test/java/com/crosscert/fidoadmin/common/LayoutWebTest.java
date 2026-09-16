@@ -30,6 +30,9 @@ class LayoutWebTest {
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
     @MockitoBean com.crosscert.fidoadmin.auth.ManagerUserDetailsService uds;
+    // Task 11 에서 DashboardController 가 통계 조회·고객사 조회를 주입받도록 바뀌었다.
+    @MockitoBean com.crosscert.fidoadmin.dashboard.StatisticsQueryService stats;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
 
     static ManagerUserDetails user(long companyIdx) {
         return new ManagerUserDetails(1L, "u", null, "홍길동", companyIdx, "KB", true, true);
