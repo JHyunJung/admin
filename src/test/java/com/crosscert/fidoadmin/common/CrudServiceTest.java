@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.common;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -122,5 +123,49 @@ class CrudServiceTest {
         ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
         verify(repo).findAll(captor.capture(), eq(PageRequest.of(0, 20, Sort.by("idx"))));
         assertThat(captor.getValue()).isNotNull();
+        // Specification 을 실제로 실행해 companyIdx = 1 조건이 들어갔는지 확인한다.
+        assertThat(companyIdxEqualsIn(captor.getValue())).isEqualTo(1L);
+    }
+
+    /**
+     * 목록 조회의 테넌트 필터는 격리의 핵심이다. Specification 이 null 이 아닌지만 보면
+     * 필터를 제거해도 테스트가 통과하므로, 실제로 평가해 companyIdx 등치 조건을 확인한다.
+     */
+    @Test void searchDoesNotFilterForSuperWhenNoCompanyChosen() {
+        login(0L);
+        when(repo.findAll(any(Specification.class), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(java.util.List.of()));
+
+        service.search(new SearchForm(), PageRequest.of(0, 20, Sort.by("idx")));
+
+        ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
+        verify(repo).findAll(captor.capture(), any(PageRequest.class));
+        assertThat(companyIdxEqualsIn(captor.getValue())).isNull();
+    }
+
+    @Test void searchLetsSuperFilterByChosenCompany() {
+        login(0L);
+        when(repo.findAll(any(Specification.class), any(PageRequest.class)))
+            .thenReturn(new PageImpl<>(java.util.List.of()));
+
+        SearchForm form = new SearchForm();
+        form.setCompanyIdx(7L);
+        service.search(form, PageRequest.of(0, 20, Sort.by("idx")));
+
+        ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
+        verify(repo).findAll(captor.capture(), any(PageRequest.class));
+        assertThat(companyIdxEqualsIn(captor.getValue())).isEqualTo(7L);
+    }
+
+    /**
+     * Specification 을 가짜 Criteria API 위에서 평가해 companyIdx 에 걸린 등치 값을 뽑아낸다.
+     * 조건이 없으면 null 을 돌려준다.
+     */
+    /**
+     * Specification 을 실제 Criteria API 위에서 평가해 companyIdx 등치 값을 뽑아낸다.
+     * 조건이 없으면 null.
+     */
+    private static Long companyIdxEqualsIn(Specification<CcfaLicense> spec) {
+        return CriteriaProbe.equalsValueFor(spec, "companyIdx");
     }
 }
