@@ -29,9 +29,16 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
         }
         // 잠금·비활성·비밀번호 오류를 화면에서 구분하면 계정 존재 여부와 상태가 노출된다.
         // 원인은 서버 로그에만 남기고 사용자에게는 동일한 메시지를 준다.
-        log.info("로그인 실패: userId={} reason={}", userId, reasonOf(exception));
+        log.info("로그인 실패: userId={} reason={}", forLog(userId), reasonOf(exception));
         setDefaultFailureUrl("/login?error");
         super.onAuthenticationFailure(request, response, exception);
+    }
+
+    /** 사용자 입력이므로 개행을 제거해 로그 위조를 막는다. */
+    private static String forLog(String value) {
+        if (value == null) return null;
+        String cleaned = value.replaceAll("[\\r\\n]", "_");
+        return cleaned.length() <= 64 ? cleaned : cleaned.substring(0, 64);
     }
 
     private static String reasonOf(AuthenticationException e) {

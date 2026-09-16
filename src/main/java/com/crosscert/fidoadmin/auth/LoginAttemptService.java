@@ -87,7 +87,7 @@ public class LoginAttemptService {
     @Transactional
     public void onLogout(String rawUserId) {
         String userId = normalize(rawUserId);
-        managers.findByUserId(userId).ifPresent(m -> {
+        managers.findByUserIdForUpdate(userId).ifPresent(m -> {
             m.setLogin("OFF-LINE");
             m.setUpdatedtime(LocalDateTime.now());
             managers.save(m);
@@ -97,14 +97,14 @@ public class LoginAttemptService {
     @Transactional
     public void unlock(String rawUserId) {
         String userId = normalize(rawUserId);
-        managers.findByUserIdForUpdate(userId);
-        LocalDateTime now = LocalDateTime.now();
-        CcfaManagerPwPolicy p = policyOrNew(userId, now);
-        p.setAccountLock("N");
-        p.setPwFailCnt(0L);
-        p.setUpdatedtime(now);
-        policies.save(p);
-        managers.findByUserId(userId).ifPresent(m -> {
+        // 존재하지 않는 계정에 대해 고아 정책 행을 만들지 않도록 계정 확인 후 진행한다.
+        managers.findByUserIdForUpdate(userId).ifPresent(m -> {
+            LocalDateTime now = LocalDateTime.now();
+            CcfaManagerPwPolicy p = policyOrNew(userId, now);
+            p.setAccountLock("N");
+            p.setPwFailCnt(0L);
+            p.setUpdatedtime(now);
+            policies.save(p);
             m.setBlockTime(null);
             m.setUpdatedtime(now);
             managers.save(m);
