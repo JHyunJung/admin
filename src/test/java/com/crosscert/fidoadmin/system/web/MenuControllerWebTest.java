@@ -3,6 +3,8 @@ package com.crosscert.fidoadmin.system.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -22,6 +24,7 @@ import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.system.entity.CcfaMenu;
 import com.crosscert.fidoadmin.system.service.MenuService;
 import java.util.List;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -71,7 +74,7 @@ class MenuControllerWebTest {
     /** 수정 폼의 부모 select 에는 자기 자신이 없고 "최상위" 는 있다. */
     @Test void editFormExcludesSelfFromParentSelect() throws Exception {
         when(service.get(2L)).thenReturn(menu(2L, "앱 ID", 1L));
-        when(service.allForSelect()).thenReturn(List.of(menu(1L, "FIDO", 0L), menu(2L, "앱 ID", 1L)));
+        when(service.selectableParentsFor(2L)).thenReturn(List.of(menu(1L, "FIDO", 0L)));
         mvc.perform(get("/system/menus/2/edit").with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("system/menus/form"))
@@ -101,5 +104,37 @@ class MenuControllerWebTest {
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {
         mvc.perform(post("/system/menus").with(user(superUser)).param("menuName", "x")).andExpect(status().isForbidden());
+    }
+
+    /** 하위 메뉴를 부모로 지정하면(순환) 서비스 검증에서 막혀 200 + 폼 재표시(리다이렉트 없음). */
+    @Test void updateWithDescendantAsParentReRendersForm() throws Exception {
+        CcfaMenu existing = menu(1L, "FIDO", 0L);
+        when(service.get(1L)).thenReturn(existing);
+        when(service.allForSelect()).thenReturn(List.of(menu(1L, "FIDO", 0L), menu(3L, "하위", 1L)));
+        when(service.isSelfOrDescendant(3L, 1L)).thenReturn(true);
+        when(service.update(eq(1L), any())).thenAnswer(inv -> {
+            Consumer<CcfaMenu> mutator = inv.getArgument(1);
+            CcfaMenu target = menu(1L, "FIDO", 0L);
+            mutator.accept(target);
+            return target;
+        });
+
+        mvc.perform(post("/system/menus/1").with(user(superUser)).with(csrf())
+                .param("menuName", "FIDO").param("menuParentIdx", "3")
+                .param("visible", "true").param("openType", "open").param("statistics", "N").param("readonly", "N"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/menus/form"));
+    }
+
+    /** 수정 폼은 selectableParentsFor(id) 를 사용해 자신+하위를 제외한 목록을 그린다. */
+    @Test void editFormUsesSelectableParentsFor() throws Exception {
+        when(service.get(1L)).thenReturn(menu(1L, "FIDO", 0L));
+        when(service.selectableParentsFor(1L)).thenReturn(List.of(menu(4L, "무관", 0L)));
+        mvc.perform(get("/system/menus/1/edit").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/menus/form"))
+            .andExpect(content().string(containsString("무관")))
+            .andExpect(content().string(not(containsString("value=\"2\">#2 앱 ID"))));
+        verify(service).selectableParentsFor(1L);
     }
 }

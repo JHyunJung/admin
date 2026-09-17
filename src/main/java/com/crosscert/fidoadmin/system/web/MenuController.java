@@ -7,6 +7,7 @@ import com.crosscert.fidoadmin.system.service.MenuService;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,17 +28,21 @@ public class MenuController extends CrudController<CcfaMenu, Long, MenuForm, Men
     @Override protected CcfaMenu toEntity(MenuForm f) { return f.toNewEntity(); }
 
     /**
-     * 폼의 select 는 자기 자신을 빼고 그리지만(템플릿), 요청을 조작해 자기 자신을 부모로 보내면
-     * 트리가 순환한다. 여기서 막으면 500 으로 끝나지만 데이터는 지켜진다.
+     * 폼의 select 는 자기 자신과 하위 메뉴를 빼고 그리지만(템플릿 + populateFormModel 이중 방어),
+     * 요청을 조작해 자기 자신이나 하위 메뉴를 부모로 보내면 트리가 순환한다. 여기서 막으면
+     * CrudController.update() 가 DataIntegrityViolationException 을 잡아 폼을 다시 렌더링한다.
      */
     @Override protected void applyForm(MenuForm f, CcfaMenu e) {
-        if (f.getMenuParentIdx() != null && f.getMenuParentIdx().equals(e.getIdx())) {
-            throw new IllegalArgumentException("자기 자신을 부모로 지정할 수 없습니다.");
+        if (service.isSelfOrDescendant(f.getMenuParentIdx(), e.getIdx())) {
+            throw new DataIntegrityViolationException("자기 자신이나 하위 메뉴를 부모로 지정할 수 없습니다.");
         }
         f.applyTo(e);
     }
 
-    @Override protected void populateFormModel(Model model) { model.addAttribute("menus", service.allForSelect()); }
+    @Override protected void populateFormModel(Model model) {
+        Long editingIdx = (Long) model.getAttribute("id");
+        model.addAttribute("menus", service.selectableParentsFor(editingIdx));
+    }
     @Override protected void populateListModel(Model model) { model.addAttribute("parentNames", parentNames()); }
     @Override protected void populateDetailModel(CcfaMenu e, Model model) { model.addAttribute("parentNames", parentNames()); }
 

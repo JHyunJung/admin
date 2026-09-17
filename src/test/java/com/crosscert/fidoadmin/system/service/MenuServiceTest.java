@@ -15,6 +15,7 @@ import com.crosscert.fidoadmin.system.entity.CcfaMenu;
 import com.crosscert.fidoadmin.system.repository.CcfaMenuRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,12 @@ class MenuServiceTest {
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
     private CcfaMenu menu(long idx, String name) { CcfaMenu m = new CcfaMenu(); m.setIdx(idx); m.setMenuName(name); return m; }
+
+    private CcfaMenu menu(long idx, String name, long parentIdx) {
+        CcfaMenu m = menu(idx, name);
+        m.setMenuParentIdx(parentIdx);
+        return m;
+    }
 
     @Test void defaultsFilledOnCreate() {
         when(repo.save(any())).thenAnswer(inv -> { CcfaMenu m = inv.getArgument(0); m.setIdx(10L); return m; });
@@ -78,5 +85,47 @@ class MenuServiceTest {
         assertThat(service.allForSelect()).extracting(CcfaMenu::getMenuName).containsExactly("FIDO", "앱 ID");
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Order.asc("menuParentIdx"), Sort.Order.asc("menuSeq"), Sort.Order.asc("idx")));
         assertThat(service.sortableProperties()).contains("idx", "menuName", "menuCode", "menuParentIdx", "menuSeq");
+    }
+
+    /** 트리 1 -> 2 -> 3, 그리고 무관한 4. */
+    private void stubTree() {
+        when(repo.findAllByOrderByMenuParentIdxAscMenuSeqAscIdxAsc()).thenReturn(List.of(
+            menu(1L, "FIDO", 0L),
+            menu(2L, "앱 ID", 1L),
+            menu(3L, "상세", 2L),
+            menu(4L, "무관", 0L)
+        ));
+    }
+
+    @Test void descendantIdxsCollectsWholeSubtree() {
+        stubTree();
+        assertThat(service.descendantIdxs(1L)).containsExactlyInAnyOrder(2L, 3L);
+    }
+
+    @Test void isSelfOrDescendantDetectsCycleCandidates() {
+        stubTree();
+        assertThat(service.isSelfOrDescendant(3L, 1L)).isTrue();
+        assertThat(service.isSelfOrDescendant(4L, 1L)).isFalse();
+        assertThat(service.isSelfOrDescendant(1L, 1L)).isTrue();
+    }
+
+    @Test void selectableParentsForExcludesSelfAndDescendants() {
+        stubTree();
+        assertThat(service.selectableParentsFor(1L)).extracting(CcfaMenu::getIdx).containsExactly(4L);
+    }
+
+    @Test void selectableParentsForReturnsAllWhenCreating() {
+        stubTree();
+        assertThat(service.selectableParentsFor(null)).extracting(CcfaMenu::getIdx).containsExactly(1L, 2L, 3L, 4L);
+    }
+
+    /** 기존 데이터에 순환(5 -> 6 -> 5)이 있어도 무한루프 없이 종료해야 한다. */
+    @Test void descendantIdxsTerminatesOnPreexistingDataCycle() {
+        when(repo.findAllByOrderByMenuParentIdxAscMenuSeqAscIdxAsc()).thenReturn(List.of(
+            menu(5L, "순환1", 6L),
+            menu(6L, "순환2", 5L)
+        ));
+        Set<Long> result = service.descendantIdxs(5L);
+        assertThat(result).isNotNull();
     }
 }
