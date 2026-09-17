@@ -22,7 +22,7 @@ public class CcfaSystemPropId implements Serializable {
 
     /**
      * 경로 값 → 복합키. 키에 '@' 가 들어갈 수 있으므로 마지막 '@' 기준으로 나눈다.
-     * 형식이 틀리면 IllegalArgumentException (컨트롤러에서는 400 으로 끝난다).
+     * 형식이 틀리면 IllegalArgumentException (컨트롤러에서는 404 로 끝난다).
      */
     public static CcfaSystemPropId parse(String value) {
         if (value == null) throw new IllegalArgumentException("시스템 설정 키가 없습니다");

@@ -85,6 +85,13 @@ class SystemPropControllerWebTest {
         verify(service).get(id);
     }
 
+    /** 경로 값이 "키@COMPANY_IDX" 형식이 아니면 어떤 자원도 가리키지 않으므로 404. */
+    @Test void malformedPathVariableIsNotFound() throws Exception {
+        mvc.perform(get("/system/props/NO_AT").with(user(superUser)))
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("error/404"));
+    }
+
     @Test void keyWithSlashIsRejected() throws Exception {
         mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
                 .param("propKey", "a/b").param("companyIdx", "0").param("shareType", "NO"))

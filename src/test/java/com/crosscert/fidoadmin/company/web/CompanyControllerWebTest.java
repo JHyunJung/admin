@@ -103,4 +103,11 @@ class CompanyControllerWebTest {
     @Test void postWithoutCsrfIsForbidden() throws Exception {
         mvc.perform(post("/companies").with(user(superUser)).param("companyName", "x")).andExpect(status().isForbidden());
     }
+
+    /** @PathVariable Long 으로 바꿀 수 없는 값(숫자가 아님)은 어떤 자원도 가리키지 않으므로 404. */
+    @Test void nonNumericIdIsNotFound() throws Exception {
+        mvc.perform(get("/companies/abc").with(user(superUser)))
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("error/404"));
+    }
 }
