@@ -11,6 +11,8 @@
 
 운영 환경은 `local` 프로파일 대신 환경 변수 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` 를 준다. 기본값은 없다.
 
+설계 5.2 의 화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
+
 ## 테스트
 
 `./gradlew test` — Docker 가 있으면 Testcontainers Oracle 통합 테스트까지 실행되고, 없으면 건너뛴다.
@@ -68,6 +70,7 @@
 - 비밀번호는 기존 시스템 호환을 위해 salt 없는 SHA-256 hex 로 저장한다(설계 3.4 / 12, 범위 밖).
 - 고객사 삭제 전 하위 데이터 검사는 검사와 삭제 사이의 동시 삽입을 막지 못한다(ERD 에 FK 없음).
 - SUPER 가 고객사를 재배정하는 것과 COMPANY 의 수정이 동시에 일어나면 경쟁이 발생할 수 있다.
+- `CCFA_SYSTEM_PROP` 화면은 복합키를 경로 한 조각 `{PROP_KEY}@{COMPANY_IDX}` 로 다루므로 `PROP_KEY` 에 `/` 가 들어간 키는 화면에서 지원하지 않는다(등록 폼에서 거부).
 
 ## 문서
 

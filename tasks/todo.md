@@ -115,3 +115,30 @@ Branch: feature/part2-screens
 - salt 없는 SHA-256 — 설계 3.4/12, 범위 밖
 - 고객사 삭제 TOCTOU, 테넌트 재배정 경쟁 — ERD 에 FK 없음, 관리자 소수 전제
 - 로그인 실패 타이밍 차이 — 사내망 전제
+
+# FIDO Admin 3부 — 시스템 화면과 최종 검증
+
+Plan: docs/superpowers/plans/2026-09-17-fido-admin-part3-system.md
+Branch: feature/part3-system
+
+- [x] Task 1: 시스템 설정 (복합키)
+- [x] Task 2: 시스템 정보
+- [x] Task 3: 에러 코드
+- [x] Task 4: FIDO 서버
+- [x] Task 5: 어드민 기준
+- [x] Task 6: 메뉴 정의
+- [x] Task 7: 코드 그룹/코드
+- [x] Task 8: 필드 정의
+- [x] Task 9: 최종 검증과 인도물
+
+## Review (2026-09-17)
+
+- clean test: tests=386 skipped=0 failures=0 errors=0 (통합 테스트 실제 실행 여부: 예 — `AssignedIdInsertIntegrationTest` 2건 신규 + `RepositoryIntegrationTest` 4건, Docker Oracle(Testcontainers, gvenzl/oracle-free:23-slim) 대상. `AssignedIdCrudService.insert()` 의 `LOCK TABLE CCFA_SYSTEM_INFO IN EXCLUSIVE MODE` 가 실제 Oracle 에서 오류·타임아웃 없이 수행됨을 확인)
+- SUPER 29개 경로 전부 200 (`SUPER non-200: 0`), COMPANY `/system/*` 8개 전부 403 (`COMPANY non-403: 0`)
+- 브라우저 확인 목록 12항목: 브라우저 대신 curl 로 기능 동등 검증 완료(HTTP 코드·플래시 문구·감사 로그·DB 상태 실측). 11항목은 브리핑과 완전히 일치, **1항목 문구 불일치**:
+  - 시스템 설정 등록 거부 문구, `PW_FAIL_LIMIT@0` 값 6→5 되돌리기, `VERSION`/`IT_MANUAL` 등록·삭제, 에러 코드 `1200` 거부·`9999` 등록/수정/삭제, FIDO 서버 `FIDO01` 거부·`FIDO03` 상태 기본값 ON, 어드민 기준 JSON 검증·pretty-print, 메뉴 부모 select 자기 제외·`최상위` 존재·하위 메뉴 있는 메뉴 삭제 차단 플래시, 코드 그룹 `hold` 추가·삭제·코드 남은 그룹 삭제 차단, 필드 정의 코드 그룹 select·목록 그룹명, 감사 로그 CREATE/DELETE 4건 확인, kbadmin 사이드바 시스템 그룹 미노출·`/system/menus` 403 — 모두 curl 실측대로 통과.
+  - **불일치**: 키에 `/` 를 넣어 등록하면 브리핑은 "키에 '/' 는 쓸 수 없습니다."를 기대했으나, 실제 메시지는 `SystemPropForm`/`SystemInfoForm`의 `@Pattern(regexp = "[A-Za-z0-9._-]+")` 검증 문구인 "키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다."이다. 동작(등록 거부)은 기대대로지만 문구가 다르다. 코드는 수정하지 않았다(범위 밖 지시에 따름).
+  - **실제 브라우저(시각) 확인은 미완료 — 수동 확인 필요**: Bootstrap 확인 모달의 문구·버튼 렌더링, alert/confirm 미출현을 눈으로 보는 것, 배지·플래시의 실제 렌더링. 절차: `superuser/Admin1234!` 로 로그인 → 시스템 메뉴 8개를 위 순서대로 열어 등록/수정/삭제를 시도하며 확인한다. (2부 Review 에 기록된 `/users/1`, `/managers/2`, `/companies/1` 브라우저 확인도 여전히 미완료로 남아 있다.)
+- 정적 자원 규칙: `grep -rn "alert(\|confirm(\|prompt(" src/main/resources` 출력 없음(종료 코드 1), `grep -rn "https\?://" src/main/resources/templates | grep -v "thymeleaf.org\|w3.org"` 출력 없음(종료 코드 1) — 둘 다 기대대로.
+- bootRun: `docker/docker-compose.yml` Oracle 이미 healthy 상태에서 `./gradlew bootRun --args='--spring.profiles.active=local'` 기동, `/tmp/fido-admin-bootrun.log` 에 `Started FidoAdminApplication in 2.732 seconds` 확인. 검증 후 `pkill -f 'FidoAdminApplication'` 로 종료, 포트 8080 반환 확인.
+- 남은 위험: 시퀀스 이름 `<TABLE>_SEQ` 임시(README 절차대로 교체 전 운영 INSERT 보장 없음), 1부 Review 의 수용 위험 유지, 시스템 설정 등록 폼의 문자 제약 오류 문구가 설계 문서 문구와 다름(동작은 일치, 문구만 차이 — 위 참고).
