@@ -17,7 +17,18 @@ class MenuRegistryTest {
         assertThat(registry.itemsFor(false)).extracting(MenuItem::href)
             .contains("/", "/appids", "/users", "/logs/fido", "/fds-policies")
             .doesNotContain("/companies", "/managers", "/system/props",
-                "/criteria", "/fido2/metadata", "/fido2/credential-params", "/fido2/demo-access-codes");
+                "/criteria", "/fido2/metadata", "/fido2/credential-params", "/fido2/demo-access-codes",
+                "/signups");
+    }
+
+    /** 가입 승인은 SUPER 전용이다. 메뉴에 보이지 않아야 SecurityConfig 의 403 과 화면이 어긋나지 않는다. */
+    @Test void signupApprovalMenuIsSuperOnly() {
+        assertThat(MenuRegistry.ALL).filteredOn(m -> "/signups".equals(m.href()))
+            .singleElement()
+            .satisfies(m -> {
+                assertThat(m.group()).isEqualTo("운영자");
+                assertThat(m.superOnly()).isTrue();
+            });
     }
 
     /** COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용(설계 3.3). 그룹은 유지된다. */

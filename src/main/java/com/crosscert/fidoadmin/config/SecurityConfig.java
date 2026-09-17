@@ -31,8 +31,9 @@ public class SecurityConfig {
                 // /signup 은 가입 신청 화면이다. 로그인 전에 열려야 하므로 permitAll 이다.
                 .requestMatchers("/login", "/signup", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
+                // /signups(복수)는 가입 승인 화면이다. 위 permitAll 의 /signup(단수, 신청)과 다르다.
                 .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**",
-                                 "/criteria/**", "/fido2/**").hasRole("SUPER")
+                                 "/criteria/**", "/fido2/**", "/signups", "/signups/**").hasRole("SUPER")
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 .loginPage("/login")

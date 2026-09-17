@@ -14,6 +14,7 @@ public class MenuRegistry {
         new MenuItem("고객사", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
         new MenuItem("고객사", "라이선스", "/licenses", true, "bi-award"),
         new MenuItem("운영자", "운영자", "/managers", true, "bi-person-badge"),
+        new MenuItem("운영자", "가입 승인", "/signups", true, "bi-person-check"),
         new MenuItem("운영자", "내 비밀번호 변경", "/me/password", false, "bi-key"),
         new MenuItem("FIDO", "앱 ID", "/appids", false, "bi-app-indicator"),
         new MenuItem("FIDO", "앱 서버", "/appservers", false, "bi-hdd-network"),
