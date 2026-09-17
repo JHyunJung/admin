@@ -769,7 +769,7 @@ package com.crosscert.fidoadmin.signup;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import com.crosscert.fidoadmin.common.ByteSize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -784,25 +784,25 @@ import lombok.Setter;
 public class SignupForm {
 
     @NotBlank(message = "아이디는 필수입니다.")
-    @Size(max = 64, message = "아이디는 64자 이하여야 합니다.")
+    @ByteSize(max = 64, message = "아이디는 64바이트 이하여야 합니다.")
     private String userId;
 
     private String password;
     private String passwordConfirm;
 
     @NotBlank(message = "이름은 필수입니다.")
-    @Size(max = 50, message = "이름은 50자 이하여야 합니다.")
+    @ByteSize(max = 50, message = "이름은 50바이트 이하여야 합니다.")
     private String userNm;
 
     @NotBlank(message = "이메일은 필수입니다.")
     @Email(message = "이메일 형식이 올바르지 않습니다.")
-    @Size(max = 256, message = "이메일은 256자 이하여야 합니다.")
+    @ByteSize(max = 256, message = "이메일은 256바이트 이하여야 합니다.")
     private String userEmail;
 
-    @Size(max = 20, message = "전화는 20자 이하여야 합니다.")
+    @ByteSize(max = 20, message = "전화는 20바이트 이하여야 합니다.")
     private String userPhone;
 
-    @Size(max = 1900, message = "신청 사유는 1900자 이하여야 합니다.")
+    @ByteSize(max = 1700, message = "신청 사유는 1700바이트 이하여야 합니다.")
     private String reason;
 
     /** 빈 문자열은 null 로 다룬다(선택 항목). */
@@ -815,7 +815,14 @@ public class SignupForm {
 }
 ```
 
-`reason` 최대 길이가 1900인 이유: `ETC` 컬럼이 2048자이고 저장 시
+**길이 제한은 반드시 `@ByteSize` 로 건다(`@Size` 아님).** KBFIDO 스키마의 VARCHAR2 는
+바이트 기준(`NLS_LENGTH_SEMANTICS=BYTE`, AL32UTF8)이라 한글 한 글자가 3바이트다.
+`@Size(max = 1900)` 이면 한글 1900자(5700바이트)가 검증을 통과해 2048바이트 컬럼에
+들어가려다 ORA-12899 로 500 오류가 난다. 이 저장소는 이미 `common/ByteSize` 로 이
+문제를 해결했고 `@ByteSize` 96곳 대 `@Size` 2곳(둘 다 비밀번호, 글자 수가 맞는 자리)으로
+쓰고 있다. `ManagerForm` 도 전부 `@ByteSize` 다.
+
+`reason` 최대 1700바이트인 이유: `ETC` 컬럼이 2048바이트이고 저장 시
 `"신청 사유: "` 접두와 이후 거절 사유가 덧붙을 여유를 둔다.
 
 - [ ] **Step 4: SignupController 를 만든다**
