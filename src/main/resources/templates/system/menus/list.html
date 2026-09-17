@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>메뉴 정의</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">메뉴 정의</h1>
+    <a th:href="@{/system/menus/new}" class="btn btn-primary btn-sm">등록</a>
+  </div>
+
+  <form method="get" th:action="@{/system/menus}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label small mb-0">이름</label><input name="menuName" th:value="${search.menuName}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">코드</label><input name="menuCode" th:value="${search.menuCode}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary btn-sm">검색</button>
+      <a th:href="@{/system/menus}" class="btn btn-link btn-sm">초기화</a>
+    </div>
+  </form>
+
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>이름</th><th>코드</th><th>부모</th><th>순번</th><th>URL</th><th>표시</th><th>읽기전용</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td th:text="${r.idx}">0</td>
+          <td><a th:href="@{/system/menus/{id}(id=${r.idx})}" th:text="${r.menuName}">이름</a></td>
+          <td th:text="${r.menuCode}"></td>
+          <td th:text="${parentNames.get(r.menuParentIdx)} ?: ${r.menuParentIdx}"></td>
+          <td th:text="${r.menuSeq}"></td>
+          <td th:text="${r.menuUrl}"></td>
+          <td th:text="${r.visible}"></td>
+          <td th:text="${r.readonly}"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="8" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>
