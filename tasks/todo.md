@@ -150,3 +150,11 @@ Branch: feature/part3-system
 - [x] `application.yml` 에 `spring.web.resources.chain.strategy.content` 추가 — `max-age: 1d` 캐시 때문에 배포 후 옛 CSS 가 보이는 문제를 콘텐츠 해시 URL(`/css/admin-<md5>.css`, `/js/admin-<md5>.js`, WebJars 포함)로 해결. `@{...}` 링크가 자동 변환되며 원본 경로도 계속 200.
 - [x] 검증: `./gradlew test` 389건 통과, bootRun 재기동 후 로그인·대시보드 HTML 에서 해시 경로 확인 및 해당 경로 200, 새 브라우저 컨텍스트(Playwright)에서 목록·상세·대시보드·폼·로그인 스크린샷으로 테마 적용 확인.
 - 미적용(선택지로 남김): 메뉴 아이콘, 상세 화면 카드 분할, 대시보드 카드 색, 번들 폰트, favicon.
+
+## 사이드바 메뉴 아이콘 (2026-09-17)
+
+- [x] `org.webjars.npm:bootstrap-icons:1.13.1` WebJar 추가 — 외부 CDN 금지 조건 유지(설계 §정적 자원). `base.html` 에 `@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}` 링크 추가.
+- [x] `MenuItem` 에 `icon` 컴포넌트 추가(Bootstrap Icons 클래스명), `MenuRegistry.ALL` 29개 메뉴에 각각 의미에 맞는 아이콘 지정.
+- [x] `sidebar.html` 을 `<i class="bi bi-*">` + 제목 `<span>` 구조로 변경, `admin.css` 에 아이콘 너비 고정(1.1rem)·색(`--fa-navy-muted`, 활성/호버 시 흰색) 규칙 추가.
+- [x] 테스트 2건 추가: `MenuRegistryTest.everyMenuHasAnIcon`(모든 메뉴가 `bi-` 접두 아이콘 보유), `LayoutWebTest.sidebarRendersMenuIcons`(아이콘 CSS 링크·렌더된 아이콘 클래스). 전체 391건 통과, 실패 0.
+- [x] 브라우저 확인: SUPER 29개·COMPANY 14개 메뉴 모두 아이콘 렌더, 아이콘 폰트 로드 성공(`document.fonts.check`), 활성 메뉴 아이콘 흰색 전환, 콘솔 오류 0건. 아이콘 폰트(woff2, 134KB)도 콘텐츠 해시 경로로 200 서빙 확인.

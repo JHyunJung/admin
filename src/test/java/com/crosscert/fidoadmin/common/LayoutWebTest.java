@@ -56,6 +56,15 @@ class LayoutWebTest {
             .andExpect(content().string(containsString("/appids")));
     }
 
+    /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */
+    @Test void sidebarRendersMenuIcons() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("bootstrap-icons")))
+            .andExpect(content().string(containsString("bi bi-speedometer2")))
+            .andExpect(content().string(containsString("bi bi-sliders")));
+    }
+
     @Test void companyGetsForbiddenOnSuperUrl() throws Exception {
         mvc.perform(get("/companies").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
             .andExpect(status().isForbidden());
