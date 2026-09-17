@@ -93,12 +93,30 @@ class ManagerServiceTest {
     }
 
     @Test void unlockDelegatesAndAuditsStatus() {
-        when(managers.findById(2L)).thenReturn(Optional.of(manager(2L, "kbadmin")));
+        CcfaManager m = manager(2L, "kbadmin");
+        when(managers.findById(2L)).thenReturn(Optional.of(m));
 
         service.unlock(2L);
 
         verify(loginAttempts).unlock("kbadmin");
         verify(audit).log(AuditType.STATUS, "CCFA_MANAGER UNLOCK kbadmin");
+    }
+
+    /**
+     * get() 은 잠금 없이 읽는다. 동시 로그인이 LOGIN/LAST_ACCESS/BLOCK_TIME/UPDATEDTIME 을 바꾼 뒤
+     * save() 가 그 값을 덮어쓰지 않도록, findById() 이후·loginAttempts.unlock() 이전에
+     * PESSIMISTIC_WRITE 로 행을 재조회(refresh)해 잠가야 한다.
+     */
+    @Test void unlockRefreshesUnderRowLockBeforeDelegating() {
+        CcfaManager m = manager(2L, "kbadmin");
+        when(managers.findById(2L)).thenReturn(Optional.of(m));
+
+        service.unlock(2L);
+
+        InOrder order = Mockito.inOrder(managers, em, loginAttempts);
+        order.verify(managers).findById(2L);
+        order.verify(em).refresh(m, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        order.verify(loginAttempts).unlock("kbadmin");
     }
 
     @Test void selfDeleteIsBlocked() {

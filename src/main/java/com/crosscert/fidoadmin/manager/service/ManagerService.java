@@ -94,6 +94,9 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     @Transactional
     public void unlock(Long id) {
         CcfaManager m = get(id);
+        // get() 은 잠금 없이 읽는다. PESSIMISTIC_WRITE 로 재조회(refresh)해 FOR UPDATE 로 행을 다시 읽어야
+        // 이후 save() 가 동시 로그인으로 바뀐 값(LOGIN, LAST_ACCESS, BLOCK_TIME, UPDATEDTIME)을 덮어쓰지 않는다.
+        em.refresh(m, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
         loginAttempts.unlock(m.getUserId());
         audit.log(AuditType.STATUS, "CCFA_MANAGER UNLOCK " + m.getUserId());
     }
