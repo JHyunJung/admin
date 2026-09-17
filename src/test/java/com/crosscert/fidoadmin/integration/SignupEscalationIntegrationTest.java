@@ -34,7 +34,6 @@ class SignupEscalationIntegrationTest extends OracleContainerSupport {
     @Autowired CcfaManagerRepository managers;
 
     /** 신청 직후의 계정은 로그인할 수 없고, 무엇보다 SUPER 가 아니다. */
-    @org.junit.jupiter.api.Disabled("진단 중")
     @Test void appliedAccountCannotLogInAndIsNotSuper() {
         String userId = "esc_" + System.nanoTime();
         signups.apply(userId, "hash", "신청자", userId + "@kb.local", null, "권한 상승 시험");
