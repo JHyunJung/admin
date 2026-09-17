@@ -9,6 +9,7 @@ import com.crosscert.fidoadmin.auth.ManagerUserDetailsService;
 import com.crosscert.fidoadmin.common.ManagerStatus;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
+import com.crosscert.fidoadmin.manager.service.ManagerService;
 import com.crosscert.fidoadmin.signup.SignupPolicy;
 import com.crosscert.fidoadmin.signup.SignupService;
 import jakarta.persistence.EntityManager;
@@ -45,6 +46,27 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
     @Autowired CcfaManagerRepository managers;
     @Autowired EntityManager em;
     @MockitoBean AuditLogger audit;
+
+    /**
+     * 운영자 수정 화면이 쓰는 서비스. 컨테이너에서 꺼내지 않고 직접 만든다 —
+     * {@code LoginAttemptService} 는 여기서 검증하는 {@code update()} 경로가 쓰지 않는데,
+     * 빈으로 올리려면 관계없는 의존성을 줄줄이 끌어와야 한다.
+     */
+    private ManagerService managerService;
+
+    @org.junit.jupiter.api.BeforeEach void prepareManagerService() {
+        managerService = new ManagerService(managers, audit,
+            org.mockito.Mockito.mock(com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository.class),
+            org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em);
+        // update() 는 테넌트 검사를 거친다. 이 화면은 SUPER 전용이므로 SUPER 로 로그인한 상태를 만든다.
+        var su = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+            new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(su, null, su.getAuthorities()));
+    }
+
+    @org.junit.jupiter.api.AfterEach void clearAuthentication() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
 
     private CcfaManager applied(String prefix) {
         String userId = prefix + System.nanoTime();
@@ -144,6 +166,53 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
         assertThat(after.getStatus()).isEqualTo(SignupPolicy.STATUS_REJECTED);
         // 거절된 계정은 로그인도 안 된다
         assertThat(((ManagerUserDetails) uds.loadUserByUsername(m.getUserId())).isEnabled()).isFalse();
+    }
+
+    /**
+     * 운영자 수정 화면(`/managers`)으로 승인 절차를 우회할 수 없다.
+     *
+     * <p>그 화면의 상태 선택지는 활성·비활성 뿐이라 승인대기를 표현하지 못한다. 그래서 승인대기 행을 열면
+     * 브라우저가 활성을 고르고, 이름만 고쳐 저장해도 상태가 활성이 되어 {@code approve()} 의
+     * 감사 로그·상태 재확인·행 잠금을 모두 건너뛰었다(설계서 4장). 실제 Oracle 에 대고 그 저장을
+     * 재현해, 이제 거부되고 행이 승인대기 그대로인지 확인한다.
+     */
+    @Test void managerEditCannotActivatePendingRow() {
+        CcfaManager m = applied("byp_");
+        flushAndClear();
+
+        assertThatThrownBy(() -> managerService.update(m.getIdx(), e -> {
+            e.setUserNm("이름만 바꿈");          // 관리자가 실제로 의도한 수정
+            e.setStatus(ManagerStatus.ACTIVE);   // 화면이 몰래 함께 실어 보내던 값
+        })).isInstanceOf(IllegalStateException.class).hasMessageContaining("가입 승인");
+
+        CcfaManager after = reloadedById(m.getIdx());
+        assertThat(after.getStatus()).as("승인대기 그대로").isEqualTo(SignupPolicy.STATUS_PENDING);
+        assertThat(after.getCompanyIdx()).as("소속도 배정되지 않았다").isEqualTo(SignupPolicy.UNASSIGNED_COMPANY_IDX);
+        assertThat(((ManagerUserDetails) uds.loadUserByUsername(m.getUserId())).isEnabled())
+            .as("로그인도 여전히 막혀 있다").isFalse();
+    }
+
+    /** 같은 행의 상태 아닌 필드 수정은 그대로 통과한다. 막는 것은 상태 변경뿐이다. */
+    @Test void managerEditStillUpdatesOtherFieldsOfPendingRow() {
+        CcfaManager m = applied("keep_");
+        flushAndClear();
+
+        managerService.update(m.getIdx(), e -> e.setUserNm("바뀐 이름"));
+
+        CcfaManager after = reloadedById(m.getIdx());
+        assertThat(after.getUserNm()).isEqualTo("바뀐 이름");
+        assertThat(after.getStatus()).isEqualTo(SignupPolicy.STATUS_PENDING);
+    }
+
+    /** 정상 상태(활성) 행의 상태 변경은 기존 화면 그대로 동작해야 한다. */
+    @Test void managerEditStillTogglesStatusOfNormalRow() {
+        CcfaManager m = applied("norm_");
+        signups.approve(m.getIdx(), 1L);
+        flushAndClear();
+
+        managerService.update(m.getIdx(), e -> e.setStatus("비활성"));
+
+        assertThat(reloadedById(m.getIdx()).getStatus()).isEqualTo("비활성");
     }
 
     /** 기존 운영자(superuser, SUPER)를 이 경로로 건드릴 수 없다. */

@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.manager.web;
 
 import com.crosscert.fidoadmin.common.ByteSize;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
+import com.crosscert.fidoadmin.signup.SignupPolicy;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -43,4 +44,10 @@ public class ManagerForm {
     }
 
     public boolean hasPassword() { return password != null && !password.isBlank(); }
+
+    /**
+     * 가입 신청 상태(승인대기·거절)인가. 화면이 상태 입력란을 읽기 전용으로 바꾸는 판단에 쓴다.
+     * 실제 차단은 {@code ManagerService.update()} 가 한다(조작된 POST 는 폼을 거치지 않는다).
+     */
+    public boolean isSignupStatus() { return SignupPolicy.isSignupStatus(status); }
 }

@@ -29,4 +29,12 @@ public final class SignupPolicy {
 
     /** SUPER 를 뜻하는 소속. 승인 시 이 값으로 배정하는 것을 금지한다(설계서 6.2, 권한 상승 차단 2단계). */
     public static final long SUPER_COMPANY_IDX = 0L;
+
+    /**
+     * 가입 워크플로가 관리하는 상태인가. 이 상태의 행은 상태를 가입 승인 화면에서만 바꿀 수 있다
+     * (설계서 4장). 운영자 수정 화면이 이 판정을 보고 상태 편집을 막는다.
+     */
+    public static boolean isSignupStatus(String status) {
+        return STATUS_PENDING.equals(status) || STATUS_REJECTED.equals(status);
+    }
 }

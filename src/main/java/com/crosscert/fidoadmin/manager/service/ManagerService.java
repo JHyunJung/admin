@@ -11,6 +11,7 @@ import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.manager.web.ManagerSearchForm;
+import com.crosscert.fidoadmin.signup.SignupPolicy;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -77,6 +78,39 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
             throw new DataIntegrityViolationException("CCFA_MANAGER " + e.getUserId() + " 은(는) 이미 존재합니다");
         }
         return super.insert(e);
+    }
+
+    /**
+     * 가입 신청 상태(승인대기·거절)인 행의 STATUS 는 이 화면에서 바꿀 수 없다.
+     *
+     * <p>수정 화면의 상태 선택지는 활성·비활성 뿐이라 승인대기를 표현하지 못한다. 그래서 승인대기 행을
+     * 열면 브라우저가 활성을 고르고, 이름만 고쳐 저장해도 상태가 활성이 된다. 그러면
+     * {@code SignupService.approve()} 를 거치지 않으므로 승인 감사 로그가 남지 않고
+     * 승인대기 여부 재확인과 행 잠금도 건너뛴다(설계서 4장).
+     *
+     * <p>검사를 <b>서비스</b>에 두는 이유: 템플릿은 조작된 POST 를 막지 못하고, 컨트롤러의
+     * {@code validate()} 훅은 폼만 받아 대상 행의 <b>현재</b> 상태를 알 수 없다. 현재 상태를 볼 수 있는
+     * 지점이자 {@code update()} 를 부르는 모든 호출자에 한 번에 적용되는 곳이 여기다.
+     * 값을 조용히 무시하지 않고 예외를 던지는 것은, 관리자가 바꿨다고 믿은 값이 반영되지 않은 채
+     * "수정되었습니다" 만 뜨는 편이 더 나쁘기 때문이다.
+     *
+     * <p>막는 것은 상태 변경뿐이다. 같은 행의 이름·연락처 등 다른 필드 수정과,
+     * 정상 상태(활성·비활성) 행의 상태 변경은 기존과 똑같이 동작한다.
+     */
+    @Override
+    @Transactional
+    public CcfaManager update(Long id, java.util.function.Consumer<CcfaManager> mutator) {
+        return super.update(id, e -> {
+            String before = e.getStatus();
+            mutator.accept(e);
+            if (SignupPolicy.isSignupStatus(before) && !before.equals(e.getStatus())) {
+                // 던지기 전에 되돌린다. 트랜잭션 롤백에만 기대면, 롤백 경계 밖에서 이 엔티티를
+                // 다시 읽는 코드(같은 영속성 컨텍스트, 테스트의 목 객체)가 바뀐 값을 보게 된다.
+                e.setStatus(before);
+                throw new IllegalStateException(
+                    "가입 신청 상태(" + before + ")인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.");
+            }
+        });
     }
 
     @Override protected void beforeDelete(CcfaManager e) {

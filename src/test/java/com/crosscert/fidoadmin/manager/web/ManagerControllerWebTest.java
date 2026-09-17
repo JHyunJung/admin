@@ -159,6 +159,48 @@ class ManagerControllerWebTest {
             .andExpect(content().string(not(containsString(">null<"))));
     }
 
+    /**
+     * 승인대기 행의 수정 화면은 상태를 고를 수 없게 보여주고, 가입 승인 화면으로 안내해야 한다.
+     * 선택지가 활성/비활성 뿐이라 승인대기를 표현하지 못하고, 그대로 두면 브라우저가 활성을 고른다.
+     */
+    @Test void editFormShowsStatusReadOnlyForPendingRow() throws Exception {
+        CcfaManager m = manager(2L, "applicant");
+        m.setStatus(com.crosscert.fidoadmin.signup.SignupPolicy.STATUS_PENDING);
+        when(service.get(2L)).thenReturn(m);
+
+        mvc.perform(get("/managers/2/edit").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("manager/manager/form"))
+            .andExpect(content().string(containsString("가입 승인")))
+            .andExpect(content().string(not(containsString("<option value=\"활성\""))))
+            .andExpect(content().string(not(containsString("<option value=\"비활성\""))));
+    }
+
+    /** 정상 상태 행의 수정 화면은 기존대로 활성/비활성을 고를 수 있어야 한다. */
+    @Test void editFormKeepsStatusSelectForNormalRow() throws Exception {
+        when(service.get(2L)).thenReturn(manager(2L, "kbadmin"));
+
+        mvc.perform(get("/managers/2/edit").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("<option value=\"활성\"")))
+            .andExpect(content().string(containsString("<option value=\"비활성\"")));
+    }
+
+    /**
+     * 템플릿을 우회해 상태를 실어 보낸 POST 도 활성화되면 안 된다. 서비스가 거부한 결과가
+     * 500 이 아니라 안내 메시지로 화면에 돌아와야 한다.
+     */
+    @Test void craftedPostCannotActivatePendingRow() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalStateException("가입 승인 화면에서 처리해야 합니다."))
+            .when(service).update(org.mockito.ArgumentMatchers.eq(2L), any());
+
+        mvc.perform(post("/managers/2").with(user(superUser)).with(csrf())
+                .param("userId", "applicant").param("companyIdx", "1").param("status", "활성"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("manager/manager/form"))
+            .andExpect(content().string(containsString("가입 승인")));
+    }
+
     @Test void unlockRedirectsToDetailWithFlash() throws Exception {
         mvc.perform(post("/managers/2/unlock").with(user(superUser)).with(csrf()))
             .andExpect(status().is3xxRedirection())

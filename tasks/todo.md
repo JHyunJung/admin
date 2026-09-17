@@ -327,7 +327,7 @@ Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
   않는다. 운영 DB 에 이미 그런 행이 있는지 확인이 필요하다:
   `SELECT IDX, USER_ID FROM CCFA_MANAGER WHERE USER_ID <> TRIM(USER_ID);`
   데이터 정정이라 코드로 일괄 처리하지 않았다.
-- [ ] **`/managers` 편집 화면으로 승인 절차를 우회할 수 있다(최종 검토에서 발견, 실제 재현 확인).**
+- [x] **`/managers` 편집 화면으로 승인 절차를 우회할 수 있었다 — 막았다.**
   기존 운영자 편집 화면의 상태 선택지는 `활성`/`비활성` 두 개뿐이라 `승인대기`·`거절` 을 표현하지 못한다.
   승인대기 행을 그 화면에서 열면 상태가 **`활성` 으로 선택되어 보이고**, 관리자가 이름만 고쳐 저장해도
   상태가 `활성` 으로 바뀐다. 실제로 재현했다: 승인대기 행을 열어 이름만 바꿔 저장하니
@@ -340,8 +340,31 @@ Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
   승인 감사 로그(`CCFA_MANAGER SIGNUP APPROVE ...`)가 남지 않고, 승인대기 상태 재확인과 행 잠금도
   건너뛴다. (2) 설계서 4장은 승인 경로가 유일한 활성화 수단인 것처럼 읽히는데, 사실이 아니다.
 
-  고치는 방법은 선택지가 갈린다(상태 선택지에 `승인대기`·`거절` 추가, 또는 그 화면에서 가입 관련 상태를
-  가진 행의 상태 편집 자체를 막기). 어느 쪽이든 기존 운영자 화면의 동작을 바꾸는 일이라 위임하지 않는다.
+  **선택한 해법: 가입 상태 행의 상태 편집 자체를 막는다.** (선택지에 `승인대기`·`거절` 을 더하는 쪽은
+  그 화면에서 승인 상태를 임의로 되돌릴 수 있게 만들어 승인 절차를 더 약하게 만든다.)
+
+  - **서버 검사는 `ManagerService.update()` 에 뒀다.** 템플릿은 조작된 POST 를 막지 못하고,
+    컨트롤러의 `validate(form, isNew, binding)` 훅은 폼만 받아 대상 행의 **현재** 상태를 알 수 없다
+    (그 정보가 있는 곳은 `applyForm(form, entity)` 인데, 그건 웹 계층이라 다른 호출자를 지켜주지 못한다).
+    현재 상태를 볼 수 있으면서 `update()` 의 모든 호출자에 한 번에 적용되는 곳이 서비스다.
+    조용히 값을 되돌리지 않고 `IllegalStateException` 을 던진다 — 관리자가 바꿨다고 믿은 값이
+    반영되지 않은 채 "수정되었습니다" 만 뜨는 편이 더 나쁘다. `CrudController.update()` 가 그 예외를
+    500 이 아니라 폼 오류 메시지로 돌려준다(기존 `delete()` 의 `IllegalStateException` 처리와 같은 방식).
+  - **화면(affordance)**: 상태가 `승인대기`·`거절` 이면 상태 입력란을 읽기 전용으로 보여주고
+    "가입 승인 화면에서만 변경할 수 있습니다." 를 붙인다. 판정은 `SignupPolicy.isSignupStatus()` 한 곳이다.
+  - **기존 동작은 그대로**: 막는 것은 상태 변경뿐이다. 같은 행의 이름·연락처 등 다른 필드 수정과,
+    정상 상태(`활성`/`비활성`) 행의 상태 변경은 이전과 똑같이 동작한다(각각 테스트로 고정했다).
+    신규 등록의 기본값 `활성` 도 그대로다.
+  - **테스트**: 우회를 재현하는 테스트를 먼저 썼고, 고치기 전 `main` 에서 실패하는 것을 확인했다.
+    `ManagerServiceTest.updateCannotActivatePendingRow`/`updateCannotChangeStatusOfRejectedRow`,
+    `ManagerControllerWebTest.editFormShowsStatusReadOnlyForPendingRow`/`craftedPostCannotActivatePendingRow`,
+    그리고 실제 Oracle 에 대고 저장을 재현하는
+    `SignupApprovalEscalationIntegrationTest.managerEditCannotActivatePendingRow`.
+    가드를 임시로 무력화해 이 5건이 실제로 실패하는 것도 확인했다(= 회귀를 잡는다).
+  - **목록 화면 상태 필터는 이번 범위에서 손대지 않았다.** 필터 기본값이 "전체"(빈 값 = 필터 없음)라
+    **승인대기·거절 행은 이미 목록에 보인다.** 필터로 그 상태만 따로 추려내지 못할 뿐이고, 이는
+    편의성 문제지 결함이 아니다. 우회 경로가 결함이었고 그것은 닫혔다.
+  - 설계서 4장의 우회 경로 서술도 현재 동작에 맞게 고쳤다(방어가 세 겹 → 네 겹).
 
 - [ ] **`auth/PasswordChangeForm` 이 비밀번호 정규식을 세 번째로 다시 선언하고 있다.** Task 2 에서
   `PasswordPolicy` 로 모았으나 이 폼은 여전히 `@Pattern(regexp = "^(?=.*[A-Za-z])...")` 리터럴을 직접 들고 있다.
