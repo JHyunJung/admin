@@ -171,3 +171,12 @@ Branch: feature/part3-system
 - [x] 테스트 2건 추가: `UserControllerWebTest.detailSplitsRowsIntoTitledSections`(구획 제목과 전 항목 유지), `detailRendersEachRowExactlyOnce`(각 행 정확히 1회 렌더). 전체 393건 통과, 실패 0.
 - [x] 함정과 해결: `th:fragment` 를 단 `<tbody>` 를 `<main>` 안에 두면 카드 밖에 평문으로 **중복 출력**된다(브라우저 확인에서 발견, 스크린샷으로 확인). 프래그먼트 정의를 `<main>` 밖으로 옮겨 해결했고, 중복을 잡는 회귀 테스트를 남겼다.
 - [x] 검증: 10개 화면 전부 HTTP 200, 구획 수 의도대로(2~4), 중복 0건, 렌더된 `<th>` 항목 수가 변경 전 템플릿과 전부 일치(누락 0). 콘솔 오류 0건(기존 favicon 404 제외).
+
+## favicon (2026-09-17)
+
+- [x] 크로스서트 공식 사이트(https://www.crosscert.com/)와 같은 아이콘 사용 — `favicon.ico`(32x32) 와 `images/favicon.png`(192x192) 를 받아 `static/` 에 두었다. 외부 요청 없이 우리 서버가 서빙한다.
+- [x] `layout/base.html`, `login.html`, `error/{403,404,500}.html` 다섯 곳 head 에 `rel="icon"`(ico/png) 과 `rel="apple-touch-icon"` 링크 추가. 다른 정적 자원과 같이 `th:href="@{...}"` 를 써서 콘텐츠 해시 버전닝을 받는다.
+- [x] **보안 설정 수정**: `SecurityConfig` 의 permitAll 목록에 `/favicon.ico` 만 있어 PNG 와 해시 경로(`favicon-<md5>.ico`)가 302 로 로그인에 리다이렉트됐다(로그인 화면에 아이콘이 안 나오는 상태). `/favicon.png`, `/favicon-*.ico`, `/favicon-*.png` 를 추가했다.
+- [x] 테스트 2건 추가: `LayoutWebTest.pagesLinkFavicon`(링크 존재), `anonymousCanFetchFavicon`(로그인 전 접근 시 302 가 아님 — 위 회귀를 실제로 잡는 것을 임시 되돌리기로 확인). 전체 394건 통과, 실패 0.
+- [x] 검증: 네 경로(`/favicon.ico`, `/favicon.png`, 해시 ico/png) 모두 인증 없이 200, 타입·크기 정상. 브라우저 콘솔 오류 0건 — 그동안 남아 있던 `/favicon.ico` 404 가 해소됐다.
+- 참고: 아이콘은 크로스서트 상표 이미지이며 사내 관리 도구용으로 저장소에 포함했다.

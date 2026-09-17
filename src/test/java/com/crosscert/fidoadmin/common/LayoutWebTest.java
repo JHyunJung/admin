@@ -65,6 +65,33 @@ class LayoutWebTest {
             .andExpect(content().string(containsString("bi bi-sliders")));
     }
 
+    /**
+     * 모든 화면이 favicon 을 건다(브라우저의 /favicon.ico 404 를 없앤다).
+     * 경로에는 콘텐츠 해시가 붙을 수 있으므로 파일명 앞부분으로 확인한다.
+     */
+    @Test void pagesLinkFavicon() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("rel=\"icon\"")))
+            .andExpect(content().string(containsString("/favicon")))
+            .andExpect(content().string(containsString("rel=\"apple-touch-icon\"")));
+    }
+
+    /**
+     * favicon 은 로그인 전에도 받을 수 있어야 한다. 로그인으로 넘기면(302) 로그인 화면에 아이콘이 안 나온다.
+     * 콘텐츠 해시가 붙은 이름(favicon-&lt;md5&gt;.ico)도 마찬가지다.
+     */
+    @Test void anonymousCanFetchFavicon() throws Exception {
+        for (String path : new String[] {"/favicon.ico", "/favicon.png",
+                "/favicon-662980f9344b8e32ef74d9e4e6b4135a.ico", "/favicon-6e37d015e36748e80bbb28466de80f17.png"}) {
+            mvc.perform(get(path))
+                .andExpect(result -> {
+                    int s = result.getResponse().getStatus();
+                    if (s == 302) throw new AssertionError(path + " 가 로그인으로 넘어간다(302). permitAll 대상이어야 한다.");
+                });
+        }
+    }
+
     @Test void companyGetsForbiddenOnSuperUrl() throws Exception {
         mvc.perform(get("/companies").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
             .andExpect(status().isForbidden());
