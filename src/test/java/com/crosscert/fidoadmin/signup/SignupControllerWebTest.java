@@ -22,6 +22,7 @@ import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,12 +88,21 @@ class SignupControllerWebTest {
                 .param("status", "활성"))
             .andExpect(status().is3xxRedirection());
 
+        // 서비스에 실제로 넘어간 인자 전체를 잡아, 공격자가 실은 값이 어느 자리에도
+        // 없음을 확인한다. 필드 이름을 보는 검사와 달리 이름을 바꿔도, 다른 바인딩
+        // 경로로 들어와도 잡힌다.
         ArgumentCaptor<String> userId = ArgumentCaptor.forClass(String.class);
-        verify(service).apply(userId.capture(), anyString(), anyString(), anyString(), any(), any());
+        ArgumentCaptor<String> password = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> userNm = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> userEmail = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> userPhone = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> reason = ArgumentCaptor.forClass(String.class);
+        verify(service).apply(userId.capture(), password.capture(), userNm.capture(),
+            userEmail.capture(), userPhone.capture(), reason.capture());
         assertThat(userId.getValue()).isEqualTo("attacker");
-        // SignupForm 에 companyIdx·status 필드가 없으므로 주입 통로 자체가 없다
-        assertThat(SignupForm.class.getDeclaredFields())
-            .noneMatch(f -> f.getName().equals("companyIdx") || f.getName().equals("status"));
+        assertThat(List.of(userId, password, userNm, userEmail, userPhone, reason))
+            .extracting(ArgumentCaptor::getValue)
+            .doesNotContain("0", "활성");
     }
 
     @Test void rejectsWeakPassword() throws Exception {
@@ -199,6 +209,27 @@ class SignupControllerWebTest {
                 .param("userEmail", "hong@kb.local"))
             .andExpect(status().isOk())
             .andExpect(model().attributeHasFieldErrors("form", "userNm"));
+        verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), any(), any());
+    }
+
+    /**
+     * 신청 사유만 제한이 컬럼 폭과 다르다. ETC 는 2048바이트지만 "신청 사유: " 접두와
+     * 나중에 덧붙는 거절 사유의 여유를 남겨 1700바이트로 잡았다(설계서 6.1).
+     * 2048 로 "고쳐지는" 것을 막기 위해 이 값을 고정한다. 한글로 재야 문자 수와
+     * 바이트 수의 차이가 실제로 드러난다(한글 1자 = 3바이트).
+     */
+    @Test void rejectsReasonOverByteLimit() throws Exception {
+        String reason = "사".repeat(567);   // 1701바이트 > 1700, 그러나 문자 수로는 567자
+        assertThat(reason.length()).isLessThan(1700);
+        mvc.perform(post("/signup").with(csrf())
+                .param("userId", "newbie")
+                .param("password", "Company1234!")
+                .param("passwordConfirm", "Company1234!")
+                .param("userNm", "홍길동")
+                .param("userEmail", "hong@kb.local")
+                .param("reason", reason))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeHasFieldErrors("form", "reason"));
         verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), any(), any());
     }
 }
