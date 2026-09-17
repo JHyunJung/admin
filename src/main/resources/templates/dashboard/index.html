@@ -32,10 +32,59 @@
   </form>
 
   <div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">인증 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.authS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.authF(), 0, 'COMMA')}">0</span></div><div class="small text-secondary" th:text="|성공률 ${totals.authSuccessRate()}%|"></div></div></div>
-    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">등록 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.regS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.regF(), 0, 'COMMA')}">0</span></div></div></div>
-    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">해지 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.deregS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.deregF(), 0, 'COMMA')}">0</span></div></div></div>
-    <div class="col-6 col-lg-3"><div class="bg-white border rounded p-3"><div class="small text-secondary">거래확인 성공 / 실패</div><div class="h5 mb-0"><span th:text="${#numbers.formatInteger(totals.tcS(), 0, 'COMMA')}">0</span> / <span class="text-danger" th:text="${#numbers.formatInteger(totals.tcF(), 0, 'COMMA')}">0</span></div></div></div>
+    <div class="col-6 col-lg-3">
+      <div class="fa-stat fa-stat-auth">
+        <div class="fa-stat-head">
+          <i class="bi bi-shield-check" aria-hidden="true"></i>
+          <span>인증 성공 / 실패</span>
+        </div>
+        <div class="fa-stat-value">
+          <span th:text="${#numbers.formatInteger(totals.authS(), 0, 'COMMA')}">0</span>
+          <span class="fa-stat-sep">/</span>
+          <span class="fa-stat-fail" th:text="${#numbers.formatInteger(totals.authF(), 0, 'COMMA')}">0</span>
+        </div>
+        <div class="fa-stat-note" th:text="|성공률 ${totals.authSuccessRate()}%|"></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fa-stat fa-stat-reg">
+        <div class="fa-stat-head">
+          <i class="bi bi-person-plus" aria-hidden="true"></i>
+          <span>등록 성공 / 실패</span>
+        </div>
+        <div class="fa-stat-value">
+          <span th:text="${#numbers.formatInteger(totals.regS(), 0, 'COMMA')}">0</span>
+          <span class="fa-stat-sep">/</span>
+          <span class="fa-stat-fail" th:text="${#numbers.formatInteger(totals.regF(), 0, 'COMMA')}">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fa-stat fa-stat-dereg">
+        <div class="fa-stat-head">
+          <i class="bi bi-person-dash" aria-hidden="true"></i>
+          <span>해지 성공 / 실패</span>
+        </div>
+        <div class="fa-stat-value">
+          <span th:text="${#numbers.formatInteger(totals.deregS(), 0, 'COMMA')}">0</span>
+          <span class="fa-stat-sep">/</span>
+          <span class="fa-stat-fail" th:text="${#numbers.formatInteger(totals.deregF(), 0, 'COMMA')}">0</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="fa-stat fa-stat-tc">
+        <div class="fa-stat-head">
+          <i class="bi bi-check2-square" aria-hidden="true"></i>
+          <span>거래확인 성공 / 실패</span>
+        </div>
+        <div class="fa-stat-value">
+          <span th:text="${#numbers.formatInteger(totals.tcS(), 0, 'COMMA')}">0</span>
+          <span class="fa-stat-sep">/</span>
+          <span class="fa-stat-fail" th:text="${#numbers.formatInteger(totals.tcF(), 0, 'COMMA')}">0</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="bg-white border rounded p-3">

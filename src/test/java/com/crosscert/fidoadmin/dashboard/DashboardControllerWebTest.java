@@ -47,4 +47,24 @@ class DashboardControllerWebTest {
             .andExpect(content().string(containsString("성공률 97.6%")))
             .andExpect(content().string(containsString("\"date\":\"2026-09-01\"")));
     }
+
+    /** 요약 카드는 지표마다 색 띠와 아이콘으로 구분한다. */
+    @Test void summaryCardsAreColorCoded() throws Exception {
+        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.serviceNames(any())).thenReturn(List.of("kbstar"));
+        when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 5, 1, 10, 2, 3, 1)));
+        var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+        mvc.perform(get("/").with(user(user)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("fa-stat")))
+            .andExpect(content().string(containsString("fa-stat-auth")))
+            .andExpect(content().string(containsString("fa-stat-reg")))
+            .andExpect(content().string(containsString("fa-stat-dereg")))
+            .andExpect(content().string(containsString("fa-stat-tc")))
+            // 카드마다 아이콘이 붙는다
+            .andExpect(content().string(containsString("bi bi-shield-check")))
+            // 네 지표의 수치는 그대로 남는다
+            .andExpect(content().string(containsString("1,200")))
+            .andExpect(content().string(containsString("성공률 97.6%")));
+    }
 }

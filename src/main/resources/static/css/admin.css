@@ -70,6 +70,22 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 .fa-table td { padding: 11px 14px; vertical-align: middle; }
 .table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
 .fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
+/* ---------- 대시보드 요약 카드 ----------
+   지표마다 위쪽 색 띠와 아이콘 색으로 구분한다. 숫자는 검게 두어 가독성을 지킨다. */
+.fa-stat { position: relative; height: 100%; background: var(--fa-surface); border: 1px solid var(--fa-line);
+  border-radius: var(--bs-border-radius); padding: 16px 18px; box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-stat::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--fa-stat-color); }
+.fa-stat-head { display: flex; align-items: center; gap: 7px; color: var(--fa-muted); font-size: .82rem; margin-bottom: 6px; }
+.fa-stat-head .bi { color: var(--fa-stat-color); font-size: .95rem; }
+.fa-stat-value { font-size: 1.5rem; font-weight: 700; color: #111827; letter-spacing: -.01em; line-height: 1.2; }
+.fa-stat-sep { color: #cbd5e1; font-weight: 400; margin: 0 2px; }
+.fa-stat-fail { color: #dc2626; }
+.fa-stat-note { font-size: .78rem; color: var(--fa-muted); margin-top: 4px; }
+.fa-stat-auth { --fa-stat-color: #2563eb; }
+.fa-stat-reg { --fa-stat-color: #16a34a; }
+.fa-stat-dereg { --fa-stat-color: #f59e0b; }
+.fa-stat-tc { --fa-stat-color: #7c3aed; }
+
 /* ---------- 상세 화면 구획 ---------- */
 .fa-section + .fa-section { margin-top: 20px; }
 .fa-section-title { font-size: .95rem; font-weight: 600; color: #374151; margin: 0 0 8px 2px; }

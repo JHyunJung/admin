@@ -180,3 +180,11 @@ Branch: feature/part3-system
 - [x] 테스트 2건 추가: `LayoutWebTest.pagesLinkFavicon`(링크 존재), `anonymousCanFetchFavicon`(로그인 전 접근 시 302 가 아님 — 위 회귀를 실제로 잡는 것을 임시 되돌리기로 확인). 전체 394건 통과, 실패 0.
 - [x] 검증: 네 경로(`/favicon.ico`, `/favicon.png`, 해시 ico/png) 모두 인증 없이 200, 타입·크기 정상. 브라우저 콘솔 오류 0건 — 그동안 남아 있던 `/favicon.ico` 404 가 해소됐다.
 - 참고: 아이콘은 크로스서트 상표 이미지이며 사내 관리 도구용으로 저장소에 포함했다.
+
+## 대시보드 카드 색 (2026-09-17)
+
+- [x] 요약 카드 4개를 지표별 색으로 구분 — 위쪽 3px 색 띠와 같은 색 아이콘: 인증(파랑 #2563eb, `bi-shield-check`), 등록(초록 #16a34a, `bi-person-plus`), 해지(주황 #f59e0b, `bi-person-dash`), 거래확인(보라 #7c3aed, `bi-check2-square`). 인증·등록 색은 차트 선 색과 같다.
+- [x] 숫자를 1.5rem 굵게 키우고 실패 수치만 빨강으로 남겼다. 카드 색은 띠·아이콘에만 쓰고 숫자는 검게 두어 가독성을 지켰다.
+- [x] `admin.css` 에 `.fa-stat` 계열 규칙 추가(카드별 색은 `--fa-stat-color` 변수 하나로 갈아끼운다).
+- [x] 테스트 1건 추가: `DashboardControllerWebTest.summaryCardsAreColorCoded`(카드별 클래스·아이콘·수치 유지). 전체 396건 통과, 실패 0.
+- [x] 검증: 카드 4개 높이 모두 114px 로 동일, 좁은 화면(430px)에서 2열로 접히며 색 구분 유지, 콘솔 오류 0건.
