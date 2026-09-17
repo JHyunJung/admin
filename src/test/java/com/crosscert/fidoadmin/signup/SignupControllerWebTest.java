@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -181,6 +182,90 @@ class SignupControllerWebTest {
         verify(service).apply(anyString(), pw.capture(), anyString(), anyString(), any(), any());
         assertThat(pw.getValue()).isNotEqualTo("Company1234!");   // 평문이 그대로 가면 안 된다
         verify(service).apply("newbie", pw.getValue(), "홍길동", "hong@kb.local", null, null);
+    }
+
+    /**
+     * 앞뒤 공백이 붙은 아이디는 공백을 뗀 형태로 저장돼야 한다.
+     *
+     * <p>Spring Security 의 UsernamePasswordAuthenticationFilter 가 로그인 때 username 을
+     * trim 하므로, " newbie " 로 저장된 계정은 승인을 받아도 영영 로그인되지 않는다.
+     * 신청은 302 로 성공하고 승인자에게도 정상으로 보이므로 화면에서는 진단이 불가능하다.
+     *
+     * <p>중복 검사와 저장이 같은 값을 봤는지도 함께 고정한다. 한쪽만 trim 하면
+     * 이 결함이 더 찾기 어려운 형태로 되살아난다.
+     */
+    @Test void trimsSurroundingWhitespaceFromUserId() throws Exception {
+        when(service.apply(anyString(), anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(new CcfaManager());
+        mvc.perform(post("/signup").with(csrf())
+                .param("userId", "  newbie  ")
+                .param("password", "Company1234!")
+                .param("passwordConfirm", "Company1234!")
+                .param("userNm", "홍길동")
+                .param("userEmail", "hong@kb.local"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login?signup"));
+
+        // 저장된 값: 로그인 경로가 나중에 찾아볼 바로 그 형태여야 한다.
+        ArgumentCaptor<String> stored = ArgumentCaptor.forClass(String.class);
+        verify(service).apply(stored.capture(), anyString(), anyString(), anyString(), any(), any());
+        assertThat(stored.getValue()).isEqualTo("newbie");
+
+        // 중복 검사가 본 값: 저장된 값과 같아야 한다(두 경로가 갈라지면 안 된다).
+        ArgumentCaptor<String> checked = ArgumentCaptor.forClass(String.class);
+        verify(service).existsUserId(checked.capture());
+        assertThat(checked.getValue()).isEqualTo(stored.getValue());
+    }
+
+    /**
+     * 공백만 다른 중복 아이디도 중복으로 잡혀야 한다. 한쪽에서만 trim 하면
+     * 존재 검사가 " kbadmin " 으로 조회해 빈 결과를 보고 그냥 통과시킨다.
+     */
+    @Test void detectsDuplicateDespiteSurroundingWhitespace() throws Exception {
+        when(service.existsUserId("kbadmin")).thenReturn(true);   // DB 에는 공백 없이 들어 있다
+        mvc.perform(post("/signup").with(csrf())
+                .param("userId", "  kbadmin  ")
+                .param("password", "Company1234!")
+                .param("passwordConfirm", "Company1234!")
+                .param("userNm", "홍길동")
+                .param("userEmail", "hong@kb.local"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeHasFieldErrors("form", "userId"));
+        verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), any(), any());
+    }
+
+    /**
+     * 공백뿐인 아이디는 필수 입력 오류다. 세터에서 공백을 떼면 빈 문자열이 되고
+     * {@code @NotBlank} 가 그대로 잡는다(검증을 따로 더하지 않았다는 근거).
+     */
+    @Test void rejectsWhitespaceOnlyUserId() throws Exception {
+        mvc.perform(post("/signup").with(csrf())
+                .param("userId", "    ")
+                .param("password", "Company1234!")
+                .param("passwordConfirm", "Company1234!")
+                .param("userNm", "홍길동")
+                .param("userEmail", "hong@kb.local"))
+            .andExpect(status().isOk())
+            .andExpect(model().attributeHasFieldErrors("form", "userId"));
+        verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), any(), any());
+    }
+
+    /** 이름·이메일·전화·사유도 공백을 떼어 저장한다. */
+    @Test void trimsSurroundingWhitespaceFromOtherFields() throws Exception {
+        when(service.apply(anyString(), anyString(), anyString(), anyString(), any(), any()))
+            .thenReturn(new CcfaManager());
+        mvc.perform(post("/signup").with(csrf())
+                .param("userId", "newbie")
+                .param("password", "Company1234!")
+                .param("passwordConfirm", "Company1234!")
+                .param("userNm", "  홍길동  ")
+                .param("userEmail", "  hong@kb.local  ")
+                .param("userPhone", "  010-0000-0000  ")
+                .param("reason", "  업무 담당자입니다  "))
+            .andExpect(status().is3xxRedirection());
+
+        verify(service).apply(eq("newbie"), anyString(), eq("홍길동"), eq("hong@kb.local"),
+            eq("010-0000-0000"), eq("업무 담당자입니다"));
     }
 
     /** 이메일 형식이 아니면 거부한다. */
