@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>에러 코드 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|에러 코드 ${item.errorCode}|">에러 코드</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/system/error-codes/{id}/edit(id=${item.errorCode})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/system/error-codes/{id}/delete(id=${item.errorCode})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/system/error-codes}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>코드</th><td class="fa-mono" th:text="${item.errorCode}"></td></tr>
+      <tr><th>메시지</th><td th:text="${item.errorMessage}"></td></tr>
+      <tr><th>설명</th><td class="fa-pre" th:text="${item.errorComment}"></td></tr>
+      <tr><th>유형</th><td th:text="${item.errorType}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>

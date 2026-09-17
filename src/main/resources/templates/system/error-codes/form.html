@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '에러 코드 등록' : '에러 코드 수정'">에러 코드</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '에러 코드 등록' : '에러 코드 수정'">에러 코드</h1>
+  <form th:action="${isNew} ? @{/system/error-codes} : @{/system/error-codes/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">코드 <span class="text-danger">*</span></label>
+        <input th:field="*{errorCode}" class="form-control" th:readonly="${!isNew}"
+               th:classappend="${#fields.hasErrors('errorCode')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{errorCode}"></div>
+      </div>
+      <div class="col-md-4"><label class="form-label">유형</label><input th:field="*{errorType}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">메시지</label><input th:field="*{errorMessage}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">설명</label><textarea th:field="*{errorComment}" rows="4" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/system/error-codes} : @{/system/error-codes/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
