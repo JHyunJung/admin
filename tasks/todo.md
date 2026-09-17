@@ -366,7 +366,20 @@ Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
     편의성 문제지 결함이 아니다. 우회 경로가 결함이었고 그것은 닫혔다.
   - 설계서 4장의 우회 경로 서술도 현재 동작에 맞게 고쳤다(방어가 세 겹 → 네 겹).
 
-- [ ] **`auth/PasswordChangeForm` 이 비밀번호 정규식을 세 번째로 다시 선언하고 있다.** Task 2 에서
-  `PasswordPolicy` 로 모았으나 이 폼은 여전히 `@Pattern(regexp = "^(?=.*[A-Za-z])...")` 리터럴을 직접 들고 있다.
-  지금은 값이 같아 동작에 차이가 없지만, 정책이 바뀔 때 한 곳만 고치면 조용히 어긋난다. 가입 흐름 밖의
-  파일이라 이번 범위에서 건드리지 않았다.
+- [x] **`auth/PasswordChangeForm` 의 비밀번호 정규식 세 번째 선언을 없앴다.**
+  `@Pattern(regexp = PasswordPolicy.PATTERN)`, `@Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH)`
+  로 바꿨다. 어노테이션 속성은 컴파일 상수여야 해서 `validatePassword()` 호출이 아니라 상수 참조를 쓴다.
+  이제 정규식 리터럴은 코드베이스 전체에서 `PasswordPolicy` 한 곳에만 있다(`grep 'A-Za-z0-9'` 로 확인).
+
+  - **테스트로 보장되지 않는 것을 분명히 해 둔다.** 자바는 `static final` 상수를 컴파일 시 호출부에
+    값으로 박아 넣는다. 그래서 "폼의 정규식이 정책의 정규식과 같은가" 를 보는 테스트는 상수를
+    참조하든 리터럴을 다시 적든 **똑같이 통과한다**. 단일 선언은 테스트가 아니라 **구조**로 보장된다 —
+    선언이 하나고 나머지가 그것을 가리킨다. 그래서 연결을 고정하는 척하는 테스트는 쓰지 않았다.
+  - 그 대신 **동작이 바뀌지 않았음**을 고정했다. 기존 `PasswordPolicyTest.patternConstantIsTheSharedRegex`
+    는 리터럴 값을 비교하며 주석으로 "PasswordChangeForm 이 같은 규칙을 쓰도록 고정한다"고 주장했는데,
+    바로 위 이유로 거짓이었다. 규칙 자체를 확인하는 `constantsExpressTheIntendedRule` 로 교체했다.
+  - **`/me/password` 화면에는 웹 테스트가 아예 없었다** — 어노테이션 경로가 통째로 미검증이었다.
+    `PasswordChangeControllerWebTest` 8건을 새로 만들어 길이 경계(8·64 통과, 4·65 거부), 세 문자 종류
+    누락 거부, 메시지 문구, 확인 불일치, 정상 통과를 고정했다. `MIN_LENGTH` 를 4로 바꿔 보니
+    이 테스트가 실패했다 — 어노테이션이 실제로 `PasswordPolicy` 상수를 따라간다는 확인이다
+    (컴파일 시점의 확인이며, 리터럴 재선언까지 막지는 못한다).
