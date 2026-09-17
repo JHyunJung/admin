@@ -14,13 +14,14 @@
         <label class="form-label">코드 <span class="text-danger">*</span></label>
         <!-- 할당형 PK: 수정 시에는 바꿀 수 없다. -->
         <input th:field="*{accesscode}" class="form-control fa-mono" th:readonly="${!isNew}" th:classappend="${#fields.hasErrors('accesscode')} ? 'is-invalid'">
+        <div class="form-text">영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 사용할 수 있습니다.</div>
         <div class="invalid-feedback" th:errors="*{accesscode}"></div>
       </div>
       <div class="col-md-6"><label class="form-label">벤더</label><input th:field="*{vendorname}" class="form-control"></div>
-      <div class="col-md-6"><label class="form-label">시작일시</label><input type="datetime-local" th:field="*{starttime}" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">시작일시</label><input type="datetime-local" step="1" th:field="*{starttime}" class="form-control"></div>
       <div class="col-md-6">
         <label class="form-label">종료일시</label>
-        <input type="datetime-local" th:field="*{endtime}" class="form-control" th:classappend="${#fields.hasErrors('endtime')} ? 'is-invalid'">
+        <input type="datetime-local" step="1" th:field="*{endtime}" class="form-control" th:classappend="${#fields.hasErrors('endtime')} ? 'is-invalid'">
         <div class="invalid-feedback" th:errors="*{endtime}"></div>
       </div>
       <div class="col-md-3">

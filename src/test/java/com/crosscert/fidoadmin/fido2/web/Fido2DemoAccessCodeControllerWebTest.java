@@ -1,7 +1,11 @@
 package com.crosscert.fidoadmin.fido2.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -21,7 +25,9 @@ import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.fido2.entity.Fido2DemoAccessCode;
 import com.crosscert.fidoadmin.fido2.service.Fido2DemoAccessCodeService;
 import java.util.List;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -100,5 +106,49 @@ class Fido2DemoAccessCodeControllerWebTest {
                 .param("starttime", "2026-01-01T09:00").param("endtime", "2026-12-31T23:59"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/fido2/demo-access-codes/DEMO-0003"));
+    }
+
+    /** 초가 있는 epoch 값(1770000000)을 수정 폼에 채웠을 때 초까지 표시되어야 한다(설계: 초 유실 방지). */
+    @Test void editFormRendersSecondsFromEpoch() throws Exception {
+        Fido2DemoAccessCode c = seedCode();
+        c.setStarttime(1770000000L);
+        java.time.LocalDateTime expected = EpochSeconds.fromEpoch(1770000000L);
+        when(service.get("DEMO-0001")).thenReturn(c);
+        String expectedValue = expected.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        mvc.perform(get("/fido2/demo-access-codes/DEMO-0001/edit").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido2/demo-access-code/form"))
+            .andExpect(content().string(containsString(expectedValue)));
+    }
+
+    /** 초가 있는 값으로 수정 제출하면 초까지 보존된 epoch 로 다시 변환되어야 한다. */
+    @Test void updateWithSecondsRoundTripsToSameEpoch() throws Exception {
+        Fido2DemoAccessCode existing = seedCode();
+        existing.setStarttime(1770000000L);
+        when(service.get("DEMO-0001")).thenReturn(existing);
+        java.time.LocalDateTime start = EpochSeconds.fromEpoch(1770000000L);
+        String startValue = start.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+
+        mvc.perform(post("/fido2/demo-access-codes/DEMO-0001").with(user(superUser)).with(csrf())
+                .param("accesscode", "DEMO-0001").param("vendorname", "벤더A").param("status", "E")
+                .param("starttime", startValue).param("endtime", "2026-12-31T23:59:59"))
+            .andExpect(status().is3xxRedirection());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Consumer<Fido2DemoAccessCode>> captor = ArgumentCaptor.forClass(Consumer.class);
+        verify(service).update(eq("DEMO-0001"), captor.capture());
+        Fido2DemoAccessCode target = new Fido2DemoAccessCode();
+        captor.getValue().accept(target);
+        assertThat(target.getStarttime()).isEqualTo(1770000000L);
+    }
+
+    /** ACCESSCODE 는 CRUD 경로의 {id} 세그먼트라 URL에 위험한 문자는 거부해야 한다. */
+    @Test void accessCodeWithSlashIsRejected() throws Exception {
+        mvc.perform(post("/fido2/demo-access-codes").with(user(superUser)).with(csrf())
+                .param("accesscode", "DEMO/0003").param("status", "E"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido2/demo-access-code/form"))
+            .andExpect(content().string(containsString("접근코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
+        verify(service, never()).create(any());
     }
 }
