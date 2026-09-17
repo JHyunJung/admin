@@ -1,16 +1,16 @@
 package com.crosscert.fidoadmin.signup;
 
-import java.util.regex.Pattern;
-import org.springframework.validation.BindingResult;
+import com.crosscert.fidoadmin.common.ManagerStatus;
 
 /**
- * 가입 신청·승인에서 공유하는 상수와 비밀번호 정책.
+ * 가입 신청·승인 워크플로 전용 상수.
  *
- * <p>STATUS_ACTIVE 는 {@link com.crosscert.fidoadmin.auth.ManagerUserDetailsService} 가
- * 로그인 가능 여부를 판단하는 값과 정확히 같아야 한다. 다르면 승인해도 로그인이 되지 않는다.
+ * <p>승인이 기록하는 활성 상태는 여기에 두지 않는다. 로그인 판정이 보는
+ * {@link ManagerStatus#ACTIVE} 를 직접 쓴다. 정의가 하나뿐이어야 어긋날 수 없고,
+ * 상수는 컴파일 시 값이 박히므로 "같은 값인지" 검사하는 테스트로는 중복을 잡을 수 없다.
  *
- * <p>비밀번호 정책은 {@link com.crosscert.fidoadmin.auth.PasswordChangeForm} 의 정책과
- * 동일하게 유지한다.
+ * <p>비밀번호 형식 규칙은 가입만의 것이 아니므로
+ * {@link com.crosscert.fidoadmin.common.PasswordPolicy} 에 있다.
  */
 public final class SignupPolicy {
 
@@ -18,8 +18,6 @@ public final class SignupPolicy {
 
     /** 신청 직후. 로그인 불가(기존 상태 검사가 막는다). */
     public static final String STATUS_PENDING = "승인대기";
-    /** 승인 완료. 로그인 가능. */
-    public static final String STATUS_ACTIVE = "활성";
     /** 반려됨. 로그인 불가. */
     public static final String STATUS_REJECTED = "거절";
 
@@ -31,24 +29,4 @@ public final class SignupPolicy {
 
     /** SUPER 를 뜻하는 소속. 승인 시 이 값으로 배정하는 것을 금지한다. */
     public static final long SUPER_COMPANY_IDX = 0L;
-
-    private static final Pattern PASSWORD_POLICY =
-        Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$");
-
-    /** 정책 위반 시 binding 에 필드 오류를 등록한다. */
-    public static void validatePassword(String pw, String confirm, BindingResult binding,
-                                        String pwField, String confirmField) {
-        if (pw == null || pw.isBlank()) {
-            binding.rejectValue(pwField, "required", "비밀번호는 필수입니다.");
-            return;
-        }
-        if (pw.length() < 8 || pw.length() > 64) {
-            binding.rejectValue(pwField, "size", "비밀번호는 8자 이상 64자 이하여야 합니다.");
-        } else if (!PASSWORD_POLICY.matcher(pw).matches()) {
-            binding.rejectValue(pwField, "policy", "영문, 숫자, 특수문자를 모두 포함해야 합니다.");
-        }
-        if (!pw.equals(confirm)) {
-            binding.rejectValue(confirmField, "mismatch", "비밀번호 확인이 일치하지 않습니다.");
-        }
-    }
 }

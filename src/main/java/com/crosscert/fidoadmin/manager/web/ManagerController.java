@@ -2,10 +2,10 @@ package com.crosscert.fidoadmin.manager.web;
 
 import com.crosscert.fidoadmin.common.CrudController;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.PasswordPolicy;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.service.ManagerService;
-import com.crosscert.fidoadmin.signup.SignupPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -50,8 +50,7 @@ public class ManagerController extends CrudController<CcfaManager, Long, Manager
         }
         // 수정 시 비밀번호를 비워두면 변경하지 않는다는 뜻이므로 정책 검사를 건너뛴다.
         if (f.hasPassword()) {
-            SignupPolicy.validatePassword(f.getPassword(), f.getPasswordConfirm(),
-                binding, "password", "passwordConfirm");
+            PasswordPolicy.validatePassword(f.getPassword(), f.getPasswordConfirm(), binding);
         }
     }
 
