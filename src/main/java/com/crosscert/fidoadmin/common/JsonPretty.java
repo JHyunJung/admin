@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -7,7 +8,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 /** CLOB 에 담긴 JSON(FIDO_LOGS.JSONDATA, CRITERIA.JSONDATA 등)을 상세 화면용으로 정리한다. */
 public final class JsonPretty {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+        .enable(SerializationFeature.INDENT_OUTPUT)
+        .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     private JsonPretty() {}
 

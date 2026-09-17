@@ -26,4 +26,15 @@ class JsonPrettyTest {
         assertThat(JsonPretty.isValidJson("{a:1}")).isFalse();
         assertThat(JsonPretty.isValidJson("")).isFalse();
     }
+
+    /** Jackson readTree() 는 기본적으로 첫 JSON 값만 읽고 뒤를 무시한다. 후행 토큰이 있으면 유효하지 않은 입력으로 취급해야 한다. */
+    @Test void prettyRejectsTrailingTokensAndReturnsRaw() {
+        assertThat(JsonPretty.pretty("{} garbage")).isEqualTo("{} garbage");
+        assertThat(JsonPretty.pretty("{} []")).isEqualTo("{} []");
+    }
+
+    @Test void isValidJsonRejectsTrailingTokens() {
+        assertThat(JsonPretty.isValidJson("{} garbage")).isFalse();
+        assertThat(JsonPretty.isValidJson("{} []")).isFalse();
+    }
 }
