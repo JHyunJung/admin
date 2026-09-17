@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>운영자 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|운영자 ${item.userId}|">운영자</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/managers/{id}/edit(id=${item.idx})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/managers/{id}/unlock(id=${item.idx})}" method="post" id="unlockForm" class="m-0">
+        <button type="button" class="btn btn-outline-warning btn-sm" data-confirm-form="unlockForm" data-confirm-ok="해제"
+                data-confirm-message="잠금을 해제하시겠습니까?">잠금 해제</button>
+      </form>
+      <form th:action="@{/managers/{id}/delete(id=${item.idx})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/managers}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0">
+      <tbody>
+        <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+        <tr><th>ID</th><td th:text="${item.userId}"></td></tr>
+        <tr><th>이름</th><td th:text="${item.userNm}"></td></tr>
+        <tr><th>이메일</th><td th:text="${item.userEmail}"></td></tr>
+        <tr><th>전화</th><td th:text="${item.userPhone}"></td></tr>
+        <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+        <tr><th>상태</th><td th:text="${item.status}"></td></tr>
+        <tr><th>로그인</th><td th:text="${item.login}"></td></tr>
+        <tr>
+          <th>잠금 상태</th>
+          <td>
+            <span th:if="${lockState == null}">정책 행 없음 (잠기지 않음)</span>
+            <span th:if="${lockState != null and lockState.accountLock == 'Y'}" class="badge text-bg-danger"
+                  th:text="|잠김 (실패 ${lockState.pwFailCnt}회)|">잠김</span>
+            <span th:if="${lockState != null and lockState.accountLock != 'Y'}"
+                  th:text="|정상 (실패 ${lockState.pwFailCnt}회)|">정상</span>
+          </td>
+        </tr>
+        <tr><th>잠금 시각</th><td th:text="${#temporals.format(item.blockTime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+        <tr><th>최근 접속</th><td th:text="${#temporals.format(item.lastAccess, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+        <tr><th>비고</th><td class="fa-pre" th:text="${item.etc}"></td></tr>
+        <tr><th>알림 유형</th><td th:text="${item.alramType}"></td></tr>
+        <tr><th>알림 레벨</th><td th:text="${item.alramLevel}"></td></tr>
+        <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+        <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>
