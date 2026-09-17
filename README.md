@@ -41,7 +41,7 @@
 - 외부 CSS/JS/폰트 호출 없음. 정적 자원은 WebJars 와 `src/main/resources/static`.
 - JS `alert/confirm/prompt` 금지. 삭제 확인은 Bootstrap 모달.
 
-### 화면을 추가할 때 (2부 작업자용)
+### 화면을 추가할 때
 
 - `CrudController`/`CrudService` 또는 `ReadOnlyController` 를 상속한다.
   테넌트 격리(목록 필터, 상세·수정·삭제 소유 검사, 등록 시 `COMPANY_IDX` 강제)는 기반이 처리한다.
@@ -53,10 +53,13 @@
 - 정렬 가능한 컬럼은 `sortableProperties()` 에 선언한다. 목록에 없는 값은 기본 정렬로 되돌아간다
   (매핑되지 않은 속성이 들어오면 500 이 나기 때문).
 - `toEntity(form)` 에서 **식별자를 폼 값으로 채우지 않는다.** 채우면 `save()` 가 INSERT 가 아니라
-  MERGE 로 동작해 기존 행을 덮어쓸 수 있다. 할당형 PK 테이블
-  (`CCFA_SYSTEM_INFO`, `CCFA_ERROR_TABLE`, `CCFA_FIDOCLIENT`, `FIDO2_DEMO_ACCESS_CODE`, `CCFA_FDS_POLICY`)
-  화면을 만들 때는 `persist` 기반 삽입 전용 경로로 바꾸는 것을 먼저 검토한다.
+  MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
 - 폼 화면에는 `#fields.allErrors()` 로 모든 검증 오류를 표시한다.
+- 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `CrudService` 대신 **`AssignedIdCrudService`** 를 상속하고
+  `assignedId()` 를 구현한다. 등록은 존재 검사 + `persist` 로만 수행되어, 이미 있는 키를 입력해도 기존 행이 덮어써지지 않고
+  "이미 존재하는 값" 오류로 돌아온다(`save()` 는 식별자가 있으면 MERGE 로 동작한다).
+- `COMPANY_IDX` 가 없는 CRITERIA·FIDO2 화면은 시스템 메뉴와 같이 **SUPER 전용**이다(설계 3.3).
+  `MenuRegistry` 의 `superOnly` 와 `SecurityConfig` 의 SUPER 매처를 함께 맞춘다.
 - 참고 구현: CRUD 는 `company/`, 조회 전용은 `log/audit`.
 
 ## 알려진 제약
@@ -69,4 +72,6 @@
 ## 문서
 
 - 설계: `docs/superpowers/specs/2026-09-16-fido-admin-design.md`
-- 구현 계획 1부: `docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md`
+- 구현 계획 1부(기반): `docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md`
+- 구현 계획 2부(업무 화면): `docs/superpowers/plans/2026-09-17-fido-admin-part2-screens.md`
+- 구현 계획 3부(시스템 화면·최종 검증): `docs/superpowers/plans/2026-09-17-fido-admin-part3-system.md`
