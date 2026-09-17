@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>예외 로그</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3">예외 로그</h1>
+  <!-- CREATEDTIME 이 문자열 컬럼이라 기간(date) 입력 대신 문자열 부분 일치 입력을 둔다. -->
+  <form method="get" th:action="@{/logs/exceptions}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto" sec:authorize="hasRole('SUPER')">
+      <label class="form-label small mb-0">고객사</label>
+      <select name="companyIdx" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}" th:selected="${search.companyIdx == c.idx}"></option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">유형</label><input name="eType" th:value="${search.eType}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">레벨</label>
+      <select name="eLevel" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option value="ERROR" th:selected="${search.eLevel == 'ERROR'}">ERROR</option>
+        <option value="WARN" th:selected="${search.eLevel == 'WARN'}">WARN</option>
+        <option value="INFO" th:selected="${search.eLevel == 'INFO'}">INFO</option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">메시지</label><input name="message" th:value="${search.message}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">일시(문자열)</label><input name="createdtime" th:value="${search.createdtime}" placeholder="예: 2026-09-15" class="form-control form-control-sm"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/exceptions}" class="btn btn-link btn-sm">초기화</a></div>
+  </form>
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>일시</th><th>고객사</th><th>유형</th><th>레벨</th><th>메시지</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td><a th:href="@{/logs/exceptions/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+          <td th:text="${r.createdtime}"></td>
+          <td th:text="${companyNames.get(r.companyIdx)} ?: ${r.companyIdx}"></td>
+          <td th:text="${r.type}"></td>
+          <td><span class="badge" th:classappend="${r.level == 'ERROR'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${r.level}"></span></td>
+          <td th:text="${#strings.abbreviate(r.message, 80)}"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>예외 로그 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|예외 로그 #${item.idx}|"></h1>
+    <a th:href="@{/logs/exceptions}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>일시</th><td th:text="${item.createdtime}"></td></tr>
+      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+      <tr><th>유형</th><td th:text="${item.type}"></td></tr>
+      <tr><th>레벨</th><td th:text="${item.level}"></td></tr>
+      <tr><th>메시지</th><td class="fa-pre" th:text="${item.message}"></td></tr>
+      <tr><th>상세 메시지</th><td class="fa-pre" th:text="${item.detailMessage}"></td></tr>
+      <tr><th>예외 데이터</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.data}"></pre></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
