@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.ManagerStatus;
+import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import jakarta.persistence.EntityManager;
@@ -29,7 +30,8 @@ class SignupApprovalServiceTest {
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
     EntityManager em = mock(EntityManager.class);
     AuditLogger audit = mock(AuditLogger.class);
-    SignupService service = new SignupService(managers, em, audit);
+    CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
+    SignupService service = new SignupService(managers, companies, em, audit);
 
     private CcfaManager pending() {
         CcfaManager m = new CcfaManager();
@@ -45,6 +47,8 @@ class SignupApprovalServiceTest {
 
     @BeforeEach void stub() {
         when(managers.save(any(CcfaManager.class))).thenAnswer(inv -> inv.getArgument(0));
+        // 기본값: 넘어오는 고객사는 실재한다. 없는 경우만 테스트에서 따로 지정한다.
+        when(companies.existsById(any(Long.class))).thenReturn(true);
     }
 
     @Test void pendingListsOldestFirst() {
@@ -89,6 +93,21 @@ class SignupApprovalServiceTest {
 
         assertThatThrownBy(() -> service.approve(5L, null))
             .isInstanceOf(IllegalArgumentException.class);
+        verify(managers, never()).save(any(CcfaManager.class));
+    }
+
+    /**
+     * 실재하지 않는 고객사로는 승인할 수 없다. CCFA_MANAGER 에 CCFA_COMPANY 로 가는
+     * 외래키가 없어 DB 가 걸러 주지 않으므로 서비스가 직접 확인해야 한다.
+     * 검증은 행을 잠그기 전에 끝나야 하니 잠금 조회 자체가 일어나지 않는다.
+     */
+    @Test void approveRejectsCompanyThatDoesNotExist() {
+        when(companies.existsById(99999L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.approve(5L, 99999L))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("존재하지 않는 고객사");
+        verify(managers, never()).findByIdxForUpdate(any());
         verify(managers, never()).save(any(CcfaManager.class));
     }
 

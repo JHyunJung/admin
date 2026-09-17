@@ -10,6 +10,7 @@ import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.signup.SignupPolicy;
 import com.crosscert.fidoadmin.signup.SignupService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -34,8 +35,20 @@ class SignupEscalationIntegrationTest extends OracleContainerSupport {
     @Autowired SignupService signups;
     @Autowired ManagerUserDetailsService uds;
     @Autowired CcfaManagerRepository managers;
+    @Autowired EntityManager em;
     // JPA 슬라이스에는 감사 로거 빈이 없다. 신청은 익명 호출이라 어차피 기록되지 않는다.
     @MockitoBean AuditLogger audit;
+
+    /**
+     * 보류 중인 변경을 Oracle 로 밀어내고 1차 캐시를 비운 뒤 USER_ID 로 다시 읽는다.
+     * 이렇게 하지 않으면 서비스가 방금 만든 그 인스턴스가 캐시에서 그대로 돌아와,
+     * DB 가 값을 거부해도 테스트가 통과한다(메모리를 검사한 것이지 DB 가 아니다).
+     */
+    private CcfaManager reloaded(String userId) {
+        em.flush();
+        em.clear();
+        return managers.findByUserId(userId).orElseThrow();
+    }
 
     /** 신청 직후의 계정은 로그인할 수 없고, 무엇보다 SUPER 가 아니다. */
     @Test void appliedAccountCannotLogInAndIsNotSuper() {
@@ -55,7 +68,7 @@ class SignupEscalationIntegrationTest extends OracleContainerSupport {
         String userId = "row_" + System.nanoTime();
         signups.apply(userId, "hash", "신청자", userId + "@kb.local", "010-0000-0000", "사유");
 
-        CcfaManager saved = managers.findByUserId(userId).orElseThrow();
+        CcfaManager saved = reloaded(userId);
 
         assertThat(saved.getStatus()).isEqualTo(SignupPolicy.STATUS_PENDING);
         assertThat(saved.getCompanyIdx()).isEqualTo(SignupPolicy.UNASSIGNED_COMPANY_IDX);
@@ -86,7 +99,7 @@ class SignupEscalationIntegrationTest extends OracleContainerSupport {
             .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
 
         // 기존 계정이 손상되지 않았는지 확인한다
-        CcfaManager original = managers.findByUserId("superuser").orElseThrow();
+        CcfaManager original = reloaded("superuser");
         assertThat(original.getCompanyIdx()).isEqualTo(0L);
         assertThat(original.getUserEmail()).isNotEqualTo("attacker@evil.local");
     }

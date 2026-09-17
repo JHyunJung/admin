@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.signup;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.ManagerStatus;
+import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import jakarta.persistence.EntityManager;
@@ -36,6 +37,7 @@ public class SignupService {
     private static final int ETC_MAX_BYTES = 2048;
 
     private final CcfaManagerRepository managers;
+    private final CcfaCompanyRepository companies;
     private final EntityManager em;
     private final AuditLogger audit;
 
@@ -91,6 +93,19 @@ public class SignupService {
      * <p>권한 상승 차단 2단계 — 전역(IDX 0) 배정을 거부한다. 승인으로 슈퍼 관리자를
      * 만들 수 없다. 미배정 표식(-1)이나 null 로도 승인할 수 없다.
      * 권한 상승 차단 3단계 — 대상이 승인대기일 때만 동작한다({@link #lockPending}).
+     *
+     * <p>실재하지 않는 고객사 IDX 도 거부한다. CCFA_MANAGER 에는 CCFA_COMPANY 로 가는
+     * 외래키가 없어 DB 가 걸러 주지 않는다. 그대로 두면 활성 계정이 존재하지 않는 테넌트에
+     * 묶여 로그인은 되지만 테넌트로 걸러지는 모든 조회가 빈 결과를 돌려주고,
+     * 신청은 대기 목록에서 사라져 운영자가 다시 처리할 수도 없다.
+     *
+     * <p>고객사 존재 확인에는 {@code CompanyLookup} 이 아니라 리포지터리를 직접 쓴다.
+     * CompanyLookup 은 로그인 사용자 기준({@code TenantContext})으로 결과를 가리는
+     * 화면용 조회라, 없는 고객사와 볼 권한이 없는 고객사를 똑같이 "#IDX" 로 돌려준다.
+     * 존재 여부를 판정할 수 없을뿐더러 서비스 계층에 웹 요청 컨텍스트 의존이 끼어든다.
+     *
+     * <p>모든 검증은 {@link #lockPending} 이 행을 건드리기 전에 끝난다. 거부된 승인은
+     * 행을 승인대기 그대로 남긴다.
      */
     @Transactional
     public CcfaManager approve(Long idx, Long companyIdx) {
@@ -99,6 +114,9 @@ public class SignupService {
         }
         if (companyIdx == null || companyIdx < 0) {
             throw new IllegalArgumentException("고객사를 선택해야 합니다.");
+        }
+        if (!companies.existsById(companyIdx)) {
+            throw new IllegalArgumentException("존재하지 않는 고객사입니다: " + companyIdx);
         }
         CcfaManager m = lockPending(idx);
         m.setCompanyIdx(companyIdx);
