@@ -28,7 +28,8 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/error/**", "/webjars/**", "/css/**", "/js/**", "/favicon.ico").permitAll()
-                .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**").hasRole("SUPER")
+                .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**",
+                                 "/criteria/**", "/fido2/**").hasRole("SUPER")
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 .loginPage("/login")

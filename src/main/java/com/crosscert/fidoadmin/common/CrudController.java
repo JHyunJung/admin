@@ -49,6 +49,12 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     protected void populateListModel(Model model) {}
     protected void populateDetailModel(E entity, Model model) {}
 
+    /**
+     * Bean Validation 으로 표현하기 어려운 검증(등록 시에만 필수, 두 필드 비교, JSON 형식 등).
+     * binding.rejectValue / reject 로 오류를 넣으면 폼을 다시 그린다.
+     */
+    protected void validate(F form, boolean isNew, BindingResult binding) {}
+
     @GetMapping
     public String list(@ModelAttribute("search") S search, Model model) {
         Page<E> page = service().search(search, search.toPageable(service().defaultSort(), service().sortableProperties()));
@@ -71,6 +77,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     @PostMapping
     public String create(@Valid @ModelAttribute("form") F form, BindingResult binding, Model model,
                          RedirectAttributes redirect) {
+        validate(form, true, binding);
         if (binding.hasErrors()) return backToForm(model, true);
         try {
             E saved = service().create(toEntity(form));
@@ -106,6 +113,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     public String update(@PathVariable ID id, @Valid @ModelAttribute("form") F form, BindingResult binding,
                          Model model, RedirectAttributes redirect) {
         model.addAttribute("id", id);
+        validate(form, false, binding);
         if (binding.hasErrors()) return backToForm(model, false);
         try {
             service().update(id, entity -> applyForm(form, entity));

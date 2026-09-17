@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
-/** 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다. 2부에서 화면이 추가될 때 항목을 늘린다. */
+/** 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다. COMPANY_IDX 가 없는 테이블(CRITERIA, FIDO2_*, 시스템)의 화면은 SUPER 전용이다(설계 3.3). */
 @Component("menuRegistry")
 public class MenuRegistry {
 
@@ -22,10 +22,10 @@ public class MenuRegistry {
         new MenuItem("FIDO", "서명", "/signs", false),
         new MenuItem("FIDO", "거래 해시", "/transaction-hashes", false),
         new MenuItem("FIDO", "거래 확인", "/transaction-confirmations", false),
-        new MenuItem("FIDO", "인증기기 기준", "/criteria", false),
-        new MenuItem("FIDO2", "메타데이터", "/fido2/metadata", false),
-        new MenuItem("FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", false),
-        new MenuItem("FIDO2", "데모 접근코드", "/fido2/demo-access-codes", false),
+        new MenuItem("FIDO", "인증기기 기준", "/criteria", true),
+        new MenuItem("FIDO2", "메타데이터", "/fido2/metadata", true),
+        new MenuItem("FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true),
+        new MenuItem("FIDO2", "데모 접근코드", "/fido2/demo-access-codes", true),
         new MenuItem("로그", "FIDO 로그", "/logs/fido", false),
         new MenuItem("로그", "감사 로그", "/logs/audit", false),
         new MenuItem("로그", "예외 로그", "/logs/exceptions", false),

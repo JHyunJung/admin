@@ -14,8 +14,16 @@ class MenuRegistryTest {
 
     @Test void companyDoesNotSeeSuperOnlyMenus() {
         assertThat(registry.itemsFor(false)).noneMatch(MenuItem::superOnly);
-        assertThat(registry.itemsFor(false)).extracting(MenuItem::href).contains("/", "/appids", "/users", "/logs/fido")
-            .doesNotContain("/companies", "/managers", "/system/props");
+        assertThat(registry.itemsFor(false)).extracting(MenuItem::href)
+            .contains("/", "/appids", "/users", "/logs/fido", "/fds-policies")
+            .doesNotContain("/companies", "/managers", "/system/props",
+                "/criteria", "/fido2/metadata", "/fido2/credential-params", "/fido2/demo-access-codes");
+    }
+
+    /** COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용(설계 3.3). 그룹은 유지된다. */
+    @Test void companySeesNoFido2Group() {
+        var groups = MenuRegistry.groups(registry.itemsFor(false));
+        assertThat(groups.keySet()).containsExactly("대시보드", "고객사", "운영자", "FIDO", "로그");
     }
 
     @Test void groupsPreserveOrder() {

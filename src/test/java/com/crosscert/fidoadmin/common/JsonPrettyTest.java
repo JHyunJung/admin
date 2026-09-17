@@ -1,0 +1,29 @@
+package com.crosscert.fidoadmin.common;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+
+class JsonPrettyTest {
+
+    @Test void prettyPrintsObject() {
+        String out = JsonPretty.pretty("{\"op\":\"Auth\",\"result\":\"1200\"}");
+        assertThat(out).isEqualTo("{\n  \"op\" : \"Auth\",\n  \"result\" : \"1200\"\n}");
+    }
+
+    @Test void returnsRawWhenNotJson() {
+        assertThat(JsonPretty.pretty("not json {")).isEqualTo("not json {");
+    }
+
+    @Test void passesThroughNullAndBlank() {
+        assertThat(JsonPretty.pretty(null)).isNull();
+        assertThat(JsonPretty.pretty("  ")).isEqualTo("  ");
+    }
+
+    @Test void isValidJsonDetectsStructure() {
+        assertThat(JsonPretty.isValidJson("{\"a\":1}")).isTrue();
+        assertThat(JsonPretty.isValidJson("[1,2]")).isTrue();
+        assertThat(JsonPretty.isValidJson("{a:1}")).isFalse();
+        assertThat(JsonPretty.isValidJson("")).isFalse();
+    }
+}

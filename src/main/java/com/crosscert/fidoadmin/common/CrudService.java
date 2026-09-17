@@ -77,6 +77,13 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         return e;
     }
 
+    /**
+     * 신규 엔티티 저장. 기본은 repository.save(). 할당형 PK 테이블은
+     * {@link AssignedIdCrudService} 가 존재 검사 + persist 로 바꾼다
+     * (save() 는 식별자가 있으면 MERGE 로 동작해 기존 행을 덮어쓴다).
+     */
+    protected E insert(E entity) { return repository.save(entity); }
+
     @Transactional
     public E create(E entity) {
         requireSuperForGlobalTable();
@@ -85,7 +92,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         }
         applyDefaults(entity);
         touchCreated(entity, LocalDateTime.now());
-        E saved = repository.save(entity);
+        E saved = insert(entity);
         audit.log(AuditType.CREATE, tableName() + " CREATE " + idOf(saved));
         return saved;
     }
