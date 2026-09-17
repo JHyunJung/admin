@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><title>서버 오류</title>
+  <link rel="icon" th:href="@{/favicon.ico}" sizes="32x32">
+  <link rel="icon" type="image/png" th:href="@{/favicon.png}" sizes="192x192">
+  <link rel="apple-touch-icon" th:href="@{/favicon.png}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="bg-light">
+<main class="container text-center" style="margin-top: 15vh;">
+  <h1 class="display-6">500</h1>
+  <p class="text-secondary">처리 중 오류가 발생했습니다. 관리자에게 문의하세요.</p>
+  <a th:href="@{/}" class="btn btn-primary btn-sm">대시보드로</a>
+</main>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '어드민 기준 등록' : '어드민 기준 수정'">어드민 기준</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '어드민 기준 등록' : '어드민 기준 수정'">어드민 기준</h1>
+  <form th:action="${isNew} ? @{/system/criteria} : @{/system/criteria/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">AAID <span class="text-danger">*</span></label>
+        <input th:field="*{aaid}" class="form-control" th:classappend="${#fields.hasErrors('aaid')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{aaid}"></div>
+      </div>
+      <div class="col-md-6"><label class="form-label">메타 해시</label><input th:field="*{metahash}" class="form-control"></div>
+      <div class="col-12">
+        <label class="form-label">JSONDATA</label>
+        <textarea th:field="*{jsondata}" rows="12" class="form-control fa-mono" th:classappend="${#fields.hasErrors('jsondata')} ? 'is-invalid'"></textarea>
+        <div class="invalid-feedback" th:errors="*{jsondata}"></div>
+      </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/system/criteria} : @{/system/criteria/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

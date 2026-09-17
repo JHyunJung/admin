@@ -1,0 +1,449 @@
+
+## APPID — RP 앱 등록 정보 (10)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                        DEFAULT NULL             
+   3. APPID                        VARCHAR2(128)                                          
+   4. MEMO                         VARCHAR2(512)                                          
+   5. STATUS                       VARCHAR2(12)         NOT NULL DEFAULT 'use'            기본값 'use'
+   6. DEVICE                       VARCHAR2(128)                                          
+   7. DEVICE_DEFAULT               VARCHAR2(1)          NOT NULL DEFAULT 'F'              기본값 'F'
+   8. SERVICENAME                  VARCHAR2(512)                                          
+   9. CREATEDTIME                  TIMESTAMP                     DEFAULT SYSDATE          
+  10. UPDATEDTIME                  TIMESTAMP                     DEFAULT SYSDATE          
+
+## APPSERVER — 앱 서버(연동 주체) 정보 (8)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. MEMBER_CODE                  VARCHAR2(32)         NOT NULL                          
+   4. MEMBER_ID                    VARCHAR2(32)         NOT NULL                          
+   5. TYPE                         VARCHAR2(10)         NOT NULL DEFAULT 'use'            기본값 'use'
+   6. NOTE                         VARCHAR2(128)                                          
+   7. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+   8. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## USERINFO — FIDO 등록 사용자 인증정보(크리덴셜) (15)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. BIO_TYPE                     NUMBER                                                 
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. USERID                       VARCHAR2(512)        NOT NULL                          
+   6. AAID                         VARCHAR2(128)        NOT NULL                          
+   7. AUTHENTICATORVERSION         NUMBER               NOT NULL DEFAULT 0                
+   8. KEYID                        VARCHAR2(1024)                                         
+   9. PUBKEY                       VARCHAR2(2048)                                         민감정보 — 로깅/직렬화 주의
+  10. CERTIFICATE                  VARCHAR2(2048)                                         민감정보 — 로깅/직렬화 주의
+  11. SIGNCOUNTER                  NUMBER               NOT NULL DEFAULT 0                
+  12. UVS                          VARCHAR2(64)                                           
+  13. STATUS                       VARCHAR2(20)         NOT NULL DEFAULT 'O'              기본값 'O'
+  14. REGTIME                      TIMESTAMP            NOT NULL DEFAULT sysdate          
+  15. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CHALLENGE — 인증 챌린지(일회성) (8)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER(11,0)                                           
+   3. USERID                       VARCHAR2(512)                                          
+   4. SERVICENAME                  VARCHAR2(512)                                          
+   5. CHALLENGECODE                VARCHAR2(140)                                          
+   6. CREATETIME                   TIMESTAMP            NOT NULL DEFAULT sysdate          
+   7. LOGIDX                       NUMBER(11,0)         NOT NULL DEFAULT -1               기본값 -1
+   8. UV                           VARCHAR2(20)                                           
+
+## CRITERIA — 인증기기 정책 기준(UAF) (17)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. AAID                         VARCHAR2(64)                                           인덱스 CRITERIA_AAID
+   3. VENDORIDS                    VARCHAR2(32)                                           
+   4. USERVERIFICATION             NUMBER                                                 
+   5. KEYPROTECTION                NUMBER                                                 
+   6. MATCHERPROTECTION            NUMBER                                                 
+   7. ATTACHMENTHNUMBER            NUMBER                                                 
+   8. TCDISPLAY                    NUMBER                                                 
+   9. TCDISPLAYCONTENTTYPE         VARCHAR2(128)                 DEFAULT 'text/plain'     
+  10. AUTHENTICATIONALGORITHMS     VARCHAR2(64)                                           
+  11. ASSERTIONSCHEMES             VARCHAR2(64)                  DEFAULT 'UAFV1TLV'       
+  12. ATTESTATIONTYPES             VARCHAR2(64)                                           
+  13. AUTHENTICATORVERSION         NUMBER                                                 
+  14. METAHASH                     VARCHAR2(512)                                          
+  15. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+  16. CREATETIME                   TIMESTAMP                     DEFAULT CURRENT_TIMESTAMP 
+  17. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT CURRENT_TIMESTAMP 
+
+## SIGN — 전자서명 원본/서명값 (11)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. USERID                       VARCHAR2(512)        NOT NULL                          
+   4. ASSERTION                    VARCHAR2(4000)       NOT NULL                          
+   5. DN                           VARCHAR2(200)                                          
+   6. PLAINTEXT                    CLOB                          DEFAULT EMPTY_CLOB()     
+   7. DATA                         VARCHAR2(2000)       NOT NULL                          
+   8. SIGNATURE                    VARCHAR2(1000)       NOT NULL                          
+   9. MEMO                         VARCHAR2(64)                                           
+  10. DEL                          VARCHAR2(1)                   DEFAULT 'N'              논리삭제 플래그, 기본값 'N'
+  11. CREATETIME                   TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## TRANSACTIONHASH — 거래내용 해시 (6)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. USERID                       VARCHAR2(512)                                          
+   4. CONTENT                      CLOB                          DEFAULT EMPTY_CLOB()     
+   5. CONTENTHASH                  VARCHAR2(64)                                           
+   6. CREATETIME                   TIMESTAMP                     DEFAULT CURRENT_TIMESTAMP 
+
+## TRANSACTION_CONFIRMATION — 거래확인(TC) 내용 (7)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. USERID                       VARCHAR2(512)                                          
+   4. AAID                         VARCHAR2(64)                                           
+   5. CONTENTTYPE                  VARCHAR2(128)                                          
+   6. CONTENT                      CLOB                          DEFAULT EMPTY_CLOB()     
+   7. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## FIDO2_METADATA — FIDO2 인증기기 메타데이터(MDS3) (23)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. DESCRIPTION                  VARCHAR2(256)                                          
+   3. AAGUID                       VARCHAR2(256)                                          
+   4. ALTERNATIVEDESCRIPTIONS      VARCHAR2(2048)                                         
+   5. PROTOCOLFAMILY               VARCHAR2(128)                                          
+   6. AUTHENTICATORVERSION         NUMBER(38,0)                                           
+   7. UPV                          VARCHAR2(512)                                          
+   8. ASSERTIONSCHME               VARCHAR2(128)                                          원본 컬럼명 오타(ASSERTIONSCHME) 그대로
+   9. AUTHENTICATIONALGORITHM      NUMBER(38,0)                                           
+  10. PUBLICKEYALGANDENCODING      NUMBER(38,0)                                           
+  11. ATTESTATIONTYPES             VARCHAR2(2048)                                         
+  12. USERVERIFICATIONDETAILS      VARCHAR2(2048)                                         
+  13. KEYPROTECTION                NUMBER(38,0)                                           
+  14. MATCHERPROTECTION            NUMBER(38,0)                                           
+  15. CRYPTOSTRENGTH               NUMBER(38,0)                                           
+  16. OPERATINGENV                 VARCHAR2(2048)                                         
+  17. ATTACHMENTHINT               NUMBER(38,0)                                           
+  18. ISSECONDFACTORONLY           VARCHAR2(8)                                            
+  19. TCDISPLAY                    NUMBER(38,0)                                           
+  20. ATTESTATIONROOTCERTIFICATES  CLOB                          DEFAULT EMPTY_CLOB()     
+  21. ICON                         CLOB                          DEFAULT EMPTY_CLOB()     
+  22. SKI                          VARCHAR2(2048)                                         
+  23. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## FIDO2_CREDENTIAL_PARAMS — FIDO2 지원 알고리즘 목록 (5)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. CRED_TYPE                    VARCHAR2(32)         NOT NULL DEFAULT 'public-key'     기본값 'public-key'
+   3. CRED_ALG                     NUMBER(38,0)                                           인덱스 FIDO2_CREDENTIAL_PARAMS_?
+   4. STATUS                       VARCHAR2(1)          NOT NULL DEFAULT 'T'              기본값 'T'
+   5. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## FIDO2_DEMO_ACCESS_CODE — 데모 접근 코드 (PK 없음 → ACCESSCODE 를 식별자로 사용) (7)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. ACCESSCODE                   VARCHAR2(128)    PK  NOT NULL                          
+   2. VENDORNAME                   VARCHAR2(128)                                          
+   3. STARTTIME                    NUMBER                                                 epoch 값. 컨버터 적용 검토
+   4. ENDTIME                      NUMBER                                                 epoch 값. 컨버터 적용 검토
+   5. STATUS                       VARCHAR2(1)          NOT NULL DEFAULT 'E'              기본값 'E'
+   6. NOTE                         VARCHAR2(300)                                          
+   7. ETC                          VARCHAR2(1024)                                         
+
+## FIDO_LOGS — FIDO 처리 로그 (append-only) (6)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. SERIALCODE                   VARCHAR2(128)        NOT NULL                          
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   6. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## FIDO_LOGS_20210101 — 일자별 로그 아카이브. 실제로는 파티셔닝 전환을 검토할 것 (6)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          인덱스 FIDO_LOGS_PK_20210101
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. SERIALCODE                   VARCHAR2(128)        NOT NULL                          
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   6. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## FIDO_LOGS_20210102 — 일자별 로그 아카이브 (6)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          인덱스 FIDO_LOGS_PK_20210102
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. SERIALCODE                   VARCHAR2(128)        NOT NULL                          
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   6. CREATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## BAK_FIDO_LOGS_BAK — 로그 백업본 (복호화 컬럼 포함) (7)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. SERIALCODE                   VARCHAR2(128)        NOT NULL                          
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   6. CREATEDTIME                  TIMESTAMP                                              
+   7. DEC_JSONDATA                 CLOB                                                   
+
+## BAK_FIDO_LOGS_TEST — 로그 테스트 테이블 (6)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          인덱스 FIDO_LOGS_PK_TEST
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. SERIALCODE                   VARCHAR2(128)        NOT NULL                          
+   4. SERVICENAME                  VARCHAR2(512)        NOT NULL                          
+   5. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   6. CREATEDTIME                  TIMESTAMP                                              
+
+## FIDO_STATISTICS — FIDO 집계 통계 (PK 없음 → 복합키로 매핑) (12)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. COMPANY_IDX                  NUMBER           PK  NOT NULL DEFAULT 0                
+   2. SERVICE_NAME                 VARCHAR2(512)    PK  NOT NULL                          
+   3. GROUPBY                      VARCHAR2(32)     PK  NOT NULL                          
+   4. CREATEDTIME                  TIMESTAMP        PK  NOT NULL DEFAULT sysdate          
+   5. AUTH_S                       NUMBER                        DEFAULT 0                
+   6. AUTH_F                       NUMBER                        DEFAULT 0                
+   7. TC_S                         NUMBER                        DEFAULT 0                
+   8. TC_F                         NUMBER                        DEFAULT 0                
+   9. REG_S                        NUMBER                        DEFAULT 0                
+  10. REG_F                        NUMBER                        DEFAULT 0                
+  11. DEREG_S                      NUMBER                        DEFAULT 0                
+  12. DEREG_F                      NUMBER                        DEFAULT 0                
+
+## FIDO_STATISTICS_BAK — 통계 백업본 (PK 없음) (12)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. COMPANY_IDX                  NUMBER           PK  NOT NULL DEFAULT 0                
+   2. SERVICE_NAME                 VARCHAR2(512)    PK  NOT NULL                          
+   3. GROUPBY                      VARCHAR2(32)     PK  NOT NULL                          
+   4. CREATEDTIME                  TIMESTAMP        PK  NOT NULL DEFAULT sysdate          
+   5. AUTH_S                       NUMBER                        DEFAULT 0                
+   6. AUTH_F                       NUMBER                        DEFAULT 0                
+   7. TC_S                         NUMBER                        DEFAULT 0                
+   8. TC_F                         NUMBER                        DEFAULT 0                
+   9. REG_S                        NUMBER                        DEFAULT 0                
+  10. REG_F                        NUMBER                        DEFAULT 0                
+  11. DEREG_S                      NUMBER                        DEFAULT 0                
+  12. DEREG_F                      NUMBER                        DEFAULT 0                
+
+## CCFA_AUDIT_LOG — 어드민 감사로그 (append-only) (11)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER               NOT NULL                          
+   3. COMPANY_NAME                 VARCHAR2(512)        NOT NULL                          
+   4. TYPE                         VARCHAR2(32)         NOT NULL                          
+   5. USER_ID                      VARCHAR2(64)         NOT NULL                          
+   6. USER_NAME                    VARCHAR2(32)         NOT NULL                          
+   7. MESSAGE                      VARCHAR2(4000)       NOT NULL                          
+   8. IP                           VARCHAR2(15)                                           IPv6 는 15자를 넘는다. 확장 검토
+   9. UA                           VARCHAR2(2048)                                         
+  10. INTERGRITY_HASH              VARCHAR2(512)                                          원본 컬럼명 오타(INTERGRITY) 그대로
+  11. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_COMPANY — 고객사(테넌트) (19)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_NAME                 VARCHAR2(256)                                          
+   3. COMPANY_TYPE                 VARCHAR2(20)                                           
+   4. VENDOR_CODE                  VARCHAR2(20)                                           
+   5. CONTACT                      VARCHAR2(512)                                          
+   6. CONTACT_PHONE                VARCHAR2(50)                                           
+   7. CONTACT_PHONE2               VARCHAR2(50)                                           
+   8. CONTACT_ADDR                 VARCHAR2(2048)                                         
+   9. ENABLE_TYPE                  VARCHAR2(20)                                           
+  10. STARTTIME                    TIMESTAMP                     DEFAULT sysdate          
+  11. ENDTIME                      TIMESTAMP                     DEFAULT to_timestamp(...) 
+  12. MAX_APPID                    NUMBER               NOT NULL DEFAULT 0                
+  13. MAX_APPSERVER                NUMBER               NOT NULL DEFAULT 0                
+  14. MAX_USER                     NUMBER               NOT NULL DEFAULT 0                
+  15. ETC                          VARCHAR2(4000)                                         
+  16. CREATOR                      NUMBER                                                 
+  17. UPDATOR                      NUMBER                                                 
+  18. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  19. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_CRITERIA — 어드민 인증기기 정책 (6)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. AAID                         VARCHAR2(64)                                           인덱스 CCFA_CRITERIA_AAID
+   3. METAHASH                     VARCHAR2(512)                                          
+   4. JSONDATA                     CLOB                          DEFAULT EMPTY_CLOB()     
+   5. CREATETIME                   TIMESTAMP                     DEFAULT CURRENT_TIMESTAMP 
+   6. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT CURRENT_TIMESTAMP 
+
+## CCFA_ERROR_TABLE — 에러코드 사전 (PK 없음 → ERROR_CODE 를 식별자로 사용) (4)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. ERROR_CODE                   VARCHAR2(20)     PK  NOT NULL                          
+   2. ERROR_MESSAGE                VARCHAR2(1024)                                         
+   3. ERROR_COMMENT                VARCHAR2(4000)                                         
+   4. ERROR_TYPE                   VARCHAR2(20)                                           
+
+## CCFA_EXCEPTIONS — 예외 로그 (8)
+   [!] append-only 로 취급
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                        DEFAULT 0                
+   3. E_TYPE                       VARCHAR2(32)                                           
+   4. E_LEVEL                      VARCHAR2(32)                                           
+   5. EXCEPTION_MESSAGE            VARCHAR2(4000)                                         
+   6. EXCEPTION_DETAIL_MESSAGE     VARCHAR2(4000)                                         
+   7. EXCEPTION_DATA               CLOB                          DEFAULT EMPTY_CLOB()     
+   8. CREATEDTIME                  VARCHAR2(64)                                           주의: 다른 테이블과 달리 VARCHAR2 다. 타입 통일 검토
+
+## CCFA_FDS_POLICY — FDS 정책 (COMPANY_IDX 가 PK) (10)
+   1. COMPANY_IDX                  NUMBER           PK  NOT NULL                          
+   2. AND_IP                       VARCHAR2(4000)                                         
+   3. AND_TERM                     VARCHAR2(32)                                           
+   4. AND_DEVICE                   VARCHAR2(16)                                           
+   5. AND_COUNTRY                  VARCHAR2(16)         NOT NULL                          
+   6. OR_IP                        VARCHAR2(4000)                                         
+   7. OR_TERM                      VARCHAR2(32)                                           
+   8. OR_COUNTRY                   VARCHAR2(16)         NOT NULL                          
+   9. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  10. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_FIDOCLIENT — FIDO 서버 연동 정보 (SERVERCODE 를 식별자로 사용) (6)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. SERVERCODE                   VARCHAR2(64)     PK  NOT NULL                          
+   2. SERVERNAME                   VARCHAR2(1024)       NOT NULL                          
+   3. SERVERURL                    VARCHAR2(2048)       NOT NULL                          
+   4. STATUS                       VARCHAR2(4)          NOT NULL DEFAULT 'ON'             기본값 'ON'
+   5. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+   6. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_FIELDS — 화면 필드 메타 정의 (9)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. FIELD_TABLE                  VARCHAR2(128)        NOT NULL                          
+   3. FIELD_NAME                   VARCHAR2(256)        NOT NULL                          
+   4. FIELD_TYPE                   VARCHAR2(128)        NOT NULL                          
+   5. FIELD_TITLE                  VARCHAR2(128)                                          
+   6. PK                           NUMBER               NOT NULL DEFAULT 0                
+   7. FK                           NUMBER               NOT NULL DEFAULT 0                
+   8. OPTION_IDX                   NUMBER                                                 
+   9. EDITABLE                     NUMBER(38,0)         NOT NULL DEFAULT 0                
+
+## CCFA_LICENSE — 라이선스 (13)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                                                 
+   3. COMPANY_NAME                 VARCHAR2(256)                                          
+   4. CONTACT_NAME                 VARCHAR2(128)                                          
+   5. CONTACT_PHONE                VARCHAR2(128)                                          
+   6. CONTACT_EMAIL                VARCHAR2(256)                                          
+   7. SERVICE_NAME                 VARCHAR2(256)                                          
+   8. ETC                          VARCHAR2(1024)                                         
+   9. LICENSE                      VARCHAR2(2048)                                         
+  10. FILE_PATH                    VARCHAR2(256)                                          
+  11. HASHVALUE                    VARCHAR2(256)                                          
+  12. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  13. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_MAILING — 메일/SMS 발송 큐 (10)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER                        DEFAULT 0                
+   3. TO                           VARCHAR2(4000)                                         TO 는 SQL 예약어라 반드시 따옴표로 감싼다
+   4. SUBJECT                      VARCHAR2(256)                                          
+   5. CONTENT                      VARCHAR2(4000)                                         
+   6. STATUS                       VARCHAR2(256)                                          
+   7. SMS_TO                       VARCHAR2(4000)                                         
+   8. SMS_CONTENT                  VARCHAR2(300)                                          
+   9. SMS_STATUS                   VARCHAR2(512)                                          
+  10. SENDTIME                     VARCHAR2(64)                                           주의: VARCHAR2 다
+
+## CCFA_MANAGER — 어드민 운영자 계정 (16)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. USER_ID                      VARCHAR2(64)         NOT NULL                          인덱스 SYS_C007850
+   3. USER_PW                      VARCHAR2(128)        NOT NULL                          민감정보 — 직렬화 제외 필수
+   4. USER_NM                      VARCHAR2(50)                                           
+   5. USER_EMAIL                   VARCHAR2(256)                                          
+   6. USER_PHONE                   VARCHAR2(20)                                           
+   7. COMPANY_IDX                  NUMBER               NOT NULL DEFAULT 0                
+   8. STATUS                       VARCHAR2(20)                                           
+   9. LOGIN                        VARCHAR2(20)                  DEFAULT 'OFF-LINE'       기본값 'OFF-LINE'
+  10. BLOCK_TIME                   TIMESTAMP                                              
+  11. LAST_ACCESS                  TIMESTAMP                                              
+  12. ETC                          VARCHAR2(2048)                                         
+  13. ALRAM_TYPE                   VARCHAR2(32)         NOT NULL DEFAULT 'none'           원본 컬럼명 오타(ALRAM) 그대로. 기본값 'none'
+  14. ALRAM_LEVEL                  VARCHAR2(20)         NOT NULL DEFAULT '0'              
+  15. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  16. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_MANAGER_PW_POLICY — 운영자 비밀번호 정책/잠금 상태 (6)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. USER_ID                      VARCHAR2(64)         NOT NULL                          
+   3. ACCOUNT_LOCK                 VARCHAR2(1)                   DEFAULT 'N'              CHAR(1), 기본값 'N'
+   4. PW_FAIL_CNT                  NUMBER                        DEFAULT 1                기본값 1
+   5. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+   6. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_MENU — 어드민 메뉴 트리 (13)
+   1. IDX                          NUMBER(11,0)     PK  NOT NULL                          
+   2. MENU_NAME                    VARCHAR2(32)                                           
+   3. MENU_CODE                    VARCHAR2(32)                                           
+   4. MENU_PARENT_IDX              NUMBER               NOT NULL DEFAULT 0                
+   5. MENU_ICON                    VARCHAR2(64)                                           
+   6. MENU_URL                     VARCHAR2(512)                                          
+   7. MENU_SEQ                     NUMBER                                                 
+   8. TBL_NAME                     VARCHAR2(128)                                          
+   9. PK                           VARCHAR2(128)                                          
+  10. VISIBLE                      VARCHAR2(20)         NOT NULL DEFAULT 'true'           기본값 'true'
+  11. OPEN_TYPE                    VARCHAR2(20)                  DEFAULT 'open'           기본값 'open'
+  12. STATISTICS                   VARCHAR2(20)                  DEFAULT 'N'              기본값 'N'
+  13. READONLY                     VARCHAR2(20)         NOT NULL DEFAULT 'N'              기본값 'N'
+
+## CCFA_OPTION — 코드 그룹 (4)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. OPTION_NAME                  VARCHAR2(64)                                           
+   3. OPTION_NOTE                  VARCHAR2(64)                                           
+   4. OPTION_TITLE                 VARCHAR2(64)                                           
+
+## CCFA_OPTIONS — 코드 상세 (CCFA_OPTION 의 하위 항목) (5)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. OPTION_IDX                   NUMBER                                                 CCFA_OPTION.IDX 참조 (DB FK 없음)
+   3. OPTION_VALUE                 VARCHAR2(128)                                          
+   4. OPTION_TITLE                 VARCHAR2(128)                                          
+   5. OPTION_NOTE                  VARCHAR2(128)                                          
+
+## CCFA_STATISTICS — 어드민 통계 위젯 정의 (16)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. OWNER_IDX                    NUMBER                                                 
+   3. TYPE                         VARCHAR2(16)                                           
+   4. OPEN_TYPE                    VARCHAR2(20)         NOT NULL DEFAULT 'close'          기본값 'close'
+   5. GROUP1_IDX                   NUMBER                                                 
+   6. GROUP2_IDX                   NUMBER                                                 
+   7. TARGET_IDX                   NUMBER                                                 
+   8. GRAPH_TYPE                   VARCHAR2(32)                                           
+   9. TITLE                        VARCHAR2(1024)                                         
+  10. CONTENT                      VARCHAR2(4000)                                         
+  11. PRIME_FIELD_IDX              NUMBER                                                 
+  12. LIMIT                        NUMBER                                                 LIMIT 는 예약어 가능성 — 따옴표 처리
+  13. REALTIME                     VARCHAR2(20)         NOT NULL DEFAULT 'custom'         기본값 'custom'
+  14. ETC                          VARCHAR2(4000)                                         
+  15. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  16. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+## CCFA_STATISTICS_FILTER — 통계 필터 조건 (PK 없음 → 복합키로 매핑) (5)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. STATISTICS_IDX               NUMBER           PK  NOT NULL                          
+   2. COLUMN_NAME                  VARCHAR2(256)    PK  NOT NULL                          
+   3. OP                           VARCHAR2(20)     PK  NOT NULL                          
+   4. VALUE                        VARCHAR2(1024)   PK  NOT NULL                          VALUE 는 예약어 — 따옴표 처리
+   5. TYPE                         VARCHAR2(20)                  DEFAULT 'F'              기본값 'F'
+
+## CCFA_STATISTICS_ORDER — 통계 정렬 정의 (PK 없음 → 복합키로 매핑) (3)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. STATISTICS_IDX               NUMBER           PK  NOT NULL                          
+   2. COLUMN_NAME                  VARCHAR2(128)    PK  NOT NULL                          
+   3. TYPE                         VARCHAR2(20)         NOT NULL                          
+
+## CCFA_SYSTEM_INFO — 시스템 정보 (key-value) (3)
+   1. PROP_KEY                     VARCHAR2(128)    PK  NOT NULL                          
+   2. PROP_VALUE                   VARCHAR2(1024)                                         
+   3. UPDATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## CCFA_SYSTEM_PROP — 시스템 설정 (고객사별 key-value, PK 없음 → 복합키) (5)
+   [!] 원본에 PK 없음 — 논리 식별자로 매핑. 운영 데이터 중복 검증 필요
+   1. PROP_KEY                     VARCHAR2(128)    PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER           PK  NOT NULL DEFAULT 0                
+   3. PROP_VALUE                   VARCHAR2(4000)                                         
+   4. SHARE_TYPE                   VARCHAR2(20)                  DEFAULT 'NO'             기본값 'NO'
+   5. UPDATEDTIME                  TIMESTAMP                     DEFAULT sysdate          
+
+## AWS_INFO — AWS 마켓플레이스 연동 정보 (10)
+   1. IDX                          NUMBER           PK  NOT NULL                          
+   2. COMPANY_IDX                  NUMBER(38,0)         NOT NULL                          
+   3. AMZ_TOKEN                    VARCHAR2(512)                                          민감정보
+   4. CUSTOMER_ID                  VARCHAR2(512)                                          
+   5. PRODUCT_CODE                 VARCHAR2(512)                                          
+   6. CUSTOMER_AWS_ACCOUNT_ID      VARCHAR2(512)                                          
+   7. DIMENSION                    VARCHAR2(100)                                          
+   8. EXPIRATIONDATE               VARCHAR2(100)                                          주의: VARCHAR2 다
+   9. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+  10. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+
+=== tables 39, columns 354 ===

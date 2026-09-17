@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FIDO2 데모 접근코드</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">FIDO2 데모 접근코드</h1>
+    <a th:href="@{/fido2/demo-access-codes/new}" class="btn btn-primary btn-sm">등록</a>
+  </div>
+
+  <form method="get" th:action="@{/fido2/demo-access-codes}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label small mb-0">코드</label><input name="accesscode" th:value="${search.accesscode}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">벤더</label><input name="vendorname" th:value="${search.vendorname}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">상태</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option value="E" th:selected="${search.status == 'E'}">E (활성)</option>
+        <option value="D" th:selected="${search.status == 'D'}">D (만료)</option>
+      </select>
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/fido2/demo-access-codes}" class="btn btn-link btn-sm">초기화</a></div>
+  </form>
+
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>코드</th><th>벤더</th><th>시작일시</th><th>종료일시</th><th>상태</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td><a th:href="@{/fido2/demo-access-codes/{id}(id=${r.accesscode})}" class="fa-mono" th:text="${r.accesscode}">코드</a></td>
+          <td th:text="${r.vendorname}"></td>
+          <td th:text="${r.startAt == null} ? '' : ${#temporals.format(r.startAt, 'yyyy-MM-dd HH:mm')}"></td>
+          <td th:text="${r.endAt == null} ? '' : ${#temporals.format(r.endAt, 'yyyy-MM-dd HH:mm')}"></td>
+          <td><span class="badge" th:classappend="${r.status == 'E'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.status}"></span></td>
+          <td th:text="${#strings.abbreviate(r.note, 40)}"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>

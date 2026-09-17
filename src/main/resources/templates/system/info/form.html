@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '시스템 정보 등록' : '시스템 정보 수정'">시스템 정보</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '시스템 정보 등록' : '시스템 정보 수정'">시스템 정보</h1>
+  <form th:action="${isNew} ? @{/system/info} : @{/system/info/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 640px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">키 <span class="text-danger">*</span></label>
+        <input th:field="*{propKey}" class="form-control" th:readonly="${!isNew}"
+               th:classappend="${#fields.hasErrors('propKey')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{propKey}"></div>
+      </div>
+      <div class="col-12"><label class="form-label">값</label><textarea th:field="*{propValue}" rows="3" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/system/info} : @{/system/info/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

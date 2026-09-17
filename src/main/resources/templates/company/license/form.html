@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '라이선스 등록' : '라이선스 수정'">라이선스</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '라이선스 등록' : '라이선스 수정'">라이선스</h1>
+  <form th:action="${isNew} ? @{/licenses} : @{/licenses/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">고객사 <span class="text-danger">*</span></label>
+        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
+          <option value="">선택</option>
+          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
+        </select>
+        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
+      </div>
+      <div class="col-md-6"><label class="form-label">서비스명</label><input th:field="*{serviceName}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">담당자</label><input th:field="*{contactName}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">전화</label><input th:field="*{contactPhone}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">이메일</label><input th:field="*{contactEmail}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">라이선스</label><textarea th:field="*{license}" rows="4" class="form-control fa-mono"></textarea></div>
+      <div class="col-md-6"><label class="form-label">파일 경로</label><input th:field="*{filePath}" class="form-control"></div>
+      <div class="col-md-6"><label class="form-label">해시</label><input th:field="*{hashvalue}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">비고</label><textarea th:field="*{etc}" rows="2" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/licenses} : @{/licenses/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '운영자 등록' : '운영자 수정'">운영자</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '운영자 등록' : '운영자 수정'">운영자</h1>
+  <form th:action="${isNew} ? @{/managers} : @{/managers/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;" autocomplete="off">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">ID <span class="text-danger">*</span></label>
+        <input th:field="*{userId}" class="form-control" th:readonly="${!isNew}" th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{userId}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">고객사 <span class="text-danger">*</span></label>
+        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
+          <option value="">선택</option>
+          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
+        </select>
+        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label" th:text="${isNew} ? '비밀번호 *' : '비밀번호 (변경 시에만 입력)'">비밀번호</label>
+        <input type="password" th:field="*{password}" class="form-control" autocomplete="new-password"
+               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{password}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">비밀번호 확인</label>
+        <input type="password" th:field="*{passwordConfirm}" class="form-control" autocomplete="new-password"
+               th:classappend="${#fields.hasErrors('passwordConfirm')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{passwordConfirm}"></div>
+      </div>
+      <div class="col-md-4"><label class="form-label">이름</label><input th:field="*{userNm}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">이메일</label><input th:field="*{userEmail}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">전화</label><input th:field="*{userPhone}" class="form-control"></div>
+      <div class="col-md-4">
+        <label class="form-label">상태 <span class="text-danger">*</span></label>
+        <select th:field="*{status}" class="form-select"><option value="활성">활성</option><option value="비활성">비활성</option></select>
+      </div>
+      <div class="col-md-4"><label class="form-label">알림 유형</label><input th:field="*{alramType}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">알림 레벨</label><input th:field="*{alramLevel}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">비고</label><textarea th:field="*{etc}" rows="3" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/managers} : @{/managers/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

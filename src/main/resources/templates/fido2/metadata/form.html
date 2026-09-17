@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? 'FIDO2 메타데이터 등록' : 'FIDO2 메타데이터 수정'">메타데이터</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? 'FIDO2 메타데이터 등록' : 'FIDO2 메타데이터 수정'">메타데이터</h1>
+  <form th:action="${isNew} ? @{/fido2/metadata} : @{/fido2/metadata/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 960px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">설명 <span class="text-danger">*</span></label>
+        <input th:field="*{description}" class="form-control" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{description}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">AAGUID <span class="text-danger">*</span></label>
+        <input th:field="*{aaguid}" class="form-control fa-mono" th:classappend="${#fields.hasErrors('aaguid')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{aaguid}"></div>
+      </div>
+      <div class="col-12"><label class="form-label">대체 설명</label><input th:field="*{alternativedescriptions}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">프로토콜</label><input th:field="*{protocolfamily}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">인증기기 버전</label><input type="number" th:field="*{authenticatorversion}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">어서션 스킴</label><input th:field="*{assertionschme}" class="form-control"></div>
+      <div class="col-md-3">
+        <label class="form-label">2FA 전용</label>
+        <select th:field="*{issecondfactoronly}" class="form-select"><option value="false">false</option><option value="true">true</option></select>
+      </div>
+      <div class="col-12"><label class="form-label">UPV</label><input th:field="*{upv}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">인증 알고리즘</label><input type="number" th:field="*{authenticationalgorithm}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">공개키 알고리즘/인코딩</label><input type="number" th:field="*{publickeyalgandencoding}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">키 보호</label><input type="number" th:field="*{keyprotection}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">매처 보호</label><input type="number" th:field="*{matcherprotection}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">암호 강도</label><input type="number" th:field="*{cryptostrength}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">부착 힌트</label><input type="number" th:field="*{attachmenthint}" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">TC 표시</label><input type="number" th:field="*{tcdisplay}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">어테스테이션 유형</label><input th:field="*{attestationtypes}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">사용자 검증 상세</label><textarea th:field="*{userverificationdetails}" rows="2" class="form-control"></textarea></div>
+      <div class="col-12"><label class="form-label">운영 환경</label><textarea th:field="*{operatingenv}" rows="2" class="form-control"></textarea></div>
+      <div class="col-12"><label class="form-label">루트 인증서 (CLOB)</label><textarea th:field="*{attestationrootcertificates}" rows="6" class="form-control fa-mono"></textarea></div>
+      <div class="col-12"><label class="form-label">아이콘 (CLOB, data URI)</label><textarea th:field="*{icon}" rows="4" class="form-control fa-mono"></textarea></div>
+      <div class="col-12"><label class="form-label">SKI</label><textarea th:field="*{ski}" rows="2" class="form-control fa-mono"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/fido2/metadata} : @{/fido2/metadata/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

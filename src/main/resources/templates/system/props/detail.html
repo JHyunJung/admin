@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>시스템 설정 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|시스템 설정 ${item.propKey}|">시스템 설정</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/system/props/{id}/edit(id=${item.pathValue})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/system/props/{id}/delete(id=${item.pathValue})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/system/props}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0">
+      <tbody>
+        <tr><th>키</th><td class="fa-mono" th:text="${item.propKey}"></td></tr>
+        <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+        <tr><th>값</th><td class="fa-pre" th:text="${item.propValue}"></td></tr>
+        <tr><th>공유</th><td th:text="${item.shareType}"></td></tr>
+        <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>

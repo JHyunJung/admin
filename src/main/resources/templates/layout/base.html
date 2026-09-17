@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:fragment="layout(title, content)">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:replace="${title}">FIDO Admin</title>
+  <link rel="icon" th:href="@{/favicon.ico}" sizes="32x32">
+  <link rel="icon" type="image/png" th:href="@{/favicon.png}" sizes="192x192">
+  <link rel="apple-touch-icon" th:href="@{/favicon.png}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<div class="fa-shell">
+  <nav class="fa-sidebar" th:replace="~{fragments/sidebar :: sidebar}"></nav>
+  <div class="fa-main">
+    <header class="fa-topbar d-flex align-items-center justify-content-between px-3">
+      <span class="fw-semibold">FIDO Admin</span>
+      <div class="d-flex align-items-center gap-3 small">
+        <span sec:authentication="principal.userNm">이름</span>
+        <span class="text-secondary" sec:authentication="principal.companyName">고객사</span>
+        <span class="badge text-bg-secondary" sec:authorize="hasRole('SUPER')">SUPER</span>
+        <form th:action="@{/logout}" method="post" class="m-0">
+          <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>
+        </form>
+      </div>
+    </header>
+    <div class="fa-content p-3">
+      <div th:replace="~{fragments/alert :: flash}"></div>
+      <main th:replace="${content}"></main>
+    </div>
+  </div>
+</div>
+<div th:replace="~{fragments/confirm-modal :: modal}"></div>
+<script th:src="@{/webjars/bootstrap/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>

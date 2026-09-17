@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '시스템 설정 등록' : '시스템 설정 수정'">시스템 설정</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '시스템 설정 등록' : '시스템 설정 수정'">시스템 설정</h1>
+  <form th:action="${isNew} ? @{/system/props} : @{/system/props/{id}(id=${id.toPathValue()})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">키 <span class="text-danger">*</span></label>
+        <input th:field="*{propKey}" class="form-control fa-mono" th:readonly="${!isNew}"
+               th:classappend="${#fields.hasErrors('propKey')} ? 'is-invalid'">
+        <div class="form-text">영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 사용할 수 있습니다.</div>
+        <div class="invalid-feedback" th:errors="*{propKey}"></div>
+      </div>
+      <div class="col-md-6" th:if="${isNew}">
+        <label class="form-label">고객사 <span class="text-danger">*</span></label>
+        <select th:field="*{companyIdx}" class="form-select">
+          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="|${c.companyName} (${c.idx})|"></option>
+        </select>
+        <div class="invalid-feedback d-block" th:errors="*{companyIdx}"></div>
+      </div>
+      <div class="col-md-6" th:unless="${isNew}">
+        <label class="form-label">고객사</label>
+        <input class="form-control" readonly th:value="|${companyNames.get(form.companyIdx) ?: '#' + form.companyIdx} (${form.companyIdx})|">
+        <input type="hidden" name="companyIdx" th:value="*{companyIdx}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">공유 <span class="text-danger">*</span></label>
+        <select th:field="*{shareType}" class="form-select"><option value="NO">NO</option><option value="YES">YES</option></select>
+      </div>
+      <div class="col-12"><label class="form-label">값</label><textarea th:field="*{propValue}" rows="4" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/system/props} : @{/system/props/{id}(id=${id.toPathValue()})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

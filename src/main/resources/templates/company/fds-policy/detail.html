@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FDS 정책 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|FDS 정책 — ${companyName}|">FDS 정책</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/fds-policies/{id}/edit(id=${item.companyIdx})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/fds-policies/{id}/delete(id=${item.companyIdx})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/fds-policies}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('AND 조건 (모두 만족)', ~{this :: andRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('OR 조건 (하나라도 만족)', ~{this :: orRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('이력', ~{this :: historyRows})}"></div>
+</main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="basicRows">
+  <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+</tbody>
+
+<tbody th:fragment="andRows">
+  <tr><th>AND IP</th><td class="fa-pre" th:text="${item.andIp}"></td></tr>
+  <tr><th>AND 기간</th><td th:text="${item.andTerm}"></td></tr>
+  <tr><th>AND 기기</th><td th:text="${item.andDevice}"></td></tr>
+  <tr><th>AND 국가</th><td th:text="${item.andCountry}"></td></tr>
+</tbody>
+
+<tbody th:fragment="orRows">
+  <tr><th>OR IP</th><td class="fa-pre" th:text="${item.orIp}"></td></tr>
+  <tr><th>OR 기간</th><td th:text="${item.orTerm}"></td></tr>
+  <tr><th>OR 국가</th><td th:text="${item.orCountry}"></td></tr>
+</tbody>
+
+<tbody th:fragment="historyRows">
+  <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+  <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
+</body>
+</html>

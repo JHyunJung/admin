@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '앱 ID 등록' : '앱 ID 수정'">앱 ID</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '앱 ID 등록' : '앱 ID 수정'">앱 ID</h1>
+  <form th:action="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6" sec:authorize="hasRole('SUPER')">
+        <label class="form-label">고객사</label>
+        <select th:field="*{companyIdx}" class="form-select">
+          <option value="">선택</option>
+          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">APPID <span class="text-danger">*</span></label>
+        <input th:field="*{appid}" class="form-control" th:classappend="${#fields.hasErrors('appid')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{appid}"></div>
+      </div>
+      <div class="col-md-6"><label class="form-label">서비스명</label><input th:field="*{servicename}" class="form-control"></div>
+      <div class="col-md-3">
+        <label class="form-label">상태 <span class="text-danger">*</span></label>
+        <select th:field="*{status}" class="form-select"><option value="use">use</option><option value="unuse">unuse</option></select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">기본기기 <span class="text-danger">*</span></label>
+        <select th:field="*{deviceDefault}" class="form-select"><option value="F">F</option><option value="T">T</option></select>
+      </div>
+      <div class="col-md-6"><label class="form-label">기기</label><input th:field="*{device}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">메모</label><textarea th:field="*{memo}" rows="3" class="form-control"></textarea></div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

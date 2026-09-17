@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>메뉴 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|메뉴 #${item.idx}|">메뉴</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/system/menus/{id}/edit(id=${item.idx})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/system/menus/{id}/delete(id=${item.idx})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/system/menus}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('화면 연결', ~{this :: linkRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('표시 옵션', ~{this :: displayRows})}"></div>
+</main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="basicRows">
+  <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+  <tr><th>이름</th><td th:text="${item.menuName}"></td></tr>
+  <tr><th>코드</th><td th:text="${item.menuCode}"></td></tr>
+  <tr><th>부모</th><td th:text="|${parentNames.get(item.menuParentIdx) ?: ''} (${item.menuParentIdx})|"></td></tr>
+  <tr><th>순번</th><td th:text="${item.menuSeq}"></td></tr>
+</tbody>
+
+<tbody th:fragment="linkRows">
+  <tr><th>URL</th><td th:text="${item.menuUrl}"></td></tr>
+  <tr><th>테이블</th><td th:text="${item.tblName}"></td></tr>
+  <tr><th>PK</th><td th:text="${item.pk}"></td></tr>
+</tbody>
+
+<tbody th:fragment="displayRows">
+  <tr><th>아이콘</th><td th:text="${item.menuIcon}"></td></tr>
+  <tr><th>표시</th><td th:text="${item.visible}"></td></tr>
+  <tr><th>열림 유형</th><td th:text="${item.openType}"></td></tr>
+  <tr><th>통계</th><td th:text="${item.statistics}"></td></tr>
+  <tr><th>읽기전용</th><td th:text="${item.readonly}"></td></tr>
+</tbody>
+</body>
+</html>

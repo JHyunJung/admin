@@ -1,0 +1,150 @@
+/* FIDO Admin 테마 — 밝은 SaaS 톤(A) + 남색 사이드바(B). 외부 자원 없음. */
+
+/* Pretendard (SIL Open Font License 1.1, /fonts/LICENSE.txt).
+   한글 상용 2,780자 서브셋만 번들한다. 서브셋 밖 글자(희귀 한자 등)는
+   font-family 뒤쪽의 시스템 폰트가 받으므로 깨지지 않는다. */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard Regular'), url(../fonts/Pretendard-Regular.subset.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard Medium'), url(../fonts/Pretendard-Medium.subset.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard SemiBold'), url(../fonts/Pretendard-SemiBold.subset.woff2) format('woff2');
+}
+
+:root {
+  --fa-sidebar-w: 236px;
+  --fa-topbar-h: 56px;
+  --fa-navy: #1e2a44;
+  --fa-navy-2: #2a3856;
+  --fa-navy-3: #2f3f63;
+  --fa-navy-text: #c7d0e0;
+  --fa-navy-muted: #8593ad;
+  --fa-accent: #2563eb;
+  --fa-accent-dark: #1d4ed8;
+  --fa-accent-soft: #e8efff;
+  --fa-surface: #ffffff;
+  --fa-line: #e5e7eb;
+  --fa-muted: #64748b;
+  --fa-head-bg: #f8fafc;
+  --fa-shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 1px 2px rgba(16, 24, 40, .04);
+
+  /* Bootstrap 변수 재정의 — 유틸리티(.border/.rounded/.bg-*)까지 함께 바뀐다 */
+  --bs-body-bg: #f4f6fb;
+  --bs-body-color: #1f2937;
+  --bs-body-font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --bs-border-color: #e5e7eb;
+  --bs-border-radius: 12px;
+  --bs-border-radius-sm: 8px;
+  --bs-link-color-rgb: 29, 78, 216;
+  --bs-link-hover-color-rgb: 30, 64, 175;
+  --bs-focus-ring-color: rgba(37, 99, 235, .25);
+  --bs-secondary-color: #64748b;
+}
+
+body { background: var(--bs-body-bg); color: var(--bs-body-color); }
+
+/* ---------- 골격 ---------- */
+.fa-shell { display: flex; min-height: 100vh; }
+.fa-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fa-content { flex: 1; padding: 28px 32px !important; }
+
+/* ---------- 사이드바 (남색) ---------- */
+.fa-sidebar { width: var(--fa-sidebar-w); flex: 0 0 var(--fa-sidebar-w); background: var(--fa-navy); color: var(--fa-navy-text); }
+.fa-brand { color: #fff; font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; padding: 18px 20px !important; border-bottom: 1px solid var(--fa-navy-2); }
+.fa-group { color: var(--fa-navy-muted) !important; font-size: .68rem !important; font-weight: 600; letter-spacing: .12em; margin: 18px 0 6px; }
+.fa-link { color: var(--fa-navy-text); text-decoration: none; font-size: .9rem; margin: 1px 8px; padding: 7px 12px !important; border-radius: 6px; }
+.fa-link:hover { background: var(--fa-navy-2); color: #fff; }
+.fa-link.active { background: var(--fa-navy-3); color: #fff; font-weight: 600; box-shadow: inset 3px 0 0 #7aa2ff; }
+/* 메뉴 아이콘 — 글자보다 흐리게 두어 제목이 먼저 읽히게 한다. 너비를 고정해 제목 시작선을 맞춘다. */
+.fa-link .bi { width: 1.1rem; flex: 0 0 1.1rem; font-size: 1rem; line-height: 1; text-align: center; color: var(--fa-navy-muted); }
+.fa-link:hover .bi, .fa-link.active .bi { color: #fff; }
+
+/* ---------- 상단바 ---------- */
+.fa-topbar { height: var(--fa-topbar-h); background: var(--fa-surface); border-bottom: 1px solid var(--fa-line); box-shadow: 0 1px 2px rgba(16, 24, 40, .04); padding: 0 32px !important; }
+.fa-topbar .badge { background: #eef2f7 !important; color: #475569 !important; }
+
+/* ---------- 제목 ---------- */
+h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111827; }
+
+/* ---------- 카드형 컨테이너 (목록 표, 상세 표, 폼, 대시보드 카드) ---------- */
+.fa-content .bg-white.border.rounded,
+.fa-content .table-responsive.bg-white.border.rounded { box-shadow: var(--fa-shadow); overflow: hidden; }
+.card { box-shadow: var(--fa-shadow); }
+
+/* 검색 폼 */
+.fa-content form.row.g-2 { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--bs-border-radius); padding: 14px 16px; margin-bottom: 18px !important; box-shadow: var(--fa-shadow); }
+.fa-content form.row.g-2 .form-label { color: var(--fa-muted); font-weight: 500; }
+
+/* ---------- 표 ---------- */
+.table { --bs-table-hover-bg: #f5f8ff; --bs-table-border-color: var(--fa-line); }
+.fa-table td, .fa-table th { white-space: nowrap; }
+.fa-table th { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding: 12px 14px; }
+.fa-table td { padding: 11px 14px; vertical-align: middle; }
+.table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
+.fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
+/* ---------- 대시보드 요약 카드 ----------
+   지표마다 위쪽 색 띠와 아이콘 색으로 구분한다. 숫자는 검게 두어 가독성을 지킨다. */
+.fa-stat { position: relative; height: 100%; background: var(--fa-surface); border: 1px solid var(--fa-line);
+  border-radius: var(--bs-border-radius); padding: 16px 18px; box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-stat::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--fa-stat-color); }
+.fa-stat-head { display: flex; align-items: center; gap: 7px; color: var(--fa-muted); font-size: .82rem; margin-bottom: 6px; }
+.fa-stat-head .bi { color: var(--fa-stat-color); font-size: .95rem; }
+.fa-stat-value { font-size: 1.5rem; font-weight: 700; color: #111827; letter-spacing: -.01em; line-height: 1.2; }
+.fa-stat-sep { color: #cbd5e1; font-weight: 400; margin: 0 2px; }
+.fa-stat-fail { color: #dc2626; }
+.fa-stat-note { font-size: .78rem; color: var(--fa-muted); margin-top: 4px; }
+.fa-stat-auth { --fa-stat-color: #2563eb; }
+.fa-stat-reg { --fa-stat-color: #16a34a; }
+.fa-stat-dereg { --fa-stat-color: #f59e0b; }
+.fa-stat-tc { --fa-stat-color: #7c3aed; }
+
+/* ---------- 상세 화면 구획 ---------- */
+.fa-section + .fa-section { margin-top: 20px; }
+.fa-section-title { font-size: .95rem; font-weight: 600; color: #374151; margin: 0 0 8px 2px; }
+.fa-detail td { padding: 12px 18px; }
+
+/* ---------- 버튼·입력 ---------- */
+.btn { --bs-btn-border-radius: 8px; font-weight: 500; }
+.btn-sm { --bs-btn-padding-y: 6px; --bs-btn-padding-x: 12px; }
+.btn-primary { --bs-btn-bg: var(--fa-accent); --bs-btn-border-color: var(--fa-accent); --bs-btn-hover-bg: var(--fa-accent-dark); --bs-btn-hover-border-color: var(--fa-accent-dark); --bs-btn-active-bg: var(--fa-accent-dark); }
+.btn-outline-primary { --bs-btn-color: var(--fa-accent); --bs-btn-border-color: #bfd0fb; --bs-btn-hover-bg: var(--fa-accent); --bs-btn-hover-border-color: var(--fa-accent); }
+.btn-outline-secondary { --bs-btn-color: #374151; --bs-btn-border-color: #d1d5db; --bs-btn-bg: var(--fa-surface); --bs-btn-hover-bg: #f3f4f6; --bs-btn-hover-color: #111827; --bs-btn-hover-border-color: #d1d5db; }
+.form-control, .form-select { border-radius: 8px; border-color: #d1d5db; }
+.form-control-sm, .form-select-sm { border-radius: 8px; }
+
+/* ---------- 배지 (연한 배경 + 진한 글자) ---------- */
+.badge { border-radius: 999px; padding: 5px 10px; font-weight: 600; letter-spacing: .02em; }
+.badge.text-bg-secondary { background: #eef2f7 !important; color: #475569 !important; }
+.badge.text-bg-success { background: #dcfce7 !important; color: #166534 !important; }
+.badge.text-bg-danger { background: #fee2e2 !important; color: #991b1b !important; }
+.badge.text-bg-warning { background: #fef3c7 !important; color: #92400e !important; }
+.badge.text-bg-primary { background: var(--fa-accent-soft) !important; color: var(--fa-accent-dark) !important; }
+
+/* ---------- 알림·페이지네이션 ---------- */
+.alert { border-radius: var(--bs-border-radius); }
+.page-link { border-radius: 8px !important; margin: 0 2px; }
+.pagination { --bs-pagination-active-bg: var(--fa-accent); --bs-pagination-active-border-color: var(--fa-accent); --bs-pagination-color: #374151; }
+
+/* ---------- 텍스트 유틸 ---------- */
+.fa-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
+.fa-pre { white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto; }
+
+/* ---------- 로그인·오류 페이지 ---------- */
+body.bg-light { background: var(--bs-body-bg) !important; }
+body.bg-light .card { border: 1px solid var(--fa-line); }
+
+@media (max-width: 900px) { .fa-sidebar { display: none; } }

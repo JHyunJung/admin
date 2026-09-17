@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? 'FIDO 서버 등록' : 'FIDO 서버 수정'">FIDO 서버</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? 'FIDO 서버 등록' : 'FIDO 서버 수정'">FIDO 서버</h1>
+  <form th:action="${isNew} ? @{/system/fido-clients} : @{/system/fido-clients/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">코드 <span class="text-danger">*</span></label>
+        <input th:field="*{servercode}" class="form-control" th:readonly="${!isNew}"
+               th:classappend="${#fields.hasErrors('servercode')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{servercode}"></div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">상태 <span class="text-danger">*</span></label>
+        <select th:field="*{status}" class="form-select"><option value="ON">ON</option><option value="OFF">OFF</option></select>
+      </div>
+      <div class="col-12">
+        <label class="form-label">이름 <span class="text-danger">*</span></label>
+        <input th:field="*{servername}" class="form-control" th:classappend="${#fields.hasErrors('servername')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{servername}"></div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">URL <span class="text-danger">*</span></label>
+        <input th:field="*{serverurl}" class="form-control" th:classappend="${#fields.hasErrors('serverurl')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{serverurl}"></div>
+      </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/system/fido-clients} : @{/system/fido-clients/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>

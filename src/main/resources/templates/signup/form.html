@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIDO Admin 가입 신청</title>
+  <link rel="icon" th:href="@{/favicon.ico}" sizes="32x32">
+  <link rel="icon" type="image/png" th:href="@{/favicon.png}" sizes="192x192">
+  <link rel="apple-touch-icon" th:href="@{/favicon.png}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="bg-light">
+<!-- 사이드바가 없는 화면이므로 레이아웃을 쓰지 않고 로그인 화면과 같은 골격을 쓴다. -->
+<main class="container" style="max-width: 560px;">
+  <div class="card shadow-sm my-5">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-1 text-center">가입 신청</h1>
+      <p class="text-secondary small text-center mb-4">신청 후 관리자 승인을 받아야 로그인할 수 있습니다.</p>
+
+      <!-- 소속 고객사 선택란을 두지 않는다. 배정은 승인자의 몫이고,
+           로그인 전 화면에 고객사 목록을 노출하지 않기 위해서다. -->
+      <form th:action="@{/signup}" th:object="${form}" method="post">
+        <!-- 필드별 메시지를 모두 표시하지 않으면 길이 초과 등에서 이유 없이 저장이 안 되는 것처럼 보인다. -->
+        <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+          <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userId" class="form-label">아이디 <span class="text-danger">*</span></label>
+          <input id="userId" type="text" th:field="*{userId}" class="form-control"
+                 th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'"
+                 autocomplete="username" required autofocus>
+          <div class="invalid-feedback" th:errors="*{userId}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">비밀번호 <span class="text-danger">*</span></label>
+          <input id="password" type="password" th:field="*{password}" class="form-control"
+                 th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                 autocomplete="new-password" required>
+          <div class="invalid-feedback" th:errors="*{password}"></div>
+          <div class="form-text">8~64자, 영문·숫자·특수문자 포함</div>
+        </div>
+        <div class="mb-3">
+          <label for="passwordConfirm" class="form-label">비밀번호 확인 <span class="text-danger">*</span></label>
+          <input id="passwordConfirm" type="password" th:field="*{passwordConfirm}" class="form-control"
+                 th:classappend="${#fields.hasErrors('passwordConfirm')} ? 'is-invalid'"
+                 autocomplete="new-password" required>
+          <div class="invalid-feedback" th:errors="*{passwordConfirm}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userNm" class="form-label">이름 <span class="text-danger">*</span></label>
+          <input id="userNm" type="text" th:field="*{userNm}" class="form-control"
+                 th:classappend="${#fields.hasErrors('userNm')} ? 'is-invalid'" required>
+          <div class="invalid-feedback" th:errors="*{userNm}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userEmail" class="form-label">이메일 <span class="text-danger">*</span></label>
+          <input id="userEmail" type="email" th:field="*{userEmail}" class="form-control"
+                 th:classappend="${#fields.hasErrors('userEmail')} ? 'is-invalid'" required>
+          <div class="invalid-feedback" th:errors="*{userEmail}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userPhone" class="form-label">전화</label>
+          <input id="userPhone" type="text" th:field="*{userPhone}" class="form-control"
+                 th:classappend="${#fields.hasErrors('userPhone')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:errors="*{userPhone}"></div>
+        </div>
+        <div class="mb-4">
+          <label for="reason" class="form-label">신청 사유</label>
+          <textarea id="reason" th:field="*{reason}" class="form-control" rows="3"
+                    th:classappend="${#fields.hasErrors('reason')} ? 'is-invalid'"
+                    placeholder="소속과 담당 업무를 적어주시면 승인이 빨라집니다."></textarea>
+          <div class="invalid-feedback" th:errors="*{reason}"></div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">가입 신청</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a th:href="@{/login}" class="small">로그인으로 돌아가기</a>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>

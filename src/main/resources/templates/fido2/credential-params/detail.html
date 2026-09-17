@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FIDO2 크리덴셜 파라미터 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|크리덴셜 파라미터 #${item.idx}|">크리덴셜 파라미터</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/fido2/credential-params/{id}/edit(id=${item.idx})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/fido2/credential-params/{id}/delete(id=${item.idx})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/fido2/credential-params}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>타입</th><td th:text="${item.credType}"></td></tr>
+      <tr><th>알고리즘(COSE)</th><td th:text="${item.credAlg}"></td></tr>
+      <tr><th>상태</th><td th:text="${item.status}"></td></tr>
+      <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>

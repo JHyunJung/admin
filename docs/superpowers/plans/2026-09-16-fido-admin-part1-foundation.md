@@ -85,7 +85,7 @@ fido-admin/
 **Interfaces:**
 - Produces: Gradle 태스크 `./gradlew test`, `./gradlew bootRun --args='--spring.profiles.active=local'`; 메인 클래스 `FidoAdminApplication`.
 
-- [ ] **Step 1: Gradle Wrapper 생성**
+- [x] **Step 1: Gradle Wrapper 생성**
 
 로컬에 Gradle이 설치되어 있으므로 wrapper를 만든다.
 
@@ -96,13 +96,13 @@ gradle wrapper --gradle-version 8.14 --distribution-type bin
 
 Expected: `gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`, `gradle-wrapper.properties` 생성. `./gradlew --version`에 `Gradle 8.14` 출력.
 
-- [ ] **Step 2: settings.gradle 작성**
+- [x] **Step 2: settings.gradle 작성**
 
 ```groovy
 rootProject.name = 'fido-admin'
 ```
 
-- [ ] **Step 3: build.gradle 작성**
+- [x] **Step 3: build.gradle 작성**
 
 ```groovy
 plugins {
@@ -152,7 +152,7 @@ tasks.named('test') {
 }
 ```
 
-- [ ] **Step 4: 메인 클래스 작성**
+- [x] **Step 4: 메인 클래스 작성**
 
 `src/main/java/com/crosscert/fidoadmin/FidoAdminApplication.java`
 
@@ -170,7 +170,7 @@ public class FidoAdminApplication {
 }
 ```
 
-- [ ] **Step 5: application.yml 작성**
+- [x] **Step 5: application.yml 작성**
 
 `src/main/resources/application.yml`
 
@@ -233,7 +233,7 @@ logging:
     org.hibernate.orm.jdbc.bind: trace
 ```
 
-- [ ] **Step 6: 스모크 테스트 작성**
+- [x] **Step 6: 스모크 테스트 작성**
 
 `src/test/java/com/crosscert/fidoadmin/BuildSmokeTest.java`
 
@@ -252,12 +252,12 @@ class BuildSmokeTest {
 }
 ```
 
-- [ ] **Step 7: 빌드·테스트 실행**
+- [x] **Step 7: 빌드·테스트 실행**
 
 Run: `./gradlew test --no-daemon`
 Expected: `BUILD SUCCESSFUL`, 테스트 1개 통과.
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add settings.gradle build.gradle gradlew gradlew.bat gradle/ src/
@@ -280,7 +280,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Produces: `localhost:1521/FREEPDB1`, 계정 `kbfido/kbfido`, 스키마 `KBFIDO`에 ERD 39개 테이블·시퀀스 29개·시드 데이터. 로그인 계정 `superuser/Admin1234!`(SUPER), `kbadmin/Company1234!`(COMPANY, COMPANY_IDX 1).
 - 시퀀스 이름 `<TABLE>_SEQ`는 Task 4 엔티티의 `sequenceName`과 반드시 같아야 한다.
 
-- [ ] **Step 1: docker-compose.yml 작성**
+- [x] **Step 1: docker-compose.yml 작성**
 
 `docker/docker-compose.yml`
 
@@ -309,7 +309,7 @@ volumes:
 
 `APP_USER`로 만든 `KBFIDO` 사용자는 `FREEPDB1` 안에 생성된다. init 스크립트는 SYSDBA로 실행되므로 각 스크립트 첫 줄에서 컨테이너와 스키마를 전환한다.
 
-- [ ] **Step 2: 01-schema.sql 작성**
+- [x] **Step 2: 01-schema.sql 작성**
 
 `docker/init/01-schema.sql` — 아래 내용 전체. ERD 컬럼 정의(`docs/erd/kbfido-columns.txt`)와 1:1이다.
 
@@ -894,7 +894,7 @@ ALTER TABLE AWS_INFO MODIFY IDX DEFAULT AWS_INFO_SEQ.NEXTVAL;
 COMMIT;
 ```
 
-- [ ] **Step 3: 02-seed.sql 작성**
+- [x] **Step 3: 02-seed.sql 작성**
 
 `docker/init/02-seed.sql` — 아래 내용 전체.
 
@@ -1024,7 +1024,7 @@ END;
 COMMIT;
 ```
 
-- [ ] **Step 4: docker/README.md 작성**
+- [x] **Step 4: docker/README.md 작성**
 
 ```markdown
 # 로컬 검증용 Oracle
@@ -1038,7 +1038,7 @@ COMMIT;
 - 시퀀스 이름은 임시(`<TABLE>_SEQ`). 실제 이름을 받으면 `01-schema.sql`과 엔티티의 `@SequenceGenerator.sequenceName`을 함께 교체한다.
 ```
 
-- [ ] **Step 5: 컨테이너 기동과 스키마 검증**
+- [x] **Step 5: 컨테이너 기동과 스키마 검증**
 
 Docker Desktop이 실행 중이어야 한다.
 
@@ -1058,7 +1058,7 @@ SQL
 
 Expected 출력 순서대로: `39`, `354`, `29`, `3`, `60`. 다르면 init 로그(`docker logs fido-admin-oracle`)에서 ORA- 오류를 찾아 SQL을 고친다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add docker/
@@ -1078,7 +1078,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `class Sha256PasswordEncoder implements org.springframework.security.crypto.password.PasswordEncoder` — `encode(CharSequence)`는 소문자 hex 64자, `matches(raw, encoded)`는 대소문자 무시 비교. `static String sha256Hex(String)` 유틸(감사 로그 해시에서 재사용).
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -1118,12 +1118,12 @@ class Sha256PasswordEncoderTest {
 }
 ```
 
-- [ ] **Step 2: 테스트 실패 확인**
+- [x] **Step 2: 테스트 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.Sha256PasswordEncoderTest' --no-daemon`
 Expected: 컴파일 오류 `Sha256PasswordEncoder` 없음.
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -1166,12 +1166,12 @@ public class Sha256PasswordEncoder implements PasswordEncoder {
 }
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.Sha256PasswordEncoderTest' --no-daemon`
 Expected: 4개 통과.
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/main/java/com/crosscert/fidoadmin/auth/Sha256PasswordEncoder.java src/test/java/com/crosscert/fidoadmin/auth/Sha256PasswordEncoderTest.java
@@ -1250,7 +1250,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 필드명은 컬럼명을 camelCase로 바꾼 것(`COMPANY_IDX → companyIdx`, `SERVICENAME → servicename`, `INTERGRITY_HASH → intergrityHash`; 오타도 그대로). 예약어 컬럼 3개는 `@Column(name = "\"TO\"")`, `"\"LIMIT\""`, `"\"VALUE\""`. 기본값·NOT NULL은 엔티티에 두지 않고 서비스에서 채운다(Task 7 이후).
 
-- [ ] **Step 1: 테스트 리소스 복사와 ERD 파서 작성**
+- [x] **Step 1: 테스트 리소스 복사와 ERD 파서 작성**
 
 ```bash
 cp docs/erd/kbfido-columns.txt src/test/resources/erd-columns.txt
@@ -1299,7 +1299,7 @@ public final class ErdColumns {
 }
 ```
 
-- [ ] **Step 2: 실패하는 정합성 테스트 작성**
+- [x] **Step 2: 실패하는 정합성 테스트 작성**
 
 `src/test/java/com/crosscert/fidoadmin/erd/ErdConformanceTest.java`
 
@@ -1377,12 +1377,12 @@ class ErdConformanceTest {
 }
 ```
 
-- [ ] **Step 3: 테스트 실패 확인**
+- [x] **Step 3: 테스트 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.erd.ErdConformanceTest' --no-daemon`
 Expected: FAIL — 엔티티가 0개라 `containsExactlyInAnyOrderElementsOf` 실패.
 
-- [ ] **Step 4: JpaConfig 작성**
+- [x] **Step 4: JpaConfig 작성**
 
 `src/main/java/com/crosscert/fidoadmin/config/JpaConfig.java`
 
@@ -1400,7 +1400,7 @@ public class JpaConfig {
 }
 ```
 
-- [ ] **Step 5: 대표 엔티티 작성 (패턴별 예시 — 이 코드를 그대로 만든다)**
+- [x] **Step 5: 대표 엔티티 작성 (패턴별 예시 — 이 코드를 그대로 만든다)**
 
 시퀀스 PK + 타임스탬프. `company/entity/CcfaCompany.java`
 
@@ -1770,16 +1770,16 @@ public class CcfaManager {
 
 `log/entity/CcfaAuditLog.java`: `idx`(SEQ `CCFA_AUDIT_LOG_SEQ`), `companyIdx`, `companyName`(512), `type`(32), `userId`(USER_ID 64), `userName`(USER_NAME 32), `message`(4000), `ip`(15), `ua`(2048), `intergrityHash`(INTERGRITY_HASH 512), `createdtime`.
 
-- [ ] **Step 6: 나머지 엔티티 작성**
+- [x] **Step 6: 나머지 엔티티 작성**
 
 매핑표의 나머지 클래스를 `src/test/resources/erd-columns.txt`의 컬럼 순서·이름·길이대로 위 패턴에 맞춰 작성한다. 각 클래스 Javadoc에 `ERD 컬럼 N개`를 적는다. `Userinfo`는 `@ToString(exclude = {"pubkey", "certificate"})`, `AwsInfo`는 `@ToString(exclude = "amzToken")`을 붙인다.
 
-- [ ] **Step 7: 정합성 테스트 통과 확인**
+- [x] **Step 7: 정합성 테스트 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.erd.ErdConformanceTest' --no-daemon`
 Expected: PASS. 실패 메시지에 테이블명과 빠진/남는 컬럼이 나오므로 그대로 고친다.
 
-- [ ] **Step 8: Hibernate 부팅 검증 (Docker Oracle 필요)**
+- [x] **Step 8: Hibernate 부팅 검증 (Docker Oracle 필요)**
 
 `src/test/java/com/crosscert/fidoadmin/erd/EntityBootTest.java`
 
@@ -1827,7 +1827,7 @@ class EntityBootTest {
 Run: `docker compose -f docker/docker-compose.yml up -d` 후 `./gradlew test --tests 'com.crosscert.fidoadmin.erd.EntityBootTest' --no-daemon`
 Expected: PASS. `ORA-00904: invalid identifier`가 나오면 해당 엔티티의 컬럼 이름/따옴표를 고친다.
 
-- [ ] **Step 9: 커밋**
+- [x] **Step 9: 커밋**
 
 ```bash
 git add src/main/java/com/crosscert/fidoadmin src/test
@@ -1855,7 +1855,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `AuditLogger.log(AuditType type, String message)` — 현재 로그인 사용자·현재 요청 기준. `AuditLogger.log(ManagerUserDetails actor, AuditType type, String message, String ip, String ua)`.
   - `CcfaAuditLogRepository extends JpaRepository<CcfaAuditLog, Long>, JpaSpecificationExecutor<CcfaAuditLog>`
 
-- [ ] **Step 1: ManagerUserDetails 작성**
+- [x] **Step 1: ManagerUserDetails 작성**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -1909,7 +1909,7 @@ public class ManagerUserDetails implements UserDetails {
 }
 ```
 
-- [ ] **Step 2: TenantContext 테스트 작성**
+- [x] **Step 2: TenantContext 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -1953,12 +1953,12 @@ class TenantContextTest {
 }
 ```
 
-- [ ] **Step 3: 실패 확인**
+- [x] **Step 3: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.TenantContextTest' --no-daemon`
 Expected: 컴파일 오류 `TenantContext` 없음.
 
-- [ ] **Step 4: TenantContext 구현**
+- [x] **Step 4: TenantContext 구현**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -1989,12 +1989,12 @@ public final class TenantContext {
 }
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.TenantContextTest' --no-daemon`
 Expected: 3개 통과.
 
-- [ ] **Step 6: AuditLogger 테스트 작성**
+- [x] **Step 6: AuditLogger 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.audit;
@@ -2058,12 +2058,12 @@ class AuditLoggerTest {
 }
 ```
 
-- [ ] **Step 7: 실패 확인**
+- [x] **Step 7: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.audit.AuditLoggerTest' --no-daemon`
 Expected: 컴파일 오류.
 
-- [ ] **Step 8: 구현**
+- [x] **Step 8: 구현**
 
 `audit/AuditType.java`
 
@@ -2180,12 +2180,12 @@ public class AuditLogger {
 
 `CcfaAuditLog.userName`이 null이면 `cut`이 null을 돌려주고 NOT NULL 컬럼이라 저장에 실패한다. `ManagerUserDetailsService`(Task 6)는 `USER_NM`이 null이면 `USER_ID`를 이름으로 넣는다.
 
-- [ ] **Step 9: 통과 확인**
+- [x] **Step 9: 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.audit.AuditLoggerTest' --no-daemon`
 Expected: 3개 통과.
 
-- [ ] **Step 10: 커밋**
+- [x] **Step 10: 커밋**
 
 ```bash
 git add src/main/java/com/crosscert/fidoadmin/auth/ManagerUserDetails.java src/main/java/com/crosscert/fidoadmin/common/TenantContext.java src/main/java/com/crosscert/fidoadmin/audit src/main/java/com/crosscert/fidoadmin/log/repository src/test
@@ -2217,7 +2217,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `LoginAttemptService.onSuccess(String userId)`, `onFailure(String userId)`, `unlock(String userId)`, `failLimit(): int`
   - `PasswordEncoder` 빈(`Sha256PasswordEncoder`), 로그인 URL `/login`, 로그아웃 `POST /logout`, 성공 후 `/`.
 
-- [ ] **Step 1: 리포지토리 4개 작성**
+- [x] **Step 1: 리포지토리 4개 작성**
 
 ```java
 package com.crosscert.fidoadmin.manager.repository;
@@ -2267,7 +2267,7 @@ public interface CcfaSystemPropRepository extends JpaRepository<CcfaSystemProp, 
 }
 ```
 
-- [ ] **Step 2: LoginAttemptService 테스트 작성**
+- [x] **Step 2: LoginAttemptService 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -2378,12 +2378,12 @@ class LoginAttemptServiceTest {
 }
 ```
 
-- [ ] **Step 3: 실패 확인**
+- [x] **Step 3: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.LoginAttemptServiceTest' --no-daemon`
 Expected: 컴파일 오류.
 
-- [ ] **Step 4: LoginAttemptService 구현**
+- [x] **Step 4: LoginAttemptService 구현**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -2499,12 +2499,12 @@ public class LoginAttemptService {
 }
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.LoginAttemptServiceTest' --no-daemon`
 Expected: 7개 통과.
 
-- [ ] **Step 6: ManagerUserDetailsService 테스트 작성**
+- [x] **Step 6: ManagerUserDetailsService 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -2588,7 +2588,7 @@ class ManagerUserDetailsServiceTest {
 }
 ```
 
-- [ ] **Step 7: 실패 확인 후 구현**
+- [x] **Step 7: 실패 확인 후 구현**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.ManagerUserDetailsServiceTest' --no-daemon` → 컴파일 오류 확인.
 
@@ -2636,7 +2636,7 @@ public class ManagerUserDetailsService implements UserDetailsService {
 
 Run 다시: 5개 통과.
 
-- [ ] **Step 8: 핸들러 3개 작성**
+- [x] **Step 8: 핸들러 3개 작성**
 
 `auth/LoginSuccessHandler.java`
 
@@ -2753,7 +2753,7 @@ public class AppLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 }
 ```
 
-- [ ] **Step 9: SecurityConfig 작성**
+- [x] **Step 9: SecurityConfig 작성**
 
 ```java
 package com.crosscert.fidoadmin.config;
@@ -2812,7 +2812,7 @@ public class SecurityConfig {
 
 CSRF는 기본 활성이다. Thymeleaf `th:action` 폼에는 토큰이 자동 삽입된다.
 
-- [ ] **Step 10: LoginController와 login.html 작성**
+- [x] **Step 10: LoginController와 login.html 작성**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -2877,7 +2877,7 @@ public class LoginController {
 body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif; }
 ```
 
-- [ ] **Step 11: 수동 검증 (Docker Oracle 필요)**
+- [x] **Step 11: 수동 검증 (Docker Oracle 필요)**
 
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=local'
@@ -2895,7 +2895,7 @@ SQL
 
 `CCFA_AUDIT_LOG`에 `LOGIN` 행이 추가되는지 확인: `SELECT TYPE, USER_ID, IP FROM CCFA_AUDIT_LOG ORDER BY IDX DESC FETCH FIRST 3 ROWS ONLY;`
 
-- [ ] **Step 12: 커밋**
+- [x] **Step 12: 커밋**
 
 ```bash
 git add src/
@@ -2924,7 +2924,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - 레이아웃 사용법: 각 페이지는 `th:replace="~{layout/base :: layout(~{::title}, ~{::main})}"` 로 `<title>`과 `<main>`을 넘긴다.
   - 프래그먼트: `fragments/pagination :: pagination(page, baseUrl)`, `fragments/alert :: flash`, `fragments/confirm-modal :: modal`.
 
-- [ ] **Step 1: MenuRegistry 테스트 작성**
+- [x] **Step 1: MenuRegistry 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -2954,11 +2954,11 @@ class MenuRegistryTest {
 }
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.MenuRegistryTest' --no-daemon` → 컴파일 오류.
 
-- [ ] **Step 3: MenuItem, MenuRegistry 구현**
+- [x] **Step 3: MenuItem, MenuRegistry 구현**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -3020,11 +3020,11 @@ public class MenuRegistry {
 }
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.MenuRegistryTest' --no-daemon` → 3개 통과.
 
-- [ ] **Step 5: 예외 클래스와 핸들러**
+- [x] **Step 5: 예외 클래스와 핸들러**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -3109,7 +3109,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 `SecurityConfig`의 permitAll 목록에 `"/error/**"`를 추가한다(기존 `"/error"`를 `"/error/**"`로 바꾼다).
 
-- [ ] **Step 6: 레이아웃 템플릿**
+- [x] **Step 6: 레이아웃 템플릿**
 
 `templates/layout/base.html`
 
@@ -3284,7 +3284,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "M
 @media (max-width: 900px) { .fa-sidebar { display: none; } }
 ```
 
-- [ ] **Step 7: 오류 페이지 3개**
+- [x] **Step 7: 오류 페이지 3개**
 
 `templates/error/404.html` (403, 500도 같은 구조에 문구만 다르게)
 
@@ -3308,7 +3308,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "M
 
 403: 제목 `접근 권한 없음`, 본문 `이 화면에 접근할 권한이 없습니다.` / 500: 제목 `서버 오류`, 본문 `처리 중 오류가 발생했습니다. 관리자에게 문의하세요.`
 
-- [ ] **Step 8: 레이아웃 렌더링 검증용 임시 대시보드 (Task 11에서 대체)**
+- [x] **Step 8: 레이아웃 렌더링 검증용 임시 대시보드 (Task 11에서 대체)**
 
 `dashboard/DashboardController.java`에 최소 구현을 둔다.
 
@@ -3340,7 +3340,7 @@ public class DashboardController {
 </html>
 ```
 
-- [ ] **Step 9: 레이아웃 웹 테스트**
+- [x] **Step 9: 레이아웃 웹 테스트**
 
 `src/test/java/com/crosscert/fidoadmin/common/LayoutWebTest.java`
 
@@ -3409,7 +3409,7 @@ class LayoutWebTest {
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.LayoutWebTest' --no-daemon` → 4개 통과. 템플릿 오류가 나면 스택트레이스의 템플릿 줄 번호를 보고 고친다.
 
-- [ ] **Step 10: 수동 확인 후 커밋**
+- [x] **Step 10: 수동 확인 후 커밋**
 
 `./gradlew bootRun --args='--spring.profiles.active=local'` 후 로그인하면 사이드바·상단바·임시 대시보드가 보이고 `/nothing`은 404 페이지가 뜬다.
 
@@ -3437,7 +3437,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `abstract class CrudService<E, ID, S extends SearchForm>`: `Page<E> search(S, Pageable)`, `E get(ID)`, `E create(E)`, `E update(ID, Consumer<E>)`, `void delete(ID)`. 훅: `toSpecification(S)`, `companyIdxAttribute()`(없으면 null), `companyIdxOf(E)`, `setCompanyIdx(E, Long)`, `idOf(E)`, `tableName()`, `defaultSort()`, `applyDefaults(E)`, `touchCreated(E, LocalDateTime)`, `touchUpdated(E, LocalDateTime)`, `beforeDelete(E)`.
   - `abstract class CrudController<E, ID, F, S extends SearchForm>` 와 `abstract class ReadOnlyController<E, ID, S extends SearchForm>` — 아래 코드의 추상 메서드가 계약이다.
 
-- [ ] **Step 1: SearchForm, Specs 테스트**
+- [x] **Step 1: SearchForm, Specs 테스트**
 
 `common/SearchFormTest.java`
 
@@ -3531,11 +3531,11 @@ class SpecsTest {
 }
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.SearchFormTest' --tests 'com.crosscert.fidoadmin.common.SpecsTest' --no-daemon` → 컴파일 오류.
 
-- [ ] **Step 3: SearchForm, Specs, AdminRepository 구현**
+- [x] **Step 3: SearchForm, Specs, AdminRepository 구현**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -3668,11 +3668,11 @@ public interface AdminRepository<E, ID> extends JpaRepository<E, ID>, JpaSpecifi
 
 Task 5·6의 리포지토리 4개를 `extends AdminRepository<엔티티, ID>`로 바꾼다.
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: 위 두 테스트 → 7개 통과.
 
-- [ ] **Step 5: CrudService 테스트**
+- [x] **Step 5: CrudService 테스트**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -3803,11 +3803,11 @@ class CrudServiceTest {
 }
 ```
 
-- [ ] **Step 6: 실패 확인**
+- [x] **Step 6: 실패 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.CrudServiceTest' --no-daemon` → 컴파일 오류.
 
-- [ ] **Step 7: CrudService 구현**
+- [x] **Step 7: CrudService 구현**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -3913,11 +3913,11 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 }
 ```
 
-- [ ] **Step 8: 통과 확인**
+- [x] **Step 8: 통과 확인**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.common.CrudServiceTest' --no-daemon` → 8개 통과.
 
-- [ ] **Step 9: CrudController, ReadOnlyController 구현**
+- [x] **Step 9: CrudController, ReadOnlyController 구현**
 
 ```java
 package com.crosscert.fidoadmin.common;
@@ -4084,7 +4084,7 @@ public abstract class ReadOnlyController<E, ID, S extends SearchForm> {
 
 `@ModelAttribute("search") S search`와 `@PathVariable ID id`는 Spring 이 하위 컨트롤러 클래스의 제네릭 인수로 실제 타입을 해석한다(`HandlerMethod`가 containing class 기준으로 타입 변수를 푼다).
 
-- [ ] **Step 10: 전체 테스트 후 커밋**
+- [x] **Step 10: 전체 테스트 후 커밋**
 
 Run: `./gradlew test --no-daemon` → 모두 통과(Docker 필요한 `EntityBootTest`는 Oracle 컨테이너가 떠 있어야 한다).
 
@@ -4114,7 +4114,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `AppidRepository.countByCompanyIdx(Long)`, `UserinfoRepository.countByCompanyIdx(Long)`, `CcfaManagerRepository.countByCompanyIdx(Long)`.
   - 화면 경로 `/companies` (SUPER 전용).
 
-- [ ] **Step 1: 리포지토리**
+- [x] **Step 1: 리포지토리**
 
 ```java
 package com.crosscert.fidoadmin.fido.repository;
@@ -4140,7 +4140,7 @@ public interface UserinfoRepository extends AdminRepository<Userinfo, Long> {
 
 `CcfaManagerRepository`에 `long countByCompanyIdx(Long companyIdx);` 추가.
 
-- [ ] **Step 2: CompanyService 테스트**
+- [x] **Step 2: CompanyService 테스트**
 
 ```java
 package com.crosscert.fidoadmin.company.service;
@@ -4208,7 +4208,7 @@ class CompanyServiceTest {
 }
 ```
 
-- [ ] **Step 3: 실패 확인 후 CompanyLookup, CompanyService 구현**
+- [x] **Step 3: 실패 확인 후 CompanyLookup, CompanyService 구현**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.company.service.CompanyServiceTest' --no-daemon` → 컴파일 오류.
 
@@ -4327,7 +4327,7 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
 
 Run 다시 → 3개 통과.
 
-- [ ] **Step 4: 검색 폼·입력 폼·컨트롤러**
+- [x] **Step 4: 검색 폼·입력 폼·컨트롤러**
 
 ```java
 package com.crosscert.fidoadmin.company.web;
@@ -4432,7 +4432,7 @@ public class CompanyController extends CrudController<CcfaCompany, Long, Company
 }
 ```
 
-- [ ] **Step 5: 템플릿 3개**
+- [x] **Step 5: 템플릿 3개**
 
 `templates/company/company/list.html`
 
@@ -4597,7 +4597,7 @@ public class CompanyController extends CrudController<CcfaCompany, Long, Company
 
 `#temporals`는 `thymeleaf-extras-java8time`이 Thymeleaf 3.1에 내장되어 있어 별도 의존성이 없다. null 이면 빈 문자열이 출력된다.
 
-- [ ] **Step 6: 웹 테스트**
+- [x] **Step 6: 웹 테스트**
 
 ```java
 package com.crosscert.fidoadmin.company.web;
@@ -4685,7 +4685,7 @@ class CompanyControllerWebTest {
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.company.web.CompanyControllerWebTest' --no-daemon` → 5개 통과.
 
-- [ ] **Step 7: 수동 확인 후 커밋**
+- [x] **Step 7: 수동 확인 후 커밋**
 
 `bootRun` 후 `superuser`로 `/companies` 목록·검색·등록·수정·삭제(하위 데이터가 있는 IDX 1은 차단 메시지, IDX 2 는 AWS_INFO 만 있으므로 삭제 가능)를 확인하고 `CCFA_AUDIT_LOG`에 `CREATE/UPDATE/DELETE` 행이 남는지 본다.
 
@@ -4710,7 +4710,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: `ReadOnlyController`, `CrudService`, `CcfaAuditLogRepository`(AdminRepository), `CompanyLookup`.
 - Produces: 화면 `/logs/audit`. COMPANY 역할은 자기 고객사 로그만 본다.
 
-- [ ] **Step 1: 검색 폼과 서비스**
+- [x] **Step 1: 검색 폼과 서비스**
 
 ```java
 package com.crosscert.fidoadmin.log.web;
@@ -4772,7 +4772,7 @@ public class AuditLogQueryService extends CrudService<CcfaAuditLog, Long, AuditL
 }
 ```
 
-- [ ] **Step 2: 컨트롤러**
+- [x] **Step 2: 컨트롤러**
 
 ```java
 package com.crosscert.fidoadmin.log.web;
@@ -4808,7 +4808,7 @@ public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, A
 }
 ```
 
-- [ ] **Step 3: 템플릿**
+- [x] **Step 3: 템플릿**
 
 `templates/log/audit/list.html`
 
@@ -4897,7 +4897,7 @@ public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, A
 </html>
 ```
 
-- [ ] **Step 4: 웹 테스트**
+- [x] **Step 4: 웹 테스트**
 
 ```java
 package com.crosscert.fidoadmin.log.web;
@@ -4972,7 +4972,7 @@ class AuditLogControllerWebTest {
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.log.web.AuditLogControllerWebTest' --no-daemon` → 2개 통과.
 
-- [ ] **Step 5: 수동 확인 후 커밋**
+- [x] **Step 5: 수동 확인 후 커밋**
 
 `kbadmin`으로 로그인하면 `/logs/audit`에 COMPANY_IDX 1 로그만 보이고 고객사 선택이 없다. `superuser`는 전체와 고객사 필터가 보인다.
 
@@ -4999,7 +4999,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   - `record StatTotals(long authS, long authF, long tcS, long tcF, long regS, long regF, long deregS, long deregF) { static StatTotals of(List<DailyStat>) }`
   - `StatisticsQueryService.daily(DashboardSearchForm): List<DailyStat>`, `groupbys(): List<String>`, `serviceNames(Long companyIdx): List<String>`
 
-- [ ] **Step 1: StatTotals 테스트와 레코드**
+- [x] **Step 1: StatTotals 테스트와 레코드**
 
 ```java
 package com.crosscert.fidoadmin.dashboard;
@@ -5061,7 +5061,7 @@ public record StatTotals(long authS, long authF, long tcS, long tcF, long regS, 
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.dashboard.StatTotalsTest' --no-daemon` → 2개 통과.
 
-- [ ] **Step 2: 검색 폼과 조회 서비스**
+- [x] **Step 2: 검색 폼과 조회 서비스**
 
 ```java
 package com.crosscert.fidoadmin.dashboard;
@@ -5149,7 +5149,7 @@ public class StatisticsQueryService {
 
 Oracle 에서 `:companyIdx IS NULL` 에 null 을 바인딩하면 타입을 알 수 없어 `ORA-17004` 가 날 수 있다. 그 경우 `MapSqlParameterSource` 로 바꿔 `addValue("companyIdx", companyIdx, java.sql.Types.NUMERIC)`, `addValue("serviceName", ..., java.sql.Types.VARCHAR)` 로 타입을 명시한다. 로컬 Oracle 에서 Step 5 로 확인한다.
 
-- [ ] **Step 3: 컨트롤러 교체**
+- [x] **Step 3: 컨트롤러 교체**
 
 ```java
 package com.crosscert.fidoadmin.dashboard;
@@ -5188,7 +5188,7 @@ public class DashboardController {
 }
 ```
 
-- [ ] **Step 4: 템플릿 교체**
+- [x] **Step 4: 템플릿 교체**
 
 `templates/dashboard/index.html`
 
@@ -5271,7 +5271,7 @@ public class DashboardController {
 
 `th:inline="javascript"`가 `DailyStat` 레코드를 JSON 으로 직렬화한다(`date`는 `"2026-09-01"` 문자열). chart.js WebJar 의 실제 파일 경로는 `build/` 아래 jar 를 열어 `META-INF/resources/webjars/chart.js/4.5.0/dist/chart.umd.js` 인지 확인한다. 다르면 `th:src`를 맞춘다.
 
-- [ ] **Step 5: 웹 테스트와 수동 확인**
+- [x] **Step 5: 웹 테스트와 수동 확인**
 
 ```java
 package com.crosscert.fidoadmin.dashboard;
@@ -5330,7 +5330,7 @@ Run: `./gradlew test --tests 'com.crosscert.fidoadmin.dashboard.DashboardControl
 
 수동: `bootRun` 후 `/`에 시드 30일 데이터의 카드와 선 그래프가 나오고, 브라우저 개발자 도구 네트워크 탭에 `localhost:8080` 이외의 호출이 **없어야** 한다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add src/
@@ -5352,7 +5352,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: `CcfaManagerRepository`, `PasswordEncoder`(Sha256), `AuditLogger`, `TenantContext`.
 - Produces: 화면 `GET/POST /me/password`. `PasswordChangeService.change(String userId, String current, String next)` — 현재 비밀번호 불일치면 `IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.")`.
 
-- [ ] **Step 1: 서비스 테스트**
+- [x] **Step 1: 서비스 테스트**
 
 ```java
 package com.crosscert.fidoadmin.auth;
@@ -5396,7 +5396,7 @@ class PasswordChangeServiceTest {
 }
 ```
 
-- [ ] **Step 2: 실패 확인 후 구현**
+- [x] **Step 2: 실패 확인 후 구현**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.auth.PasswordChangeServiceTest' --no-daemon` → 컴파일 오류.
 
@@ -5537,7 +5537,7 @@ public class PasswordChangeController {
 
 Run 다시 → 2개 통과.
 
-- [ ] **Step 3: 수동 확인 후 커밋**
+- [x] **Step 3: 수동 확인 후 커밋**
 
 `kbadmin`으로 로그인해 비밀번호를 바꾸고 로그아웃 후 새 비밀번호로 로그인되는지 확인한다. 확인 후 시드 비밀번호로 되돌린다:
 
@@ -5567,7 +5567,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Consumes: `docker/init/01-schema.sql`, `02-seed.sql` (컨테이너 초기화에 재사용), 리포지토리들.
 - Produces: `./gradlew test`에서 Docker 가 있으면 실행되고 없으면 건너뛰는 통합 테스트.
 
-- [ ] **Step 1: 테스트 프로파일과 컨테이너 지원 클래스**
+- [x] **Step 1: 테스트 프로파일과 컨테이너 지원 클래스**
 
 `src/test/resources/application-test.yml`
 
@@ -5610,7 +5610,7 @@ public abstract class OracleContainerSupport {
 
 `OracleContainer`의 기본 DB 이름이 `FREEPDB1`이고 사용자 `kbfido`가 그 안에 만들어지므로 init 스크립트의 `ALTER SESSION SET CONTAINER = FREEPDB1; ... CURRENT_SCHEMA = KBFIDO;`가 그대로 맞는다.
 
-- [ ] **Step 2: 통합 테스트 작성**
+- [x] **Step 2: 통합 테스트 작성**
 
 ```java
 package com.crosscert.fidoadmin.integration;
@@ -5685,14 +5685,14 @@ class RepositoryIntegrationTest extends OracleContainerSupport {
 }
 ```
 
-- [ ] **Step 3: 실행**
+- [x] **Step 3: 실행**
 
 Run: `./gradlew test --tests 'com.crosscert.fidoadmin.integration.RepositoryIntegrationTest' --no-daemon`
 Expected: Docker 실행 중이면 4개 통과(최초 실행은 이미지 초기화로 2~3분). Docker 가 없으면 `skipped`.
 
 `ORA-01400`(NOT NULL 위반)이 나면 해당 엔티티의 테스트 데이터에 ERD의 NOT NULL 컬럼 값을 채운다.
 
-- [ ] **Step 4: 커밋**
+- [x] **Step 4: 커밋**
 
 ```bash
 git add src/test
@@ -5709,7 +5709,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `README.md`
 - Modify: `docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md` (체크박스 갱신)
 
-- [ ] **Step 1: README 작성**
+- [x] **Step 1: README 작성**
 
 ```markdown
 # FIDO Admin
@@ -5754,7 +5754,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - 구현 계획 1부: `docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md`
 ```
 
-- [ ] **Step 2: 전체 테스트와 수동 점검**
+- [x] **Step 2: 전체 테스트와 수동 점검**
 
 ```bash
 ./gradlew clean test --no-daemon
@@ -5769,7 +5769,7 @@ Expected: 전부 통과(Docker 기동 상태). 그런 다음 `bootRun`으로 아
 5. 브라우저 네트워크 탭에 외부 호스트 요청 없음
 6. `/nothing` → 404 페이지
 
-- [ ] **Step 3: 커밋**
+- [x] **Step 3: 커밋**
 
 ```bash
 git add README.md docs/

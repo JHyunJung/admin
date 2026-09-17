@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>코드 그룹 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|코드 그룹 #${item.idx} ${item.optionName}|">코드 그룹</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/system/options/{id}/edit(id=${item.idx})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/system/options/{id}/delete(id=${item.idx})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm"
+                data-confirm-message="그룹을 삭제하시겠습니까? 하위 코드가 있으면 삭제되지 않습니다.">삭제</button>
+      </form>
+      <a th:href="@{/system/options}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+
+  <div class="bg-white border rounded mb-4">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>그룹 이름</th><td th:text="${item.optionName}"></td></tr>
+      <tr><th>제목</th><td th:text="${item.optionTitle}"></td></tr>
+      <tr><th>비고</th><td th:text="${item.optionNote}"></td></tr>
+    </tbody></table>
+  </div>
+
+  <h2 class="h5 mb-2">코드 목록</h2>
+  <div class="table-responsive bg-white border rounded mb-3">
+    <table class="table table-sm fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>값</th><th>제목</th><th>비고</th><th></th></tr></thead>
+      <tbody>
+        <tr th:each="it : ${items}">
+          <td th:text="${it.idx}"></td>
+          <td class="fa-mono" th:text="${it.optionValue}"></td>
+          <td th:text="${it.optionTitle}"></td>
+          <td th:text="${it.optionNote}"></td>
+          <td class="text-end">
+            <!-- 행마다 고유한 form id 를 주고 버튼이 그 id 를 가리킨다. admin.js 는 어떤 id 든 찾아 제출한다. -->
+            <form th:action="@{/system/options/{id}/items/{itemIdx}/delete(id=${item.idx}, itemIdx=${it.idx})}" method="post"
+                  th:id="|delItem${it.idx}|" class="m-0 d-inline">
+              <button type="button" class="btn btn-outline-danger btn-sm" th:attr="data-confirm-form=|delItem${it.idx}|"
+                      data-confirm-message="코드를 삭제하시겠습니까?">삭제</button>
+            </form>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(items)}"><td colspan="5" class="text-center text-secondary py-3">코드가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <form th:action="@{/system/options/{id}/items(id=${item.idx})}" th:object="${itemForm}" method="post"
+        class="bg-white border rounded p-3 row g-2 align-items-end" style="max-width: 760px;">
+    <div class="col-md-3">
+      <label class="form-label small mb-0">값 <span class="text-danger">*</span></label>
+      <input th:field="*{optionValue}" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3"><label class="form-label small mb-0">제목</label><input th:field="*{optionTitle}" class="form-control form-control-sm"></div>
+    <div class="col-md-4"><label class="form-label small mb-0">비고</label><input th:field="*{optionNote}" class="form-control form-control-sm"></div>
+    <div class="col-md-2"><button class="btn btn-primary btn-sm w-100">코드 추가</button></div>
+  </form>
+</main>
+</body>
+</html>
