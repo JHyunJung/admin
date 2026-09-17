@@ -119,6 +119,29 @@ class SignupAdminControllerWebTest {
             .andExpect(content().string(containsString("maxlength=\"100\"")));
     }
 
+    /**
+     * 거절 폼은 확인 모달에 연결돼 있어야 한다.
+     *
+     * <p>이 화면의 거절 폼은 텍스트 입력이 하나뿐이고 제출 버튼이 없다. 그런 폼은 입력란에서
+     * Enter 만 쳐도 브라우저가 암묵적 제출(implicit submission)을 일으킨다. 실제로 그 경로로
+     * 확인 모달이 통째로 건너뛰어져 되돌릴 수 없는 거절이 바로 실행되는 결함이 있었다.
+     *
+     * <p>막는 일 자체는 admin.js 가 폼의 submit 이벤트를 가로채서 한다. 브라우저가 Enter 를
+     * 암묵적 제출로 바꾸는 동작은 MockMvc 로 재현할 수 없으므로, 여기서는 그 가드가 붙을
+     * 자리인 data-confirm-form 연결만 지킨다. 이 속성이 사라지면 admin.js 는 이 폼을
+     * 아예 모르게 되고 Enter 도 클릭도 확인 없이 지나간다.
+     */
+    @Test void rejectFormIsWiredToConfirmModal() throws Exception {
+        when(service.pending()).thenReturn(List.of(pending()));
+        twoCompanies();
+        mvc.perform(get("/signups").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("id=\"rejectForm5\"")))
+            .andExpect(content().string(containsString("data-confirm-form=\"rejectForm5\"")))
+            // 거절은 되돌릴 수 없으므로 확인 문구가 그 사실을 알려야 한다.
+            .andExpect(content().string(containsString("되돌릴 수 없습니다")));
+    }
+
     @Test void approveRedirectsWithFlash() throws Exception {
         when(service.approve(5L, 1L)).thenReturn(pending());
         mvc.perform(post("/signups/5/approve").with(user(superUser)).with(csrf())

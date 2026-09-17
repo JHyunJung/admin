@@ -1,0 +1,13 @@
+- main [ref=f5e2]:
+  - generic [ref=f5e4]:
+    - heading "FIDO Admin" [level=1] [ref=f5e5]
+    - generic [ref=f5e6]:
+      - generic [ref=f5e7]:
+        - generic [ref=f5e8]: 아이디
+        - textbox "아이디" [active] [ref=f5e9]: superuser
+      - generic [ref=f5e10]:
+        - generic [ref=f5e11]: 비밀번호
+        - textbox "비밀번호" [ref=f5e12]: Admin1234!
+      - button "로그인" [ref=f5e13] [cursor=pointer]
+    - link "가입 신청" [ref=f5e15] [cursor=pointer]:
+      - /url: /signup

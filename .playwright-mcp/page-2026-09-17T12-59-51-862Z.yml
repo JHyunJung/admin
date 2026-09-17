@@ -1,0 +1,145 @@
+- generic [ref=f13e2]:
+  - navigation [ref=f13e3]:
+    - generic [ref=f13e4]: FIDO Admin
+    - generic [ref=f13e5]:
+      - generic [ref=f13e6]: 대시보드
+      - link "통계" [ref=f13e7] [cursor=pointer]:
+        - /url: /
+        - generic [aria-hidden] [ref=f13e8]: 
+    - generic [ref=f13e10]:
+      - generic [ref=f13e11]: 고객사
+      - link "고객사" [ref=f13e12] [cursor=pointer]:
+        - /url: /companies
+        - generic [aria-hidden] [ref=f13e13]: 
+      - link "FDS 정책" [ref=f13e15] [cursor=pointer]:
+        - /url: /fds-policies
+        - generic [aria-hidden] [ref=f13e16]: 
+      - link "라이선스" [ref=f13e18] [cursor=pointer]:
+        - /url: /licenses
+        - generic [aria-hidden] [ref=f13e19]: 
+    - generic [ref=f13e21]:
+      - generic [ref=f13e22]: 운영자
+      - link "운영자" [ref=f13e23] [cursor=pointer]:
+        - /url: /managers
+        - generic [aria-hidden] [ref=f13e24]: 
+      - link "가입 승인" [ref=f13e26] [cursor=pointer]:
+        - /url: /signups
+        - generic [aria-hidden] [ref=f13e27]: 
+      - link "내 비밀번호 변경" [ref=f13e29] [cursor=pointer]:
+        - /url: /me/password
+        - generic [aria-hidden] [ref=f13e30]: 
+    - generic [ref=f13e32]:
+      - generic [ref=f13e33]: FIDO
+      - link "앱 ID" [ref=f13e34] [cursor=pointer]:
+        - /url: /appids
+        - generic [aria-hidden] [ref=f13e35]: 
+      - link "앱 서버" [ref=f13e37] [cursor=pointer]:
+        - /url: /appservers
+        - generic [aria-hidden] [ref=f13e38]: 
+      - link "사용자" [ref=f13e40] [cursor=pointer]:
+        - /url: /users
+        - generic [aria-hidden] [ref=f13e41]: 
+      - link "챌린지" [ref=f13e43] [cursor=pointer]:
+        - /url: /challenges
+        - generic [aria-hidden] [ref=f13e44]: 
+      - link "서명" [ref=f13e46] [cursor=pointer]:
+        - /url: /signs
+        - generic [aria-hidden] [ref=f13e47]: 
+      - link "거래 해시" [ref=f13e49] [cursor=pointer]:
+        - /url: /transaction-hashes
+        - generic [aria-hidden] [ref=f13e50]: 
+      - link "거래 확인" [ref=f13e52] [cursor=pointer]:
+        - /url: /transaction-confirmations
+        - generic [aria-hidden] [ref=f13e53]: 
+      - link "인증기기 기준" [ref=f13e55] [cursor=pointer]:
+        - /url: /criteria
+        - generic [aria-hidden] [ref=f13e56]: 
+    - generic [ref=f13e58]:
+      - generic [ref=f13e59]: FIDO2
+      - link "메타데이터" [ref=f13e60] [cursor=pointer]:
+        - /url: /fido2/metadata
+        - generic [aria-hidden] [ref=f13e61]: 
+      - link "크리덴셜 파라미터" [ref=f13e63] [cursor=pointer]:
+        - /url: /fido2/credential-params
+        - generic [aria-hidden] [ref=f13e64]: 
+      - link "데모 접근코드" [ref=f13e66] [cursor=pointer]:
+        - /url: /fido2/demo-access-codes
+        - generic [aria-hidden] [ref=f13e67]: 
+    - generic [ref=f13e69]:
+      - generic [ref=f13e70]: 로그
+      - link "FIDO 로그" [ref=f13e71] [cursor=pointer]:
+        - /url: /logs/fido
+        - generic [aria-hidden] [ref=f13e72]: 
+      - link "감사 로그" [ref=f13e74] [cursor=pointer]:
+        - /url: /logs/audit
+        - generic [aria-hidden] [ref=f13e75]: 
+      - link "예외 로그" [ref=f13e77] [cursor=pointer]:
+        - /url: /logs/exceptions
+        - generic [aria-hidden] [ref=f13e78]: 
+      - link "메일/SMS 큐" [ref=f13e80] [cursor=pointer]:
+        - /url: /logs/mailing
+        - generic [aria-hidden] [ref=f13e81]: 
+    - generic [ref=f13e83]:
+      - generic [ref=f13e84]: 시스템
+      - link "시스템 설정" [ref=f13e85] [cursor=pointer]:
+        - /url: /system/props
+        - generic [aria-hidden] [ref=f13e86]: 
+      - link "시스템 정보" [ref=f13e88] [cursor=pointer]:
+        - /url: /system/info
+        - generic [aria-hidden] [ref=f13e89]: 
+      - link "에러 코드" [ref=f13e91] [cursor=pointer]:
+        - /url: /system/error-codes
+        - generic [aria-hidden] [ref=f13e92]: 
+      - link "FIDO 서버" [ref=f13e94] [cursor=pointer]:
+        - /url: /system/fido-clients
+        - generic [aria-hidden] [ref=f13e95]: 
+      - link "어드민 기준" [ref=f13e97] [cursor=pointer]:
+        - /url: /system/criteria
+        - generic [aria-hidden] [ref=f13e98]: 
+      - link "메뉴 정의" [ref=f13e100] [cursor=pointer]:
+        - /url: /system/menus
+        - generic [aria-hidden] [ref=f13e101]: 
+      - link "코드 그룹/코드" [ref=f13e103] [cursor=pointer]:
+        - /url: /system/options
+        - generic [aria-hidden] [ref=f13e104]: 
+      - link "필드 정의" [ref=f13e106] [cursor=pointer]:
+        - /url: /system/fields
+        - generic [aria-hidden] [ref=f13e107]: 
+  - generic [ref=f13e109]:
+    - banner [ref=f13e110]:
+      - generic [ref=f13e111]: FIDO Admin
+      - generic [ref=f13e112]:
+        - generic [ref=f13e113]: 슈퍼관리자
+        - generic [ref=f13e114]: 전역(시스템)
+        - generic [ref=f13e115]: SUPER
+        - button "로그아웃" [ref=f13e117] [cursor=pointer]
+    - main [ref=f13e119]:
+      - generic [ref=f13e120]:
+        - heading "가입 승인" [level=1] [ref=f13e121]
+        - generic [ref=f13e122]: 대기 1건
+      - generic [ref=f13e124]:
+        - generic [ref=f13e125]:
+          - generic [ref=f13e126]:
+            - text: 엔터테스트4 entertest4
+            - generic [ref=f13e127]: 승인대기
+          - generic [ref=f13e128]: 2026-09-17 21:59
+        - generic [ref=f13e129]:
+          - generic [aria-hidden] [ref=f13e130]: 
+          - text: enter4@test.local
+        - generic [ref=f13e131]: "신청 사유: 취소 경로 검증용"
+        - generic [ref=f13e132]:
+          - generic [ref=f13e134]:
+            - generic [ref=f13e135]:
+              - generic [ref=f13e136]: 소속 고객사
+              - combobox "소속 고객사" [ref=f13e137]:
+                - option "선택하세요" [selected]
+                - option "KB국민은행"
+                - option "테스트고객사"
+            - button "승인" [ref=f13e138] [cursor=pointer]
+          - generic [ref=f13e140]:
+            - generic [ref=f13e141]:
+              - generic [ref=f13e142]: 거절 사유
+              - textbox "거절 사유" [active] [ref=f13e143]:
+                - /placeholder: 거절 사유 (최대 100자)
+                - text: 취소 경로 검증
+            - button "거절" [ref=f13e144] [cursor=pointer]
