@@ -2,6 +2,8 @@ package com.crosscert.fidoadmin.system.web;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -80,6 +82,7 @@ class FieldControllerWebTest {
 
     @Test void blankTableShowsFormAgain() throws Exception {
         when(service.options()).thenReturn(List.of());
+        when(service.optionExists(any())).thenReturn(true);
         mvc.perform(post("/system/fields").with(user(superUser)).with(csrf())
                 .param("fieldTable", "").param("fieldName", "STATUS").param("fieldType", "select")
                 .param("pk", "0").param("fk", "0").param("editable", "0"))
@@ -89,6 +92,7 @@ class FieldControllerWebTest {
 
     @Test void negativeFlagShowsFormAgain() throws Exception {
         when(service.options()).thenReturn(List.of());
+        when(service.optionExists(any())).thenReturn(true);
         mvc.perform(post("/system/fields").with(user(superUser)).with(csrf())
                 .param("fieldTable", "APPID").param("fieldName", "STATUS").param("fieldType", "select")
                 .param("pk", "-1").param("fk", "0").param("editable", "0"))
@@ -97,6 +101,7 @@ class FieldControllerWebTest {
     }
 
     @Test void createRedirectsToDetail() throws Exception {
+        when(service.optionExists(any())).thenReturn(true);
         when(service.create(any())).thenReturn(field(9L, null));
         when(service.idOf(any())).thenReturn("9");
         mvc.perform(post("/system/fields").with(user(superUser)).with(csrf())
@@ -104,6 +109,19 @@ class FieldControllerWebTest {
                 .param("pk", "0").param("fk", "0").param("editable", "1").param("optionIdx", ""))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/fields/9"));
+    }
+
+    /** 등록 시 존재하지 않는 코드 그룹(예: 999)을 지정하면 저장 전에 막혀 폼을 다시 그린다. */
+    @Test void createWithUnknownOptionShowsFormAgain() throws Exception {
+        when(service.optionExists(999L)).thenReturn(false);
+        when(service.options()).thenReturn(List.of());
+        mvc.perform(post("/system/fields").with(user(superUser)).with(csrf())
+                .param("fieldTable", "APPID").param("fieldName", "STATUS").param("fieldType", "select")
+                .param("pk", "0").param("fk", "0").param("editable", "0").param("optionIdx", "999"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/fields/form"))
+            .andExpect(content().string(containsString("존재하지 않는 코드 그룹입니다.")));
+        verify(service, never()).create(any());
     }
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {

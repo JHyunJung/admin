@@ -49,4 +49,10 @@ public class FieldService extends CrudService<CcfaFields, Long, FieldSearchForm>
         requireSuperForGlobalTable();
         return options.findAll(Sort.by("idx"));
     }
+
+    /** optionIdx 가 유효한 코드 그룹 참조인지: 비어 있거나(선택 항목) 실제 존재하는 코드 그룹이어야 한다. */
+    @Transactional(readOnly = true)
+    public boolean optionExists(Long optionIdx) {
+        return optionIdx == null || options.existsById(optionIdx);
+    }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,5 +75,18 @@ class FieldServiceTest {
         login(1L);
         assertThatThrownBy(() -> service.options()).isInstanceOf(AccessDeniedException.class);
         assertThatThrownBy(() -> service.create(field())).isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test void optionExistsAcceptsEmptyWithoutTouchingRepository() {
+        assertThat(service.optionExists(null)).isTrue();
+        verify(options, never()).existsById(any());
+    }
+
+    @Test void optionExistsDelegatesToRepository() {
+        when(options.existsById(7L)).thenReturn(true);
+        assertThat(service.optionExists(7L)).isTrue();
+
+        when(options.existsById(999L)).thenReturn(false);
+        assertThat(service.optionExists(999L)).isFalse();
     }
 }

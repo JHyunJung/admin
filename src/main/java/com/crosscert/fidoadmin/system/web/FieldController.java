@@ -10,6 +10,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -27,6 +28,17 @@ public class FieldController extends CrudController<CcfaFields, Long, FieldForm,
     @Override protected FieldForm toForm(CcfaFields e) { return FieldForm.from(e); }
     @Override protected CcfaFields toEntity(FieldForm f) { return f.toNewEntity(); }
     @Override protected void applyForm(FieldForm f, CcfaFields e) { f.applyTo(e); }
+
+    /**
+     * 등록·수정 공통: 코드 그룹으로 지정한 IDX 가 비어 있거나 실제 존재하는 CCFA_OPTION 이어야 한다.
+     * 이 검증은 applyForm(엔티티 반영) 이전에 돌기 때문에, 존재하지 않는(허공의) 코드 그룹은
+     * DB 에 쓰이기 전에 걸러진다.
+     */
+    @Override protected void validate(FieldForm form, boolean isNew, BindingResult binding) {
+        if (!service.optionExists(form.getOptionIdx())) {
+            binding.rejectValue("optionIdx", "unknown", "존재하지 않는 코드 그룹입니다.");
+        }
+    }
 
     @Override protected void populateFormModel(Model model) { model.addAttribute("options", service.options()); }
     @Override protected void populateListModel(Model model) { model.addAttribute("optionNames", optionNames()); }
