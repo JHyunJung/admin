@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,6 +88,47 @@ class UserControllerWebTest {
             .andExpect(content().string(containsString("MIIB-CERT-SAMPLE")))
             .andExpect(content().string(not(containsString(FULL_CERT))))
             .andExpect(content().string(containsString("/users/1/status")));
+    }
+
+    /** 상세 화면은 항목을 구획 카드로 나눠 보여준다. 모든 항목은 그대로 남는다. */
+    @Test void detailSplitsRowsIntoTitledSections() throws Exception {
+        when(service.get(1L)).thenReturn(userinfo(1L));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        mvc.perform(get("/users/1").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("fa-section-title")))
+            .andExpect(content().string(containsString("기본 정보")))
+            .andExpect(content().string(containsString("인증기기 정보")))
+            .andExpect(content().string(containsString("상태 · 이력")))
+            // 구획을 나눠도 항목은 하나도 사라지지 않는다
+            .andExpect(content().string(containsString("USERID")))
+            .andExpect(content().string(containsString("AAID")))
+            .andExpect(content().string(containsString("KEYID")))
+            .andExpect(content().string(containsString("서명횟수")))
+            .andExpect(content().string(containsString("등록일시")))
+            .andExpect(content().string(containsString("생성일시")));
+    }
+
+    /**
+     * 구획 프래그먼트 정의가 본문에 그대로 한 번 더 찍히면 안 된다.
+     * (th:fragment 를 단 tbody 를 main 안에 두면 카드 밖에 평문으로 중복 출력된다.)
+     */
+    @Test void detailRendersEachRowExactlyOnce() throws Exception {
+        when(service.get(1L)).thenReturn(userinfo(1L));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        String html = mvc.perform(get("/users/1").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(countOf(html, "<th>USERID</th>")).isEqualTo(1);
+        assertThat(countOf(html, "<th>AAID</th>")).isEqualTo(1);
+        assertThat(countOf(html, "user001")).isEqualTo(1);
+        assertThat(countOf(html, "0012#0001")).isEqualTo(1);
+    }
+
+    private static int countOf(String haystack, String needle) {
+        int count = 0;
+        for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) count++;
+        return count;
     }
 
     @Test void detailHasNoEditOrDeleteLinks() throws Exception {

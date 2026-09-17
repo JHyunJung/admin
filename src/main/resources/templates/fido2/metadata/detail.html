@@ -13,35 +13,46 @@
       <a th:href="@{/fido2/metadata}" class="btn btn-link btn-sm">목록</a>
     </div>
   </div>
-  <div class="bg-white border rounded">
-    <table class="table table-sm fa-detail mb-0">
-      <tbody>
-        <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-        <tr><th>설명</th><td th:text="${item.description}"></td></tr>
-        <tr><th>AAGUID</th><td class="fa-mono" th:text="${item.aaguid}"></td></tr>
-        <tr><th>대체 설명</th><td class="fa-pre" th:text="${item.alternativedescriptions}"></td></tr>
-        <tr><th>프로토콜</th><td th:text="${item.protocolfamily}"></td></tr>
-        <tr><th>인증기기 버전</th><td th:text="${item.authenticatorversion}"></td></tr>
-        <tr><th>UPV</th><td class="fa-pre" th:text="${item.upv}"></td></tr>
-        <tr><th>어서션 스킴(ASSERTIONSCHME)</th><td th:text="${item.assertionschme}"></td></tr>
-        <tr><th>인증 알고리즘</th><td th:text="${item.authenticationalgorithm}"></td></tr>
-        <tr><th>공개키 알고리즘/인코딩</th><td th:text="${item.publickeyalgandencoding}"></td></tr>
-        <tr><th>어테스테이션 유형</th><td class="fa-pre" th:text="${item.attestationtypes}"></td></tr>
-        <tr><th>사용자 검증 상세</th><td class="fa-pre" th:text="${item.userverificationdetails}"></td></tr>
-        <tr><th>키 보호</th><td th:text="${item.keyprotection}"></td></tr>
-        <tr><th>매처 보호</th><td th:text="${item.matcherprotection}"></td></tr>
-        <tr><th>암호 강도</th><td th:text="${item.cryptostrength}"></td></tr>
-        <tr><th>운영 환경</th><td class="fa-pre" th:text="${item.operatingenv}"></td></tr>
-        <tr><th>부착 힌트</th><td th:text="${item.attachmenthint}"></td></tr>
-        <tr><th>2FA 전용</th><td th:text="${item.issecondfactoronly}"></td></tr>
-        <tr><th>TC 표시</th><td th:text="${item.tcdisplay}"></td></tr>
-        <tr><th>루트 인증서 (CLOB)</th><td class="fa-pre fa-mono" th:text="${item.attestationrootcertificates}"></td></tr>
-        <tr><th>아이콘 (CLOB)</th><td class="fa-pre fa-mono" th:text="${item.icon}"></td></tr>
-        <tr><th>SKI</th><td class="fa-pre fa-mono" th:text="${item.ski}"></td></tr>
-        <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div th:replace="~{fragments/detail-section :: section('식별 정보', ~{this :: idRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('인증기기 사양', ~{this :: specRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('보안 속성', ~{this :: securityRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('인증서 · 자원', ~{this :: resourceRows})}"></div>
 </main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="idRows">
+  <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+  <tr><th>설명</th><td th:text="${item.description}"></td></tr>
+  <tr><th>AAGUID</th><td class="fa-mono" th:text="${item.aaguid}"></td></tr>
+  <tr><th>대체 설명</th><td class="fa-pre" th:text="${item.alternativedescriptions}"></td></tr>
+</tbody>
+
+<tbody th:fragment="specRows">
+  <tr><th>프로토콜</th><td th:text="${item.protocolfamily}"></td></tr>
+  <tr><th>인증기기 버전</th><td th:text="${item.authenticatorversion}"></td></tr>
+  <tr><th>UPV</th><td class="fa-pre" th:text="${item.upv}"></td></tr>
+  <tr><th>어서션 스킴(ASSERTIONSCHME)</th><td th:text="${item.assertionschme}"></td></tr>
+  <tr><th>인증 알고리즘</th><td th:text="${item.authenticationalgorithm}"></td></tr>
+  <tr><th>공개키 알고리즘/인코딩</th><td th:text="${item.publickeyalgandencoding}"></td></tr>
+</tbody>
+
+<tbody th:fragment="securityRows">
+  <tr><th>어테스테이션 유형</th><td class="fa-pre" th:text="${item.attestationtypes}"></td></tr>
+  <tr><th>사용자 검증 상세</th><td class="fa-pre" th:text="${item.userverificationdetails}"></td></tr>
+  <tr><th>키 보호</th><td th:text="${item.keyprotection}"></td></tr>
+  <tr><th>매처 보호</th><td th:text="${item.matcherprotection}"></td></tr>
+  <tr><th>암호 강도</th><td th:text="${item.cryptostrength}"></td></tr>
+  <tr><th>운영 환경</th><td class="fa-pre" th:text="${item.operatingenv}"></td></tr>
+  <tr><th>부착 힌트</th><td th:text="${item.attachmenthint}"></td></tr>
+  <tr><th>2FA 전용</th><td th:text="${item.issecondfactoronly}"></td></tr>
+  <tr><th>TC 표시</th><td th:text="${item.tcdisplay}"></td></tr>
+</tbody>
+
+<tbody th:fragment="resourceRows">
+  <tr><th>루트 인증서 (CLOB)</th><td class="fa-pre fa-mono" th:text="${item.attestationrootcertificates}"></td></tr>
+  <tr><th>아이콘 (CLOB)</th><td class="fa-pre fa-mono" th:text="${item.icon}"></td></tr>
+  <tr><th>SKI</th><td class="fa-pre fa-mono" th:text="${item.ski}"></td></tr>
+  <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
 </body>
 </html>

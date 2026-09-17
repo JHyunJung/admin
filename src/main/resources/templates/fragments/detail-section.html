@@ -1,0 +1,17 @@
+<div xmlns:th="http://www.thymeleaf.org">
+  <!--
+    상세 화면의 한 구획. 제목이 붙은 카드 안에 이름/값 표를 담는다.
+    쓰는 쪽: <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{::basicRows})}"></div>
+    rows 는 <tr> 들을 담은 조각이다.
+  -->
+  <section th:fragment="section(title, rows)" class="fa-section">
+    <h2 class="fa-section-title" th:text="${title}">구획</h2>
+    <div class="bg-white border rounded">
+      <table class="table table-sm fa-detail mb-0">
+        <tbody th:replace="${rows}">
+          <tr><th>이름</th><td>값</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

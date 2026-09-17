@@ -70,6 +70,9 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 .fa-table td { padding: 11px 14px; vertical-align: middle; }
 .table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
 .fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
+/* ---------- 상세 화면 구획 ---------- */
+.fa-section + .fa-section { margin-top: 20px; }
+.fa-section-title { font-size: .95rem; font-weight: 600; color: #374151; margin: 0 0 8px 2px; }
 .fa-detail td { padding: 12px 18px; }
 
 /* ---------- 버튼·입력 ---------- */

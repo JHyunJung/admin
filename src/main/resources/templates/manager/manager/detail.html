@@ -17,37 +17,44 @@
       <a th:href="@{/managers}" class="btn btn-link btn-sm">목록</a>
     </div>
   </div>
-  <div class="bg-white border rounded">
-    <table class="table table-sm fa-detail mb-0">
-      <tbody>
-        <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-        <tr><th>ID</th><td th:text="${item.userId}"></td></tr>
-        <tr><th>이름</th><td th:text="${item.userNm}"></td></tr>
-        <tr><th>이메일</th><td th:text="${item.userEmail}"></td></tr>
-        <tr><th>전화</th><td th:text="${item.userPhone}"></td></tr>
-        <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
-        <tr><th>상태</th><td th:text="${item.status}"></td></tr>
-        <tr><th>로그인</th><td th:text="${item.login}"></td></tr>
-        <tr>
-          <th>잠금 상태</th>
-          <td>
-            <span th:if="${lockState == null}">정책 행 없음 (잠기지 않음)</span>
-            <span th:if="${lockState != null and lockState.accountLock == 'Y'}" class="badge text-bg-danger"
-                  th:text="|잠김 (실패 ${lockState.pwFailCnt}회)|">잠김</span>
-            <span th:if="${lockState != null and lockState.accountLock != 'Y'}"
-                  th:text="|정상 (실패 ${lockState.pwFailCnt}회)|">정상</span>
-          </td>
-        </tr>
-        <tr><th>잠금 시각</th><td th:text="${#temporals.format(item.blockTime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-        <tr><th>최근 접속</th><td th:text="${#temporals.format(item.lastAccess, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-        <tr><th>비고</th><td class="fa-pre" th:text="${item.etc}"></td></tr>
-        <tr><th>알림 유형</th><td th:text="${item.alramType}"></td></tr>
-        <tr><th>알림 레벨</th><td th:text="${item.alramLevel}"></td></tr>
-        <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-        <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('계정 상태', ~{this :: accountRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('알림 · 이력', ~{this :: etcRows})}"></div>
 </main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="basicRows">
+  <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+  <tr><th>ID</th><td th:text="${item.userId}"></td></tr>
+  <tr><th>이름</th><td th:text="${item.userNm}"></td></tr>
+  <tr><th>이메일</th><td th:text="${item.userEmail}"></td></tr>
+  <tr><th>전화</th><td th:text="${item.userPhone}"></td></tr>
+  <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+</tbody>
+
+<tbody th:fragment="accountRows">
+  <tr><th>상태</th><td th:text="${item.status}"></td></tr>
+  <tr><th>로그인</th><td th:text="${item.login}"></td></tr>
+  <tr>
+    <th>잠금 상태</th>
+    <td>
+      <span th:if="${lockState == null}">정책 행 없음 (잠기지 않음)</span>
+      <span th:if="${lockState != null and lockState.accountLock == 'Y'}" class="badge text-bg-danger"
+            th:text="|잠김 (실패 ${lockState.pwFailCnt}회)|">잠김</span>
+      <span th:if="${lockState != null and lockState.accountLock != 'Y'}"
+            th:text="|정상 (실패 ${lockState.pwFailCnt}회)|">정상</span>
+    </td>
+  </tr>
+  <tr><th>잠금 시각</th><td th:text="${#temporals.format(item.blockTime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+  <tr><th>최근 접속</th><td th:text="${#temporals.format(item.lastAccess, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
+
+<tbody th:fragment="etcRows">
+  <tr><th>비고</th><td class="fa-pre" th:text="${item.etc}"></td></tr>
+  <tr><th>알림 유형</th><td th:text="${item.alramType}"></td></tr>
+  <tr><th>알림 레벨</th><td th:text="${item.alramLevel}"></td></tr>
+  <tr><th>등록일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+  <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
 </body>
 </html>

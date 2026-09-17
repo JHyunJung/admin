@@ -158,3 +158,16 @@ Branch: feature/part3-system
 - [x] `sidebar.html` 을 `<i class="bi bi-*">` + 제목 `<span>` 구조로 변경, `admin.css` 에 아이콘 너비 고정(1.1rem)·색(`--fa-navy-muted`, 활성/호버 시 흰색) 규칙 추가.
 - [x] 테스트 2건 추가: `MenuRegistryTest.everyMenuHasAnIcon`(모든 메뉴가 `bi-` 접두 아이콘 보유), `LayoutWebTest.sidebarRendersMenuIcons`(아이콘 CSS 링크·렌더된 아이콘 클래스). 전체 391건 통과, 실패 0.
 - [x] 브라우저 확인: SUPER 29개·COMPANY 14개 메뉴 모두 아이콘 렌더, 아이콘 폰트 로드 성공(`document.fonts.check`), 활성 메뉴 아이콘 흰색 전환, 콘솔 오류 0건. 아이콘 폰트(woff2, 134KB)도 콘텐츠 해시 경로로 200 서빙 확인.
+
+## 상세 화면 카드 분할 (2026-09-17)
+
+- [x] `fragments/detail-section.html` 추가 — 제목 붙은 카드 안에 이름/값 표를 담는 재사용 구획. 쓰는 쪽은 `~{this :: xxxRows}` 로 행 묶음을 넘긴다.
+- [x] 항목이 많은 상세 화면 10개를 구획으로 분할:
+  - 사용자(15) 기본 정보/인증기기 정보/상태·이력, 고객사(19) 기본 정보/연락처/계약·한도/비고·이력, 운영자(16) 기본 정보/계정 상태/알림·이력,
+    라이선스(13) 기본 정보/연락처/라이선스·이력, FDS 정책(10) 기본 정보/AND 조건/OR 조건/이력, 인증기기 기준(17) 식별 정보/인증 정책/원본 데이터·이력,
+    서명(11) 기본 정보/서명 데이터, 메일·SMS 큐(10) 기본 정보/메일/SMS, 메뉴 정의(13) 기본 정보/화면 연결/표시 옵션, FIDO2 메타데이터(23) 식별 정보/인증기기 사양/보안 속성/인증서·자원.
+  - 항목이 9개 이하인 나머지 17개 화면은 한 카드 그대로 둔다.
+- [x] `admin.css` 에 `.fa-section`(구획 간격), `.fa-section-title`(구획 제목) 규칙 추가.
+- [x] 테스트 2건 추가: `UserControllerWebTest.detailSplitsRowsIntoTitledSections`(구획 제목과 전 항목 유지), `detailRendersEachRowExactlyOnce`(각 행 정확히 1회 렌더). 전체 393건 통과, 실패 0.
+- [x] 함정과 해결: `th:fragment` 를 단 `<tbody>` 를 `<main>` 안에 두면 카드 밖에 평문으로 **중복 출력**된다(브라우저 확인에서 발견, 스크린샷으로 확인). 프래그먼트 정의를 `<main>` 밖으로 옮겨 해결했고, 중복을 잡는 회귀 테스트를 남겼다.
+- [x] 검증: 10개 화면 전부 HTTP 200, 구획 수 의도대로(2~4), 중복 0건, 렌더된 `<th>` 항목 수가 변경 전 템플릿과 전부 일치(누락 0). 콘솔 오류 0건(기존 favicon 404 제외).
