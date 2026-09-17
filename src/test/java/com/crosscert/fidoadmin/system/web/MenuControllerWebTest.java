@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -85,6 +86,7 @@ class MenuControllerWebTest {
 
     @Test void blankNameShowsFormAgain() throws Exception {
         when(service.allForSelect()).thenReturn(List.of());
+        when(service.parentExists(0L)).thenReturn(true);
         mvc.perform(post("/system/menus").with(user(superUser)).with(csrf())
                 .param("menuName", "").param("menuParentIdx", "0").param("visible", "true")
                 .param("openType", "open").param("statistics", "N").param("readonly", "N"))
@@ -93,6 +95,7 @@ class MenuControllerWebTest {
     }
 
     @Test void createRedirectsToDetail() throws Exception {
+        when(service.parentExists(0L)).thenReturn(true);
         when(service.create(any())).thenReturn(menu(9L, "신규", 0L));
         when(service.idOf(any())).thenReturn("9");
         mvc.perform(post("/system/menus").with(user(superUser)).with(csrf())
@@ -100,6 +103,19 @@ class MenuControllerWebTest {
                 .param("visible", "true").param("openType", "open").param("statistics", "N").param("readonly", "N"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/menus/9"));
+    }
+
+    /** 등록 시 존재하지 않는 부모(예: 999)를 지정하면 저장 전에 막혀 폼을 다시 그린다. */
+    @Test void createWithUnknownParentShowsFormAgain() throws Exception {
+        when(service.parentExists(999L)).thenReturn(false);
+        when(service.allForSelect()).thenReturn(List.of());
+        mvc.perform(post("/system/menus").with(user(superUser)).with(csrf())
+                .param("menuName", "신규").param("menuCode", "NEW").param("menuParentIdx", "999")
+                .param("visible", "true").param("openType", "open").param("statistics", "N").param("readonly", "N"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/menus/form"))
+            .andExpect(content().string(containsString("존재하지 않는 부모 메뉴입니다.")));
+        verify(service, never()).create(any());
     }
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {
@@ -111,6 +127,7 @@ class MenuControllerWebTest {
         CcfaMenu existing = menu(1L, "FIDO", 0L);
         when(service.get(1L)).thenReturn(existing);
         when(service.allForSelect()).thenReturn(List.of(menu(1L, "FIDO", 0L), menu(3L, "하위", 1L)));
+        when(service.parentExists(3L)).thenReturn(true);
         when(service.isSelfOrDescendant(3L, 1L)).thenReturn(true);
         when(service.update(eq(1L), any())).thenAnswer(inv -> {
             Consumer<CcfaMenu> mutator = inv.getArgument(1);

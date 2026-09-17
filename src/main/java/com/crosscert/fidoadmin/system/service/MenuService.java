@@ -103,4 +103,10 @@ public class MenuService extends CrudService<CcfaMenu, Long, MenuSearchForm> {
             .filter(m -> !m.getIdx().equals(editingIdx) && !excluded.contains(m.getIdx()))
             .toList();
     }
+
+    /** parentIdx 가 유효한 부모 후보인지: 0(최상위)이거나 실제 존재하는 메뉴여야 한다. */
+    @Transactional(readOnly = true)
+    public boolean parentExists(Long parentIdx) {
+        return parentIdx != null && (parentIdx.equals(0L) || menus.existsById(parentIdx));
+    }
 }

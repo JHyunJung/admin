@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -26,6 +27,17 @@ public class MenuController extends CrudController<CcfaMenu, Long, MenuForm, Men
     @Override protected MenuForm newForm() { return new MenuForm(); }
     @Override protected MenuForm toForm(CcfaMenu e) { return MenuForm.from(e); }
     @Override protected CcfaMenu toEntity(MenuForm f) { return f.toNewEntity(); }
+
+    /**
+     * 등록·수정 공통: 부모로 지정한 IDX 가 0(최상위)이거나 실제 존재하는 메뉴여야 한다.
+     * 이 검증은 applyForm(엔티티 반영) 이전에 돌기 때문에, 존재하지 않는(허공의) 부모는
+     * DB 에 쓰이기 전에 걸러진다. 자기 자신·하위 순환은 수정 시 applyForm 에서 별도로 막는다.
+     */
+    @Override protected void validate(MenuForm form, boolean isNew, BindingResult binding) {
+        if (form.getMenuParentIdx() != null && !service.parentExists(form.getMenuParentIdx())) {
+            binding.rejectValue("menuParentIdx", "unknown", "존재하지 않는 부모 메뉴입니다.");
+        }
+    }
 
     /**
      * 폼의 select 는 자기 자신과 하위 메뉴를 빼고 그리지만(템플릿 + populateFormModel 이중 방어),

@@ -128,4 +128,21 @@ class MenuServiceTest {
         Set<Long> result = service.descendantIdxs(5L);
         assertThat(result).isNotNull();
     }
+
+    @Test void parentExistsAcceptsTopLevelWithoutTouchingRepository() {
+        assertThat(service.parentExists(0L)).isTrue();
+        verify(repo, never()).existsById(any());
+    }
+
+    @Test void parentExistsDelegatesToRepositoryForNonZero() {
+        when(repo.existsById(7L)).thenReturn(true);
+        assertThat(service.parentExists(7L)).isTrue();
+        verify(repo).existsById(7L);
+    }
+
+    @Test void parentExistsRejectsUnknownAndNull() {
+        when(repo.existsById(999L)).thenReturn(false);
+        assertThat(service.parentExists(999L)).isFalse();
+        assertThat(service.parentExists(null)).isFalse();
+    }
 }
