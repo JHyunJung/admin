@@ -1,0 +1,79 @@
+package com.crosscert.fidoadmin.system.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.audit.AuditType;
+import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.system.entity.CcfaSystemInfo;
+import com.crosscert.fidoadmin.system.repository.CcfaSystemInfoRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+class SystemInfoServiceTest {
+
+    CcfaSystemInfoRepository repo = mock(CcfaSystemInfoRepository.class);
+    AuditLogger audit = mock(AuditLogger.class);
+    EntityManager em = mock(EntityManager.class);
+    SystemInfoService service = new SystemInfoService(repo, audit, em);
+
+    @BeforeEach void loginSuper() {
+        var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        when(em.createNativeQuery(anyString())).thenReturn(mock(Query.class));
+    }
+    @AfterEach void clear() { SecurityContextHolder.clearContext(); }
+
+    private CcfaSystemInfo info(String key) { CcfaSystemInfo i = new CcfaSystemInfo(); i.setPropKey(key); i.setPropValue("v"); return i; }
+
+    @Test void createRejectsDuplicateKey() {
+        when(repo.existsById("VERSION")).thenReturn(true);
+        assertThatThrownBy(() -> service.create(info("VERSION"))).isInstanceOf(DataIntegrityViolationException.class);
+        verify(em, never()).persist(any());
+    }
+
+    @Test void createPersistsAndAudits() {
+        when(repo.existsById("BUILD_NO")).thenReturn(false);
+        CcfaSystemInfo saved = service.create(info("BUILD_NO"));
+        assertThat(saved.getUpdatedtime()).isNotNull();
+        verify(em).persist(saved);
+        verify(em).flush();
+        verify(audit).log(AuditType.CREATE, "CCFA_SYSTEM_INFO CREATE BUILD_NO");
+    }
+
+    @Test void updateTouchesTimestamp() {
+        when(repo.findById("VERSION")).thenReturn(java.util.Optional.of(info("VERSION")));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        CcfaSystemInfo out = service.update("VERSION", i -> i.setPropValue("1.1.0"));
+        assertThat(out.getPropValue()).isEqualTo("1.1.0");
+        assertThat(out.getUpdatedtime()).isNotNull();
+        verify(audit).log(AuditType.UPDATE, "CCFA_SYSTEM_INFO UPDATE VERSION");
+    }
+
+    @Test void sortDefaultsToKey() {
+        assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.ASC, "propKey"));
+        assertThat(service.sortableProperties()).containsExactlyInAnyOrder("propKey", "updatedtime");
+    }
+
+    /** COMPANY_IDX 가 없는 테이블: COMPANY 역할은 서비스 계층에서도 거부된다. */
+    @Test void companyRoleIsDeniedAtServiceLayer() {
+        var u = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        assertThatThrownBy(() -> service.get("VERSION"))
+            .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
+}
