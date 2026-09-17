@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>필드 정의</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">필드 정의</h1>
+    <a th:href="@{/system/fields/new}" class="btn btn-primary btn-sm">등록</a>
+  </div>
+
+  <form method="get" th:action="@{/system/fields}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label small mb-0">테이블</label><input name="fieldTable" th:value="${search.fieldTable}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">필드 이름</label><input name="fieldName" th:value="${search.fieldName}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary btn-sm">검색</button>
+      <a th:href="@{/system/fields}" class="btn btn-link btn-sm">초기화</a>
+    </div>
+  </form>
+
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>테이블</th><th>필드 이름</th><th>유형</th><th>제목</th><th>PK</th><th>FK</th><th>편집</th><th>코드 그룹</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td th:text="${r.idx}">0</td>
+          <td th:text="${r.fieldTable}"></td>
+          <td><a th:href="@{/system/fields/{id}(id=${r.idx})}" th:text="${r.fieldName}">이름</a></td>
+          <td th:text="${r.fieldType}"></td>
+          <td th:text="${r.fieldTitle}"></td>
+          <td th:text="${r.pk}"></td>
+          <td th:text="${r.fk}"></td>
+          <td th:text="${r.editable}"></td>
+          <td th:text="${r.optionIdx == null} ? '' : (${optionNames.get(r.optionIdx)} ?: ${r.optionIdx})"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="9" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>
