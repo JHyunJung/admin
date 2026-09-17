@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FIDO Admin 가입 신청</title>
+  <link rel="icon" th:href="@{/favicon.ico}" sizes="32x32">
+  <link rel="icon" type="image/png" th:href="@{/favicon.png}" sizes="192x192">
+  <link rel="apple-touch-icon" th:href="@{/favicon.png}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="bg-light">
+<!-- 사이드바가 없는 화면이므로 레이아웃을 쓰지 않고 로그인 화면과 같은 골격을 쓴다. -->
+<main class="container" style="max-width: 560px;">
+  <div class="card shadow-sm my-5">
+    <div class="card-body p-4">
+      <h1 class="h4 mb-1 text-center">가입 신청</h1>
+      <p class="text-secondary small text-center mb-4">신청 후 관리자 승인을 받아야 로그인할 수 있습니다.</p>
+
+      <!-- 소속 고객사 선택란을 두지 않는다. 배정은 승인자의 몫이고,
+           로그인 전 화면에 고객사 목록을 노출하지 않기 위해서다. -->
+      <form th:action="@{/signup}" th:object="${form}" method="post">
+        <div class="mb-3">
+          <label for="userId" class="form-label small">아이디 <span class="text-danger">*</span></label>
+          <input id="userId" type="text" th:field="*{userId}" class="form-control form-control-sm" autocomplete="username">
+          <div class="text-danger small" th:if="${#fields.hasErrors('userId')}" th:errors="*{userId}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label small">비밀번호 <span class="text-danger">*</span></label>
+          <input id="password" type="password" th:field="*{password}" class="form-control form-control-sm" autocomplete="new-password">
+          <div class="form-text">8자 이상 64자 이하, 영문·숫자·특수문자를 모두 포함합니다.</div>
+          <div class="text-danger small" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="passwordConfirm" class="form-label small">비밀번호 확인 <span class="text-danger">*</span></label>
+          <input id="passwordConfirm" type="password" th:field="*{passwordConfirm}" class="form-control form-control-sm" autocomplete="new-password">
+          <div class="text-danger small" th:if="${#fields.hasErrors('passwordConfirm')}" th:errors="*{passwordConfirm}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userNm" class="form-label small">이름 <span class="text-danger">*</span></label>
+          <input id="userNm" type="text" th:field="*{userNm}" class="form-control form-control-sm">
+          <div class="text-danger small" th:if="${#fields.hasErrors('userNm')}" th:errors="*{userNm}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userEmail" class="form-label small">이메일 <span class="text-danger">*</span></label>
+          <input id="userEmail" type="email" th:field="*{userEmail}" class="form-control form-control-sm">
+          <div class="text-danger small" th:if="${#fields.hasErrors('userEmail')}" th:errors="*{userEmail}"></div>
+        </div>
+        <div class="mb-3">
+          <label for="userPhone" class="form-label small">전화</label>
+          <input id="userPhone" type="text" th:field="*{userPhone}" class="form-control form-control-sm">
+          <div class="text-danger small" th:if="${#fields.hasErrors('userPhone')}" th:errors="*{userPhone}"></div>
+        </div>
+        <div class="mb-4">
+          <label for="reason" class="form-label small">신청 사유</label>
+          <textarea id="reason" th:field="*{reason}" class="form-control form-control-sm" rows="3"
+                    placeholder="소속과 담당 업무를 적어주시면 승인이 빨라집니다."></textarea>
+          <div class="text-danger small" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">신청</button>
+      </form>
+
+      <div class="text-center mt-3">
+        <a th:href="@{/login}" class="small">로그인으로 돌아가기</a>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>
