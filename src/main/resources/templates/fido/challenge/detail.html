@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>챌린지 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|챌린지 #${item.idx}|"></h1>
+    <a th:href="@{/challenges}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+      <tr><th>USERID</th><td th:text="${item.userid}"></td></tr>
+      <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
+      <tr><th>챌린지코드</th><td class="fa-mono" th:text="${item.challengecode}"></td></tr>
+      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      <tr><th>LOGIDX</th><td th:text="${item.logidx}"></td></tr>
+      <tr><th>UV</th><td th:text="${item.uv}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
