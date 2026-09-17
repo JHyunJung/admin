@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>코드 그룹/코드</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">코드 그룹/코드</h1>
+    <a th:href="@{/system/options/new}" class="btn btn-primary btn-sm">그룹 등록</a>
+  </div>
+
+  <form method="get" th:action="@{/system/options}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto"><label class="form-label small mb-0">그룹 이름</label><input name="optionName" th:value="${search.optionName}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary btn-sm">검색</button>
+      <a th:href="@{/system/options}" class="btn btn-link btn-sm">초기화</a>
+    </div>
+  </form>
+
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>그룹 이름</th><th>제목</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td th:text="${r.idx}">0</td>
+          <td><a th:href="@{/system/options/{id}(id=${r.idx})}" th:text="${r.optionName}">이름</a></td>
+          <td th:text="${r.optionTitle}"></td>
+          <td th:text="${r.optionNote}"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="4" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>
