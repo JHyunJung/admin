@@ -95,7 +95,8 @@ Branch: feature/part2-screens
 - SUPER 경로 18개: 전부 200 (예외 없음)
 - COMPANY 경로: 200 12개 / 403 6개 (표와 일치 — `/licenses` `/managers` `/criteria` `/fido2/metadata` `/fido2/credential-params` `/fido2/demo-access-codes` 403, 나머지 200)
 - 테넌트 격리: /users tester 0건, /users user001 1건 이상, /logs/fido SN-0003 0건, ?companyIdx=2 변조(logs/fido, users) 무시(둘 다 0건 유지), /users/3 404
-- 브라우저 확인 목록: 10/10 curl 로 등가 검증 통과(헤드리스 환경이라 실제 브라우저 렌더링·Bootstrap 모달 자체는 미관찰 — "수동 확인 필요"로 별도 기록)
+- 브라우저 체크리스트 10항목: curl 로 기능 등가 검증(HTTP 코드·플래시 문구·감사 로그·DB 상태) 완료. 시각 확인(Bootstrap 확인 모달 문구·버튼 "삭제/변경/해제", 네이티브 alert/confirm 미출현, 배지·플래시 렌더링)은 **미완료 — 수동 확인 필요**: `/users/1` 상태 변경, `/managers/2` 잠금 해제, `/companies/1` 삭제 버튼 순으로 확인.
+  - (curl 로 완료한 기능 검증 내역)
   - FDS 정책 중복 등록 시 LOCK TABLE 경로 정상 동작(에러 없음, 기존 행 보존)
   - 운영자 등록→5회 실패 잠김→잠금해제→재로그인 성공, 감사 로그 CREATE/UNLOCK 확인
   - 운영자 빈 비밀번호 검증 메시지 확인
@@ -106,11 +107,11 @@ Branch: feature/part2-screens
 - 외부 자원 호출 0건, JS alert/confirm/prompt 0건
 
 ### 3부 시작 전 처리 필요
-- 없음
+- 브라우저 시각 확인 **미완료**: Bootstrap 확인 모달 문구·버튼("삭제"/"변경"/"해제"), 네이티브 alert/confirm 미출현, 배지·플래시 렌더링을 실제 브라우저로 확인해야 한다.
+  절차: `/users/1` 상태 변경 → `/managers/2` 잠금 해제 → `/companies/1` 삭제 버튼 순으로 확인.
 
 ### 수용한 잔여 위험
 - IPv6 절단(IP VARCHAR2(15)) — 스키마 무변경 제약, 설계 3.5 에 명시된 동작
 - salt 없는 SHA-256 — 설계 3.4/12, 범위 밖
 - 고객사 삭제 TOCTOU, 테넌트 재배정 경쟁 — ERD 에 FK 없음, 관리자 소수 전제
 - 로그인 실패 타이밍 차이 — 사내망 전제
-- 브라우저 렌더링(부트스트랩 모달 표시, alert/confirm 미노출)은 curl 로 대체 검증했고 실제 시각적 확인은 하지 않음 — 3부 진행 중 여유가 있으면 수동 확인 권장
