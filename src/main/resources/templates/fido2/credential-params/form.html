@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? '크리덴셜 파라미터 등록' : '크리덴셜 파라미터 수정'">크리덴셜 파라미터</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '크리덴셜 파라미터 등록' : '크리덴셜 파라미터 수정'">크리덴셜 파라미터</h1>
+  <form th:action="${isNew} ? @{/fido2/credential-params} : @{/fido2/credential-params/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 560px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">타입 <span class="text-danger">*</span></label>
+        <input th:field="*{credType}" class="form-control" th:classappend="${#fields.hasErrors('credType')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{credType}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">알고리즘(COSE) <span class="text-danger">*</span></label>
+        <input type="number" th:field="*{credAlg}" class="form-control" placeholder="-7 (ES256), -257 (RS256)" th:classappend="${#fields.hasErrors('credAlg')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{credAlg}"></div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">상태 <span class="text-danger">*</span></label>
+        <select th:field="*{status}" class="form-select"><option value="T">T (사용)</option><option value="F">F (미사용)</option></select>
+      </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/fido2/credential-params} : @{/fido2/credential-params/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
