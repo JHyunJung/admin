@@ -1854,13 +1854,13 @@ Expected: 전부 통과, 실패 0.
 Spec: docs/superpowers/specs/2026-09-17-fido-admin-signup-design.md
 Plan: docs/superpowers/plans/2026-09-17-fido-admin-signup.md
 
-- [ ] Task 1: (선행 수정) COMPANY_IDX null → 슈퍼 관리자 결함 차단
-- [ ] Task 2: 비밀번호 정책·상태 상수 공통화
-- [ ] Task 3: 가입 신청 서비스
-- [ ] Task 4: 가입 신청 화면
+- [x] Task 1: (선행 수정) COMPANY_IDX null → 슈퍼 관리자 결함 차단
+- [x] Task 2: 비밀번호 정책·상태 상수 공통화
+- [x] Task 3: 가입 신청 서비스
+- [x] Task 4: 가입 신청 화면
 - [x] Task 5: 승인·거절 서비스
-- [ ] Task 6: 승인 화면
-- [ ] Task 7: 인증 흐름 통합 검증과 문서 갱신
+- [x] Task 6: 승인 화면
+- [x] Task 7: 인증 흐름 통합 검증과 문서 갱신
 ```
 
 - [x] **Step 8: 커밋**
