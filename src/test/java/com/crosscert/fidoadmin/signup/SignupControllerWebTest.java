@@ -33,7 +33,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = SignupController.class)
+// LoginController 를 함께 올린다. 가입 신청의 진입점과 복귀점이 모두 로그인 화면이므로,
+// 그 두 지점이 살아 있는지도 이 테스트가 지킨다.
+@WebMvcTest(controllers = {SignupController.class, com.crosscert.fidoadmin.auth.LoginController.class})
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class,
          GlobalExceptionHandler.class})
 class SignupControllerWebTest {
@@ -73,6 +75,30 @@ class SignupControllerWebTest {
                 .param("reason", "업무 담당자입니다"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login?signup"));
+    }
+
+    /**
+     * 로그인 화면에 가입 신청 진입점이 있다. 이것이 없으면 /signup 이 살아 있어도
+     * 사용자가 도달할 길이 없다(화면은 도달 가능해야 기능이다).
+     */
+    @Test void loginPageLinksToSignupForm() throws Exception {
+        mvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("/signup")))
+            .andExpect(content().string(containsString("가입 신청")));
+    }
+
+    /**
+     * 신청 후 되돌아오는 {@code /login?signup} 에 접수 안내가 보인다.
+     * 위 {@link #validApplicationRedirectsToLogin} 이 확인한 리다이렉트의 착지점이다.
+     */
+    @Test void loginPageShowsNoticeAfterApplying() throws Exception {
+        mvc.perform(get("/login").param("signup", ""))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("관리자 승인 후 로그인할 수 있습니다")));
+        // 파라미터가 없으면 안내가 나오지 않는다(항상 떠 있는 문구가 아니다)
+        mvc.perform(get("/login"))
+            .andExpect(content().string(not(containsString("관리자 승인 후 로그인할 수 있습니다"))));
     }
 
     /** 폼에 소속·상태를 실어 보내도 서비스는 그 값을 받지 않는다. */

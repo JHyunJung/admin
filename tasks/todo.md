@@ -203,3 +203,127 @@ Branch: feature/part3-system
   - 폰트 3개 모두 인증 없이 200(`font/woff2`), 브라우저 네트워크에서 콘텐츠 해시 경로로 수신 확인(CSS 내부 상대경로도 Spring 이 해시로 변환).
   - body·제목·사이드바·표·버튼·`.form-select` 등 전 요소가 Pretendard 로 계산됨(폼 요소 포함), 400/500/600/700 네 굵기 모두 로드. 콘솔 오류 0건.
 - 비용: 저장소에 786KB 증가(기존 .git 8.5MB). 첫 방문 시 폰트 전송량은 Bootstrap Icons(134KB) 포함 약 920KB, 이후 캐시된다.
+
+## 운영자 가입 신청·승인 (2026-09-17)
+
+Spec: `docs/superpowers/specs/2026-09-17-fido-admin-signup-design.md`
+Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
+
+사용자가 스스로 가입을 신청하고 슈퍼 관리자가 승인해야 로그인할 수 있는 흐름. 스키마는 건드리지 않았고
+신청 행은 `CCFA_MANAGER` 에 `STATUS = 승인대기`, `COMPANY_IDX = -1`(미배정) 로 저장한다. 로그인 차단은
+기존 `ManagerUserDetailsService` 의 상태 검사가 그대로 처리한다 — 새 차단 경로를 만들지 않았다.
+
+- [x] Task 1: (선행 수정) `COMPANY_IDX` 가 null 이면 슈퍼 관리자가 되는 결함 차단
+- [x] Task 2: 비밀번호 정책·상태 상수 공통화 (`PasswordPolicy`, `ManagerStatus`, `SignupPolicy`)
+- [x] Task 3: 가입 신청 서비스 (`SignupService.apply()`)
+- [x] Task 4: 가입 신청 화면 (`/signup`, 로그인 불필요)
+- [x] Task 5: 승인·거절 서비스 (권한 상승 차단 4중 가드)
+- [x] Task 6: 가입 승인 화면 (`/signups`, SUPER 전용)
+- [x] Task 7: 인증 흐름 통합 검증과 문서 갱신
+
+### 설계 검토에서 먼저 잡은 것
+
+- [x] **기존 권한 상승 결함 (설계 3.3)** — 가입 기능과 무관하게 이미 있던 결함이다.
+  `ManagerUserDetailsService` 가 `COMPANY_IDX` 를 `long` 으로 언박싱하기 전에 null 을 검사하지 않아,
+  `COMPANY_IDX` 가 null 인 행이 0(= SUPER)으로 해석될 수 있었다. 외부 입력이 계정 행을 만들기 **전에**
+  고쳐야 하는 문제라 다른 무엇보다 먼저 처리했다. 지금은 거부되며 고객사 조회조차 하지 않는다.
+  (`ManagerUserDetailsServiceTest`, `NullCompanyIdxLoginFlowTest`)
+
+### 의도적으로 감수한 것
+
+- [x] **계정 열거(account enumeration) 트레이드오프 — 사용자가 명시적으로 선택했다.**
+  아이디 중복 시 "이미 사용 중인 아이디"라고 그대로 알려준다. 이 응답으로 특정 아이디의 존재 여부를
+  확인할 수 있다. 모호한 문구로 감추는 대신 신청자가 곧바로 다른 아이디를 고를 수 있는 쪽을 택했다.
+  사내망 전용이고 신청 자체가 승인 없이는 아무 권한도 주지 않기 때문이다.
+  **재검토 조건: 이 화면이 사내망 밖(인터넷)에 노출되는 순간.** 그때는 응답을 모호하게 바꾸고
+  아래의 rate limit 을 함께 넣어야 한다. 둘 중 하나만 해서는 효과가 없다.
+
+### 구현 중 잡은 결함
+
+- [x] **`@ByteSize` vs `@Size`** — 이 스키마는 바이트 의미(`NLS_LENGTH_SEMANTICS=BYTE`, `AL32UTF8`)라
+  한글 1자가 3바이트다. 글자 수 기준인 `@Size` 를 쓰면 검증을 통과한 뒤 `ORA-12899` 로 저장에 실패한다.
+  즉 한글 입력에서만 터지는 결함이다. 가입 폼의 길이 제한을 전부 `@ByteSize` 로 맞췄다.
+  (`SignupControllerWebTest.rejectsNameOverByteLimit` / `rejectsReasonOverByteLimit`,
+  `SignupApprovalEscalationIntegrationTest.longKoreanRejectReasonFitsInColumn` 은 실제 Oracle 로 확인한다)
+
+아래 세 건은 **다른 리뷰어들이 모두 승인한 뒤 Codex 리뷰 게이트가 잡아냈다.** 기록해 둘 가치가 있다 —
+정상 경로만 보면 셋 다 보이지 않는다.
+
+- [x] **공백 결함(가장 무거웠다)** — 가입은 아이디를 trim 하지 않고 저장하는데 로그인은 trim 한다.
+  `" hong"` 으로 신청하면 그대로 저장되고, 로그인은 `"hong"` 을 찾으므로 영영 일치하지 않는다.
+  승인까지 정상적으로 끝난 계정이 **영구히 사용 불가**가 되는데, 화면 어디에도 이상 징후가 없다.
+  신청 시점에 trim 하도록 고쳤고 공백만으로 이루어진 아이디도 거부한다. 중복 검사도 trim 후 값으로 한다.
+  (`SignupControllerWebTest.trimsSurroundingWhitespaceFromUserId`,
+  `detectsDuplicateDespiteSurroundingWhitespace`, `rejectsWhitespaceOnlyUserId`)
+- [x] **없는 고객사로도 승인됐다** — 승인은 `companyIdx` 가 0(SUPER)이나 -1(미배정)인지는 봤지만
+  그 고객사가 **실재하는지**는 확인하지 않았다. 존재하지 않는 IDX 로 승인하면 어느 고객사에도 속하지
+  않는 계정이 만들어진다(ERD 에 FK 가 없어 DB 도 막지 못한다). 존재 검사를 추가했다.
+  (`SignupApprovalServiceTest.approveRejectsCompanyThatDoesNotExist`,
+  `SignupApprovalEscalationIntegrationTest.approveRejectsCompanyThatDoesNotExist`)
+- [x] **Enter 키로 확인 모달을 건너뛸 수 있었다** — 거절 사유 입력란에서 Enter 를 치면 폼이 곧바로
+  제출되어, 되돌릴 수 없는 처리의 확인 모달이 통째로 생략됐다. 모달을 붙여 놓고도 우회로가 열려 있던 셈이다.
+  (`SignupAdminControllerWebTest.rejectFormIsWiredToConfirmModal`)
+
+### 테스트 — 설계서 8장 대조
+
+8장의 모든 항목에 대응하는 테스트가 있다. **단, 동시성 2건은 제외했다(아래 사유).**
+
+| 8장 항목 | 검증하는 테스트 |
+| --- | --- |
+| `COMPANY_IDX` null 이 SUPER 가 되지 않는가 (3.3) | `ManagerUserDetailsServiceTest.nullCompanyIdxIsRejectedInsteadOfBecomingSuper`, `NullCompanyIdxLoginFlowTest` |
+| 신청에 `companyIdx=0`·`status=활성` 을 실어도 무시되는가 | `SignupControllerWebTest.injectedCompanyIdxAndStatusAreIgnored`, `SignupServiceTest.applyForcesPendingStatusAndUnassignedCompany` |
+| 승인 시 `companyIdx = 0` 이 거부되는가 | `SignupApprovalServiceTest.approveRejectsSuperCompanyIdx`, `SignupApprovalEscalationIntegrationTest.approveCannotCreateSuperAccount` |
+| 이미 `활성` 인 계정에 승인이 적용되지 않는가 | `SignupApprovalServiceTest.approveRejectsAlreadyActiveAccount`, `SignupApprovalEscalationIntegrationTest.approvedAccountCannotBeReassigned` |
+| `승인대기` 계정으로 로그인 실패 | `SignupEscalationIntegrationTest.appliedAccountCannotLogInAndIsNotSuper` (실제 Oracle + 실제 인증 코드) |
+| 승인 후 로그인 성공, 소속이 지정한 고객사 | `SignupApprovalEscalationIntegrationTest.approvedAccountBecomesCompanyUserNotSuper` |
+| `거절` 계정으로 로그인 실패 | `SignupApprovalEscalationIntegrationTest.rejectedAccountCannotBeApproved` |
+| 아이디 중복 시 거부 | `SignupControllerWebTest.rejectsDuplicateUserId`, `SignupServiceTest.applyRejectsDuplicateUserId`, `SignupEscalationIntegrationTest.duplicateUserIdIsRejectedOnRealDatabase` |
+| 비밀번호 정책 위반 시 거부 | `PasswordPolicyTest`(8건), `SignupControllerWebTest.rejectsWeakPassword` |
+| 비밀번호 확인 불일치 시 거부 | `PasswordPolicyTest.rejectsConfirmMismatch`, `SignupControllerWebTest.rejectsConfirmMismatch` |
+| 인증 없이 `/signup` 이 열리는가 | `SignupControllerWebTest.formIsPublic` |
+| 고객사 계정이 `/signups` 에 접근하면 403 | `SignupAdminControllerWebTest.companyUserIsForbidden` |
+| 고객사 사이드바에 가입 승인 메뉴가 없는가 | **Task 7 신규** `LayoutWebTest.companySidebarHidesSignupApprovalMenu` (+ 짝이 되는 `superSidebarShowsSignupApprovalMenu`) |
+| 같은 아이디 동시 신청 시 하나만 저장 | **작성하지 않음 — 아래 사유** |
+| 같은 신청 동시 승인 시 한 번만 적용 | **작성하지 않음 — 아래 사유** |
+
+- [x] **동시성 2건을 작성하지 않은 이유(정직하게 남긴다).** 이 프로젝트의 통합 테스트는 `@DataJpaTest` 라
+  테스트 메서드 전체가 하나의 트랜잭션으로 감싸였다가 롤백된다. 다른 스레드는 그 트랜잭션이 만든 행을
+  **볼 수 없다.** 그래서 스레드를 띄워 봐야 경쟁을 재현하지 못하고, 통과하더라도 동시성을 검증한 것이
+  아니라 아무것도 검증하지 않은 테스트가 된다. **통과하는데 이유가 틀린 테스트를 남기느니 없는 쪽이 낫다고 판단했다.**
+  대신 실제 방어 장치 두 개를 실제 Oracle 로 각각 확인한다:
+  `apply()` 의 `LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE` 가 문법 오류·타임아웃 없이 도는 것
+  (`SignupEscalationIntegrationTest.duplicateUserIdIsRejectedOnRealDatabase`), 그리고 승인이 행 잠금
+  **이후** 상태를 다시 읽어 판단하는 것(`SignupApprovalServiceTest.approveRechecksStatusAfterRowLock`,
+  `SignupApprovalEscalationIntegrationTest.approvedAccountCannotBeReassigned` — 후자는 flush + clear 로
+  1차 캐시가 아니라 DB 를 읽게 만들어야 의미가 있다). 진짜 동시성 검증이 필요해지면 `@DataJpaTest` 가 아닌
+  별도 하네스(커밋되는 트랜잭션 + 실제 커넥션 2개)가 필요하다.
+
+- [x] **Task 7 에서 추가한 테스트 4건** — 8장 대조 중 실제로 비어 있던 두 자리를 채웠다.
+  - `LayoutWebTest.companySidebarHidesSignupApprovalMenu` / `superSidebarShowsSignupApprovalMenu` —
+    기존 `MenuRegistryTest.signupApprovalMenuIsSuperOnly` 는 레지스트리 **데이터**가 `superOnly` 인지만 본다.
+    정작 메뉴가 새는 곳은 렌더된 HTML 이다. 템플릿이 `itemsFor(isSuper)` 대신 `MenuRegistry.ALL` 을 쓰도록
+    바뀌면 데이터 테스트는 그대로 통과하면서 메뉴는 노출된다. 실제로 그렇게 바꿔 보니 새 테스트가 실패했고,
+    되돌리니 통과했다(= 회귀를 잡는다는 것을 확인했다).
+  - `SignupControllerWebTest.loginPageLinksToSignupForm` / `loginPageShowsNoticeAfterApplying` —
+    `/signup` 이 살아 있어도 로그인 화면에 링크가 없으면 도달할 길이 없다. 신청 후 돌아오는
+    `/login?signup` 의 접수 안내까지 확인해 진입점과 복귀점을 모두 고정했다. 링크를 지워 보고 실패를 확인했다.
+  - 나머지 항목은 Task 1~6 에서 이미 덮고 있어 중복해 만들지 않았다.
+
+- [x] 전체 테스트 481건 통과, 실패 0, 건너뜀 0.
+
+### 사람이 판단해야 할 후속 과제 (이번 범위 밖, 그러나 실재한다)
+
+- [ ] **가입 엔드포인트에 rate limit 이 없다.** `/signup` 은 인증 없이 열려 있어 아이디 존재 여부를
+  빠르게 훑는 데 쓸 수 있고, 승인대기 행으로 테이블을 채울 수도 있다. 현재 완화책은 **사내망 전용이라는 것뿐**이다.
+  위 계정 열거 트레이드오프와 같은 조건에서 함께 재검토해야 한다(인터넷 노출 시).
+- [ ] **가입 신청은 감사 기록이 남지 않는다.** `AuditLogger` 가 인증된 주체가 없으면 조용히 아무것도 하지 않기
+  때문이다(가입은 익명 호출이다). 승인·거절은 슈퍼 관리자가 로그인한 상태라 정상 기록된다. 신청 이력을
+  남기려면 익명 경로용 기록 수단을 따로 만들어야 하며, 이는 감사 로그의 의미를 바꾸는 결정이라 위임하지 않는다.
+- [ ] **trim 수정 이전에 만들어진 행은 앞뒤 공백이 붙은 아이디를 가질 수 있다.** 그런 행은 승인해도 로그인되지
+  않는다. 운영 DB 에 이미 그런 행이 있는지 확인이 필요하다:
+  `SELECT IDX, USER_ID FROM CCFA_MANAGER WHERE USER_ID <> TRIM(USER_ID);`
+  데이터 정정이라 코드로 일괄 처리하지 않았다.
+- [ ] **`auth/PasswordChangeForm` 이 비밀번호 정규식을 세 번째로 다시 선언하고 있다.** Task 2 에서
+  `PasswordPolicy` 로 모았으나 이 폼은 여전히 `@Pattern(regexp = "^(?=.*[A-Za-z])...")` 리터럴을 직접 들고 있다.
+  지금은 값이 같아 동작에 차이가 없지만, 정책이 바뀔 때 한 곳만 고치면 조용히 어긋난다. 가입 흐름 밖의
+  파일이라 이번 범위에서 건드리지 않았다.

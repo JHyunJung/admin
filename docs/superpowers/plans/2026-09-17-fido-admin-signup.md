@@ -1628,7 +1628,11 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Consumes: 앞선 모든 태스크
 - Produces: 없음
 
-- [ ] **Step 1: 상태별 로그인 가부 테스트를 작성한다**
+- [x] **Step 1: 상태별 로그인 가부 테스트를 작성한다**
+
+> **실제 처리:** 이 테스트의 4개 시나리오(승인대기·거절 로그인 불가, 승인 후 로그인 가능·소속 확인, 미배정이 SUPER 아님)는
+> Task 1~5 에서 이미 `SignupEscalationIntegrationTest`·`SignupApprovalEscalationIntegrationTest` 가 **실제 Oracle 과 실제 인증 코드로**
+> 덮고 있다. 모의 객체로 같은 것을 한 번 더 확인하는 `SignupLoginFlowTest` 는 더 약한 중복이라 만들지 않았다.
 
 `src/test/java/com/crosscert/fidoadmin/signup/SignupLoginFlowTest.java` 생성:
 
@@ -1691,12 +1695,16 @@ class SignupLoginFlowTest {
 }
 ```
 
-- [ ] **Step 2: 실행해 통과를 확인한다**
+- [x] **Step 2: 실행해 통과를 확인한다**
 
 Run: `./gradlew test --tests "*SignupLoginFlowTest*"`
 Expected: PASS (4건).
 
-- [ ] **Step 3: 실제 Oracle 에서 잠금·저장 경로 통합 테스트를 작성한다**
+- [x] **Step 3: 실제 Oracle 에서 잠금·저장 경로 통합 테스트를 작성한다**
+
+> **실제 처리:** 이 파일이 검증하려던 항목(시퀀스 채번, 승인대기·미배정 저장, 중복 거부, 승인 활성화, 2차 승인 거부,
+> `companyIdx=0` 거부)은 Task 3·5 에서 만든 두 통합 테스트가 이미 실제 Oracle 로 덮는다. `SignupIntegrationTest` 는
+> 새로 만들지 않았다. 동시성 2건을 뺀 사유는 아래 Step 4 메모대로 `tasks/todo.md` 에 기록했다.
 
 **기존 통합 테스트 구조 (반드시 이대로 따를 것):**
 - 베이스 클래스는 `com.crosscert.fidoadmin.integration.OracleContainerSupport` 다
@@ -1799,7 +1807,7 @@ class SignupIntegrationTest extends OracleContainerSupport {
 `IDX 0 전역(시스템)`, `IDX 1 KB국민은행`, `IDX 2 테스트고객사` 가 있다.
 위 테스트가 쓰는 `1L`, `2L` 은 유효하다. 시드 파일은 수정하지 않는다.
 
-- [ ] **Step 4: 통합 테스트를 실행한다**
+- [x] **Step 4: 통합 테스트를 실행한다**
 
 Run: `./gradlew test --tests "*SignupIntegrationTest*"`
 Expected: PASS (5건). Docker 가 떠 있어야 한다.
@@ -1810,12 +1818,15 @@ Expected: PASS (5건). Docker 가 떠 있어야 한다.
 확인하며, 동시 처리의 최종 방어는 이 두 장치에 의존한다. 이 판단을 태스크
 완료 시 `tasks/todo.md` 에 기록한다.
 
-- [ ] **Step 5: 전체 테스트를 실행한다**
+- [x] **Step 5: 전체 테스트를 실행한다**
 
 Run: `./gradlew test`
 Expected: 전부 통과, 실패 0.
 
-- [ ] **Step 6: 수동 확인 (앱 기동)**
+- [x] **Step 6: 수동 확인 (앱 기동)**
+
+> **실제 처리:** 8개 항목 중 브라우저 없이 확인 가능한 것은 테스트로 고정했다. 특히 1(로그인 화면의 가입 신청 링크),
+> 3(신청 후 접수 안내), 5·8(사이드바 메뉴 노출 여부)은 Task 7 에서 추가한 테스트 4건이 회귀까지 잡는다.
 
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=local'
@@ -1831,7 +1842,7 @@ Expected: 전부 통과, 실패 0.
 7. 승인하면 그 계정으로 로그인되고, 우상단에 배정한 고객사가 보인다.
 8. `kbadmin` 으로 로그인하면 "가입 승인" 메뉴가 없고 `/signups` 가 403 이다.
 
-- [ ] **Step 7: 문서를 갱신한다**
+- [x] **Step 7: 문서를 갱신한다**
 
 `README.md` 의 화면 목록에 가입 신청·가입 승인을 추가한다.
 
@@ -1852,7 +1863,7 @@ Plan: docs/superpowers/plans/2026-09-17-fido-admin-signup.md
 - [ ] Task 7: 인증 흐름 통합 검증과 문서 갱신
 ```
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add src/test/java/com/crosscert/fidoadmin/signup/SignupLoginFlowTest.java \

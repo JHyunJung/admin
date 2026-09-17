@@ -105,4 +105,27 @@ class LayoutWebTest {
         mvc.perform(get("/companies").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
             .andExpect(status().isForbidden());
     }
+
+    /**
+     * 고객사 계정의 사이드바에 "가입 승인"이 렌더되지 않는다(설계서 8장 접근 제어).
+     *
+     * <p>{@code MenuRegistryTest} 는 레지스트리 <em>데이터</em>가 superOnly 인지만 본다.
+     * 그러나 실제로 새는 곳은 렌더된 HTML 이다. 템플릿이 {@code itemsFor(isSuper)} 대신
+     * {@code MenuRegistry.ALL} 을 쓰도록 바뀌면 데이터 테스트는 통과하지만 메뉴는 노출된다.
+     * 여기서는 응답 본문을 직접 본다.
+     */
+    @Test void companySidebarHidesSignupApprovalMenu() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("/signups"))))
+            .andExpect(content().string(not(containsString("가입 승인"))));
+    }
+
+    /** SUPER 의 사이드바에는 보인다. 위 테스트가 "아무것도 안 보여서" 통과하는 것을 막는다. */
+    @Test void superSidebarShowsSignupApprovalMenu() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("/signups")))
+            .andExpect(content().string(containsString("가입 승인")));
+    }
 }
