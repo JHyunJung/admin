@@ -11,6 +11,7 @@ import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.manager.web.ManagerSearchForm;
+import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
@@ -29,13 +30,16 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     private final CcfaManagerRepository managers;
     private final CcfaManagerPwPolicyRepository policies;
     private final LoginAttemptService loginAttempts;
+    private final EntityManager em;
 
     public ManagerService(CcfaManagerRepository managers, AuditLogger audit,
-                          CcfaManagerPwPolicyRepository policies, LoginAttemptService loginAttempts) {
+                          CcfaManagerPwPolicyRepository policies, LoginAttemptService loginAttempts,
+                          EntityManager em) {
         super(managers, audit);
         this.managers = managers;
         this.policies = policies;
         this.loginAttempts = loginAttempts;
+        this.em = em;
     }
 
     @Override protected Specification<CcfaManager> toSpecification(ManagerSearchForm f) {
@@ -60,8 +64,15 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     @Override protected void touchCreated(CcfaManager e, LocalDateTime now) { e.setCreatedtime(now); e.setUpdatedtime(now); }
     @Override protected void touchUpdated(CcfaManager e, LocalDateTime now) { e.setUpdatedtime(now); }
 
-    /** ERD 에 USER_ID 유니크 제약이 없다. 로그인이 USER_ID 로 조회하므로 중복을 코드에서 막는다. */
+    /**
+     * ERD 에 USER_ID 유니크 제약이 없고 스키마를 바꿀 수 없어, 존재 검사를 코드에서 직렬화해야 한다.
+     * 그러지 않으면 동시에 등록 요청이 들어왔을 때 둘 다 findByUserId() 에서 빈 결과를 보고
+     * 둘 다 INSERT 해 중복 USER_ID 가 생길 수 있다(로그인이 USER_ID 로 조회하므로 위험하다).
+     * 트랜잭션이 끝날 때까지 테이블을 배타 잠금해 이후 생성 요청을 직렬화한다.
+     * 운영자 등록은 SUPER 만 드물게 수행하므로 테이블 잠금 비용은 수용 가능하다.
+     */
     @Override protected CcfaManager insert(CcfaManager e) {
+        em.createNativeQuery("LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE").executeUpdate();
         if (managers.findByUserId(e.getUserId()).isPresent()) {
             throw new DataIntegrityViolationException("CCFA_MANAGER " + e.getUserId() + " 은(는) 이미 존재합니다");
         }

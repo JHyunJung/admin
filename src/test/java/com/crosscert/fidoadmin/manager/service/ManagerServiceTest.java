@@ -16,10 +16,14 @@ import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,11 +34,14 @@ class ManagerServiceTest {
     CcfaManagerPwPolicyRepository policies = mock(CcfaManagerPwPolicyRepository.class);
     LoginAttemptService loginAttempts = mock(LoginAttemptService.class);
     AuditLogger audit = mock(AuditLogger.class);
-    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts);
+    EntityManager em = mock(EntityManager.class);
+    Query lockQuery = mock(Query.class);
+    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        when(em.createNativeQuery("LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE")).thenReturn(lockQuery);
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -51,6 +58,23 @@ class ManagerServiceTest {
             .hasMessageContaining("kbadmin");
         verify(managers, never()).save(any());
         verify(audit, never()).log(any(), any());
+    }
+
+    /**
+     * USER_ID 에 DB 유니크 제약이 없어(ERD, 스키마 변경 불가) 동시 등록 요청이 둘 다
+     * findByUserId() 에서 빈 결과를 볼 수 있다. 존재 검사 전에 테이블을 배타 잠금해
+     * 이후 생성 요청을 직렬화해야 한다.
+     */
+    @Test void createLocksTableBeforeDuplicateCheck() {
+        when(managers.findByUserId("newop")).thenReturn(Optional.empty());
+        when(managers.save(any())).thenAnswer(inv -> { CcfaManager m = inv.getArgument(0); m.setIdx(11L); return m; });
+
+        service.create(manager(null, "newop"));
+
+        InOrder order = Mockito.inOrder(em, lockQuery, managers);
+        order.verify(em).createNativeQuery("LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE");
+        order.verify(lockQuery).executeUpdate();
+        order.verify(managers).findByUserId("newop");
     }
 
     @Test void defaultsFilledOnCreate() {
