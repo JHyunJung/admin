@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FIDO2 데모 접근코드 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|데모 접근코드 ${item.accesscode}|">데모 접근코드</h1>
+    <div class="d-flex gap-2">
+      <a th:href="@{/fido2/demo-access-codes/{id}/edit(id=${item.accesscode})}" class="btn btn-outline-primary btn-sm">수정</a>
+      <form th:action="@{/fido2/demo-access-codes/{id}/delete(id=${item.accesscode})}" method="post" id="deleteForm" class="m-0">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+      </form>
+      <a th:href="@{/fido2/demo-access-codes}" class="btn btn-link btn-sm">목록</a>
+    </div>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>코드</th><td class="fa-mono" th:text="${item.accesscode}"></td></tr>
+      <tr><th>벤더</th><td th:text="${item.vendorname}"></td></tr>
+      <tr><th>시작일시</th><td><span th:text="${item.startAt == null} ? '' : ${#temporals.format(item.startAt, 'yyyy-MM-dd HH:mm:ss')}"></span> <small class="text-secondary fa-mono" th:if="${item.starttime != null}" th:text="|(epoch ${item.starttime})|"></small></td></tr>
+      <tr><th>종료일시</th><td><span th:text="${item.endAt == null} ? '' : ${#temporals.format(item.endAt, 'yyyy-MM-dd HH:mm:ss')}"></span> <small class="text-secondary fa-mono" th:if="${item.endtime != null}" th:text="|(epoch ${item.endtime})|"></small></td></tr>
+      <tr><th>상태</th><td th:text="${item.status}"></td></tr>
+      <tr><th>비고</th><td class="fa-pre" th:text="${item.note}"></td></tr>
+      <tr><th>기타</th><td class="fa-pre" th:text="${item.etc}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
