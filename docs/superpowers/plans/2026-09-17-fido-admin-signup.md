@@ -1281,7 +1281,10 @@ git commit -m "feat: 가입 신청 승인·거절 처리 추가
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ```
-: 승인 화면 (SUPER 전용)
+
+---
+
+### Task 6: 승인 화면 (SUPER 전용)
 
 **Files:**
 - Create: `src/main/java/com/crosscert/fidoadmin/signup/SignupAdminController.java`
