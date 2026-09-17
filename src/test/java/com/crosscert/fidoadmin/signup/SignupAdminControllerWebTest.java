@@ -110,7 +110,7 @@ class SignupAdminControllerWebTest {
             .andExpect(content().string(not(containsString(">전역</option>"))));
     }
 
-    /** 거절 사유 입력란은 ETC 바이트 여유(약 318바이트)를 넘겨 쓰도록 유도하지 않는다. */
+    /** 거절 사유 입력란은 ETC 바이트 여유(317바이트)를 넘겨 쓰도록 유도하지 않는다. */
     @Test void rejectReasonInputIsLengthLimited() throws Exception {
         when(service.pending()).thenReturn(List.of(pending()));
         twoCompanies();
@@ -183,7 +183,19 @@ class SignupAdminControllerWebTest {
                 .param("reason", "소속 확인 불가"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/signups"))
-            .andExpect(flash().attributeExists("flashError"));
+            .andExpect(flash().attribute("flashError",
+                "이미 처리된 신청입니다(승인대기 상태가 아닙니다): newbie"));
+    }
+
+    /**
+     * 권한 상승이 걸린 화면이므로 CSRF 보호가 살아 있는지 못 박는다. 나머지 테스트가 모두
+     * {@code .with(csrf())} 를 붙이기 때문에, 이 테스트가 없으면 보호가 꺼져도 알 수 없다.
+     */
+    @Test void approveWithoutCsrfIsForbidden() throws Exception {
+        mvc.perform(post("/signups/5/approve").with(user(superUser))
+                .param("companyIdx", "1"))
+            .andExpect(status().isForbidden());
+        verify(service, never()).approve(anyLong(), anyLong());
     }
 
     /** 일반 고객사 계정은 접근할 수 없다. */

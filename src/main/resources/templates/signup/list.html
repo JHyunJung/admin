@@ -31,45 +31,44 @@
       <div class="small text-secondary mb-1" th:if="${m.userPhone}">
         <i class="bi bi-telephone me-1" aria-hidden="true"></i><span th:text="${m.userPhone}">전화</span>
       </div>
-      <div class="small fa-pre border-start ps-2 mb-3 mt-2" th:if="${m.etc}" th:text="${m.etc}">신청 사유</div>
+      <div class="small fa-pre mb-3 mt-2" th:if="${m.etc}" th:text="${m.etc}">신청 사유</div>
 
       <div class="row g-3 align-items-end">
         <div class="col-md-5">
+          <!-- row g-2 를 쓰면 .fa-content form.row.g-2(검색 바 스킨)에 걸려 카드 안에
+               테두리·그림자 패널이 겹쳐 보인다. d-flex 로 같은 배치를 만든다. -->
           <form th:action="@{/signups/{id}/approve(id=${m.idx})}" method="post"
-                th:id="|approveForm${m.idx}|" class="row g-2 align-items-end m-0">
-            <div class="col">
+                th:id="|approveForm${m.idx}|" class="d-flex gap-2 align-items-end m-0">
+            <div class="flex-grow-1">
               <label class="form-label small mb-1" th:for="|companyIdx${m.idx}|">소속 고객사</label>
               <!-- 전역(IDX 0)은 컨트롤러가 목록에서 빼 준다. 승인으로 슈퍼 관리자를 만들 수 없다. -->
-              <select th:id="|companyIdx${m.idx}|" name="companyIdx" class="form-select" required>
+              <select th:id="|companyIdx${m.idx}|" name="companyIdx" class="form-select form-select-sm" required>
                 <option value="">선택하세요</option>
                 <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
               </select>
             </div>
-            <div class="col-auto">
-              <button type="button" class="btn btn-primary"
-                      th:attr="data-confirm-form=|approveForm${m.idx}|"
-                      th:data-confirm-message="|${m.userId} 의 가입을 승인하시겠습니까?|"
-                      data-confirm-ok="승인">승인</button>
-            </div>
+            <button type="button" class="btn btn-primary btn-sm"
+                    th:attr="data-confirm-form=|approveForm${m.idx}|"
+                    th:data-confirm-message="|${m.userId}의 가입을 승인하시겠습니까?|"
+                    data-confirm-ok="승인">승인</button>
           </form>
         </div>
         <div class="col-md-7">
           <form th:action="@{/signups/{id}/reject(id=${m.idx})}" method="post"
-                th:id="|rejectForm${m.idx}|" class="row g-2 align-items-end m-0">
-            <div class="col">
+                th:id="|rejectForm${m.idx}|" class="d-flex gap-2 align-items-end m-0">
+            <div class="flex-grow-1">
               <label class="form-label small mb-1" th:for="|reason${m.idx}|">거절 사유</label>
-              <!-- 100자 제한. CCFA_MANAGER.ETC 는 2048"바이트"이고 신청 사유가 최대 1700바이트 +
-                   접두사 15바이트를 이미 쓴다. 남는 약 318바이트는 한글 106자라 100자가 안전한 한도다.
+              <!-- 100자 제한. CCFA_MANAGER.ETC 는 2048"바이트"인데 신청 사유가 최대 1700바이트,
+                   "신청 사유: " 접두사가 15바이트, 줄바꿈 1바이트, "거절 사유: " 접두사가 15바이트를
+                   쓴다. 남는 317바이트는 한글 105자라 100자가 안전한 한도다.
                    SignupService.reject() 가 바이트 기준으로 잘라 주지만, 잘릴 양을 입력하게 두지 않는다. -->
-              <input type="text" th:id="|reason${m.idx}|" name="reason" class="form-control" maxlength="100"
+              <input type="text" th:id="|reason${m.idx}|" name="reason" class="form-control form-control-sm" maxlength="100"
                      placeholder="거절 사유 (최대 100자)">
             </div>
-            <div class="col-auto">
-              <button type="button" class="btn btn-outline-danger"
-                      th:attr="data-confirm-form=|rejectForm${m.idx}|"
-                      th:data-confirm-message="|${m.userId} 의 가입을 거절하시겠습니까? 되돌릴 수 없습니다.|"
-                      data-confirm-ok="거절">거절</button>
-            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm"
+                    th:attr="data-confirm-form=|rejectForm${m.idx}|"
+                    th:data-confirm-message="|${m.userId}의 가입을 거절하시겠습니까? 되돌릴 수 없습니다.|"
+                    data-confirm-ok="거절">거절</button>
           </form>
         </div>
       </div>
