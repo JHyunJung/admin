@@ -28,7 +28,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // favicon 은 로그인 화면에서도 필요하고, 콘텐츠 해시가 붙으면 이름이 favicon-<md5>.ico 가 된다.
-                .requestMatchers("/login", "/error/**", "/webjars/**", "/css/**", "/js/**",
+                .requestMatchers("/login", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
                 .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**",
                                  "/criteria/**", "/fido2/**").hasRole("SUPER")

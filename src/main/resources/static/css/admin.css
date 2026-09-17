@@ -1,4 +1,30 @@
 /* FIDO Admin 테마 — 밝은 SaaS 톤(A) + 남색 사이드바(B). 외부 자원 없음. */
+
+/* Pretendard (SIL Open Font License 1.1, /fonts/LICENSE.txt).
+   한글 상용 2,780자 서브셋만 번들한다. 서브셋 밖 글자(희귀 한자 등)는
+   font-family 뒤쪽의 시스템 폰트가 받으므로 깨지지 않는다. */
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard Regular'), url(../fonts/Pretendard-Regular.subset.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard Medium'), url(../fonts/Pretendard-Medium.subset.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  src: local('Pretendard SemiBold'), url(../fonts/Pretendard-SemiBold.subset.woff2) format('woff2');
+}
+
 :root {
   --fa-sidebar-w: 236px;
   --fa-topbar-h: 56px;
@@ -19,7 +45,7 @@
   /* Bootstrap 변수 재정의 — 유틸리티(.border/.rounded/.bg-*)까지 함께 바뀐다 */
   --bs-body-bg: #f4f6fb;
   --bs-body-color: #1f2937;
-  --bs-body-font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --bs-body-font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
   --bs-border-color: #e5e7eb;
   --bs-border-radius: 12px;
   --bs-border-radius-sm: 8px;

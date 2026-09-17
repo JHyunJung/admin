@@ -188,3 +188,18 @@ Branch: feature/part3-system
 - [x] `admin.css` 에 `.fa-stat` 계열 규칙 추가(카드별 색은 `--fa-stat-color` 변수 하나로 갈아끼운다).
 - [x] 테스트 1건 추가: `DashboardControllerWebTest.summaryCardsAreColorCoded`(카드별 클래스·아이콘·수치 유지). 전체 396건 통과, 실패 0.
 - [x] 검증: 카드 4개 높이 모두 114px 로 동일, 좁은 화면(430px)에서 2열로 접히며 색 구분 유지, 콘솔 오류 0건.
+
+## 번들 폰트 Pretendard (2026-09-17)
+
+- [x] **설계서 문구 변경**: `docs/superpowers/specs/2026-09-16-fido-admin-design.md` 1.1 고정 제약의 "폰트는 시스템 폰트 스택" → Pretendard 한글 상용 서브셋 번들 + 서브셋 밖 글자는 시스템 폰트가 받음. 외부 호출 금지 원칙은 그대로다.
+- [x] WebJar 조사 결과 Maven Central 에 Pretendard·Noto Sans KR WebJar 가 없어(둘 다 404) npm tarball 에서 받아 `static/fonts/` 에 직접 넣었다. 라이선스 OFL-1.1, `fonts/LICENSE.txt` 동봉(OFL 의무).
+- [x] 무게 3개(Regular 400 / Medium 500 / SemiBold 600–700)의 **정적 서브셋** woff2 사용, 합계 786KB. 대안 비교: 전체 woff2 무게당 ~780KB(3무게 2.3MB), 가변폰트 2MB, 동적 서브셋 92조각·Regular만 1.1MB → 서브셋이 가장 유리.
+- [x] `admin.css` 에 `@font-face` 3개 추가하고 `--bs-body-font-family` 맨 앞에 Pretendard 배치. 시스템 폰트 스택은 뒤에 남겨 서브셋 밖 글자를 받게 했다.
+- [x] `SecurityConfig` permitAll 에 `/fonts/**` 추가(favicon 때와 같은 302 문제를 테스트가 먼저 잡았다).
+- [x] 테스트 1건 추가: `LayoutWebTest.anonymousCanFetchBundledFont`. 전체 397건 통과, 실패 0.
+- [x] 검증:
+  - **글리프 커버리지 실측** — 템플릿·자바 소스의 한글 429자를 모두 추출해 서브셋(한글 2,780자)과 대조: **누락 0자**.
+  - 서브셋 밖 글자 처리 — 희귀 한자(龘齉齾) 렌더 폭이 0 이 아님(=fallback 이 정상 수신, 두부 현상 없음).
+  - 폰트 3개 모두 인증 없이 200(`font/woff2`), 브라우저 네트워크에서 콘텐츠 해시 경로로 수신 확인(CSS 내부 상대경로도 Spring 이 해시로 변환).
+  - body·제목·사이드바·표·버튼·`.form-select` 등 전 요소가 Pretendard 로 계산됨(폼 요소 포함), 400/500/600/700 네 굵기 모두 로드. 콘솔 오류 0건.
+- 비용: 저장소에 786KB 증가(기존 .git 8.5MB). 첫 방문 시 폰트 전송량은 Bootstrap Icons(134KB) 포함 약 920KB, 이후 캐시된다.

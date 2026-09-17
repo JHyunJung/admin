@@ -17,7 +17,7 @@
 | 스택 | Java 17, Spring Boot 3.5.x, Gradle Wrapper 8.14 (Groovy DSL) |
 | DB | Oracle. ERD 이외의 테이블·컬럼을 추가·수정·삭제하지 않는다. `ddl-auto: none` |
 | 뷰 | Thymeleaf만 사용. SPA·REST 프런트엔드 없음 |
-| 네트워크 | 사내망. CSS/JS/폰트는 외부 호출 없이 jar 내부(WebJars)에서 서빙. 폰트는 시스템 폰트 스택 |
+| 네트워크 | 사내망. CSS/JS/폰트는 외부 호출 없이 jar 내부(WebJars 또는 `static/`)에서 서빙. 본문 폰트는 Pretendard 한글 상용 서브셋(OFL-1.1, 3 무게 약 786KB)을 번들하고, 서브셋 밖 글자는 시스템 폰트 스택이 받는다 |
 | 미포함 테이블 | `CCFA_FIDO_TLOG`는 ERD에 없으므로 다루지 않는다 |
 
 ### 1.2 화면 대상 테이블
