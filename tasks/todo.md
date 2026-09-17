@@ -224,9 +224,13 @@ Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
 ### 설계 검토에서 먼저 잡은 것
 
 - [x] **기존 권한 상승 결함 (설계 3.3)** — 가입 기능과 무관하게 이미 있던 결함이다.
-  `ManagerUserDetailsService` 가 `COMPANY_IDX` 를 `long` 으로 언박싱하기 전에 null 을 검사하지 않아,
-  `COMPANY_IDX` 가 null 인 행이 0(= SUPER)으로 해석될 수 있었다. 외부 입력이 계정 행을 만들기 **전에**
-  고쳐야 하는 문제라 다른 무엇보다 먼저 처리했다. 지금은 거부되며 고객사 조회조차 하지 않는다.
+  `ManagerUserDetailsService` 에 `null` 을 `0` 으로 **명시적으로 치환하는 한 줄**이 있었다:
+  `long companyIdx = m.getCompanyIdx() == null ? 0L : m.getCompanyIdx();`
+  0 은 SUPER 를 뜻하므로, `COMPANY_IDX` 가 비어 있는 계정은 차단되기는커녕 **슈퍼 관리자로 로그인**했다.
+  `ManagerUserDetails` 생성자에 null 을 거부하는 방어가 이미 있었지만, 이 치환 때문에 도달하지 못했다.
+  즉 방어를 무력화한 것은 실수가 아니라 의도적으로 쓴 한 줄이었다 — null 을 "안전한 기본값"으로 다루려다
+  가장 높은 권한값을 골라 버린 경우다. 치환을 제거해 생성자의 방어가 실제로 동작하게 했다.
+  외부 입력이 계정 행을 만들기 **전에** 고쳐야 하는 문제라 다른 무엇보다 먼저 처리했다.
   (`ManagerUserDetailsServiceTest`, `NullCompanyIdxLoginFlowTest`)
 
 ### 의도적으로 감수한 것
