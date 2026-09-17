@@ -2,7 +2,10 @@ package com.crosscert.fidoadmin.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
@@ -22,11 +25,34 @@ class ManagerUserDetailsServiceTest {
     CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
     ManagerUserDetailsService service = new ManagerUserDetailsService(managers, policies, companies);
 
-    private CcfaManager manager(String status, long companyIdx) {
+    private CcfaManager manager(String status, Long companyIdx) {
         CcfaManager m = new CcfaManager();
         m.setIdx(1L); m.setUserId("kbadmin"); m.setUserPw("hash"); m.setUserNm("KB운영자");
         m.setStatus(status); m.setCompanyIdx(companyIdx);
         return m;
+    }
+
+    /**
+     * COMPANY_IDX 가 null 인 계정은 로그인이 거부되어야 한다.
+     * null 을 0 으로 치환하면 isSuper() 가 참이 되어 슈퍼 관리자로 승격된다.
+     */
+    @Test void nullCompanyIdxIsRejectedInsteadOfBecomingSuper() {
+        when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager("활성", null)));
+        when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.loadUserByUsername("kbadmin"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("COMPANY_IDX");
+    }
+
+    /** COMPANY_IDX 가 null 이면 회사명 조회로 DB 를 찌르지 않는다. */
+    @Test void nullCompanyIdxDoesNotQueryCompany() {
+        when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager("활성", null)));
+        when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.loadUserByUsername("kbadmin"))
+            .isInstanceOf(IllegalArgumentException.class);
+        verify(companies, never()).findById(any());
     }
 
     @Test void loadsActiveManagerWithCompanyRole() {

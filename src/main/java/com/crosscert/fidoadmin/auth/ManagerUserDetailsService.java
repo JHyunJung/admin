@@ -29,9 +29,12 @@ public class ManagerUserDetailsService implements UserDetailsService {
             .orElseThrow(() -> new UsernameNotFoundException("운영자 없음: " + username));
         boolean locked = policies.findFirstByUserIdOrderByIdxDesc(username)
             .map(p -> "Y".equalsIgnoreCase(p.getAccountLock())).orElse(false);
-        long companyIdx = m.getCompanyIdx() == null ? 0L : m.getCompanyIdx();
-        String companyName = companies.findById(companyIdx).map(CcfaCompany::getCompanyName)
-            .orElse(companyIdx == 0L ? "전역" : "고객사 " + companyIdx);
+        // COMPANY_IDX 가 null 이어도 0 으로 치환하지 않는다. 0 은 SUPER 이므로 치환은 권한 상승이다.
+        // null 은 ManagerUserDetails 생성자가 거부한다.
+        Long companyIdx = m.getCompanyIdx();
+        String companyName = companyIdx == null ? null
+            : companies.findById(companyIdx).map(CcfaCompany::getCompanyName)
+                .orElse(companyIdx == 0L ? "전역" : "고객사 " + companyIdx);
         String name = m.getUserNm() == null || m.getUserNm().isBlank() ? m.getUserId() : m.getUserNm();
         return new ManagerUserDetails(m.getIdx(), m.getUserId(), m.getUserPw(), name, companyIdx, companyName,
             STATUS_ACTIVE.equals(m.getStatus()), !locked);
