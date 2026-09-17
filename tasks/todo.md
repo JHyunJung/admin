@@ -141,3 +141,12 @@ Branch: feature/part3-system
 - 정적 자원 규칙: `grep -rn "alert(\|confirm(\|prompt(" src/main/resources` 출력 없음(종료 코드 1), `grep -rn "https\?://" src/main/resources/templates | grep -v "thymeleaf.org\|w3.org"` 출력 없음(종료 코드 1) — 둘 다 기대대로.
 - bootRun: `docker/docker-compose.yml` Oracle 이미 healthy 상태에서 `./gradlew bootRun --args='--spring.profiles.active=local'` 기동, `/tmp/fido-admin-bootrun.log` 에 `Started FidoAdminApplication in 2.732 seconds` 확인. 검증 후 `pkill -f 'FidoAdminApplication'` 로 종료, 포트 8080 반환 확인.
 - 남은 위험: 시퀀스 이름 `<TABLE>_SEQ` 임시(README 절차대로 교체 전 운영 INSERT 보장 없음), 1부 Review 의 수용 위험 유지, 시스템 설정 등록 폼의 문자 제약 오류 문구가 설계 문서 문구와 다름(동작은 일치, 문구만 차이 — 위 참고).
+
+## 디자인 테마 적용 (2026-09-17)
+
+사용자 선택: "A(밝은 SaaS 톤)로 가되 사이드바만 B(남색)처럼".
+
+- [x] `static/css/admin.css` 재작성 — Bootstrap CSS 변수 재정의(본문 배경 `#f4f6fb`, 12px 모서리, 파란 액센트 `#2563eb`), 남색 사이드바(`#1e2a44`, 활성 메뉴 왼쪽 액센트 바), 카드형 목록·상세·검색 폼, 연한 배경 배지, 대문자 표 헤더. 외부 자원·마크업 변경 없음(템플릿 무수정).
+- [x] `application.yml` 에 `spring.web.resources.chain.strategy.content` 추가 — `max-age: 1d` 캐시 때문에 배포 후 옛 CSS 가 보이는 문제를 콘텐츠 해시 URL(`/css/admin-<md5>.css`, `/js/admin-<md5>.js`, WebJars 포함)로 해결. `@{...}` 링크가 자동 변환되며 원본 경로도 계속 200.
+- [x] 검증: `./gradlew test` 389건 통과, bootRun 재기동 후 로그인·대시보드 HTML 에서 해시 경로 확인 및 해당 경로 200, 새 브라우저 컨텍스트(Playwright)에서 목록·상세·대시보드·폼·로그인 스크린샷으로 테마 적용 확인.
+- 미적용(선택지로 남김): 메뉴 아이콘, 상세 화면 카드 분할, 대시보드 카드 색, 번들 폰트, favicon.
