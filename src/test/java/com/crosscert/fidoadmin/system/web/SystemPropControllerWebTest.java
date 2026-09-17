@@ -1,0 +1,112 @@
+package com.crosscert.fidoadmin.system.web;
+
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+
+import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.GlobalExceptionHandler;
+import com.crosscert.fidoadmin.common.MenuRegistry;
+import com.crosscert.fidoadmin.company.service.CompanyLookup;
+import com.crosscert.fidoadmin.config.CurrentPathAdvice;
+import com.crosscert.fidoadmin.config.SecurityConfig;
+import com.crosscert.fidoadmin.config.WebMvcConfig;
+import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
+import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
+import com.crosscert.fidoadmin.system.service.SystemPropService;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(controllers = SystemPropController.class)
+@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class,
+         SystemPropIdConverter.class})
+class SystemPropControllerWebTest {
+
+    @Autowired MockMvc mvc;
+    @MockitoBean SystemPropService service;
+    @MockitoBean CompanyLookup companies;
+    @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
+    @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
+    @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
+    @MockitoBean com.crosscert.fidoadmin.auth.ManagerUserDetailsService uds;
+
+    ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
+    ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+
+    private CcfaSystemProp prop(String key, long company, String value) {
+        CcfaSystemProp p = new CcfaSystemProp();
+        p.setId(new CcfaSystemPropId(key, company)); p.setPropValue(value); p.setShareType("YES");
+        return p;
+    }
+
+    @Test void companyRoleIsForbidden() throws Exception {
+        mvc.perform(get("/system/props").with(user(companyUser))).andExpect(status().isForbidden());
+    }
+
+    @Test void listRendersRowsWithPathLinks() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("id.propKey"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(prop("PW_FAIL_LIMIT", 0L, "5"))));
+        when(companies.names()).thenReturn(Map.of(0L, "전역(시스템)"));
+        mvc.perform(get("/system/props").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/list"))
+            .andExpect(content().string(containsString("PW_FAIL_LIMIT")))
+            .andExpect(content().string(containsString("/system/props/PW_FAIL_LIMIT@0")))
+            .andExpect(content().string(containsString("전역(시스템)")));
+    }
+
+    /** 경로 변수 "PW_FAIL_LIMIT@0" 가 복합키로 변환되어 서비스에 전달된다. */
+    @Test void detailConvertsCompositePathVariable() throws Exception {
+        CcfaSystemPropId id = new CcfaSystemPropId("PW_FAIL_LIMIT", 0L);
+        when(service.get(id)).thenReturn(prop("PW_FAIL_LIMIT", 0L, "5"));
+        when(companies.name(0L)).thenReturn("전역(시스템)");
+        mvc.perform(get("/system/props/PW_FAIL_LIMIT@0").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/detail"))
+            .andExpect(content().string(containsString("PW_FAIL_LIMIT")))
+            .andExpect(content().string(containsString("전역(시스템)")));
+        verify(service).get(id);
+    }
+
+    @Test void keyWithSlashIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "a/b").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키에 &#39;/&#39; 는 쓸 수 없습니다.")));
+    }
+
+    @Test void createRedirectsToCompositeDetail() throws Exception {
+        when(service.create(any())).thenReturn(prop("NEW", 0L, "x"));
+        when(service.idOf(any())).thenReturn("NEW@0");
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "NEW").param("companyIdx", "0").param("propValue", "x").param("shareType", "NO"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/system/props/NEW@0"));
+    }
+
+    /** update 리다이렉트는 CrudController 가 id.toString() 으로 만든다. toString 이 경로 값이어야 한다. */
+    @Test void updateRedirectsToCompositeDetail() throws Exception {
+        mvc.perform(post("/system/props/PW_FAIL_LIMIT@0").with(user(superUser)).with(csrf())
+                .param("propKey", "PW_FAIL_LIMIT").param("companyIdx", "0").param("propValue", "7").param("shareType", "YES"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/system/props/PW_FAIL_LIMIT@0"));
+    }
+}
