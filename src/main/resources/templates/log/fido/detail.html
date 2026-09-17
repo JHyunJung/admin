@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FIDO 로그 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|FIDO 로그 #${item.idx}|"></h1>
+    <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+      <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
+      <tr><th>시리얼</th><td class="fa-mono" th:text="${item.serialcode}"></td></tr>
+      <tr><th>JSONDATA</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.jsondataPretty}"></pre></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
