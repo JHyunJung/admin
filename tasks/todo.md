@@ -95,7 +95,7 @@ Branch: feature/part2-screens
 - SUPER 경로 18개: 전부 200 (예외 없음)
 - COMPANY 경로: 200 12개 / 403 6개 (표와 일치 — `/licenses` `/managers` `/criteria` `/fido2/metadata` `/fido2/credential-params` `/fido2/demo-access-codes` 403, 나머지 200)
 - 테넌트 격리: /users tester 0건, /users user001 1건 이상, /logs/fido SN-0003 0건, ?companyIdx=2 변조(logs/fido, users) 무시(둘 다 0건 유지), /users/3 404
-- 브라우저 체크리스트 10항목: curl 로 기능 등가 검증(HTTP 코드·플래시 문구·감사 로그·DB 상태) 완료. 시각 확인(Bootstrap 확인 모달 문구·버튼 "삭제/변경/해제", 네이티브 alert/confirm 미출현, 배지·플래시 렌더링)은 **미완료 — 수동 확인 필요**: `/users/1` 상태 변경, `/managers/2` 잠금 해제, `/companies/1` 삭제 버튼 순으로 확인.
+- 브라우저 체크리스트 10항목: curl 로 기능 등가 검증(HTTP 코드·플래시 문구·감사 로그·DB 상태) 완료. 시각 확인은 2026-09-17 Playwright(Chromium, curl 로 받은 세션 쿠키 주입)로 완료: `/users/1` 상태 변경 모달 "상태를 변경하시겠습니까?"/버튼 "변경"(btn-primary) → 확인 후 플래시 "상태가 변경되었습니다." 와 배지 O→X→O, `/managers/2` 잠금 해제 모달 "잠금을 해제하시겠습니까?"/"해제"(btn-primary) → 플래시 "잠금이 해제되었습니다.", `/companies/1` 삭제 모달 "정말 삭제하시겠습니까?"/"삭제"(btn-danger, 취소로 닫힘). 네이티브 alert/confirm/prompt 0건(page.on('dialog') 감시), 콘솔 JS 오류 0건(favicon.ico 404 만 있음), 감사 로그에 `USERINFO STATUS 1 O->X`, `X->O`, `CCFA_MANAGER UNLOCK kbadmin` 기록 확인.
   - (curl 로 완료한 기능 검증 내역)
   - FDS 정책 중복 등록 시 LOCK TABLE 경로 정상 동작(에러 없음, 기존 행 보존)
   - 운영자 등록→5회 실패 잠김→잠금해제→재로그인 성공, 감사 로그 CREATE/UNLOCK 확인
@@ -107,8 +107,7 @@ Branch: feature/part2-screens
 - 외부 자원 호출 0건, JS alert/confirm/prompt 0건
 
 ### 3부 시작 전 처리 필요
-- 브라우저 시각 확인 **미완료**: Bootstrap 확인 모달 문구·버튼("삭제"/"변경"/"해제"), 네이티브 alert/confirm 미출현, 배지·플래시 렌더링을 실제 브라우저로 확인해야 한다.
-  절차: `/users/1` 상태 변경 → `/managers/2` 잠금 해제 → `/companies/1` 삭제 버튼 순으로 확인.
+- 브라우저 시각 확인: 2026-09-17 Playwright 로 완료(위 2부 Review 참조). 남은 것 없음.
 
 ### 수용한 잔여 위험
 - IPv6 절단(IP VARCHAR2(15)) — 스키마 무변경 제약, 설계 3.5 에 명시된 동작
@@ -138,7 +137,7 @@ Branch: feature/part3-system
 - 브라우저 확인 목록 12항목: 브라우저 대신 curl 로 기능 동등 검증 완료(HTTP 코드·플래시 문구·감사 로그·DB 상태 실측). 11항목은 브리핑과 완전히 일치, **1항목 문구 불일치**:
   - 시스템 설정 등록 거부 문구, `PW_FAIL_LIMIT@0` 값 6→5 되돌리기, `VERSION`/`IT_MANUAL` 등록·삭제, 에러 코드 `1200` 거부·`9999` 등록/수정/삭제, FIDO 서버 `FIDO01` 거부·`FIDO03` 상태 기본값 ON, 어드민 기준 JSON 검증·pretty-print, 메뉴 부모 select 자기 제외·`최상위` 존재·하위 메뉴 있는 메뉴 삭제 차단 플래시, 코드 그룹 `hold` 추가·삭제·코드 남은 그룹 삭제 차단, 필드 정의 코드 그룹 select·목록 그룹명, 감사 로그 CREATE/DELETE 4건 확인, kbadmin 사이드바 시스템 그룹 미노출·`/system/menus` 403 — 모두 curl 실측대로 통과.
   - **불일치**: 키에 `/` 를 넣어 등록하면 브리핑은 "키에 '/' 는 쓸 수 없습니다."를 기대했으나, 실제 메시지는 `SystemPropForm`/`SystemInfoForm`의 `@Pattern(regexp = "[A-Za-z0-9._-]+")` 검증 문구인 "키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다."이다. 동작(등록 거부)은 기대대로지만 문구가 다르다. 코드는 수정하지 않았다(범위 밖 지시에 따름).
-  - **실제 브라우저(시각) 확인은 미완료 — 수동 확인 필요**: Bootstrap 확인 모달의 문구·버튼 렌더링, alert/confirm 미출현을 눈으로 보는 것, 배지·플래시의 실제 렌더링. 절차: `superuser/Admin1234!` 로 로그인 → 시스템 메뉴 8개를 위 순서대로 열어 등록/수정/삭제를 시도하며 확인한다. (2부 Review 에 기록된 `/users/1`, `/managers/2`, `/companies/1` 브라우저 확인도 여전히 미완료로 남아 있다.)
+  - 실제 브라우저(시각) 확인: 2026-09-17 Playwright(Chromium, curl 세션 쿠키 주입)로 완료. 시스템 8개 화면 모두 목록 200(행 1~3건)·`등록` 링크·`/new` 폼 200·첫 행 상세(`/system/props/PW_FAIL_LIMIT@0`, `/system/info/BUILD_DATE`, `/system/error-codes/1200`, `/system/fido-clients/FIDO01`, `/system/criteria/1`, `/system/menus/1`, `/system/options/1`, `/system/fields/1`)·삭제 모달("정말 삭제하시겠습니까?"/"삭제", 코드 그룹은 "그룹을 삭제하시겠습니까? 하위 코드가 있으면 삭제되지 않습니다.") 확인, 취소로 닫힘. 네이티브 dialog 0건, 콘솔 JS 오류 0건(favicon.ico 404 만 있음). 2부의 `/users/1`, `/managers/2`, `/companies/1` 확인도 같은 세션에서 완료(2부 Review 참조).
 - 정적 자원 규칙: `grep -rn "alert(\|confirm(\|prompt(" src/main/resources` 출력 없음(종료 코드 1), `grep -rn "https\?://" src/main/resources/templates | grep -v "thymeleaf.org\|w3.org"` 출력 없음(종료 코드 1) — 둘 다 기대대로.
 - bootRun: `docker/docker-compose.yml` Oracle 이미 healthy 상태에서 `./gradlew bootRun --args='--spring.profiles.active=local'` 기동, `/tmp/fido-admin-bootrun.log` 에 `Started FidoAdminApplication in 2.732 seconds` 확인. 검증 후 `pkill -f 'FidoAdminApplication'` 로 종료, 포트 8080 반환 확인.
 - 남은 위험: 시퀀스 이름 `<TABLE>_SEQ` 임시(README 절차대로 교체 전 운영 INSERT 보장 없음), 1부 Review 의 수용 위험 유지, 시스템 설정 등록 폼의 문자 제약 오류 문구가 설계 문서 문구와 다름(동작은 일치, 문구만 차이 — 위 참고).
