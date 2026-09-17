@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>사용자 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|사용자 #${item.idx}|">사용자</h1>
+    <a th:href="@{/users}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0">
+      <tbody>
+        <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+        <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+        <tr><th>USERID</th><td th:text="${item.userid}"></td></tr>
+        <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
+        <tr><th>AAID</th><td class="fa-mono" th:text="${item.aaid}"></td></tr>
+        <tr><th>생체 유형</th><td th:text="${item.bioType}"></td></tr>
+        <tr><th>인증기기 버전</th><td th:text="${item.authenticatorversion}"></td></tr>
+        <tr><th>KEYID</th><td class="fa-mono fa-pre" th:text="${item.keyid}"></td></tr>
+        <tr><th>PUBKEY (앞 16자)</th><td class="fa-mono" th:text="${item.pubkeyHead != null} ? |${item.pubkeyHead}…| : ''"></td></tr>
+        <tr><th>CERTIFICATE (앞 16자)</th><td class="fa-mono" th:text="${item.certificateHead != null} ? |${item.certificateHead}…| : ''"></td></tr>
+        <tr><th>서명횟수</th><td th:text="${item.signcounter}"></td></tr>
+        <tr><th>UVS</th><td th:text="${item.uvs}"></td></tr>
+        <tr>
+          <th>상태</th>
+          <td>
+            <form th:action="@{/users/{id}/status(id=${item.idx})}" method="post" id="statusForm"
+                  class="d-flex gap-2 align-items-center m-0">
+              <span class="badge" th:classappend="${item.status == 'O'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${item.status}"></span>
+              <select name="status" class="form-select form-select-sm w-auto">
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s == 'O'} ? 'O (정상)' : 'X (해지)'" th:selected="${item.status == s}"></option>
+              </select>
+              <button type="button" class="btn btn-outline-warning btn-sm" data-confirm-form="statusForm"
+                      data-confirm-message="상태를 변경하시겠습니까?" data-confirm-ok="변경">상태 변경</button>
+            </form>
+          </td>
+        </tr>
+        <tr><th>등록일시</th><td th:text="${#temporals.format(item.regtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+        <tr><th>생성일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+</body>
+</html>
