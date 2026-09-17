@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>서명</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3">서명</h1>
+  <form method="get" th:action="@{/signs}" class="row g-2 align-items-end mb-3">
+    <div class="col-auto" sec:authorize="hasRole('SUPER')">
+      <label class="form-label small mb-0">고객사</label>
+      <select name="companyIdx" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}" th:selected="${search.companyIdx == c.idx}"></option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">USERID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">DEL</label>
+      <select name="del" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option value="Y" th:selected="${search.del == 'Y'}">Y</option>
+        <option value="N" th:selected="${search.del == 'N'}">N</option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">시작일</label><input type="date" name="fromDate" th:value="${search.fromDate}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">종료일</label><input type="date" name="toDate" th:value="${search.toDate}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/signs}" class="btn btn-link btn-sm">초기화</a></div>
+  </form>
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0">
+      <thead class="table-light"><tr><th>IDX</th><th>일시</th><th>고객사</th><th>USERID</th><th>DN</th><th>ASSERTION</th><th>메모</th><th>DEL</th></tr></thead>
+      <tbody>
+        <tr th:each="r : ${page.content}">
+          <td><a th:href="@{/signs/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+          <td th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          <td th:text="${companyNames.get(r.companyIdx)} ?: ${r.companyIdx}"></td>
+          <td th:text="${r.userid}"></td>
+          <td th:text="${r.dn}"></td>
+          <td class="fa-mono" th:text="${r.assertionHead}"></td>
+          <td th:text="${r.memo}"></td>
+          <td th:text="${r.del}"></td>
+        </tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="8" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
+    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  </div>
+</main>
+</body>
+</html>

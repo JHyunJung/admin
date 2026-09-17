@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>서명 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|서명 #${item.idx}|"></h1>
+    <a th:href="@{/signs}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+      <tr><th>USERID</th><td th:text="${item.userid}"></td></tr>
+      <tr><th>DN</th><td th:text="${item.dn}"></td></tr>
+      <tr><th>메모</th><td th:text="${item.memo}"></td></tr>
+      <tr><th>DEL</th><td th:text="${item.del}"></td></tr>
+      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      <tr><th>PLAINTEXT (원문)</th><td class="fa-pre" th:text="${item.plaintext}"></td></tr>
+      <tr><th>ASSERTION</th><td class="fa-pre fa-mono" th:text="${item.assertion}"></td></tr>
+      <tr><th>DATA</th><td class="fa-pre fa-mono" th:text="${item.data}"></td></tr>
+      <tr><th>SIGNATURE</th><td class="fa-pre fa-mono" th:text="${item.signature}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
