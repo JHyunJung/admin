@@ -24,12 +24,22 @@ public abstract class AssignedIdCrudService<E, ID, S extends SearchForm> extends
     /** 폼에서 채워진 식별자. null/공백이면 등록을 거부한다. */
     protected abstract ID assignedId(E entity);
 
+    /**
+     * 존재 검사 직전에 테이블을 배타 잠금해 동시 등록 요청을 직렬화한다.
+     * 일부 할당형 PK 테이블(FIDO2_DEMO_ACCESS_CODE, CCFA_ERROR_TABLE, CCFA_FIDOCLIENT,
+     * CCFA_SYSTEM_PROP 등)은 스키마를 바꿀 수 없어 PK 제약이 아예 없다. 그런 테이블에서는
+     * existsById() 이후 다른 트랜잭션이 같은 키로 먼저 INSERT 해도 DB 가 잡아주지 못하므로,
+     * 존재 검사와 INSERT 사이의 경쟁을 코드에서 막아야 한다(ManagerService.insert 의 CCFA_MANAGER
+     * 처리와 같은 방식). tableName() 은 코드 상수이며 사용자 입력이 아니라 SQL 인젝션 여지가 없다.
+     * 잠금은 이 메서드를 감싼 짧은 create() 트랜잭션 커밋 시점에 풀린다.
+     */
     @Override
     protected E insert(E entity) {
         ID id = assignedId(entity);
         if (id == null || (id instanceof String s && s.isBlank())) {
             throw new IllegalArgumentException(tableName() + " 식별자가 비어 있습니다");
         }
+        em.createNativeQuery("LOCK TABLE " + tableName() + " IN EXCLUSIVE MODE").executeUpdate();
         if (repository.existsById(id)) {
             throw new DataIntegrityViolationException(tableName() + " " + id + " 은(는) 이미 존재합니다");
         }

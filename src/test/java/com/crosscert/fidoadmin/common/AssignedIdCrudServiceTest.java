@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.common;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,9 +15,11 @@ import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemInfo;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
+import jakarta.persistence.Query;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,6 +33,7 @@ class AssignedIdCrudServiceTest {
     InfoRepo repo = mock(InfoRepo.class);
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
+    Query lockQuery = mock(Query.class);
 
     AssignedIdCrudService<CcfaSystemInfo, String, SearchForm> service =
         new AssignedIdCrudService<>(repo, audit, em) {
@@ -45,6 +49,7 @@ class AssignedIdCrudServiceTest {
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        when(em.createNativeQuery(anyString())).thenReturn(lockQuery);
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -92,6 +97,29 @@ class AssignedIdCrudServiceTest {
         CcfaSystemInfo out = service.update("VERSION", i -> i.setPropValue("2"));
         assertThat(out.getPropValue()).isEqualTo("2");
         verify(repo).save(any());
+        verify(em, never()).persist(any());
+    }
+
+    /**
+     * PK 제약이 없는 테이블에서는 존재 검사만으로 동시 등록을 막을 수 없다.
+     * LOCK TABLE 을 존재 검사보다 먼저 실행해 이후 요청을 직렬화해야 한다.
+     */
+    @Test void locksTableBeforeExistenceCheck() {
+        when(repo.existsById("NEW_KEY")).thenReturn(false);
+        service.create(info("NEW_KEY"));
+
+        InOrder order = Mockito.inOrder(em, repo);
+        order.verify(em).createNativeQuery("LOCK TABLE CCFA_SYSTEM_INFO IN EXCLUSIVE MODE");
+        order.verify(repo).existsById("NEW_KEY");
+        verify(lockQuery).executeUpdate();
+    }
+
+    @Test void duplicateAfterLockStillDoesNotPersist() {
+        when(repo.existsById("VERSION")).thenReturn(true);
+        assertThatThrownBy(() -> service.create(info("VERSION")))
+            .isInstanceOf(DataIntegrityViolationException.class);
+        verify(em).createNativeQuery("LOCK TABLE CCFA_SYSTEM_INFO IN EXCLUSIVE MODE");
+        verify(lockQuery).executeUpdate();
         verify(em, never()).persist(any());
     }
 }

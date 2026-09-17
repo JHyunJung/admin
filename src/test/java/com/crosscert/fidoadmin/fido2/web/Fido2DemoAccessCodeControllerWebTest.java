@@ -151,4 +151,24 @@ class Fido2DemoAccessCodeControllerWebTest {
             .andExpect(content().string(containsString("접근코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
         verify(service, never()).create(any());
     }
+
+    /** "new" 는 등록 폼 경로("/fido2/demo-access-codes/new")와 겹쳐 상세 조회가 그 경로로 잘못 라우팅된다. */
+    @Test void accessCodeNewIsRejected() throws Exception {
+        mvc.perform(post("/fido2/demo-access-codes").with(user(superUser)).with(csrf())
+                .param("accesscode", "new").param("status", "E"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido2/demo-access-code/form"))
+            .andExpect(content().string(containsString("접근코드로 쓸 수 없는 값입니다: new")));
+        verify(service, never()).create(any());
+    }
+
+    /** 점으로만 된 값은 경로 세그먼트로서 특수한 의미(".."=상위 경로)를 가져 링크가 깨진다. */
+    @Test void accessCodeDotsOnlyIsRejected() throws Exception {
+        mvc.perform(post("/fido2/demo-access-codes").with(user(superUser)).with(csrf())
+                .param("accesscode", "..").param("status", "E"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido2/demo-access-code/form"))
+            .andExpect(content().string(containsString("접근코드로 쓸 수 없는 값입니다: ..")));
+        verify(service, never()).create(any());
+    }
 }

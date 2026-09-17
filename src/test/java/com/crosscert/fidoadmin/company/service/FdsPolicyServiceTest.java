@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.company.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,7 +15,9 @@ import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
 import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +30,9 @@ class FdsPolicyServiceTest {
     EntityManager em = mock(EntityManager.class);
     FdsPolicyService service = new FdsPolicyService(repo, audit, em);
 
+    @BeforeEach void stubLock() {
+        when(em.createNativeQuery(anyString())).thenReturn(mock(Query.class));
+    }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
     private void login(long companyIdx) {

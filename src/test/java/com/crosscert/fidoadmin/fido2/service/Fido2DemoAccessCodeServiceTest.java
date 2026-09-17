@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.fido2.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.fido2.entity.Fido2DemoAccessCode;
 import com.crosscert.fidoadmin.fido2.repository.Fido2DemoAccessCodeRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ class Fido2DemoAccessCodeServiceTest {
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        when(em.createNativeQuery(anyString())).thenReturn(mock(Query.class));
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

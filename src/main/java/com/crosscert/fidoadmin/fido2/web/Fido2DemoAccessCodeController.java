@@ -33,5 +33,17 @@ public class Fido2DemoAccessCodeController
         if (form.getStarttime() != null && form.getEndtime() != null && form.getEndtime().isBefore(form.getStarttime())) {
             binding.rejectValue("endtime", "range", "종료일시는 시작일시보다 빠를 수 없습니다.");
         }
+        /*
+         * ACCESSCODE 는 CRUD 경로의 {id} 세그먼트 그대로 쓰인다("/fido2/demo-access-codes/{id}" 등).
+         * "new" 는 등록 폼 경로("/new")와 겹치고, 점으로만 된 값("." , "..")은 경로 세그먼트로서
+         * 특수한 의미를 가져 상세/수정/삭제 링크가 만들어지지 않는다. 문자 집합 자체는
+         * @Pattern 으로 이미 제한했으니 여기서는 예약된 값만 추가로 막는다.
+         */
+        if (isNew && form.getAccesscode() != null) {
+            String code = form.getAccesscode();
+            if (code.equalsIgnoreCase("new") || code.matches("\\.+")) {
+                binding.rejectValue("accesscode", "reserved", "접근코드로 쓸 수 없는 값입니다: " + code);
+            }
+        }
     }
 }
