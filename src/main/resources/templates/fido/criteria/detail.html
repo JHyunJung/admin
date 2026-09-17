@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>인증기기 기준 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|인증기기 기준 #${item.idx}|"></h1>
+    <a th:href="@{/criteria}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>AAID</th><td th:text="${item.aaid}"></td></tr>
+      <tr><th>VENDORIDS</th><td th:text="${item.vendorids}"></td></tr>
+      <tr><th>USERVERIFICATION</th><td th:text="${item.userverification}"></td></tr>
+      <tr><th>KEYPROTECTION</th><td th:text="${item.keyprotection}"></td></tr>
+      <tr><th>MATCHERPROTECTION</th><td th:text="${item.matcherprotection}"></td></tr>
+      <tr><th>ATTACHMENTHNUMBER</th><td th:text="${item.attachmenthnumber}"></td></tr>
+      <tr><th>TCDISPLAY</th><td th:text="${item.tcdisplay}"></td></tr>
+      <tr><th>TCDISPLAYCONTENTTYPE</th><td th:text="${item.tcdisplaycontenttype}"></td></tr>
+      <tr><th>AUTHENTICATIONALGORITHMS</th><td th:text="${item.authenticationalgorithms}"></td></tr>
+      <tr><th>ASSERTIONSCHEMES</th><td th:text="${item.assertionschemes}"></td></tr>
+      <tr><th>ATTESTATIONTYPES</th><td th:text="${item.attestationtypes}"></td></tr>
+      <tr><th>AUTHENTICATORVERSION</th><td th:text="${item.authenticatorversion}"></td></tr>
+      <tr><th>METAHASH</th><td class="fa-mono" th:text="${item.metahash}"></td></tr>
+      <tr><th>JSONDATA</th><td class="fa-pre fa-mono" th:text="${item.jsondataPretty}"></td></tr>
+      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+      <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
