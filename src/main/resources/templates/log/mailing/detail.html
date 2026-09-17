@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>메일/SMS 큐 상세</title></head>
+<body>
+<main>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0" th:text="|메일/SMS 큐 #${item.idx}|"></h1>
+    <a th:href="@{/logs/mailing}" class="btn btn-link btn-sm">목록</a>
+  </div>
+  <div class="bg-white border rounded">
+    <table class="table table-sm fa-detail mb-0"><tbody>
+      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+      <tr><th>수신자(TO)</th><td class="fa-pre" th:text="${item.to}"></td></tr>
+      <tr><th>제목</th><td th:text="${item.subject}"></td></tr>
+      <tr><th>내용</th><td class="fa-pre" th:text="${item.content}"></td></tr>
+      <tr><th>상태</th><td th:text="${item.status}"></td></tr>
+      <tr><th>SMS 수신자</th><td class="fa-pre" th:text="${item.smsTo}"></td></tr>
+      <tr><th>SMS 내용</th><td class="fa-pre" th:text="${item.smsContent}"></td></tr>
+      <tr><th>SMS 상태</th><td th:text="${item.smsStatus}"></td></tr>
+      <tr><th>발송시각</th><td th:text="${item.sendtime}"></td></tr>
+    </tbody></table>
+  </div>
+</main>
+</body>
+</html>
