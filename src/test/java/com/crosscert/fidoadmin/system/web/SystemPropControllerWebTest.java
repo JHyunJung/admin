@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.web;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -92,21 +93,74 @@ class SystemPropControllerWebTest {
             .andExpect(view().name("error/404"));
     }
 
+    /**
+     * PROP_KEY 는 리다이렉트 경로의 {id} 세그먼트로 그대로 쓰인다. RedirectView 가 "{...}" 를
+     * URI 템플릿 변수로 해석하거나(예: "a{x}") "?"/"#" 뒤가 쿼리·프래그먼트로 잘리는 값은
+     * 저장 후 리다이렉트가 깨지므로 허용 문자 집합(@Pattern)으로 미리 막는다.
+     */
     @Test void keyWithSlashIsRejected() throws Exception {
         mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
                 .param("propKey", "a/b").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
-            .andExpect(content().string(containsString("키에 &#39;/&#39; 는 쓸 수 없습니다.")));
+            .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
+        verify(service, never()).create(any());
+    }
+
+    @Test void keyWithBraceIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "a{x}").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
+        verify(service, never()).create(any());
+    }
+
+    @Test void keyWithQuestionMarkIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "a?b").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
+        verify(service, never()).create(any());
+    }
+
+    @Test void keyWithUpperCaseSlashIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "A/B").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
+        verify(service, never()).create(any());
+    }
+
+    /** "new" 는 등록 폼 경로와 겹쳐 예약된 값으로 거부한다. */
+    @Test void keyEqualToNewIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "new").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: new")));
+        verify(service, never()).create(any());
+    }
+
+    /** 점으로만 된 값은 경로 세그먼트로서 특수한 의미를 가져 예약된 값으로 거부한다. */
+    @Test void keyOfDotsOnlyIsRejected() throws Exception {
+        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+                .param("propKey", "..").param("companyIdx", "0").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: ..")));
+        verify(service, never()).create(any());
     }
 
     @Test void createRedirectsToCompositeDetail() throws Exception {
-        when(service.create(any())).thenReturn(prop("NEW", 0L, "x"));
-        when(service.idOf(any())).thenReturn("NEW@0");
+        when(service.create(any())).thenReturn(prop("NEW_KEY", 0L, "x"));
+        when(service.idOf(any())).thenReturn("NEW_KEY@0");
         mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
-                .param("propKey", "NEW").param("companyIdx", "0").param("propValue", "x").param("shareType", "NO"))
+                .param("propKey", "NEW_KEY").param("companyIdx", "0").param("propValue", "x").param("shareType", "NO"))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/system/props/NEW@0"));
+            .andExpect(redirectedUrl("/system/props/NEW_KEY@0"));
     }
 
     /** update 리다이렉트는 CrudController 가 id.toString() 으로 만든다. toString 이 경로 값이어야 한다. */

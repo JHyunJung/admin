@@ -31,10 +31,18 @@ public class SystemPropController extends CrudController<CcfaSystemProp, CcfaSys
     @Override protected Object toListView(CcfaSystemProp e) { return SystemPropRow.of(e); }
     @Override protected Object toDetailView(CcfaSystemProp e) { return SystemPropRow.of(e); }
 
-    /** 경로 조각으로 쓰이는 키라 '/' 는 받지 않는다. */
+    /**
+     * PROP_KEY 는 CRUD 경로의 {id} 세그먼트 조합으로 그대로 쓰인다("/system/props/{key}@{companyIdx}" 등).
+     * "new" 는 등록 폼 경로("/new")와 겹치고, 점으로만 된 값("." , "..")은 경로 세그먼트로서
+     * 특수한 의미를 가져 상세/수정/삭제 링크가 만들어지지 않는다. 문자 집합 자체는
+     * @Pattern 으로 이미 제한했으니 여기서는 예약된 값만 추가로 막는다.
+     */
     @Override protected void validate(SystemPropForm form, boolean isNew, BindingResult binding) {
-        if (isNew && form.getPropKey() != null && form.getPropKey().contains("/")) {
-            binding.rejectValue("propKey", "path", "키에 '/' 는 쓸 수 없습니다.");
+        if (isNew && form.getPropKey() != null) {
+            String key = form.getPropKey();
+            if (key.equalsIgnoreCase("new") || key.matches("\\.+")) {
+                binding.rejectValue("propKey", "reserved", "키로 쓸 수 없는 값입니다: " + key);
+            }
         }
     }
 
