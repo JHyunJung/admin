@@ -1219,11 +1219,30 @@ import java.util.List;
         return m;
     }
 
-    /** ETC 는 2048자 제한이다. 넘치면 뒤에서 잘라 맞춘다. */
+    /**
+     * ETC 는 2048 **바이트** 제한이다(문자 수가 아니다. 한글 1자 = 3바이트).
+     * 넘치면 바이트 기준으로 자르되, 글자 중간에서 잘라 깨진 문자가 저장되지 않게 한다.
+     */
     private static String appendReason(String etc, String reason) {
         String added = "거절 사유: " + (reason == null || reason.isBlank() ? "(사유 없음)" : reason);
         String merged = etc == null || etc.isBlank() ? added : etc + "\n" + added;
-        return merged.length() <= 2048 ? merged : merged.substring(0, 2048);
+        return truncateToBytes(merged, 2048);
+    }
+
+    /** UTF-8 바이트 기준으로 자른다. 경계에서 글자가 쪼개지지 않도록 CharsetEncoder 를 쓴다. */
+    private static String truncateToBytes(String s, int maxBytes) {
+        byte[] bytes = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (bytes.length <= maxBytes) return s;
+        java.nio.CharBuffer out = java.nio.CharBuffer.allocate(s.length());
+        java.nio.charset.CharsetEncoder enc = java.nio.charset.StandardCharsets.UTF_8.newEncoder();
+        java.nio.ByteBuffer limited = java.nio.ByteBuffer.allocate(maxBytes);
+        enc.encode(java.nio.CharBuffer.wrap(s), limited, true);
+        limited.flip();
+        java.nio.charset.StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(java.nio.charset.CodingErrorAction.IGNORE)
+            .decode(limited, out, true);
+        out.flip();
+        return out.toString();
     }
 ```
 
@@ -1539,7 +1558,8 @@ public class SignupAdminController {
                 th:id="'rejectForm' + ${m.idx}" class="d-flex gap-2 align-items-end m-0">
             <div class="flex-grow-1">
               <label class="form-label small mb-0">거절 사유</label>
-              <input type="text" name="reason" class="form-control form-control-sm" maxlength="200">
+              <!-- 100자 제한: ETC 여유가 318바이트뿐이라 한글 106자가 한계다. 아래 계산 참고. -->
+              <input type="text" name="reason" class="form-control form-control-sm" maxlength="100">
             </div>
             <button type="button" class="btn btn-outline-danger btn-sm"
                     th:attr="data-confirm-form='rejectForm' + ${m.idx}"
