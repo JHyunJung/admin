@@ -43,7 +43,7 @@
           <td><a th:href="@{/managers/{id}(id=${r.idx})}" th:text="${r.userId}">id</a></td>
           <td th:text="${r.userNm}"></td>
           <td th:text="${r.userEmail}"></td>
-          <td th:text="${companyNames.get(r.companyIdx)}"></td>
+          <td th:text="${companyNames.get(r.companyIdx)} ?: ${r.companyIdx}"></td>
           <td><span class="badge" th:classappend="${r.status == '활성'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.status}"></span></td>
           <td th:text="${r.login}"></td>
           <td th:text="${#temporals.format(r.lastAccess, 'yyyy-MM-dd HH:mm')}"></td>

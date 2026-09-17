@@ -97,6 +97,25 @@ class FdsPolicyControllerWebTest {
             .andExpect(redirectedUrl("/fds-policies/1"));
     }
 
+    /** 고객사명이 조회되지 않는 IDX 는 목록에 "null" 대신 "#IDX" 를 보여준다. */
+    @Test void listFallsBackToHashCompanyIdxWhenNameMissing() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("companyIdx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(policy(9L))));
+        mvc.perform(get("/fds-policies").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("null"))))
+            .andExpect(content().string(containsString("#9 (9)")));
+    }
+
+    /** 수정 폼에서도 고객사명이 없으면 "null" 대신 "#IDX" 를 보여준다. */
+    @Test void editFormFallsBackToHashCompanyIdxWhenNameMissing() throws Exception {
+        when(service.get(9L)).thenReturn(policy(9L));
+        mvc.perform(get("/fds-policies/9/edit").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("null"))))
+            .andExpect(content().string(containsString("#9 (9)")));
+    }
+
     @Test void detailRendersAllColumns() throws Exception {
         when(service.get(1L)).thenReturn(policy(1L));
         when(companies.name(1L)).thenReturn("KB국민은행");

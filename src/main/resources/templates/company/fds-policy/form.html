@@ -24,7 +24,7 @@
       <div class="col-md-6" th:unless="${isNew}">
         <label class="form-label">고객사</label>
         <input type="hidden" th:field="*{companyIdx}">
-        <input class="form-control" readonly th:value="|${companyNames.get(form.companyIdx)} (${form.companyIdx})|">
+        <input class="form-control" readonly th:value="|${companyNames.get(form.companyIdx) ?: '#' + form.companyIdx} (${form.companyIdx})|">
       </div>
       <div class="col-12"><label class="form-label">AND IP</label><textarea th:field="*{andIp}" rows="2" class="form-control"></textarea></div>
       <div class="col-md-4"><label class="form-label">AND 기간</label><input th:field="*{andTerm}" class="form-control"></div>

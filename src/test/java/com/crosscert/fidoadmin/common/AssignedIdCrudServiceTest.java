@@ -80,6 +80,7 @@ class AssignedIdCrudServiceTest {
         assertThatThrownBy(() -> service.create(info(null))).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.create(info("  "))).isInstanceOf(IllegalArgumentException.class);
         verify(em, never()).persist(any());
+        verify(audit, never()).log(any(), any());
     }
 
     /** 존재 검사와 INSERT 사이에 다른 세션이 같은 키를 넣은 경우(경쟁) 도 같은 예외로 화면에 전달된다. */

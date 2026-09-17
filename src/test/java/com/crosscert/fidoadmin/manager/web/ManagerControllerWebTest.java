@@ -121,6 +121,44 @@ class ManagerControllerWebTest {
             .isEqualTo(com.crosscert.fidoadmin.auth.Sha256PasswordEncoder.sha256Hex("Secret1234!"));
     }
 
+    @Test void createWithShortPasswordShowsSizeMessage() throws Exception {
+        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("password", "short1!").param("passwordConfirm", "short1!"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("manager/manager/form"))
+            .andExpect(content().string(containsString("비밀번호는 8자 이상 64자 이하여야 합니다.")));
+        verify(service, org.mockito.Mockito.never()).create(any());
+    }
+
+    @Test void createWithoutSpecialCharShowsPolicyMessage() throws Exception {
+        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("password", "abcdefgh1").param("passwordConfirm", "abcdefgh1"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("manager/manager/form"))
+            .andExpect(content().string(containsString("영문, 숫자, 특수문자를 모두 포함해야 합니다.")));
+        verify(service, org.mockito.Mockito.never()).create(any());
+    }
+
+    /** 수정 시 비밀번호를 비워두면(변경하지 않으면) 정책 검사를 건너뛰고 그대로 저장된다. */
+    @Test void editWithBlankPasswordStillSucceeds() throws Exception {
+        mvc.perform(post("/managers/2").with(user(superUser)).with(csrf())
+                .param("userId", "kbadmin").param("companyIdx", "1").param("status", "활성"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/managers/2"));
+    }
+
+    /** 고객사명이 조회되지 않는 IDX 는 목록에 "null" 대신 IDX 를 그대로 보여준다. */
+    @Test void listFallsBackToCompanyIdxWhenNameMissing() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        CcfaManager m = manager(2L, "kbadmin"); m.setCompanyIdx(5L);
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(m)));
+        mvc.perform(get("/managers").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString(">null<"))));
+    }
+
     @Test void unlockRedirectsToDetailWithFlash() throws Exception {
         mvc.perform(post("/managers/2/unlock").with(user(superUser)).with(csrf()))
             .andExpect(status().is3xxRedirection())

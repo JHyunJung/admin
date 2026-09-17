@@ -38,7 +38,7 @@ public class Fido2DemoAccessCodeForm {
     /** 신규 엔티티에만 식별자를 채운다. 수정 시에는 applyTo 만 쓰므로 식별자가 바뀌지 않는다. */
     public Fido2DemoAccessCode toNewEntity() {
         Fido2DemoAccessCode c = new Fido2DemoAccessCode();
-        c.setAccesscode(accesscode == null ? null : accesscode.trim());
+        c.setAccesscode(accesscode);
         applyTo(c);
         return c;
     }

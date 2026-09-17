@@ -30,7 +30,7 @@
       </thead>
       <tbody>
         <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/fds-policies/{id}(id=${r.companyIdx})}" th:text="|${companyNames.get(r.companyIdx)} (${r.companyIdx})|">고객사</a></td>
+          <td><a th:href="@{/fds-policies/{id}(id=${r.companyIdx})}" th:text="|${companyNames.get(r.companyIdx) ?: '#' + r.companyIdx} (${r.companyIdx})|">고객사</a></td>
           <td th:text="${r.andCountry}"></td>
           <td th:text="${r.andTerm}"></td>
           <td th:text="${r.andDevice}"></td>
