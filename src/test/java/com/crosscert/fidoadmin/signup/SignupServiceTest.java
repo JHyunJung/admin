@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
@@ -28,7 +29,8 @@ class SignupServiceTest {
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
-    SignupService service = new SignupService(managers, em);
+    AuditLogger audit = mock(AuditLogger.class);
+    SignupService service = new SignupService(managers, em, audit);
 
     @BeforeEach void stubLock() {
         // 가입은 인증 없이 일어난다. 테스트도 로그인 사용자가 없는 상태로 돌린다.

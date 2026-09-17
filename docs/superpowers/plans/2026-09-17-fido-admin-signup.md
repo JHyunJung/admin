@@ -1024,7 +1024,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
   - `SignupService.reject(Long idx, String reason)` → `CcfaManager`
     - 대상이 `승인대기` 가 아니면 `IllegalStateException`
 
-- [ ] **Step 1: 실패하는 테스트를 작성한다**
+- [x] **Step 1: 실패하는 테스트를 작성한다**
 
 `src/test/java/com/crosscert/fidoadmin/signup/SignupApprovalServiceTest.java` 생성:
 
@@ -1142,12 +1142,12 @@ class SignupApprovalServiceTest {
 }
 ```
 
-- [ ] **Step 2: 테스트를 실행해 실패를 확인한다**
+- [x] **Step 2: 테스트를 실행해 실패를 확인한다**
 
 Run: `./gradlew test --tests "*SignupApprovalServiceTest*"`
 Expected: 컴파일 실패 (`approve`, `reject`, `pending` 없음 / 생성자 인자 3개).
 
-- [ ] **Step 3: SignupService 에 승인·거절을 추가한다**
+- [x] **Step 3: SignupService 에 승인·거절을 추가한다**
 
 생성자에 `AuditLogger audit` 를 추가하고(`@RequiredArgsConstructor` 가 자동 생성),
 다음 메서드와 import 를 더한다.
@@ -1246,7 +1246,7 @@ import java.util.List;
     }
 ```
 
-- [ ] **Step 4: 리포지터리에 조회·잠금 메서드를 추가한다**
+- [x] **Step 4: 리포지터리에 조회·잠금 메서드를 추가한다**
 
 `src/main/java/com/crosscert/fidoadmin/manager/repository/CcfaManagerRepository.java` 에 추가.
 `findByIdxForUpdate` 는 기존 `findByUserIdForUpdate` 와 같은 방식이다(바로 위에 있으니 참고).
@@ -1263,13 +1263,13 @@ import java.util.List;
 `@Lock`, `LockModeType`, `@Query`, `@Param`, `Optional` 은 이 파일에 이미
 import 되어 있다(`findByUserIdForUpdate` 가 쓰고 있다).
 
-- [ ] **Step 5: 테스트를 실행해 통과를 확인한다**
+- [x] **Step 5: 테스트를 실행해 통과를 확인한다**
 
 Run: `./gradlew test --tests "*SignupApprovalServiceTest*" --tests "*SignupServiceTest*"`
 Expected: PASS. `SignupServiceTest` 는 생성자 인자가 3개로 늘었으므로
 `new SignupService(managers, em, mock(AuditLogger.class))` 로 고친다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add src/main/java/com/crosscert/fidoadmin/signup/SignupService.java \
@@ -1281,10 +1281,7 @@ git commit -m "feat: 가입 신청 승인·거절 처리 추가
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ```
-
----
-
-### Task 6: 승인 화면 (SUPER 전용)
+: 승인 화면 (SUPER 전용)
 
 **Files:**
 - Create: `src/main/java/com/crosscert/fidoadmin/signup/SignupAdminController.java`
@@ -1847,7 +1844,7 @@ Plan: docs/superpowers/plans/2026-09-17-fido-admin-signup.md
 - [ ] Task 2: 비밀번호 정책·상태 상수 공통화
 - [ ] Task 3: 가입 신청 서비스
 - [ ] Task 4: 가입 신청 화면
-- [ ] Task 5: 승인·거절 서비스
+- [x] Task 5: 승인·거절 서비스
 - [ ] Task 6: 승인 화면
 - [ ] Task 7: 인증 흐름 통합 검증과 문서 갱신
 ```

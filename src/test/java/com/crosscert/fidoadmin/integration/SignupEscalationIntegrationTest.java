@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.auth.ManagerUserDetailsService;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
  * 가입 신청이 실제 Oracle 에 저장된 뒤, 그 계정으로 인증을 시도하면 무슨 일이 벌어지는지 확인한다.
@@ -32,6 +34,8 @@ class SignupEscalationIntegrationTest extends OracleContainerSupport {
     @Autowired SignupService signups;
     @Autowired ManagerUserDetailsService uds;
     @Autowired CcfaManagerRepository managers;
+    // JPA 슬라이스에는 감사 로거 빈이 없다. 신청은 익명 호출이라 어차피 기록되지 않는다.
+    @MockitoBean AuditLogger audit;
 
     /** 신청 직후의 계정은 로그인할 수 없고, 무엇보다 SUPER 가 아니다. */
     @Test void appliedAccountCannotLogInAndIsNotSuper() {

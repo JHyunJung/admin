@@ -18,7 +18,7 @@ public final class SignupPolicy {
 
     /** 신청 직후. 로그인 불가(기존 상태 검사가 막는다). */
     public static final String STATUS_PENDING = "승인대기";
-    /** 반려됨. 로그인 불가. 승인 화면(설계서 6.2)에서 쓴다 — Task 5 전까지 미사용. */
+    /** 반려됨. 로그인 불가. 승인·거절 처리가 쓴다(설계서 6.2). */
     public static final String STATUS_REJECTED = "거절";
 
     /**
@@ -27,6 +27,6 @@ public final class SignupPolicy {
      */
     public static final long UNASSIGNED_COMPANY_IDX = -1L;
 
-    /** SUPER 를 뜻하는 소속. 승인 시 이 값으로 배정하는 것을 금지한다(설계서 6.2) — Task 5 전까지 미사용. */
+    /** SUPER 를 뜻하는 소속. 승인 시 이 값으로 배정하는 것을 금지한다(설계서 6.2, 권한 상승 차단 2단계). */
     public static final long SUPER_COMPANY_IDX = 0L;
 }
