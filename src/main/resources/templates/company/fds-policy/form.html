@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${isNew} ? 'FDS 정책 등록' : 'FDS 정책 수정'">FDS 정책</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3" th:text="${isNew} ? 'FDS 정책 등록' : 'FDS 정책 수정'">FDS 정책</h1>
+  <form th:action="${isNew} ? @{/fds-policies} : @{/fds-policies/{id}(id=${id})}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <div class="row g-3">
+      <!-- 등록: SUPER 만 고객사를 고른다. COMPANY 는 서비스가 자기 고객사로 강제한다. -->
+      <div class="col-md-6" th:if="${isNew}" sec:authorize="hasRole('SUPER')">
+        <label class="form-label">고객사 <span class="text-danger">*</span></label>
+        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
+          <option value="">선택</option>
+          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
+        </select>
+        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
+      </div>
+      <!-- 수정: 식별자는 바꿀 수 없다. -->
+      <div class="col-md-6" th:unless="${isNew}">
+        <label class="form-label">고객사</label>
+        <input type="hidden" th:field="*{companyIdx}">
+        <input class="form-control" readonly th:value="|${companyNames.get(form.companyIdx)} (${form.companyIdx})|">
+      </div>
+      <div class="col-12"><label class="form-label">AND IP</label><textarea th:field="*{andIp}" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-4"><label class="form-label">AND 기간</label><input th:field="*{andTerm}" class="form-control"></div>
+      <div class="col-md-4"><label class="form-label">AND 기기</label><input th:field="*{andDevice}" class="form-control"></div>
+      <div class="col-md-4">
+        <label class="form-label">AND 국가 <span class="text-danger">*</span></label>
+        <input th:field="*{andCountry}" class="form-control" th:classappend="${#fields.hasErrors('andCountry')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{andCountry}"></div>
+      </div>
+      <div class="col-12"><label class="form-label">OR IP</label><textarea th:field="*{orIp}" rows="2" class="form-control"></textarea></div>
+      <div class="col-md-4"><label class="form-label">OR 기간</label><input th:field="*{orTerm}" class="form-control"></div>
+      <div class="col-md-4">
+        <label class="form-label">OR 국가 <span class="text-danger">*</span></label>
+        <input th:field="*{orCountry}" class="form-control" th:classappend="${#fields.hasErrors('orCountry')} ? 'is-invalid'">
+        <div class="invalid-feedback" th:errors="*{orCountry}"></div>
+      </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">저장</button>
+      <a th:href="${isNew} ? @{/fds-policies} : @{/fds-policies/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
