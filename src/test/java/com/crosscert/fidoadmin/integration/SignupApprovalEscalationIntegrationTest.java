@@ -174,25 +174,56 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
     }
 
     /**
-     * 운영자 수정 화면(`/managers`)으로 승인 절차를 우회할 수 없다.
+     * 미배정(COMPANY_IDX = -1) 행은 운영자 수정 화면 경로로 아예 도달할 수 없다.
      *
-     * <p>그 화면의 상태 선택지는 활성·비활성 뿐이라 승인대기를 표현하지 못한다. 그래서 승인대기 행을 열면
-     * 브라우저가 활성을 고르고, 이름만 고쳐 저장해도 상태가 활성이 되어 {@code approve()} 의
-     * 감사 로그·상태 재확인·행 잠금을 모두 건너뛰었다(설계서 4장). 실제 Oracle 에 대고 그 저장을
-     * 재현해, 이제 거부되고 행이 승인대기 그대로인지 확인한다.
-     *
-     * <p><b>Task 3.5 알려진 실패(BLOCKED, 셋업으로 못 고친다):</b> {@code applied()} 로 만든 승인대기
-     * 행은 COMPANY_IDX = -1(미배정)이다. {@code SelectedTenant.select()} 는 0/null 만 거부하지만,
-     * -1 은 실재하지 않는 고객사라 브리프가 테넌트로 선택하지 말라고 명시한다. 어떤 유효한 테넌트를
-     * 선택해도 {@code ManagerService.update()} → {@code get()} 의 {@code checkTenant} 가 소유(-1)와
-     * 불일치로 먼저 {@code TenantMismatchException} 을 던져, 이 테스트가 검증하려는
-     * "상태 변경만 막는다"(IllegalStateException, 가입 승인 메시지) 코드 경로 자체에 도달하지 못한다.
-     * 즉 미배정 행에 대한 이 시나리오는 새 모델에서 {@code ManagerService.update()} 경로로는
-     * 구조적으로 재현할 수 없다. 프로덕션 코드는 옳다(Task 3 의 의도된 동작) — 여기서 고치지 않는다.
+     * <p>Task 3.5 가 열었던 시나리오("운영자 수정 화면으로 승인 절차를 우회할 수 없다")는 원래
+     * {@code ManagerService.update()} 의 상태 가드(IllegalStateException)를 검증하려 했다. 하지만
+     * {@code applied()} 로 만든 승인대기 행은 COMPANY_IDX = -1(미배정)이고, 실재하는 고객사가
+     * 아니므로 {@code SelectedTenant.select()} 로 테넌트로 선택할 수 없다({@code select(0L)} 은
+     * SUPER 라서, {@code select(-1L)} 은 실재하지 않아서 둘 다 거부되거나 부정행위다). 그 결과
+     * 어떤 유효 테넌트를 선택하고 들어와도 {@code ManagerService.update()} → {@code get()} 의
+     * {@code checkTenant} 가 소유(-1)와 불일치로 상태 가드보다 먼저 {@code TenantMismatchException}
+     * 을 던진다. Task 12 (task-12-deferred-tests.md)의 결론대로, 이는 셋업 문제가 아니라 새 모델이
+     * 만든 더 강한 보장이다: "미배정 행은 운영자 수정 화면 경로로 나타나지도, 열리지도 않는다."
+     * 그 보장을 여기서 고정한다. {@code TenantMismatchException} 은 404 로 매핑된다(존재를 숨긴다,
+     * 403 이 아니다). 상태 가드 자체의 검증은
+     * {@link #managerEditCannotActivateAssignedPendingRow()} 로 옮겼다.
      */
-    @Test void managerEditCannotActivatePendingRow() {
+    @Test void 미배정_행은_운영자_수정_경로로_도달할_수_없다() {
         CcfaManager m = applied("byp_");
         flushAndClear();
+        selected.select(1L); // 유효 테넌트(고객사 1)를 선택한 상태 — 그래도 -1 행에는 닿지 않는다
+
+        assertThatThrownBy(() -> managerService.update(m.getIdx(), e -> {
+            e.setUserNm("이름만 바꿈");
+            e.setStatus(ManagerStatus.ACTIVE);
+        })).isInstanceOf(com.crosscert.fidoadmin.common.TenantMismatchException.class);
+
+        CcfaManager after = reloadedById(m.getIdx());
+        assertThat(after.getStatus()).as("변경 시도가 막혔으니 승인대기 그대로").isEqualTo(SignupPolicy.STATUS_PENDING);
+        assertThat(after.getCompanyIdx()).as("소속도 배정되지 않았다").isEqualTo(SignupPolicy.UNASSIGNED_COMPANY_IDX);
+        assertThat(((ManagerUserDetails) uds.loadUserByUsername(m.getUserId())).isEnabled())
+            .as("로그인도 여전히 막혀 있다").isFalse();
+    }
+
+    /**
+     * 소속이 배정된 행에서도 가입 상태 가드는 여전히 살아 있다: 상태 변경은 막히고, 다른 필드
+     * 수정은 통과한다.
+     *
+     * <p><b>주의 — 이 조합은 현재 가입 워크플로로는 생성되지 않는다.</b> {@code approve()} 는 소속을
+     * 배정하면서 상태를 활성으로 바꾸고, {@code reject()} 는 소속을 -1 로 둔 채 상태만 바꾼다. 즉
+     * "소속 배정 + 가입 상태(승인대기/거절)" 조합은 승인·거절 경로 어디서도 나오지 않는다. 그래도
+     * 이 조합을 테스트로 구성하는 것은 정당하다: 상태 가드는 {@code ManagerService.update()} 에 있는
+     * 서비스 계층 규칙이고, 그 규칙은 행이 어떤 경로로 생겼든(데이터 이관, 운영 중 직접 수정, 미래의
+     * 워크플로 변경) 적용돼야 한다. 아래 행은 리포지터리로 직접 구성한다 — 통합 시나리오가 아니라
+     * 가드 자체의 검증이다.
+     */
+    @Test void managerEditCannotActivateAssignedPendingRow() {
+        CcfaManager m = applied("byp2_");
+        m.setCompanyIdx(1L); // 실재하는 고객사로 소속을 직접 배정한다(워크플로가 만들지 않는 조합, 위 문서 참고)
+        managers.save(m);
+        flushAndClear();
+        selected.select(1L); // 이 행의 소속과 맞춘 유효 테넌트
 
         assertThatThrownBy(() -> managerService.update(m.getIdx(), e -> {
             e.setUserNm("이름만 바꿈");          // 관리자가 실제로 의도한 수정
@@ -201,7 +232,7 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
 
         CcfaManager after = reloadedById(m.getIdx());
         assertThat(after.getStatus()).as("승인대기 그대로").isEqualTo(SignupPolicy.STATUS_PENDING);
-        assertThat(after.getCompanyIdx()).as("소속도 배정되지 않았다").isEqualTo(SignupPolicy.UNASSIGNED_COMPANY_IDX);
+        assertThat(after.getCompanyIdx()).as("소속은 그대로 배정된 고객사 1").isEqualTo(1L);
         assertThat(((ManagerUserDetails) uds.loadUserByUsername(m.getUserId())).isEnabled())
             .as("로그인도 여전히 막혀 있다").isFalse();
     }
@@ -209,20 +240,22 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
     /**
      * 같은 행의 상태 아닌 필드 수정은 그대로 통과한다. 막는 것은 상태 변경뿐이다.
      *
-     * <p><b>Task 3.5 알려진 실패(BLOCKED):</b> 위 {@code managerEditCannotActivatePendingRow} 와 같은
-     * 이유다. 이 행도 COMPANY_IDX = -1(미배정)이라 어떤 유효 테넌트를 선택해도
-     * {@code checkTenant} 가 먼저 {@code TenantMismatchException} 을 던진다. 미배정 행은
-     * {@code ManagerService.update()} 경로로 도달할 수 없다(새 모델의 의도된 동작).
+     * <p>위 {@link #managerEditCannotActivateAssignedPendingRow()} 와 같은 이유로, 소속이 배정된
+     * 행으로 검증한다(현재 워크플로로는 생성되지 않는 조합 — 위 문서 참고).
      */
     @Test void managerEditStillUpdatesOtherFieldsOfPendingRow() {
         CcfaManager m = applied("keep_");
+        m.setCompanyIdx(1L); // 실재하는 고객사로 소속을 직접 배정한다(워크플로가 만들지 않는 조합)
+        managers.save(m);
         flushAndClear();
+        selected.select(1L);
 
         managerService.update(m.getIdx(), e -> e.setUserNm("바뀐 이름"));
 
         CcfaManager after = reloadedById(m.getIdx());
         assertThat(after.getUserNm()).isEqualTo("바뀐 이름");
         assertThat(after.getStatus()).isEqualTo(SignupPolicy.STATUS_PENDING);
+        assertThat(after.getCompanyIdx()).as("소속은 변하지 않는다").isEqualTo(1L);
     }
 
     /** 정상 상태(활성) 행의 상태 변경은 기존 화면 그대로 동작해야 한다. */

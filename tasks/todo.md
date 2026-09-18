@@ -390,3 +390,62 @@ Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
   FIDO 로그 사본이다. 운영 스키마에 남은 테스트 테이블(`BAK_FIDO_LOGS_TEST`)과
   쓰지 않는 연동의 토큰(`AWS_INFO.AMZ_TOKEN`)도 함께 봐야 한다.
   어떤 테이블도 문서만으로 삭제해서는 안 된다. 다른 시스템이 읽고 있는지 확인이 먼저다.
+
+## Review — 테넌트 선택 기반 UI/UX, Task 12 (2026-09-18)
+
+Spec/Plan: `.superpowers/sdd/2026-09-18-tenant-scoped-ui/` (task-12-brief.md, task-12-deferred-tests.md, task-12-report.md)
+
+Task 1~11 로 SUPER 계정을 세션 선택 테넌트(`SelectedTenant`)로 한 번에 한 고객사만 보게 좁혔다.
+Task 12 는 이 계획의 마지막 태스크로, Task 3.5 가 Task 12 로 미뤄 둔 실패 2건을 새 모델에 맞게
+재작성하고 전체 스위트를 검증했다.
+
+- [x] **이연된 실패 2건 재작성** — `SignupApprovalEscalationIntegrationTest`.
+  두 테스트가 다루던 행(승인대기, `COMPANY_IDX = -1` 미배정)은 어떤 유효 테넌트로도 선택할 수 없어
+  `ManagerService.update()` → `get()` 의 `checkTenant()` 가 원래 검증하려던 상태 가드
+  (`IllegalStateException`)보다 먼저 `TenantMismatchException` 을 던진다. 셋업 문제가 아니라
+  새 모델이 만든 더 강한 보장이다. 각 테스트를 두 조각으로 나눴다(삭제·`@Disabled`·단언 약화 없음).
+  1. **`미배정_행은_운영자_수정_경로로_도달할_수_없다`(신규)** — 유효 테넌트(고객사 1)를 선택한 채로
+     미배정(-1) 행을 열면 `TenantMismatchException` 인지 고정한다(404 매핑, 403 아님).
+  2. **`managerEditCannotActivateAssignedPendingRow`(신규, 기존 의도 이전)** /
+     **`managerEditStillUpdatesOtherFieldsOfPendingRow`(기존 이름 유지, 대상만 이전)** — 소속이
+     실재 고객사(1)로 배정된 승인대기 행을 리포지터리로 직접 구성해, 상태 가드가 여전히 상태 변경만
+     막고 다른 필드 수정은 통과시키는지 검증한다.
+     **주의:** "소속 배정 + 가입 상태" 조합은 현재 가입 워크플로(승인/거절)로는 생성되지 않는다
+     (`approve()` 는 배정하며 활성으로 바꾸고, `reject()` 는 미배정을 유지한다). 테스트가 이 행을
+     직접 만든 것은 통합 시나리오가 아니라 `ManagerService.update()` 의 서비스 계층 규칙 자체를
+     검증하기 위함이다 — 다음 사람이 통합 시나리오로 오해하지 않도록 테스트 주석에도 명시했다.
+  - 프로덕션 코드는 변경하지 않았다(브리프의 명시적 금지).
+
+- [x] **전체 스위트 검증** — Docker Oracle(healthy) 기동 상태에서 `./gradlew clean test`.
+  결과: **tests=577, failures=0, errors=0, skipped=0** (아래 집계 명령으로 확인).
+  ```
+  for k in tests failures errors skipped; do printf "%-9s " "$k"; \
+    grep -ho "$k=\"[0-9]*\"" build/test-results/test/*.xml | grep -o '[0-9]*' | awk '{s+=$1} END {print s+0}'; done
+  ```
+  (Task 3.5 시점 576/2/0/0 → 이번 재작성으로 테스트 1건이 늘어 577/0/0/0.)
+
+- [x] **README 갱신** — "실행" 절 아래 "테넌트 선택" 절을 추가했다. 슈퍼관리자의 `/select-tenant` +
+  상단 선택기, 테넌트/시스템/개인 세 영역과 대표 화면, `/managers/super` 가 필요한 이유
+  (`COMPANY_IDX = 0` 은 어떤 테넌트로도 선택되지 않아 일반 운영자 목록에 나타나지 않음),
+  그리고 COMPANY 역할 계정의 동작은 이번 작업 전과 동일하다는 점을 명시했다.
+
+- [x] **손 확인(브라우저 없이 가능한 범위)** —
+  `./gradlew bootRun --args='--spring.profiles.active=local'` 로 기동 후 `curl` 로:
+  - `curl -sD - http://localhost:8080/` → `302` + `Location: http://localhost:8080/login` (미인증 리다이렉트 확인).
+  - `curl http://localhost:8080/login` → `200`.
+  - 부팅 로그(`Started FidoAdminApplication in 2.797 seconds`)에 컨텍스트 로드 오류·경고 없음
+    (`grep -iE "error|exception|WARN"` 결과 없음).
+  - 확인 후 프로세스 정상 종료.
+  **브라우저가 필요해 손대지 못한 항목**(브리프의 Step 3 목록, 사람이 확인해야 함):
+  로그인 화면 자체의 시각적 렌더링, `/select-tenant` 선택 화면 흐름, 상단 선택기(Bootstrap
+  드롭다운) 렌더링과 동작, 고객사 전환 시 목록 데이터 변화, 상세 화면(`/users/{id}`)에서 테넌트
+  전환 시 목록으로 리다이렉트되는지, 다른 테넌트 ID 직접 URL 접근 시 404, 사이드바 사이즈/디밍
+  표시, `/managers/super`·`/managers` 분리 노출, 감사 로그의 대상 테넌트 기록, `kbadmin` 계정의
+  무회귀 확인.
+
+## 남은 과제 (인간 리뷰어에게)
+
+- **테넌트를 선택 중이던 세션의 고객사가 그 사이 삭제된 경우**: `CompanyService.beforeDelete` 가
+  비어 있지 않은 고객사의 삭제를 막으므로, 최악의 경우도 데이터 유출이 아니라 빈 화면이다.
+- **Bootstrap 드롭다운 렌더링과 사이드바 디밍은 어떤 에이전트도 시각적으로 확인한 적이 없다.**
+  사람이 브라우저로 확인해야 한다.
