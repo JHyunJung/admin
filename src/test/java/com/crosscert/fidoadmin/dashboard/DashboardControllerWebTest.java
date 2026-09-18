@@ -38,7 +38,7 @@ class DashboardControllerWebTest {
 
     @Test void rendersTotalsAndSerializedRows() throws Exception {
         when(stats.groupbys()).thenReturn(List.of("day"));
-        when(stats.serviceNames(any())).thenReturn(List.of("kbstar"));
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 0, 0, 10, 0, 0, 0)));
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
         mvc.perform(get("/").with(user(user)))
@@ -51,7 +51,7 @@ class DashboardControllerWebTest {
     /** 요약 카드는 지표마다 색 띠와 아이콘으로 구분한다. */
     @Test void summaryCardsAreColorCoded() throws Exception {
         when(stats.groupbys()).thenReturn(List.of("day"));
-        when(stats.serviceNames(any())).thenReturn(List.of("kbstar"));
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 5, 1, 10, 2, 3, 1)));
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
         mvc.perform(get("/").with(user(user)))

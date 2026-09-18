@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.dashboard;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.NoTenantSelectedException;
 import com.crosscert.fidoadmin.common.SelectedTenant;
 import com.crosscert.fidoadmin.common.TenantContext;
 import java.time.LocalDate;
@@ -65,9 +67,11 @@ class StatisticsTenantScopeTest {
         assertThat(capturedCompanyIdx()).isEqualTo(1L); // 자기 것으로 강제
     }
 
+    /** SUPER 의 필터는 더 이상 폼 파라미터가 아니라 세션에서 고른 테넌트로 걸린다. */
     @Test
     void superCanFilterByChosenCompany() {
         login(0L);
+        selected.select(2L);
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
 
@@ -108,14 +112,15 @@ class StatisticsTenantScopeTest {
         assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);
     }
 
+    /**
+     * 예전에는 미선택 SUPER 가 전체 고객사 합산을 볼 수 있었다.
+     * 이제는 유효 테넌트가 없으므로 조회 자체가 예외로 막힌다.
+     */
     @Test
-    void superWithoutChoiceSeesAllCompanies() {
+    void 미선택_SUPER_는_집계를_볼_수_없다() {
         login(0L);
-        when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
-            .thenReturn(List.of());
 
-        service.daily(form(null));
-
-        assertThat(capturedCompanyIdx()).isNull(); // SQL 의 :companyIdx IS NULL 분기
+        assertThatThrownBy(() -> service.daily(form(null)))
+            .isInstanceOf(NoTenantSelectedException.class);
     }
 }

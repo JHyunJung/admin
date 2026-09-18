@@ -40,9 +40,9 @@ public class StatisticsQueryService {
             p, String.class);
     }
 
+    /** 유효 테넌트가 유일한 출처이므로 파라미터로 받지 않는다. */
     @Transactional(readOnly = true)
-    /** COMPANY 역할은 전달값과 무관하게 자기 고객사로 강제한다. */
-    public List<String> serviceNames(Long companyIdx) {
+    public List<String> serviceNames() {
         Map<String, Object> p = new HashMap<>();
         p.put("companyIdx", tenant.companyIdx());
         return jdbc.queryForList(
