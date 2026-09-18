@@ -65,8 +65,8 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         Specification<E> spec = toSpecification(form);
         String attr = companyIdxAttribute();
         if (attr != null) {
-            Long filter = tenant.require().isSuper() ? form.getCompanyIdx() : tenant.companyIdx();
-            spec = Specs.all(spec, Specs.eq(attr, filter));
+            // 역할을 묻지 않는다. 유효 테넌트가 곧 경계다.
+            spec = Specs.all(spec, Specs.eq(attr, tenant.companyIdx()));
         }
         return repository.findAll(spec == null ? Specs.all() : spec, pageable);
     }
@@ -89,7 +89,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     @Transactional
     public E create(E entity) {
         requireSuperForGlobalTable();
-        if (companyIdxAttribute() != null && !tenant.require().isSuper()) {
+        if (companyIdxAttribute() != null) {
             setCompanyIdx(entity, tenant.companyIdx());
         }
         applyDefaults(entity);
@@ -103,7 +103,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     public E update(ID id, Consumer<E> mutator) {
         E e = get(id);
         mutator.accept(e);
-        if (companyIdxAttribute() != null && !tenant.require().isSuper()) {
+        if (companyIdxAttribute() != null) {
             setCompanyIdx(e, tenant.companyIdx());
         }
         touchUpdated(e, LocalDateTime.now());
@@ -121,7 +121,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     }
 
     protected void checkTenant(E e) {
-        if (companyIdxAttribute() == null || tenant.require().isSuper()) return;
+        if (companyIdxAttribute() == null) return;
         Long owner = companyIdxOf(e);
         if (owner == null || !owner.equals(tenant.companyIdx())) {
             throw new TenantMismatchException(tableName() + " " + idOf(e));

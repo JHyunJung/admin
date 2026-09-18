@@ -54,6 +54,12 @@ class CrudServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 
+    /** SUPER 로 로그인하고 고객사를 선택한다. */
+    private void loginSuperSelecting(long companyIdx) {
+        login(0L);
+        selected.select(companyIdx);
+    }
+
     private CcfaLicense license(long idx, long companyIdx) {
         CcfaLicense l = new CcfaLicense(); l.setIdx(idx); l.setCompanyIdx(companyIdx); return l;
     }
@@ -64,16 +70,36 @@ class CrudServiceTest {
         assertThatThrownBy(() -> service.get(9L)).isInstanceOf(TenantMismatchException.class);
     }
 
-    @Test void superCanGetAnyTenant() {
-        login(0L);
-        when(repo.findById(9L)).thenReturn(Optional.of(license(9L, 2L)));
-        assertThat(service.get(9L).getCompanyIdx()).isEqualTo(2L);
+    /**
+     * 이번 변경의 핵심. 예전에는 checkTenant() 가 isSuper() 면 그냥 통과해
+     * SUPER 가 URL 로 임의 테넌트의 행을 열 수 있었다(superCanGetAnyTenant 로 불렸고
+     * 그 통과를 정상 동작으로 단언했다). 이제는 선택한 테넌트와 다르면 거부된다.
+     */
+    @Test void superGetsRejectedForOtherTenant() {
+        loginSuperSelecting(9L);
+        when(repo.findById(1L)).thenReturn(Optional.of(license(1L, 3L)));
+
+        assertThatThrownBy(() -> service.get(1L)).isInstanceOf(TenantMismatchException.class);
+    }
+
+    @Test void superGetsSelectedTenantRow() {
+        loginSuperSelecting(9L);
+        when(repo.findById(1L)).thenReturn(Optional.of(license(1L, 9L)));
+
+        assertThat(service.get(1L).getCompanyIdx()).isEqualTo(9L);
     }
 
     @Test void getThrowsWhenMissing() {
-        login(0L);
+        loginSuperSelecting(9L);
         when(repo.findById(9L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.get(9L)).isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
+    }
+
+    /** 미선택 SUPER 는 조회 자체가 성립하지 않는다. */
+    @Test void searchThrowsWhenSuperHasNoTenantSelected() {
+        login(0L);
+        assertThatThrownBy(() -> service.search(new SearchForm(), PageRequest.of(0, 20, Sort.by("idx"))))
+            .isInstanceOf(NoTenantSelectedException.class);
     }
 
     @Test void createForcesTenantAndTimestampsAndAudits() {
@@ -88,10 +114,11 @@ class CrudServiceTest {
         verify(audit).log(AuditType.CREATE, "CCFA_LICENSE CREATE 100");
     }
 
-    @Test void superKeepsGivenTenantOnCreate() {
-        login(0L);
+    /** 등록은 역할과 무관하게 유효 테넌트 소유가 된다. 폼/엔티티에 실린 값은 무시된다. */
+    @Test void superCreatedRowIsOwnedBySelectedTenant() {
+        loginSuperSelecting(9L);
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        assertThat(service.create(license(0L, 5L)).getCompanyIdx()).isEqualTo(5L);
+        assertThat(service.create(license(0L, 5L)).getCompanyIdx()).isEqualTo(9L);
     }
 
     @Test void updateMutatesWithinTenant() {
@@ -132,9 +159,12 @@ class CrudServiceTest {
     /**
      * 목록 조회의 테넌트 필터는 격리의 핵심이다. Specification 이 null 이 아닌지만 보면
      * 필터를 제거해도 테스트가 통과하므로, 실제로 평가해 companyIdx 등치 조건을 확인한다.
+     *
+     * 예전에는 SUPER 면 필터가 없어 전체가 조회됐다(이 단언이 isNull() 이었다).
+     * 이제는 선택한 고객사로 걸린다.
      */
-    @Test void searchDoesNotFilterForSuperWhenNoCompanyChosen() {
-        login(0L);
+    @Test void searchFiltersSuperBySelectedCompany() {
+        loginSuperSelecting(9L);
         when(repo.findAll(any(Specification.class), any(PageRequest.class)))
             .thenReturn(new PageImpl<>(java.util.List.of()));
 
@@ -142,21 +172,7 @@ class CrudServiceTest {
 
         ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
         verify(repo).findAll(captor.capture(), any(PageRequest.class));
-        assertThat(companyIdxEqualsIn(captor.getValue())).isNull();
-    }
-
-    @Test void searchLetsSuperFilterByChosenCompany() {
-        login(0L);
-        when(repo.findAll(any(Specification.class), any(PageRequest.class)))
-            .thenReturn(new PageImpl<>(java.util.List.of()));
-
-        SearchForm form = new SearchForm();
-        form.setCompanyIdx(7L);
-        service.search(form, PageRequest.of(0, 20, Sort.by("idx")));
-
-        ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
-        verify(repo).findAll(captor.capture(), any(PageRequest.class));
-        assertThat(companyIdxEqualsIn(captor.getValue())).isEqualTo(7L);
+        assertThat(companyIdxEqualsIn(captor.getValue())).isEqualTo(9L);
     }
 
     /**
