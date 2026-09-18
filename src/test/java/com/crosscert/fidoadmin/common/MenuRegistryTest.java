@@ -56,9 +56,13 @@ class MenuRegistryTest {
             "대시보드", "로그", "이상 징후 탐지", "FIDO 서버 관리", "FIDO2", "시스템관리", "내 정보");
     }
 
-    @Test void 테넌트_영역_화면은_16개다() {
+    /** 숫자만 맞추지 않도록, 영역 합이 전체와 같은지도 함께 본다. */
+    @Test void 테넌트_영역_화면은_17개다() {
         long tenant = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.TENANT).count();
-        assertThat(tenant).isEqualTo(16);
+        long system = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.SYSTEM).count();
+        long personal = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.PERSONAL).count();
+        assertThat(tenant + system + personal).isEqualTo(MenuRegistry.ALL.size());
+        assertThat(tenant).isEqualTo(17);
     }
 
     @Test void 시스템_영역은_전부_superOnly_다() {

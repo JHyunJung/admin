@@ -55,6 +55,7 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "슈퍼관리자 계정", "/managers/super", true, "bi-person-gear"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "가입 승인", "/signups", true, "bi-person-check"),
         new MenuItem(MenuArea.TENANT, "시스템관리", "라이선스", "/licenses", true, "bi-award"),
+        new MenuItem(MenuArea.TENANT, "시스템관리", "FIDO 서버 설정", "/system/settings", true, "bi-toggles"),
         new MenuItem(MenuArea.TENANT, "시스템관리", "시스템 설정", "/system/props", true, "bi-sliders"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "시스템 정보", "/system/info", true, "bi-info-circle"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "에러 코드", "/system/error-codes", true, "bi-bug"),

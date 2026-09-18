@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>FIDO 서버 설정</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3">FIDO 서버 설정</h1>
+
+  <!--
+    키 이름이 운영 서버와 아직 맞춰지지 않았음을 숨기지 않는다. 이 경고가 없으면
+    관리자가 설정이 적용되는 줄 알고 쓰게 된다. 실제 키를 확인하면 FidoSettingKey 만 고치면 된다.
+  -->
+  <div class="alert alert-warning py-2 small" role="alert">
+    <strong>주의</strong> — 이 화면의 설정 키 이름은 운영 FIDO 서버와 아직 맞춰지지 않았습니다.
+    값은 <code>CCFA_SYSTEM_PROP</code> 에 정상 저장되지만, 서버가 같은 키를 읽지 않으면 동작에 반영되지 않습니다.
+    운영 DB 의 실제 <code>PROP_KEY</code> 확인 후 <code>FidoSettingKey</code> 를 갱신해야 합니다.
+  </div>
+
+  <form method="post" th:action="@{/system/settings}" id="fidoSettingForm">
+    <div class="bg-white border rounded mb-3" th:each="section : ${sections}">
+      <div class="border-bottom px-3 py-2 fw-semibold bg-light" th:text="${section.key}">섹션</div>
+      <div class="p-3">
+        <div class="row mb-3 align-items-center" th:each="k : ${section.value}">
+          <label class="col-sm-4 col-form-label text-sm-end small" th:text="${k.label()}">항목</label>
+          <div class="col-sm-8">
+
+            <!-- 사용안함 / 사용함 -->
+            <div class="form-check form-switch" th:if="${k.type().name() == 'TOGGLE'}">
+              <input type="hidden" th:name="${k.key()}" value="N">
+              <input class="form-check-input" type="checkbox" role="switch"
+                     th:id="${k.key()}" th:name="${k.key()}" value="Y"
+                     th:checked="${values.get(k.key()) == 'Y'}">
+              <label class="form-check-label small text-secondary" th:for="${k.key()}">사용함</label>
+            </div>
+
+            <select class="form-select form-select-sm" style="max-width:320px"
+                    th:if="${k.type().name() == 'SELECT'}"
+                    th:name="${k.key()}" th:id="${k.key()}"
+                    th:with="opts=${k.name() == 'CERT_VERIFY_ON_REGISTER'} ? ${certVerifyOptions} : ${tcRetentionOptions}">
+              <option th:each="o : ${opts}" th:value="${o.value()}" th:text="${o.label()}"
+                      th:selected="${values.get(k.key()) == o.value()}"></option>
+            </select>
+
+            <!--
+              체크박스는 선택된 것만 전송되므로 개별 name 을 쓰면 "전부 해제" 를 표현할 수 없다.
+              화면에서는 체크박스로 고르고, 실제 전송은 아래 hidden 한 칸에 CSV 로 모아 보낸다.
+            -->
+            <div th:if="${k.type().name() == 'CHECKBOXES'}"
+                 th:with="picked=${values.get(k.key())}">
+              <input type="hidden" th:name="${k.key()}" th:id="${k.key()}" th:value="${picked}"
+                     data-csv-target>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check" th:each="o : ${authResponseChoices}">
+                  <input class="form-check-input" type="checkbox"
+                         th:id="${k.key()} + '_' + ${o.value()}" th:value="${o.value()}"
+                         th:attr="data-csv-source=${k.key()}"
+                         th:checked="${picked != null and (picked == o.value()
+                                       or picked.startsWith(o.value() + ',')
+                                       or picked.endsWith(',' + o.value())
+                                       or picked.contains(',' + o.value() + ','))}">
+                  <label class="form-check-label small" th:for="${k.key()} + '_' + ${o.value()}"
+                         th:text="${o.label()}">옵션</label>
+                </div>
+              </div>
+            </div>
+
+            <input type="number" class="form-control form-control-sm" style="max-width:200px"
+                   th:if="${k.type().name() == 'NUMBER'}"
+                   th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}" min="0">
+
+            <input type="text" class="form-control form-control-sm" style="max-width:420px"
+                   th:if="${k.type().name() == 'TEXT'}"
+                   th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}">
+
+            <input type="password" class="form-control form-control-sm" style="max-width:420px"
+                   th:if="${k.type().name() == 'PASSWORD'}"
+                   th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}"
+                   autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary btn-sm">저장</button>
+      <a th:href="@{/system/settings}" class="btn btn-outline-secondary btn-sm">되돌리기</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
