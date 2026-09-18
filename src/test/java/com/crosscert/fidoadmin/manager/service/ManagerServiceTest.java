@@ -68,6 +68,24 @@ class ManagerServiceTest {
     }
 
     /**
+     * 교차 경로: ManagerService(테넌트 운영자 화면)로 이미 존재하는 USER_ID(슈퍼관리자 계정의 것,
+     * COMPANY_IDX=0)를 만들려 하면 거부된다. USER_ID 중복 검사는 findByUserId() 로 테넌트와
+     * 무관하게 전역이라, 어느 화면에서 왔는지와 무관하게 같은 USER_ID 는 하나만 존재해야 한다.
+     * SuperManagerServiceTest.테넌트_운영자의_USER_ID_로는_슈퍼관리자_계정을_만들_수_없다() 와
+     * 짝을 이루는 반대 방향 테스트다.
+     */
+    @Test void 슈퍼관리자_계정의_USER_ID_로는_테넌트_운영자를_만들_수_없다() {
+        CcfaManager superAdmin = new CcfaManager();
+        superAdmin.setIdx(3L); superAdmin.setUserId("superadmin"); superAdmin.setUserPw("hash"); superAdmin.setCompanyIdx(0L);
+        when(managers.findByUserId("superadmin")).thenReturn(Optional.of(superAdmin));
+        assertThatThrownBy(() -> service.create(manager(null, "superadmin")))
+            .isInstanceOf(DataIntegrityViolationException.class)
+            .hasMessageContaining("superadmin");
+        verify(managers, never()).save(any());
+        verify(audit, never()).log(any(), any());
+    }
+
+    /**
      * USER_ID 에 DB 유니크 제약이 없어(ERD, 스키마 변경 불가) 동시 등록 요청이 둘 다
      * findByUserId() 에서 빈 결과를 볼 수 있다. 존재 검사 전에 테이블을 배타 잠금해
      * 이후 생성 요청을 직렬화해야 한다.
