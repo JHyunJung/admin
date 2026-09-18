@@ -22,6 +22,7 @@ import com.crosscert.fidoadmin.log.entity.FidoLogs;
 import com.crosscert.fidoadmin.log.service.FidoLogQueryService;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +32,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = FidoLogController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class FidoLogControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean FidoLogQueryService service;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -55,6 +61,25 @@ class FidoLogControllerWebTest {
     }
 
     /** COMPANY 역할: 고객사 select 가 없고, CLOB(JSONDATA) 은 목록에 나오지 않는다. */
+
+    /**
+     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
     @Test void companyListHidesCompanyFilterAndClob() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(log(5L, "MARKER_JSON_ONLY_IN_DETAIL"))));
@@ -72,7 +97,7 @@ class FidoLogControllerWebTest {
     @Test void superListShowsCompanyFilter() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
-        mvc.perform(get("/logs/fido").with(user(superUser)))
+        mvc.perform(get("/logs/fido").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("name=\"companyIdx\"")))
             .andExpect(content().string(containsString("데이터가 없습니다.")));

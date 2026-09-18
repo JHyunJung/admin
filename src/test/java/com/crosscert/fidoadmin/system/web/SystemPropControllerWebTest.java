@@ -26,6 +26,7 @@ import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
 import com.crosscert.fidoadmin.system.service.SystemPropService;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -34,13 +35,19 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = SystemPropController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class,
-         SystemPropIdConverter.class})
+         SystemPropIdConverter.class,
+         com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class SystemPropControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean SystemPropService service;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -57,6 +64,25 @@ class SystemPropControllerWebTest {
         return p;
     }
 
+    /**
+     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+
     @Test void companyRoleIsForbidden() throws Exception {
         mvc.perform(get("/system/props").with(user(companyUser))).andExpect(status().isForbidden());
     }
@@ -65,7 +91,7 @@ class SystemPropControllerWebTest {
         when(service.defaultSort()).thenReturn(Sort.by("id.propKey"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(prop("PW_FAIL_LIMIT", 0L, "5"))));
         when(companies.names()).thenReturn(Map.of(0L, "전역(시스템)"));
-        mvc.perform(get("/system/props").with(user(superUser)))
+        mvc.perform(get("/system/props").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/list"))
             .andExpect(content().string(containsString("PW_FAIL_LIMIT")))
@@ -78,7 +104,7 @@ class SystemPropControllerWebTest {
         CcfaSystemPropId id = new CcfaSystemPropId("PW_FAIL_LIMIT", 0L);
         when(service.get(id)).thenReturn(prop("PW_FAIL_LIMIT", 0L, "5"));
         when(companies.name(0L)).thenReturn("전역(시스템)");
-        mvc.perform(get("/system/props/PW_FAIL_LIMIT@0").with(user(superUser)))
+        mvc.perform(get("/system/props/PW_FAIL_LIMIT@0").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/detail"))
             .andExpect(content().string(containsString("PW_FAIL_LIMIT")))
@@ -88,7 +114,7 @@ class SystemPropControllerWebTest {
 
     /** 경로 값이 "키@COMPANY_IDX" 형식이 아니면 어떤 자원도 가리키지 않으므로 404. */
     @Test void malformedPathVariableIsNotFound() throws Exception {
-        mvc.perform(get("/system/props/NO_AT").with(user(superUser)))
+        mvc.perform(get("/system/props/NO_AT").session(session).with(user(superUser)))
             .andExpect(status().isNotFound())
             .andExpect(view().name("error/404"));
     }
@@ -99,7 +125,7 @@ class SystemPropControllerWebTest {
      * 저장 후 리다이렉트가 깨지므로 허용 문자 집합(@Pattern)으로 미리 막는다.
      */
     @Test void keyWithSlashIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "a/b").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -108,7 +134,7 @@ class SystemPropControllerWebTest {
     }
 
     @Test void keyWithBraceIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "a{x}").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -117,7 +143,7 @@ class SystemPropControllerWebTest {
     }
 
     @Test void keyWithQuestionMarkIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "a?b").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -126,7 +152,7 @@ class SystemPropControllerWebTest {
     }
 
     @Test void keyWithUpperCaseSlashIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "A/B").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -136,7 +162,7 @@ class SystemPropControllerWebTest {
 
     /** "new" 는 등록 폼 경로와 겹쳐 예약된 값으로 거부한다. */
     @Test void keyEqualToNewIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "new").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -146,7 +172,7 @@ class SystemPropControllerWebTest {
 
     /** 점으로만 된 값은 경로 세그먼트로서 특수한 의미를 가져 예약된 값으로 거부한다. */
     @Test void keyOfDotsOnlyIsRejected() throws Exception {
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "..").param("companyIdx", "0").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
@@ -157,7 +183,7 @@ class SystemPropControllerWebTest {
     @Test void createRedirectsToCompositeDetail() throws Exception {
         when(service.create(any())).thenReturn(prop("NEW_KEY", 0L, "x"));
         when(service.idOf(any())).thenReturn("NEW_KEY@0");
-        mvc.perform(post("/system/props").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "NEW_KEY").param("companyIdx", "0").param("propValue", "x").param("shareType", "NO"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/props/NEW_KEY@0"));
@@ -165,7 +191,7 @@ class SystemPropControllerWebTest {
 
     /** update 리다이렉트는 CrudController 가 id.toString() 으로 만든다. toString 이 경로 값이어야 한다. */
     @Test void updateRedirectsToCompositeDetail() throws Exception {
-        mvc.perform(post("/system/props/PW_FAIL_LIMIT@0").with(user(superUser)).with(csrf())
+        mvc.perform(post("/system/props/PW_FAIL_LIMIT@0").session(session).with(user(superUser)).with(csrf())
                 .param("propKey", "PW_FAIL_LIMIT").param("companyIdx", "0").param("propValue", "7").param("shareType", "YES"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/props/PW_FAIL_LIMIT@0"));

@@ -36,7 +36,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = SignupAdminController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class,
-         GlobalExceptionHandler.class})
+         GlobalExceptionHandler.class,
+         com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class SignupAdminControllerWebTest {
 
     @Autowired MockMvc mvc;

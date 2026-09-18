@@ -25,6 +25,7 @@ import com.crosscert.fidoadmin.fido.entity.Appid;
 import com.crosscert.fidoadmin.fido.service.AppidService;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,12 +34,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = AppidController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class AppidControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean AppidService service;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -57,6 +63,25 @@ class AppidControllerWebTest {
 
     private CcfaCompany kb() { CcfaCompany c = new CcfaCompany(); c.setIdx(1L); c.setCompanyName("KB국민은행"); return c; }
 
+    /**
+     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+
     @Test void companyUserSeesListWithoutCompanyFilter() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(appid(1L))));
@@ -73,7 +98,7 @@ class AppidControllerWebTest {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         when(companies.all()).thenReturn(List.of(kb()));
-        mvc.perform(get("/appids").with(user(superUser)))
+        mvc.perform(get("/appids").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("name=\"companyIdx\"")));
     }

@@ -22,11 +22,13 @@ import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
+import com.crosscert.fidoadmin.common.SelectedTenant;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.service.ManagerService;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,16 +36,22 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = ManagerController.class)
-@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class})
+@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class,
+    com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class ManagerControllerWebTest {
 
     static final String PW_HASH = "a".repeat(64);
 
     @Autowired MockMvc mvc;
+    @Autowired SelectedTenant selected;
     @MockitoBean ManagerService service;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -53,6 +61,25 @@ class ManagerControllerWebTest {
 
     ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+
+    /**
+     * /managers 는 TENANT 영역이라 TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를
+     * /select-tenant 로 돌려보낸다. 이 클래스의 관심사는 운영자 CRUD 이므로,
+     * 매 테스트마다 세션에 테넌트를 미리 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
 
     private CcfaManager manager(long idx, String userId) {
         CcfaManager m = new CcfaManager(); m.setIdx(idx); m.setUserId(userId); m.setUserPw(PW_HASH);
@@ -68,7 +95,7 @@ class ManagerControllerWebTest {
     @Test void listNeverExposesPasswordHash() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(manager(2L, "kbadmin"))));
-        mvc.perform(get("/managers").with(user(superUser)))
+        mvc.perform(get("/managers").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/list"))
             .andExpect(content().string(containsString("kbadmin")))
@@ -80,7 +107,7 @@ class ManagerControllerWebTest {
         CcfaManagerPwPolicy p = new CcfaManagerPwPolicy(); p.setAccountLock("Y"); p.setPwFailCnt(5L);
         when(service.lockState("kbadmin")).thenReturn(Optional.of(p));
         when(companies.name(1L)).thenReturn("KB국민은행");
-        mvc.perform(get("/managers/2").with(user(superUser)))
+        mvc.perform(get("/managers/2").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/detail"))
             .andExpect(content().string(containsString("잠김")))
@@ -89,7 +116,7 @@ class ManagerControllerWebTest {
     }
 
     @Test void createWithoutPasswordShowsFormWithMessage() throws Exception {
-        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("companyIdx", "1").param("status", "활성"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
@@ -97,7 +124,7 @@ class ManagerControllerWebTest {
     }
 
     @Test void passwordMismatchShowsMessage() throws Exception {
-        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
                 .param("password", "Secret1234!").param("passwordConfirm", "Other1234!"))
             .andExpect(status().isOk())
@@ -110,7 +137,7 @@ class ManagerControllerWebTest {
         CcfaManager saved = manager(10L, "newop");
         when(service.create(any())).thenReturn(saved);
         when(service.idOf(any())).thenReturn("10");
-        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
                 .param("password", "Secret1234!").param("passwordConfirm", "Secret1234!"))
             .andExpect(status().is3xxRedirection())
@@ -122,7 +149,7 @@ class ManagerControllerWebTest {
     }
 
     @Test void createWithShortPasswordShowsSizeMessage() throws Exception {
-        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
                 .param("password", "short1!").param("passwordConfirm", "short1!"))
             .andExpect(status().isOk())
@@ -132,7 +159,7 @@ class ManagerControllerWebTest {
     }
 
     @Test void createWithoutSpecialCharShowsPolicyMessage() throws Exception {
-        mvc.perform(post("/managers").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
                 .param("password", "abcdefgh1").param("passwordConfirm", "abcdefgh1"))
             .andExpect(status().isOk())
@@ -143,7 +170,7 @@ class ManagerControllerWebTest {
 
     /** 수정 시 비밀번호를 비워두면(변경하지 않으면) 정책 검사를 건너뛰고 그대로 저장된다. */
     @Test void editWithBlankPasswordStillSucceeds() throws Exception {
-        mvc.perform(post("/managers/2").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers/2").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "kbadmin").param("companyIdx", "1").param("status", "활성"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/managers/2"));
@@ -154,7 +181,7 @@ class ManagerControllerWebTest {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         CcfaManager m = manager(2L, "kbadmin"); m.setCompanyIdx(5L);
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(m)));
-        mvc.perform(get("/managers").with(user(superUser)))
+        mvc.perform(get("/managers").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString(">null<"))));
     }
@@ -168,7 +195,7 @@ class ManagerControllerWebTest {
         m.setStatus(com.crosscert.fidoadmin.signup.SignupPolicy.STATUS_PENDING);
         when(service.get(2L)).thenReturn(m);
 
-        mvc.perform(get("/managers/2/edit").with(user(superUser)))
+        mvc.perform(get("/managers/2/edit").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
             .andExpect(content().string(containsString("가입 승인")))
@@ -180,7 +207,7 @@ class ManagerControllerWebTest {
     @Test void editFormKeepsStatusSelectForNormalRow() throws Exception {
         when(service.get(2L)).thenReturn(manager(2L, "kbadmin"));
 
-        mvc.perform(get("/managers/2/edit").with(user(superUser)))
+        mvc.perform(get("/managers/2/edit").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("<option value=\"활성\"")))
             .andExpect(content().string(containsString("<option value=\"비활성\"")));
@@ -194,7 +221,7 @@ class ManagerControllerWebTest {
         org.mockito.Mockito.doThrow(new IllegalStateException("가입 승인 화면에서 처리해야 합니다."))
             .when(service).update(org.mockito.ArgumentMatchers.eq(2L), any());
 
-        mvc.perform(post("/managers/2").with(user(superUser)).with(csrf())
+        mvc.perform(post("/managers/2").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "applicant").param("companyIdx", "1").param("status", "활성"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
@@ -202,7 +229,7 @@ class ManagerControllerWebTest {
     }
 
     @Test void unlockRedirectsToDetailWithFlash() throws Exception {
-        mvc.perform(post("/managers/2/unlock").with(user(superUser)).with(csrf()))
+        mvc.perform(post("/managers/2/unlock").session(session).with(user(superUser)).with(csrf()))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/managers/2"))
             .andExpect(flash().attribute("flashSuccess", "잠금이 해제되었습니다."));
@@ -210,6 +237,6 @@ class ManagerControllerWebTest {
     }
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {
-        mvc.perform(post("/managers/2/unlock").with(user(superUser))).andExpect(status().isForbidden());
+        mvc.perform(post("/managers/2/unlock").session(session).with(user(superUser))).andExpect(status().isForbidden());
     }
 }

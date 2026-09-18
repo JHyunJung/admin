@@ -16,15 +16,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = DashboardController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class LayoutWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired SelectedTenant selected;
 
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
@@ -38,12 +43,30 @@ class LayoutWebTest {
         return new ManagerUserDetails(1L, "u", null, "홍길동", companyIdx, "KB", true, true);
     }
 
+    /**
+     * SUPER 가 레이아웃 전체를 보려면 유효 테넌트가 있어야 한다(Task 6, TenantSelectionInterceptor).
+     * 이 슬라이스에는 TenantSelectionController 가 없으므로 세션 스코프 빈에 직접 선택값을 넣는다.
+     * 세션 빈은 요청 스레드에서만 프록시가 풀리므로, 세팅하는 동안만 RequestContextHolder 를 임시로 건다.
+     */
+    private MockHttpSession superSelecting(long companyIdx) {
+        MockHttpSession session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(companyIdx);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+        return session;
+    }
+
     @Test void anonymousRedirectsToLogin() throws Exception {
         mvc.perform(get("/")).andExpect(status().is3xxRedirection()).andExpect(redirectedUrlPattern("**/login"));
     }
 
     @Test void superSeesSystemMenu() throws Exception {
-        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("/system/props")))
             .andExpect(content().string(containsString("홍길동")));
@@ -58,7 +81,7 @@ class LayoutWebTest {
 
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */
     @Test void sidebarRendersMenuIcons() throws Exception {
-        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("bootstrap-icons")))
             .andExpect(content().string(containsString("bi bi-speedometer2")))
@@ -70,7 +93,7 @@ class LayoutWebTest {
      * 경로에는 콘텐츠 해시가 붙을 수 있으므로 파일명 앞부분으로 확인한다.
      */
     @Test void pagesLinkFavicon() throws Exception {
-        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("rel=\"icon\"")))
             .andExpect(content().string(containsString("/favicon")))
@@ -123,7 +146,7 @@ class LayoutWebTest {
 
     /** SUPER 의 사이드바에는 보인다. 위 테스트가 "아무것도 안 보여서" 통과하는 것을 막는다. */
     @Test void superSidebarShowsSignupApprovalMenu() throws Exception {
-        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("/signups")))
             .andExpect(content().string(containsString("가입 승인")));

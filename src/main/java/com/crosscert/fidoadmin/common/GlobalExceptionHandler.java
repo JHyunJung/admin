@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.common;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,6 +29,19 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String forbidden(AccessDeniedException e) {
         return "error/403";
+    }
+
+    /**
+     * 인터셉터가 놓친 경로에서 유효 테넌트를 요구했다. 500 대신 선택 화면으로 보낸다.
+     *
+     * <p>여기 걸리는 경로가 있다면 MenuRegistry 에 등록되지 않은 테넌트 화면이라는
+     * 뜻이므로 로그를 남긴다.
+     */
+    @ExceptionHandler(NoTenantSelectedException.class)
+    public String noTenant(NoTenantSelectedException e, HttpServletRequest request) {
+        log.warn("테넌트 미선택 상태로 테넌트 데이터를 요청했다. 인터셉터가 놓친 경로일 수 있다: {}",
+            request.getRequestURI());
+        return "redirect:/select-tenant";
     }
 
     @ExceptionHandler(Exception.class)

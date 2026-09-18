@@ -23,6 +23,7 @@ import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,12 +32,17 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = LicenseController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class LicenseControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean LicenseService service;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -47,6 +53,25 @@ class LicenseControllerWebTest {
     ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
+    /**
+     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
+
+
     @Test void companyRoleIsForbidden() throws Exception {
         mvc.perform(get("/licenses").with(user(companyUser))).andExpect(status().isForbidden());
     }
@@ -56,7 +81,7 @@ class LicenseControllerWebTest {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(l)));
         when(companies.names()).thenReturn(Map.of(1L, "KB국민은행"));
-        mvc.perform(get("/licenses").with(user(superUser)))
+        mvc.perform(get("/licenses").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("company/license/list"))
             .andExpect(content().string(containsString("kbstar")))
@@ -65,7 +90,7 @@ class LicenseControllerWebTest {
     }
 
     @Test void createWithoutCompanyShowsFormAgain() throws Exception {
-        mvc.perform(post("/licenses").with(user(superUser)).with(csrf()).param("serviceName", "kbstar"))
+        mvc.perform(post("/licenses").session(session).with(user(superUser)).with(csrf()).param("serviceName", "kbstar"))
             .andExpect(status().isOk())
             .andExpect(view().name("company/license/form"))
             .andExpect(content().string(containsString("고객사를 선택하세요.")));
@@ -75,7 +100,7 @@ class LicenseControllerWebTest {
         CcfaLicense saved = new CcfaLicense(); saved.setIdx(55L);
         when(service.create(any())).thenReturn(saved);
         when(service.idOf(any())).thenReturn("55");
-        mvc.perform(post("/licenses").with(user(superUser)).with(csrf()).param("companyIdx", "1").param("serviceName", "kbstar"))
+        mvc.perform(post("/licenses").session(session).with(user(superUser)).with(csrf()).param("companyIdx", "1").param("serviceName", "kbstar"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/licenses/55"));
     }
@@ -84,7 +109,7 @@ class LicenseControllerWebTest {
         CcfaLicense l = new CcfaLicense(); l.setIdx(1L); l.setCompanyIdx(1L); l.setLicense("LICENSE-SAMPLE-KEY");
         when(service.get(1L)).thenReturn(l);
         when(companies.name(1L)).thenReturn("KB국민은행");
-        mvc.perform(get("/licenses/1").with(user(superUser)))
+        mvc.perform(get("/licenses/1").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("LICENSE-SAMPLE-KEY")))
             .andExpect(content().string(containsString("KB국민은행")));

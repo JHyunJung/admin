@@ -37,7 +37,8 @@ import org.springframework.test.web.servlet.MockMvc;
 // 그 두 지점이 살아 있는지도 이 테스트가 지킨다.
 @WebMvcTest(controllers = {SignupController.class, com.crosscert.fidoadmin.auth.LoginController.class})
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class,
-         GlobalExceptionHandler.class})
+         GlobalExceptionHandler.class,
+         com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class SignupControllerWebTest {
 
     @Autowired MockMvc mvc;
