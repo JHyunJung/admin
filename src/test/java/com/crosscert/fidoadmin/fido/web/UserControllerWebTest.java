@@ -53,6 +53,7 @@ class UserControllerWebTest {
     @Autowired MockMvc mvc;
     @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean UserinfoService service;
+    @MockitoBean com.crosscert.fidoadmin.fido.service.UserAccountService accounts;
     @MockitoBean CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
@@ -61,6 +62,11 @@ class UserControllerWebTest {
 
     ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+
+    private com.crosscert.fidoadmin.fido.service.UserAccountRow accountRow(String userid) {
+        return new com.crosscert.fidoadmin.fido.service.UserAccountRow(
+            userid, "kbstar", 3L, 2L, LocalDateTime.now());
+    }
 
     private Userinfo userinfo(long idx) {
         Userinfo u = new Userinfo(); u.setIdx(idx); u.setCompanyIdx(1L); u.setServicename("kbstar"); u.setUserid("user001");
@@ -88,10 +94,14 @@ class UserControllerWebTest {
     }
 
 
+    /**
+     * 사용자 단위 목록에는 민감 컬럼이 실리지 않는다. 묶음 행(UserAccountRow)에는
+     * 애초에 PUBKEY·CERTIFICATE 필드가 없지만, 나중에 누가 행에 필드를 더할 수 있어
+     * 화면 출력으로 고정해 둔다.
+     */
     @Test void listNeverExposesPubkeyOrCertificate() throws Exception {
-        when(service.defaultSort()).thenReturn(Sort.by("idx"));
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(userinfo(1L))));
-        when(companies.names()).thenReturn(Map.of(1L, "KB국민은행"));
+        when(accounts.search(any(), any(), any()))
+            .thenReturn(new PageImpl<>(List.of(accountRow("user001"))));
         mvc.perform(get("/users").with(user(companyUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("fido/user/list"))
@@ -189,12 +199,59 @@ class UserControllerWebTest {
      * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
      * 검색폼 select 태그로 특정한다.
      */
+    /** 고객사는 세션이 정한다. 목록에 고객사 선택 필터가 있으면 안 된다. */
     @Test void superUserDoesNotSeeCompanyFilterOnList() throws Exception {
-        when(service.defaultSort()).thenReturn(Sort.by("idx"));
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
+        when(accounts.search(any(), any(), any())).thenReturn(new PageImpl<>(List.of()));
         mvc.perform(get("/users").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))));
+    }
+
+    /** 목록은 사용자 단위다 — 기기 수와 정상 수가 보여야 "몇 대 등록했나"에 답할 수 있다. */
+    @Test void 목록은_사용자_단위로_집계를_보여준다() throws Exception {
+        when(accounts.search(any(), any(), any()))
+            .thenReturn(new PageImpl<>(List.of(accountRow("user001"))));
+
+        mvc.perform(get("/users").session(session).with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/user/list"))
+            .andExpect(content().string(containsString("user001")))
+            .andExpect(content().string(containsString("기기 수")))
+            .andExpect(content().string(containsString("/users/user001/credentials")));
+    }
+
+    /** 검색어가 서비스까지 전달되어야 한다. 화면만 있고 조건이 안 걸리면 조용히 전체가 나온다. */
+    @Test void 검색어가_서비스로_전달된다() throws Exception {
+        when(accounts.search(any(), any(), any())).thenReturn(new PageImpl<>(List.of()));
+
+        mvc.perform(get("/users").session(session).with(user(superUser))
+                .param("userid", "user0").param("servicename", "kb"))
+            .andExpect(status().isOk());
+
+        verify(accounts).search(eq("user0"), eq("kb"), any());
+    }
+
+    /** 기기 목록은 묶음 키 두 개(userid + servicename)로 조회해야 동명이인이 섞이지 않는다. */
+    @Test void 기기_목록은_묶음_키_두_개로_조회한다() throws Exception {
+        when(accounts.credentialsOf(any(), any())).thenReturn(List.of(userinfo(1L)));
+
+        mvc.perform(get("/users/user001/credentials").session(session).with(user(superUser))
+                .param("servicename", "kbstar"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/user/credentials"))
+            .andExpect(content().string(containsString("user001")));
+
+        verify(accounts).credentialsOf("user001", "kbstar");
+    }
+
+    /** 기기 목록에도 민감 컬럼이 실리면 안 된다(UserRow 가 걸러낸다). */
+    @Test void 기기_목록도_민감_컬럼을_노출하지_않는다() throws Exception {
+        when(accounts.credentialsOf(any(), any())).thenReturn(List.of(userinfo(1L)));
+
+        mvc.perform(get("/users/user001/credentials").session(session).with(user(superUser))
+                .param("servicename", "kbstar"))
+            .andExpect(content().string(not(containsString(FULL_PUBKEY))))
+            .andExpect(content().string(not(containsString(FULL_CERT))));
     }
 
     @Test void head16CutsAndPassesNull() {

@@ -4,44 +4,44 @@
 <head><title>사용자</title></head>
 <body>
 <main>
-  <h1 class="h4 mb-3">사용자</h1>
+  <h1 class="h4 mb-1">사용자</h1>
+  <p class="text-secondary small mb-3">
+    등록된 기기를 사용자 단위로 묶어 보여줍니다. 사용자를 누르면 그 사람의 기기 목록으로 이동합니다.
+  </p>
 
   <form method="get" th:action="@{/users}" class="row g-2 align-items-end mb-3">
     <div class="col-auto"><label class="form-label small mb-0">USERID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
     <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">AAID</label><input name="aaid" th:value="${search.aaid}" class="form-control form-control-sm"></div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">상태</label>
-      <select name="status" class="form-select form-select-sm">
-        <option value="">전체</option>
-        <option value="O" th:selected="${search.status == 'O'}">O (정상)</option>
-        <option value="X" th:selected="${search.status == 'X'}">X (해지)</option>
-      </select>
-    </div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/users}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
 
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover fa-table mb-0">
       <thead class="table-light">
-        <tr><th>IDX</th><th>USERID</th><th>서비스명</th><th>AAID</th><th>상태</th><th>서명횟수</th><th>등록일시</th></tr>
+        <tr><th>USERID</th><th>서비스명</th><th class="text-end">기기 수</th><th class="text-end">정상</th><th>최근 등록</th></tr>
       </thead>
       <tbody>
         <tr th:each="r : ${page.content}">
-          <td th:text="${r.idx}">0</td>
-          <td><a th:href="@{/users/{id}(id=${r.idx})}" th:text="${r.userid}">userid</a></td>
+          <td>
+            <a th:href="@{/users/{u}/credentials(u=${r.userid}, servicename=${r.servicename})}"
+               th:text="${r.userid}">userid</a>
+          </td>
           <td th:text="${r.servicename}"></td>
-          <td class="fa-mono" th:text="${r.aaid}"></td>
-          <td><span class="badge" th:classappend="${r.status == 'O'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.status}"></span></td>
-          <td th:text="${r.signcounter}"></td>
-          <td th:text="${#temporals.format(r.regtime, 'yyyy-MM-dd HH:mm')}"></td>
+          <td class="text-end" th:text="${r.deviceCount}">0</td>
+          <!-- 정상 기기가 하나도 없으면 그 사용자는 인증할 수 없다. 눈에 띄게 표시한다. -->
+          <td class="text-end">
+            <span class="badge"
+                  th:classappend="${r.activeCount > 0} ? 'text-bg-success' : 'text-bg-secondary'"
+                  th:text="${r.activeCount}">0</span>
+          </td>
+          <td th:text="${#temporals.format(r.lastRegtime, 'yyyy-MM-dd HH:mm')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="5" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>
   <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
+    <span th:text="|총 ${page.totalElements}명|"></span>
     <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
   </div>
 </main>

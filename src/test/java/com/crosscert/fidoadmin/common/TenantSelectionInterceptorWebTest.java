@@ -49,6 +49,7 @@ class TenantSelectionInterceptorWebTest {
     @Autowired MockMvc mvc;
 
     @MockitoBean UserinfoService userinfoService;
+    @MockitoBean com.crosscert.fidoadmin.fido.service.UserAccountService userAccountService;
     @MockitoBean CompanyService companyService;
     @MockitoBean CompanyLookup companies;
     @MockitoBean CcfaCompanyRepository repository;
@@ -83,10 +84,9 @@ class TenantSelectionInterceptorWebTest {
     @Test void 선택한_SUPER_는_테넌트_화면을_본다() throws Exception {
         MockHttpSession session = new MockHttpSession();
         RequestPostProcessor selected = superUserSelecting(9L, session);
-        when(userinfoService.defaultSort()).thenReturn(Sort.by("idx"));
-        when(userinfoService.search(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+        when(userAccountService.search(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
             .thenReturn(new PageImpl<>(List.of()));
-        when(companies.names()).thenReturn(Map.of());
 
         mvc.perform(get("/users").session(session).with(selected))
             .andExpect(status().isOk());
@@ -110,10 +110,9 @@ class TenantSelectionInterceptorWebTest {
 
     /** COMPANY 는 항상 유효 테넌트가 있으므로 인터셉터에 걸리지 않는다. */
     @Test void COMPANY_는_영향을_받지_않는다() throws Exception {
-        when(userinfoService.defaultSort()).thenReturn(Sort.by("idx"));
-        when(userinfoService.search(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+        when(userAccountService.search(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
             .thenReturn(new PageImpl<>(List.of()));
-        when(companies.names()).thenReturn(Map.of());
 
         mvc.perform(get("/users").with(user(companyUser(5L))))
             .andExpect(status().isOk());
