@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -17,12 +18,17 @@ import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = TenantSelectionController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class,
@@ -30,6 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class TenantSelectionControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired SelectedTenant selected;
 
     @MockitoBean CompanyLookup companies;
     @MockitoBean CcfaCompanyRepository repository;
@@ -97,6 +104,48 @@ class TenantSelectionControllerWebTest {
         mvc.perform(post("/select-tenant").with(user(superUser())).with(csrf())
                 .param("companyIdx", "0").param("returnTo", "/users"))
             .andExpect(redirectedUrl("/select-tenant"));
+    }
+
+    /**
+     * POST 가드 회귀 테스트: COMPANY 는 테넌트를 바꿀 것이 없으므로 조작된 POST 요청도
+     * 대시보드로 돌려보내야 한다.
+     *
+     * <p>리다이렉트 목적지만 확인하면 selected.select() 가 이미 실행된 뒤에도 통과한다
+     * (컨트롤러가 가드 없이 selected.select() 를 호출한 다음에야 "redirect:/" 를 반환해도
+     * 이 단언은 여전히 성공한다). 그래서 세션의 SelectedTenant 가 그대로인지도 직접 확인한다 —
+     * 이것이 이 테스트의 핵심이다. 가드가 POST 에서만 빠지는 회귀(리뷰가 지목한 권한 상승
+     * 경로)는 리다이렉트만 보는 단언으로는 절대 잡히지 않는다.
+     */
+    @Test void COMPANY_의_조작된_POST는_테넌트를_바꾸지_못하고_대시보드로_보낸다() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        when(repository.existsById(9L)).thenReturn(true);
+
+        mvc.perform(post("/select-tenant").with(user(companyUser(5L))).with(csrf())
+                .session(session)
+                .param("companyIdx", "9").param("returnTo", "/users"))
+            .andExpect(redirectedUrl("/"));
+
+        assertThat(companyIdxSelectedIn(session)).isEmpty();
+    }
+
+    /**
+     * 세션 스코프 빈은 요청 스레드에서만 프록시가 풀린다. MockMvc 요청이 끝나면
+     * RequestContextHolder 바인딩도 사라지므로, 검사 시점에만 같은 세션을 임시로 걸어
+     * 그 세션에 실제로 저장된 SelectedTenant 인스턴스에서 값을 읽어낸다.
+     *
+     * <p>바인딩을 건 채로 메서드 호출까지 끝내야 한다 — 프록시(selected)를 반환만 하고
+     * 바인딩을 풀면, 호출자가 나중에 메서드를 호출하는 시점엔 이미 스레드에 세션이
+     * 없어 ScopeNotActiveException 이 난다.
+     */
+    private Optional<Long> companyIdxSelectedIn(MockHttpSession session) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            return selected.companyIdx();
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
     }
 
     // ---- 오픈 리다이렉트 경계 핀 테스트 (safeReturnTo) ----

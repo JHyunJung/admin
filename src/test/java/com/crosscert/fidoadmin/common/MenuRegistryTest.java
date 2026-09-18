@@ -109,6 +109,31 @@ class MenuRegistryTest {
         assertThat(r.areaOf("/system/info")).isEqualTo(MenuArea.SYSTEM);
     }
 
+    @Test void listPathFor_은_하위_경로를_목록_경로로_절상한다() {
+        assertThat(new MenuRegistry().listPathFor("/users/123/edit")).isEqualTo("/users");
+    }
+
+    /**
+     * 미등록 경로는 "/" 를 받는다.
+     *
+     * <p>주의: 이 단언은 areaOf 의 루트 가드({@code !m.href().equals("/")}) 가
+     * listPathFor 에서 빠져도 그대로 통과한다 — 루트 메뉴의 href 자체가 "/" 이고
+     * 미일치 시 기본값도 "/" 이므로, "가드가 있어서 접두사로 안 걸림"과
+     * "접두사로 걸렸는데 그 href 가 마침 '/' 임"이 같은 값으로 관찰된다.
+     * (areaOf 는 MenuArea 를 반환해 SYSTEM/TENANT 로 값이 갈리므로 가드 유무가
+     * 드러나지만, listPathFor 는 반환형이 String "/" 하나뿐이라 이 특정 입력으로는
+     * 가드 유무를 구분할 수 없다.) 그래도 "미등록 경로 → '/'" 자체는 계약이 맞는
+     * 동작이므로 남겨 둔다 — 가드 회귀를 잡는 테스트는 areaOf 쪽의
+     * 등록되지_않은_경로는_시스템_영역이다 다.
+     */
+    @Test void listPathFor_은_미등록_경로에서_루트를_반환한다() {
+        assertThat(new MenuRegistry().listPathFor("/xyz")).isEqualTo("/");
+    }
+
+    @Test void listPathFor_은_루트_자기_자신에서_루트를_반환한다() {
+        assertThat(new MenuRegistry().listPathFor("/")).isEqualTo("/");
+    }
+
     private MenuArea area(String href) {
         return MenuRegistry.ALL.stream().filter(m -> m.href().equals(href))
             .findFirst().orElseThrow().area();
