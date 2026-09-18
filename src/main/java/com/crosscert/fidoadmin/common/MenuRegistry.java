@@ -62,13 +62,18 @@ public class MenuRegistry {
     public MenuArea areaOf(String path) {
         if (path == null) return MenuArea.SYSTEM;
         return ALL.stream()
-            .filter(m -> path.equals(m.href()) || path.startsWith(withSlash(m.href())))
+            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
             .max(java.util.Comparator.comparingInt(m -> m.href().length()))
             .map(MenuItem::area)
             .orElse(MenuArea.SYSTEM);
     }
 
-    /** "/" 는 그대로, 나머지는 "/users" → "/users/" 로 만들어 /usersfoo 오탐을 막는다. */
+    /**
+     * "/users" → "/users/" 로 만들어 /usersfoo 오탐을 막는다.
+     *
+     * <p>루트 "/" 는 이 헬퍼를 하위 경로 접두사 판정에 쓰지 않는다(areaOf 참고) — 그대로 두면
+     * 모든 경로가 "/" 로 시작하므로 등록되지 않은 경로까지 대시보드(TENANT)로 오판된다.
+     */
     private static String withSlash(String href) {
         return href.endsWith("/") ? href : href + "/";
     }

@@ -85,6 +85,30 @@ class MenuRegistryTest {
         assertThat(new MenuRegistry().areaOf("/me/password")).isEqualTo(MenuArea.PERSONAL);
     }
 
+    /**
+     * 회귀 테스트: 루트 "/" 가 접두사로 취급되면 등록되지 않은 모든 경로가 잘못 TENANT(대시보드)로
+     * 판정된다. "/" 는 정확히 일치할 때만 매칭되어야 한다.
+     */
+    @Test void 등록되지_않은_경로는_시스템_영역이다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.areaOf("/xyz")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/usersfoo")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/signupsX")).isEqualTo(MenuArea.SYSTEM);
+    }
+
+    @Test void 루트는_정확히_일치할_때만_대시보드다() {
+        assertThat(new MenuRegistry().areaOf("/")).isEqualTo(MenuArea.TENANT);
+    }
+
+    /** /system 하위 형제 경로라도 영역이 다를 수 있다 — 접두사 버그가 숨기 쉬운 지점이다. */
+    @Test void system_하위_형제_경로는_각자의_영역으로_판정한다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.areaOf("/system/props")).isEqualTo(MenuArea.TENANT);
+        assertThat(r.areaOf("/system/props/KEY@1")).isEqualTo(MenuArea.TENANT);
+        assertThat(r.areaOf("/system/menus")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/system/info")).isEqualTo(MenuArea.SYSTEM);
+    }
+
     private MenuArea area(String href) {
         return MenuRegistry.ALL.stream().filter(m -> m.href().equals(href))
             .findFirst().orElseThrow().area();
