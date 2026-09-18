@@ -30,7 +30,8 @@ class FdsPolicyServiceTest {
     CcfaFdsPolicyRepository repo = mock(CcfaFdsPolicyRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
-    TenantContext tenant = new TenantContext(new SelectedTenant());
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
     FdsPolicyService service = new FdsPolicyService(repo, audit, em, tenant);
 
     @BeforeEach void stubLock() {
@@ -74,10 +75,16 @@ class FdsPolicyServiceTest {
         verify(audit, never()).log(any(), any());
     }
 
-    @Test void superKeepsChosenCompany() {
+    /**
+     * "폼 값이 이긴다" 는 Task 3 가 막은 구멍이다. PK 가 companyIdx 인 이 테이블에서도
+     * 유효 테넌트가 소유자를 정한다: SUPER 가 폼에 2 를 넣어도, 선택 테넌트(9)가 결과의
+     * companyIdx 가 된다. existsById 스텁도 선택 테넌트에 맞춘다.
+     */
+    @Test void superCreatedPolicyIsOwnedBySelectedTenant() {
         login(0L);
-        when(repo.existsById(2L)).thenReturn(false);
-        assertThat(service.create(policy(2L)).getCompanyIdx()).isEqualTo(2L);
+        selected.select(9L);
+        when(repo.existsById(9L)).thenReturn(false);
+        assertThat(service.create(policy(2L)).getCompanyIdx()).isEqualTo(9L);
         verify(em).persist(any());
     }
 

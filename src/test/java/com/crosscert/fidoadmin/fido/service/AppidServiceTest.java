@@ -42,6 +42,7 @@ class AppidServiceTest {
 
     @Test void defaultsAndTimestampsFilledOnCreate() {
         login(0L);
+        selected.select(1L); // 대상 행의 소유 COMPANY_IDX 와 맞춘다
         when(repo.save(any())).thenAnswer(inv -> { Appid a = inv.getArgument(0); a.setIdx(10L); return a; });
         Appid in = new Appid(); in.setAppid("https://kbstar.com/facets.json"); in.setCompanyIdx(1L);
 
@@ -56,6 +57,7 @@ class AppidServiceTest {
 
     @Test void explicitValuesAreKept() {
         login(0L);
+        selected.select(1L); // 미선택 SUPER 는 NoTenantSelectedException; 테넌시는 이 테스트의 관심사가 아니다
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         Appid in = new Appid(); in.setAppid("x"); in.setStatus("unuse"); in.setDeviceDefault("T");
         Appid out = service.create(in);

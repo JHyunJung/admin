@@ -27,7 +27,8 @@ class UserinfoServiceTest {
 
     UserinfoRepository repo = mock(UserinfoRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    TenantContext tenant = new TenantContext(new SelectedTenant());
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
     UserinfoService service = new UserinfoService(repo, audit, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
@@ -80,8 +81,24 @@ class UserinfoServiceTest {
         verify(audit, never()).log(any(), any());
     }
 
-    @Test void superCanChangeAnyTenantStatus() {
+    /**
+     * Task 3 가 막은 구멍: SUPER 가 미선택 상태로건, 선택한 것과 다른 테넌트의 행이건
+     * URL 로 상태를 바꿀 수 있어서는 안 된다. 소유(2)와 다른 테넌트(9)를 선택하면
+     * TenantMismatchException 이어야 한다(404 로 처리됨, CrudService.checkTenant 참고).
+     */
+    @Test void superCannotChangeOtherTenantStatus() {
         login(0L);
+        selected.select(9L);
+        when(repo.findById(9L)).thenReturn(Optional.of(user(9L, 2L, "X")));
+        assertThatThrownBy(() -> service.changeStatus(9L, "O")).isInstanceOf(TenantMismatchException.class);
+        verify(repo, never()).save(any());
+        verify(audit, never()).log(any(), any());
+    }
+
+    /** SUPER 가 자신이 선택한 테넌트의 행이라면 상태를 바꿀 수 있다(감사 로그 포함). */
+    @Test void superChangesSelectedTenantStatus() {
+        login(0L);
+        selected.select(2L);
         when(repo.findById(9L)).thenReturn(Optional.of(user(9L, 2L, "X")));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         assertThat(service.changeStatus(9L, "O").getStatus()).isEqualTo("O");

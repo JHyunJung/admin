@@ -33,11 +33,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class MailingQueryServiceTest {
 
     CcfaMailingRepository repo = mock(CcfaMailingRepository.class);
-    MailingQueryService service = new MailingQueryService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
+    SelectedTenant selected = new SelectedTenant();
+    MailingQueryService service = new MailingQueryService(repo, mock(AuditLogger.class), new TenantContext(selected));
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+        selected.select(1L); // search() 는 유효 테넌트를 요구한다; 테넌시는 이 테스트의 관심사가 아니다
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

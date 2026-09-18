@@ -55,12 +55,13 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
      * 빈으로 올리려면 관계없는 의존성을 줄줄이 끌어와야 한다.
      */
     private ManagerService managerService;
+    private final SelectedTenant selected = new SelectedTenant();
 
     @org.junit.jupiter.api.BeforeEach void prepareManagerService() {
         managerService = new ManagerService(managers, audit,
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository.class),
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em,
-            new TenantContext(new SelectedTenant()));
+            new TenantContext(selected));
         // update() 는 테넌트 검사를 거친다. 이 화면은 SUPER 전용이므로 SUPER 로 로그인한 상태를 만든다.
         var su = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
@@ -178,6 +179,15 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
      * 브라우저가 활성을 고르고, 이름만 고쳐 저장해도 상태가 활성이 되어 {@code approve()} 의
      * 감사 로그·상태 재확인·행 잠금을 모두 건너뛰었다(설계서 4장). 실제 Oracle 에 대고 그 저장을
      * 재현해, 이제 거부되고 행이 승인대기 그대로인지 확인한다.
+     *
+     * <p><b>Task 3.5 알려진 실패(BLOCKED, 셋업으로 못 고친다):</b> {@code applied()} 로 만든 승인대기
+     * 행은 COMPANY_IDX = -1(미배정)이다. {@code SelectedTenant.select()} 는 0/null 만 거부하지만,
+     * -1 은 실재하지 않는 고객사라 브리프가 테넌트로 선택하지 말라고 명시한다. 어떤 유효한 테넌트를
+     * 선택해도 {@code ManagerService.update()} → {@code get()} 의 {@code checkTenant} 가 소유(-1)와
+     * 불일치로 먼저 {@code TenantMismatchException} 을 던져, 이 테스트가 검증하려는
+     * "상태 변경만 막는다"(IllegalStateException, 가입 승인 메시지) 코드 경로 자체에 도달하지 못한다.
+     * 즉 미배정 행에 대한 이 시나리오는 새 모델에서 {@code ManagerService.update()} 경로로는
+     * 구조적으로 재현할 수 없다. 프로덕션 코드는 옳다(Task 3 의 의도된 동작) — 여기서 고치지 않는다.
      */
     @Test void managerEditCannotActivatePendingRow() {
         CcfaManager m = applied("byp_");
@@ -195,7 +205,14 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
             .as("로그인도 여전히 막혀 있다").isFalse();
     }
 
-    /** 같은 행의 상태 아닌 필드 수정은 그대로 통과한다. 막는 것은 상태 변경뿐이다. */
+    /**
+     * 같은 행의 상태 아닌 필드 수정은 그대로 통과한다. 막는 것은 상태 변경뿐이다.
+     *
+     * <p><b>Task 3.5 알려진 실패(BLOCKED):</b> 위 {@code managerEditCannotActivatePendingRow} 와 같은
+     * 이유다. 이 행도 COMPANY_IDX = -1(미배정)이라 어떤 유효 테넌트를 선택해도
+     * {@code checkTenant} 가 먼저 {@code TenantMismatchException} 을 던진다. 미배정 행은
+     * {@code ManagerService.update()} 경로로 도달할 수 없다(새 모델의 의도된 동작).
+     */
     @Test void managerEditStillUpdatesOtherFieldsOfPendingRow() {
         CcfaManager m = applied("keep_");
         flushAndClear();
@@ -212,6 +229,7 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
         CcfaManager m = applied("norm_");
         signups.approve(m.getIdx(), 1L);
         flushAndClear();
+        selected.select(1L); // 이 행의 소유(승인된 고객사 1)와 맞춘다
 
         managerService.update(m.getIdx(), e -> e.setStatus("비활성"));
 

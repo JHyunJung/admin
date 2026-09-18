@@ -39,13 +39,15 @@ class ManagerServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
-    TenantContext tenant = new TenantContext(new SelectedTenant());
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
     ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
         when(em.createNativeQuery("LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE")).thenReturn(lockQuery);
+        selected.select(1L); // manager() 가 만드는 행의 소유 COMPANY_IDX 와 맞춘다
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

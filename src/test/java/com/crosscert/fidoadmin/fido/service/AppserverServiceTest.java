@@ -25,7 +25,8 @@ class AppserverServiceTest {
 
     AppserverRepository repo = mock(AppserverRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    TenantContext tenant = new TenantContext(new SelectedTenant());
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
     AppserverService service = new AppserverService(repo, audit, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
@@ -37,6 +38,7 @@ class AppserverServiceTest {
 
     @Test void typeDefaultsToUseAndTimestampsSet() {
         login(0L);
+        selected.select(1L); // 미선택 SUPER 는 NoTenantSelectedException; 테넌시는 이 테스트의 관심사가 아니다
         when(repo.save(any())).thenAnswer(inv -> { Appserver a = inv.getArgument(0); a.setIdx(7L); return a; });
         Appserver in = new Appserver(); in.setMemberCode("KB01"); in.setMemberId("kbsvr");
 
