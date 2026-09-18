@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>고객사 선택</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-1">고객사 선택</h1>
+  <p class="text-secondary small mb-3">작업할 고객사를 선택하세요. 선택한 고객사의 데이터만 조회·수정합니다.</p>
+
+  <div class="mb-3">
+    <input type="text" id="tenantFilter" class="form-control form-control-sm"
+           style="max-width:320px" placeholder="고객사 이름 검색" autocomplete="off">
+  </div>
+
+  <div class="row g-2">
+    <div class="col-md-4" th:each="c : ${companies}" data-tenant-card
+         th:attr="data-name=${c.companyName}">
+      <form method="post" th:action="@{/select-tenant}" class="m-0">
+        <input type="hidden" name="companyIdx" th:value="${c.idx}">
+        <input type="hidden" name="returnTo" value="/">
+        <button type="submit" class="btn btn-outline-secondary w-100 text-start p-3">
+          <span class="d-block fw-semibold" th:text="${c.companyName}">고객사</span>
+          <span class="d-block small text-secondary" th:text="|IDX ${c.idx}|">IDX</span>
+        </button>
+      </form>
+    </div>
+    <div class="col-12" th:if="${#lists.isEmpty(companies)}">
+      <div class="text-center text-secondary py-4">선택할 수 있는 고객사가 없습니다.</div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+  <h2 class="h6 text-secondary">시스템 관리</h2>
+  <p class="small text-secondary">고객사 선택과 무관한 전역 화면입니다.</p>
+  <div class="d-flex flex-wrap gap-2">
+    <a th:each="m : ${systemMenus}" th:href="@{${m.href}}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
+      <span th:text="${m.title}">메뉴</span>
+    </a>
+  </div>
+</main>
+</body>
+</html>

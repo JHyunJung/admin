@@ -61,3 +61,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+
+// 고객사 선택 화면의 이름 검색. 카드가 많아도 서버를 다시 부르지 않는다.
+(function () {
+  var input = document.getElementById('tenantFilter');
+  if (!input) return;
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    document.querySelectorAll('[data-tenant-card]').forEach(function (card) {
+      var name = (card.getAttribute('data-name') || '').toLowerCase();
+      card.style.display = name.indexOf(q) === -1 ? 'none' : '';
+    });
+  });
+})();

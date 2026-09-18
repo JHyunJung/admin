@@ -69,6 +69,22 @@ public class MenuRegistry {
     }
 
     /**
+     * 경로가 속한 메뉴의 목록 경로. "/users/123/edit" → "/users".
+     * 일치하는 메뉴가 없으면 "/" 다.
+     *
+     * <p>루트 "/" 는 areaOf 와 같은 이유로 접두사 판정에서 제외한다 — 그대로 두면
+     * 등록되지 않은 경로가 모두 대시보드로 절상되어 버그가 새 자리에서 재발한다.
+     */
+    public String listPathFor(String path) {
+        if (path == null) return "/";
+        return ALL.stream()
+            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
+            .max(java.util.Comparator.comparingInt(m -> m.href().length()))
+            .map(MenuItem::href)
+            .orElse("/");
+    }
+
+    /**
      * "/users" → "/users/" 로 만들어 /usersfoo 오탐을 막는다.
      *
      * <p>루트 "/" 는 이 헬퍼를 하위 경로 접두사 판정에 쓰지 않는다(areaOf 참고) — 그대로 두면
