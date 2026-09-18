@@ -10,3 +10,6 @@ out/
 
 # Playwright MCP 가 브라우저 확인 중에 남기는 스냅샷·스크린샷. 소스가 아니다.
 .playwright-mcp/
+
+# git worktree 격리 작업 공간. 소스가 아니다.
+.worktrees/
