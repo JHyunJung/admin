@@ -17,18 +17,7 @@
         <div class="form-text">영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 사용할 수 있습니다.</div>
         <div class="invalid-feedback" th:errors="*{propKey}"></div>
       </div>
-      <div class="col-md-6" th:if="${isNew}">
-        <label class="form-label">고객사 <span class="text-danger">*</span></label>
-        <select th:field="*{companyIdx}" class="form-select">
-          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="|${c.companyName} (${c.idx})|"></option>
-        </select>
-        <div class="invalid-feedback d-block" th:errors="*{companyIdx}"></div>
-      </div>
-      <div class="col-md-6" th:unless="${isNew}">
-        <label class="form-label">고객사</label>
-        <input class="form-control" readonly th:value="|${companyNames.get(form.companyIdx) ?: '#' + form.companyIdx} (${form.companyIdx})|">
-        <input type="hidden" name="companyIdx" th:value="*{companyIdx}">
-      </div>
+      <!-- 고객사는 세션이 선택한 유효 테넌트로 컨트롤러가 채운다(등록·수정 모두 식별자는 여기서 다루지 않는다). -->
       <div class="col-md-3">
         <label class="form-label">공유 <span class="text-danger">*</span></label>
         <select th:field="*{shareType}" class="form-select"><option value="NO">NO</option><option value="YES">YES</option></select>

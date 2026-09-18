@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.web;
 
 import com.crosscert.fidoadmin.common.CrudController;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
@@ -19,6 +20,7 @@ public class SystemPropController extends CrudController<CcfaSystemProp, CcfaSys
 
     private final SystemPropService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaSystemProp, CcfaSystemPropId, SystemPropSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/props"; }
@@ -26,7 +28,8 @@ public class SystemPropController extends CrudController<CcfaSystemProp, CcfaSys
     @Override protected SystemPropSearchForm newSearchForm() { return new SystemPropSearchForm(); }
     @Override protected SystemPropForm newForm() { return new SystemPropForm(); }
     @Override protected SystemPropForm toForm(CcfaSystemProp e) { return SystemPropForm.from(e); }
-    @Override protected CcfaSystemProp toEntity(SystemPropForm f) { return f.toNewEntity(); }
+    /** 복합키(PROP_KEY + COMPANY_IDX)의 COMPANY_IDX 를 유효 테넌트로 채운다. 고객사 select 가 사라졌으므로 폼에는 값이 없다. */
+    @Override protected CcfaSystemProp toEntity(SystemPropForm f) { return f.toNewEntity(tenant.companyIdx()); }
     @Override protected void applyForm(SystemPropForm f, CcfaSystemProp e) { f.applyTo(e); }
     @Override protected Object toListView(CcfaSystemProp e) { return SystemPropRow.of(e); }
     @Override protected Object toDetailView(CcfaSystemProp e) { return SystemPropRow.of(e); }
@@ -47,10 +50,6 @@ public class SystemPropController extends CrudController<CcfaSystemProp, CcfaSys
     }
 
     @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
-    @Override protected void populateFormModel(Model model) {
-        model.addAttribute("companies", companies.all());
         model.addAttribute("companyNames", companies.names());
     }
     @Override protected void populateDetailModel(CcfaSystemProp e, Model model) {

@@ -11,15 +11,7 @@
       <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
     </div>
     <div class="row g-3">
-      <!-- 등록: SUPER 만 고객사를 고른다. COMPANY 는 서비스가 자기 고객사로 강제한다. -->
-      <div class="col-md-6" th:if="${isNew}" sec:authorize="hasRole('SUPER')">
-        <label class="form-label">고객사 <span class="text-danger">*</span></label>
-        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
-          <option value="">선택</option>
-          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
-        </select>
-        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
-      </div>
+      <!-- 등록: 식별자는 유효 테넌트(세션이 선택한 고객사)로 컨트롤러가 채운다. -->
       <!-- 수정: 식별자는 바꿀 수 없다. -->
       <div class="col-md-6" th:unless="${isNew}">
         <label class="form-label">고객사</label>

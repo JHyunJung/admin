@@ -1,8 +1,10 @@
 package com.crosscert.fidoadmin.company.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -110,13 +112,21 @@ class FdsPolicyControllerWebTest {
             .andExpect(content().string(containsString("AND 국가는 필수입니다.")));
     }
 
-    /** SUPER 는 고객사를 골라야 한다. COMPANY 는 기반이 강제하므로 검사하지 않는다. */
-    @Test void superMustChooseCompanyOnCreate() throws Exception {
+    /**
+     * Task 11: 고객사 select 가 사라진 뒤로는 SUPER 도 폼 값 없이 유효 테넌트(세션이 고른 9)로
+     * 등록한다. 예전에는 폼 companyIdx 가 비어 있으면 "고객사를 선택하세요." 로 거부했지만,
+     * 유효 테넌트는 항상 값이 있으므로 그 상태 자체가 더는 나타나지 않는다.
+     */
+    @Test void superCreatesUsingSelectedTenantWithoutFormValue() throws Exception {
+        when(service.create(any())).thenReturn(policy(9L));
+        when(service.idOf(any())).thenReturn("9");
         mvc.perform(post("/fds-policies").session(session).with(user(superUser)).with(csrf())
                 .param("andCountry", "KR").param("orCountry", "KR"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("company/fds-policy/form"))
-            .andExpect(content().string(containsString("고객사를 선택하세요.")));
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/fds-policies/9"));
+        org.mockito.ArgumentCaptor<CcfaFdsPolicy> captor = org.mockito.ArgumentCaptor.forClass(CcfaFdsPolicy.class);
+        verify(service).create(captor.capture());
+        assertThat(captor.getValue().getCompanyIdx()).isEqualTo(9L);
     }
 
     @Test void createRedirectsToDetail() throws Exception {

@@ -9,7 +9,6 @@ import com.crosscert.fidoadmin.company.service.FdsPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -29,31 +28,24 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
     @Override protected FdsPolicyForm toForm(CcfaFdsPolicy e) { return FdsPolicyForm.from(e); }
 
     /**
-     * 할당형 PK 이므로 예외적으로 폼의 companyIdx 를 식별자로 채운다.
-     * COMPANY 역할은 기반 create() 가 insert() 전에 tenant.companyIdx() 로 덮어쓰고,
-     * AssignedIdCrudService.insert() 가 존재 검사 후 persist 하므로 기존 행이 덮어써지지 않는다.
+     * 할당형 PK 이므로 폼이 아니라 유효 테넌트로 식별자를 채운다. 고객사 select 가
+     * 사라졌으므로 폼에는 값이 없다. AssignedIdCrudService.insert() 가 존재 검사 후
+     * persist 하므로 이미 정책이 있는 고객사를 고른 채 등록하면 기존과 같은 중복 거부가 난다.
      */
     @Override protected CcfaFdsPolicy toEntity(FdsPolicyForm f) {
         CcfaFdsPolicy p = new CcfaFdsPolicy();
-        p.setCompanyIdx(f.getCompanyIdx());
+        p.setCompanyIdx(tenant.companyIdx());
         f.applyTo(p);
         return p;
     }
     /** 수정에서는 식별자를 바꾸지 않는다. */
     @Override protected void applyForm(FdsPolicyForm f, CcfaFdsPolicy e) { f.applyTo(e); }
 
-    @Override protected void validate(FdsPolicyForm f, boolean isNew, BindingResult binding) {
-        if (isNew && tenant.require().isSuper() && f.getCompanyIdx() == null) {
-            binding.rejectValue("companyIdx", "required", "고객사를 선택하세요.");
-        }
-    }
-
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
     }
     @Override protected void populateFormModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
     @Override protected void populateDetailModel(CcfaFdsPolicy e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
