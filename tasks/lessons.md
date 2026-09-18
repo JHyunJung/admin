@@ -40,3 +40,40 @@ ORA-12899 를 낸다. 코드베이스는 이미 `common.ByteSize` 로 이 문제
   0인지 확인한다.
 - 커밋 전 점검: `grep -ho 'skipped="[0-9]*"' build/test-results/test/*.xml`
 - "통과했다"는 실행된 테스트에 대해서만 참이다. 건너뛴 테스트는 통과가 아니다.
+
+## 2026-09-18 — 기존 테스트가 "고쳐야 할 동작"을 정당화하고 있을 수 있다
+
+테넌트 격리 작업에서 `CrudService.checkTenant()` 의 SUPER 우회를 제거했다.
+그런데 그 우회는 **테스트가 정상 동작으로 단언하고 있었다**.
+
+    @Test void superCanGetAnyTenant() {
+        login(0L);
+        when(repo.findById(9L)).thenReturn(Optional.of(license(9L, 2L)));  // 소유 = 2
+        assertThat(service.get(9L).getCompanyIdx()).isEqualTo(2L);         // 열린다고 단언
+    }
+
+같은 성질의 테스트가 다른 파일에도 셋 더 있었다(`UserinfoServiceTest.superCanChangeAnyTenantStatus`,
+`FdsPolicyServiceTest.superKeepsChosenCompany`, `SystemPropServiceTest` 의 감사 로그 단언).
+
+- 동작을 바꾸는 작업에서 기존 테스트가 빨개지면, **"셋업이 낡았나"와 "이 테스트가 옛 의미를
+  정당화하나"를 먼저 구분한다.** 전자는 셋업만 고치고, 후자는 이름과 단언을 다시 쓴다.
+- 구분 없이 일괄로 셋업만 맞추면 **초록 스위트 뒤에 회귀가 숨는다.** 이번 건에서는
+  25개 실패 중 3개가 후자였고, 이름(`superCanGetAnyTenant`)이 단서였다.
+- `superCan...` 처럼 **권한을 긍정하는 이름**은 격리 작업에서 우선 의심 대상이다.
+
+## 2026-09-18 — 계획서의 코드 샘플은 "읽히는가"가 아니라 "컴파일되는가"로 본다
+
+이번 계획에서 두 건이 나왔다.
+
+- `TenantSelectionInterceptor.preHandle` 샘플이 2인자였다(`Object handler` 누락).
+  `HandlerInterceptor` 를 구현할 수 없는 코드였고 구현자가 고쳐서 진행했다.
+- `MenuRegistry.areaOf` 샘플이 미등록 경로를 전부 TENANT 로 판정했다.
+  `withSlash("/")` 가 `"/"` 라서 모든 경로가 루트 항목에 접두사 일치했고,
+  `.orElse(SYSTEM)` 이 도달 불가 코드였다. 주석은 "오탐을 막는다"고 적혀 있었다.
+
+둘 다 읽기에는 자연스러웠다. 후자는 기존 테스트가 **등록된 경로의 하위 경로만** 검증해
+비껴갔고, 컨트롤러가 직접 탐침을 짜서야 드러났다.
+
+- 계획에 코드를 넣을 때는 시그니처와 경계값(빈 값, 루트, 미등록)을 손으로 한 번 돌려본다.
+- **자신 있는 주석 + 결함을 비껴가는 테스트** 조합은 특히 위험하다. 주석을 믿지 말고
+  동작을 실행해 확인한다.
