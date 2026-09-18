@@ -26,15 +26,19 @@ class MenuRegistryTest {
         assertThat(MenuRegistry.ALL).filteredOn(m -> "/signups".equals(m.href()))
             .singleElement()
             .satisfies(m -> {
-                assertThat(m.group()).isEqualTo("운영자");
+                assertThat(m.group()).isEqualTo("시스템관리");
                 assertThat(m.superOnly()).isTrue();
             });
     }
 
-    /** COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용(설계 3.3). 그룹은 유지된다. */
+    /**
+     * COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용(설계 3.3)이라 COMPANY 에게는
+     * FIDO2 그룹과 시스템관리 그룹이 통째로 사라진다. 나머지 그룹은 유지된다.
+     */
     @Test void companySeesNoFido2Group() {
         var groups = MenuRegistry.groups(registry.itemsFor(false));
-        assertThat(groups.keySet()).containsExactly("대시보드", "고객사", "운영자", "FIDO", "로그");
+        assertThat(groups.keySet())
+            .containsExactly("대시보드", "로그", "이상 징후 탐지", "FIDO 서버 관리", "내 정보");
     }
 
     /** 사이드바 아이콘. 모든 메뉴가 Bootstrap Icons 클래스명을 가진다(빈 값 금지). */
@@ -45,9 +49,11 @@ class MenuRegistryTest {
         });
     }
 
+    /** 그룹 순서는 이전 어드민의 업무 도메인 순서를 따른다(MenuRegistry.ALL 주석 참고). */
     @Test void groupsPreserveOrder() {
         var groups = MenuRegistry.groups(registry.itemsFor(true));
-        assertThat(groups.keySet()).containsExactly("대시보드", "고객사", "운영자", "FIDO", "FIDO2", "로그", "시스템");
+        assertThat(groups.keySet()).containsExactly(
+            "대시보드", "로그", "이상 징후 탐지", "FIDO 서버 관리", "FIDO2", "시스템관리", "내 정보");
     }
 
     @Test void 테넌트_영역_화면은_16개다() {
