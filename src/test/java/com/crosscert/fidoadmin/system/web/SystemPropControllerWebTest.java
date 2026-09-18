@@ -125,7 +125,7 @@ class SystemPropControllerWebTest {
      */
     @Test void keyWithSlashIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "a/b").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "a/b").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
@@ -134,7 +134,7 @@ class SystemPropControllerWebTest {
 
     @Test void keyWithBraceIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "a{x}").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "a{x}").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
@@ -143,7 +143,7 @@ class SystemPropControllerWebTest {
 
     @Test void keyWithQuestionMarkIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "a?b").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "a?b").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
@@ -152,7 +152,7 @@ class SystemPropControllerWebTest {
 
     @Test void keyWithUpperCaseSlashIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "A/B").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "A/B").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")));
@@ -162,7 +162,7 @@ class SystemPropControllerWebTest {
     /** "new" 는 등록 폼 경로와 겹쳐 예약된 값으로 거부한다. */
     @Test void keyEqualToNewIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "new").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "new").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: new")));
@@ -172,7 +172,7 @@ class SystemPropControllerWebTest {
     /** 점으로만 된 값은 경로 세그먼트로서 특수한 의미를 가져 예약된 값으로 거부한다. */
     @Test void keyOfDotsOnlyIsRejected() throws Exception {
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "..").param("companyIdx", "0").param("shareType", "NO"))
+                .param("propKey", "..").param("shareType", "NO"))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/form"))
             .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: ..")));
@@ -183,7 +183,7 @@ class SystemPropControllerWebTest {
         when(service.create(any())).thenReturn(prop("NEW_KEY", 0L, "x"));
         when(service.idOf(any())).thenReturn("NEW_KEY@0");
         mvc.perform(post("/system/props").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "NEW_KEY").param("companyIdx", "0").param("propValue", "x").param("shareType", "NO"))
+                .param("propKey", "NEW_KEY").param("propValue", "x").param("shareType", "NO"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/props/NEW_KEY@0"));
     }
@@ -191,7 +191,7 @@ class SystemPropControllerWebTest {
     /** update 리다이렉트는 CrudController 가 id.toString() 으로 만든다. toString 이 경로 값이어야 한다. */
     @Test void updateRedirectsToCompositeDetail() throws Exception {
         mvc.perform(post("/system/props/PW_FAIL_LIMIT@0").session(session).with(user(superUser)).with(csrf())
-                .param("propKey", "PW_FAIL_LIMIT").param("companyIdx", "0").param("propValue", "7").param("shareType", "YES"))
+                .param("propKey", "PW_FAIL_LIMIT").param("propValue", "7").param("shareType", "YES"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/props/PW_FAIL_LIMIT@0"));
     }

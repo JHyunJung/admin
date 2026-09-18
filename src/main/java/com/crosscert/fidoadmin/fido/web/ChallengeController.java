@@ -23,10 +23,6 @@ public class ChallengeController extends ReadOnlyController<Challenge, Long, Cha
     @Override protected String basePath() { return "/challenges"; }
     @Override protected String viewDir() { return "fido/challenge"; }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
-
     @Override protected void populateDetailModel(Challenge entity, Model model) {
         model.addAttribute("companyName", companies.name(entity.getCompanyIdx()));
     }

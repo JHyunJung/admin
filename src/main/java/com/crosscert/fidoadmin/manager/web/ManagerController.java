@@ -57,9 +57,6 @@ public class ManagerController extends CrudController<CcfaManager, Long, Manager
     @Override protected Object toListView(CcfaManager e) { return ManagerRow.of(e); }
     @Override protected Object toDetailView(CcfaManager e) { return ManagerView.of(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(CcfaManager e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
         model.addAttribute("lockState", service.lockState(e.getUserId()).orElse(null));

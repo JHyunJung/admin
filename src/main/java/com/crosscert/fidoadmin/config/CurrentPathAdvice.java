@@ -5,6 +5,7 @@ import com.crosscert.fidoadmin.common.MenuRegistry;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
+import com.crosscert.fidoadmin.signup.SignupPolicy;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,8 @@ public class CurrentPathAdvice {
     @ModelAttribute("selectableCompanies")
     public List<CcfaCompany> selectableCompanies() {
         if (tenant.current().isEmpty() || !tenant.require().isSuper()) return List.of();
-        return companies.all().stream().filter(c -> c.getIdx() != null && c.getIdx() != 0L).toList();
+        return companies.all().stream()
+            .filter(c -> c.getIdx() != null && c.getIdx() != SignupPolicy.SUPER_COMPANY_IDX)
+            .toList();
     }
 }

@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.common;
 
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
+import com.crosscert.fidoadmin.signup.SignupPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,7 +33,7 @@ public class TenantSelectionController {
     public String selectForm(Model model) {
         if (!tenant.require().isSuper()) return "redirect:/";
         model.addAttribute("companies", companies.all().stream()
-            .filter(c -> c.getIdx() != null && c.getIdx() != 0L)
+            .filter(c -> c.getIdx() != null && c.getIdx() != SignupPolicy.SUPER_COMPANY_IDX)
             .toList());
         model.addAttribute("systemMenus", menus.itemsFor(true).stream()
             .filter(m -> m.area() == MenuArea.SYSTEM)

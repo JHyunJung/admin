@@ -27,9 +27,6 @@ public class AppserverController extends CrudController<Appserver, Long, Appserv
     @Override protected Appserver toEntity(AppserverForm f) { Appserver a = new Appserver(); f.applyTo(a); return a; }
     @Override protected void applyForm(AppserverForm f, Appserver e) { f.applyTo(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(Appserver e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
     }

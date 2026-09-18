@@ -23,9 +23,6 @@ public class MailingController extends ReadOnlyController<CcfaMailing, Long, Mai
     @Override protected String basePath() { return "/logs/mailing"; }
     @Override protected String viewDir() { return "log/mailing"; }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
 
     @Override protected void populateDetailModel(CcfaMailing e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));

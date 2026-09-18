@@ -49,9 +49,6 @@ public class SystemPropController extends CrudController<CcfaSystemProp, CcfaSys
         }
     }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(CcfaSystemProp e, Model model) {
         model.addAttribute("companyName", companies.name(e.getId().getCompanyIdx()));
     }

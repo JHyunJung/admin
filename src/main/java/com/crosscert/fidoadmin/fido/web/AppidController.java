@@ -27,9 +27,6 @@ public class AppidController extends CrudController<Appid, Long, AppidForm, Appi
     @Override protected Appid toEntity(AppidForm f) { Appid a = new Appid(); f.applyTo(a); return a; }
     @Override protected void applyForm(AppidForm f, Appid e) { f.applyTo(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(Appid e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
     }

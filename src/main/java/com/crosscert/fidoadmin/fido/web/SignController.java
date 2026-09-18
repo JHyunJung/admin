@@ -24,10 +24,6 @@ public class SignController extends ReadOnlyController<Sign, Long, SignSearchFor
     @Override protected String viewDir() { return "fido/sign"; }
     @Override protected Object toListView(Sign entity) { return SignRow.of(entity); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
-
     @Override protected void populateDetailModel(Sign entity, Model model) {
         model.addAttribute("companyName", companies.name(entity.getCompanyIdx()));
     }

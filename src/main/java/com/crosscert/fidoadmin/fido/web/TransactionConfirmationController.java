@@ -25,10 +25,6 @@ public class TransactionConfirmationController
     @Override protected String viewDir() { return "fido/transaction-confirmation"; }
     @Override protected Object toListView(TransactionConfirmation entity) { return TransactionConfirmationRow.of(entity); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
-
     @Override protected void populateDetailModel(TransactionConfirmation entity, Model model) {
         model.addAttribute("companyName", companies.name(entity.getCompanyIdx()));
     }

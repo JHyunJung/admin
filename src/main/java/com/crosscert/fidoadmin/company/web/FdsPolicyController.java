@@ -41,9 +41,6 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
     /** 수정에서는 식별자를 바꾸지 않는다. */
     @Override protected void applyForm(FdsPolicyForm f, CcfaFdsPolicy e) { f.applyTo(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateFormModel(Model model) {
         model.addAttribute("companyNames", companies.names());
     }

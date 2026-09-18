@@ -29,9 +29,6 @@ public class UserController extends ReadOnlyController<Userinfo, Long, UserSearc
     @Override protected Object toListView(Userinfo e) { return UserRow.from(e); }
     @Override protected Object toDetailView(Userinfo e) { return UserView.from(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(Userinfo e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
         model.addAttribute("statuses", UserinfoService.STATUSES.stream().sorted().toList());

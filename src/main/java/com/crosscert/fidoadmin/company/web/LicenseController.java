@@ -27,9 +27,6 @@ public class LicenseController extends CrudController<CcfaLicense, Long, License
     @Override protected CcfaLicense toEntity(LicenseForm f) { CcfaLicense l = new CcfaLicense(); f.applyTo(l); return l; }
     @Override protected void applyForm(LicenseForm f, CcfaLicense e) { f.applyTo(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
     @Override protected void populateDetailModel(CcfaLicense e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
     }

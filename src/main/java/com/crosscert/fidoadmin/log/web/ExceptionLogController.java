@@ -24,9 +24,6 @@ public class ExceptionLogController extends ReadOnlyController<CcfaExceptions, L
     @Override protected Object toListView(CcfaExceptions e) { return ExceptionLogRow.from(e); }
     @Override protected Object toDetailView(CcfaExceptions e) { return ExceptionLogView.from(e); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
 
     @Override protected void populateDetailModel(CcfaExceptions e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));

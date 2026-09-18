@@ -14,6 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * FIDO_STATISTICS 를 일자별로 합산한다. 읽기 전용 SQL 만 쓴다.
  * GROUPBY 값은 운영 데이터에 따라 다르므로 화면에서 고르게 하고, 없으면 첫 값을 쓴다.
+ *
+ * <p>각 쿼리의 {@code (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx)} 절 중
+ * {@code IS NULL} 쪽은 이제 도달할 수 없다. {@link TenantContext#companyIdx()} 는
+ * 유효 테넌트가 없으면 null 을 돌려주지 않고 예외를 던지므로, 이 서비스로 들어오는
+ * {@code companyIdx} 파라미터는 항상 값이 있다. 즉 전역(테넌트 미지정) 집계 경로는
+ * 이미 막혀 있다. SQL 자체는 그대로 둔다 — 다시 쓰면 회귀 위험만 지고 얻는 것이 없다.
  */
 @Service
 @RequiredArgsConstructor

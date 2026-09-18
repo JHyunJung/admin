@@ -24,10 +24,6 @@ public class TransactionhashController extends ReadOnlyController<Transactionhas
     @Override protected String viewDir() { return "fido/transactionhash"; }
     @Override protected Object toListView(Transactionhash entity) { return TransactionhashRow.of(entity); }
 
-    @Override protected void populateListModel(Model model) {
-        model.addAttribute("companyNames", companies.names());
-    }
-
     @Override protected void populateDetailModel(Transactionhash entity, Model model) {
         model.addAttribute("companyName", companies.name(entity.getCompanyIdx()));
     }
