@@ -61,7 +61,6 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "에러 코드", "/system/error-codes", true, "bi-bug"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "FIDO 서버", "/system/fido-clients", true, "bi-server"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "어드민 기준", "/system/criteria", true, "bi-ui-checks"),
-        new MenuItem(MenuArea.SYSTEM, "시스템관리", "메뉴 정의", "/system/menus", true, "bi-list-nested"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "코드 그룹/코드", "/system/options", true, "bi-tags"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "필드 정의", "/system/fields", true, "bi-input-cursor-text"),
         new MenuItem(MenuArea.PERSONAL, "내 정보", "내 비밀번호 변경", "/me/password", false, "bi-key"));

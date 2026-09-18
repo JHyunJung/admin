@@ -65,6 +65,15 @@ class MenuRegistryTest {
         assertThat(tenant).isEqualTo(17);
     }
 
+    /**
+     * 메뉴 정의 화면(/system/menus)은 제거했다. MenuRegistry 가 CCFA_MENU 를 읽지 않아
+     * 이 화면에서 무엇을 고쳐도 사이드바가 바뀌지 않았기 때문이다 — 운영자가 반영된 줄
+     * 아는 상태가 더 해로웠다. 되살릴 때는 사이드바가 실제로 그 데이터를 읽게 만든 뒤여야 한다.
+     */
+    @Test void 메뉴_정의_화면은_메뉴에_없다() {
+        assertThat(MenuRegistry.ALL).extracting(MenuItem::href).doesNotContain("/system/menus");
+    }
+
     @Test void 시스템_영역은_전부_superOnly_다() {
         assertThat(MenuRegistry.ALL.stream()
             .filter(m -> m.area() == MenuArea.SYSTEM))
@@ -85,7 +94,7 @@ class MenuRegistryTest {
     @Test void 하위_경로는_가장_긴_접두사로_판정한다() {
         MenuRegistry r = new MenuRegistry();
         assertThat(r.areaOf("/users/123/edit")).isEqualTo(MenuArea.TENANT);
-        assertThat(r.areaOf("/system/menus/5")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/system/options/5")).isEqualTo(MenuArea.SYSTEM);
     }
 
     /**
@@ -124,7 +133,7 @@ class MenuRegistryTest {
         MenuRegistry r = new MenuRegistry();
         assertThat(r.areaOf("/system/props")).isEqualTo(MenuArea.TENANT);
         assertThat(r.areaOf("/system/props/KEY@1")).isEqualTo(MenuArea.TENANT);
-        assertThat(r.areaOf("/system/menus")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/system/options")).isEqualTo(MenuArea.SYSTEM);
         assertThat(r.areaOf("/system/info")).isEqualTo(MenuArea.SYSTEM);
     }
 
