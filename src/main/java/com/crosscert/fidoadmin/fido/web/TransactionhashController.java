@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.fido.web;
 
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.fido.entity.Transactionhash;
 import com.crosscert.fidoadmin.fido.service.TransactionhashQueryService;
@@ -19,7 +18,6 @@ public class TransactionhashController extends ReadOnlyController<Transactionhas
 
     private final TransactionhashQueryService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<Transactionhash, Long, TransactionhashSearchForm> service() { return service; }
     @Override protected String basePath() { return "/transaction-hashes"; }
@@ -28,7 +26,6 @@ public class TransactionhashController extends ReadOnlyController<Transactionhas
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(Transactionhash entity, Model model) {

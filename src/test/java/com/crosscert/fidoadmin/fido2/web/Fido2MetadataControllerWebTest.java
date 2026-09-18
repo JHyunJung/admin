@@ -38,6 +38,7 @@ class Fido2MetadataControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean Fido2MetadataService service;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;

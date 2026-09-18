@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.company.web;
 
 import com.crosscert.fidoadmin.common.CrudController;
 import com.crosscert.fidoadmin.common.CrudService;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaLicense;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.company.service.LicenseService;
@@ -18,7 +17,6 @@ public class LicenseController extends CrudController<CcfaLicense, Long, License
 
     private final LicenseService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaLicense, Long, LicenseSearchForm> service() { return service; }
     @Override protected String basePath() { return "/licenses"; }
@@ -31,9 +29,7 @@ public class LicenseController extends CrudController<CcfaLicense, Long, License
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
-    @Override protected void populateFormModel(Model model) { model.addAttribute("companies", companies.all()); }
     @Override protected void populateDetailModel(CcfaLicense e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
     }

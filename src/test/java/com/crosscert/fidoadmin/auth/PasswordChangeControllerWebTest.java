@@ -40,6 +40,7 @@ class PasswordChangeControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean PasswordChangeService service;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean LoginSuccessHandler success;
     @MockitoBean LoginFailureHandler failure;
     @MockitoBean AppLogoutSuccessHandler logout;

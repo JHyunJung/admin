@@ -45,6 +45,17 @@ public class MenuRegistry {
         return isSuper ? ALL : ALL.stream().filter(m -> !m.superOnly()).toList();
     }
 
+    /**
+     * 영역으로 거른 목록. 사이드바가 영역별로 나눠 그리는 데 쓴다(Task 10).
+     *
+     * <p>템플릿의 SpEL 에는 {@code items.?[area.name() == 'TENANT']} 같은 선택 연산자 전례가
+     * 없어, 필터를 자바로 옮겨 이 오버로드로 둔다. 기존 {@code itemsFor(boolean)} 시그니처는
+     * sidebar.html 이 그대로 호출하므로 바꾸지 않는다.
+     */
+    public List<MenuItem> itemsFor(boolean isSuper, MenuArea area) {
+        return itemsFor(isSuper).stream().filter(m -> m.area() == area).toList();
+    }
+
     public static LinkedHashMap<String, List<MenuItem>> groups(List<MenuItem> items) {
         LinkedHashMap<String, List<MenuItem>> map = new LinkedHashMap<>();
         for (MenuItem m : items) map.computeIfAbsent(m.group(), k -> new java.util.ArrayList<>()).add(m);

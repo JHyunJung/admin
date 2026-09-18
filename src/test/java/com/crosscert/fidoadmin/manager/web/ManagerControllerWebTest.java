@@ -117,7 +117,7 @@ class ManagerControllerWebTest {
 
     @Test void createWithoutPasswordShowsFormWithMessage() throws Exception {
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "newop").param("companyIdx", "1").param("status", "활성"))
+                .param("userId", "newop").param("status", "활성"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
             .andExpect(content().string(containsString("비밀번호는 필수입니다.")));
@@ -125,7 +125,7 @@ class ManagerControllerWebTest {
 
     @Test void passwordMismatchShowsMessage() throws Exception {
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("userId", "newop").param("status", "활성")
                 .param("password", "Secret1234!").param("passwordConfirm", "Other1234!"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
@@ -138,7 +138,7 @@ class ManagerControllerWebTest {
         when(service.create(any())).thenReturn(saved);
         when(service.idOf(any())).thenReturn("10");
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("userId", "newop").param("status", "활성")
                 .param("password", "Secret1234!").param("passwordConfirm", "Secret1234!"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/managers/10"));
@@ -150,7 +150,7 @@ class ManagerControllerWebTest {
 
     @Test void createWithShortPasswordShowsSizeMessage() throws Exception {
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("userId", "newop").param("status", "활성")
                 .param("password", "short1!").param("passwordConfirm", "short1!"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
@@ -160,7 +160,7 @@ class ManagerControllerWebTest {
 
     @Test void createWithoutSpecialCharShowsPolicyMessage() throws Exception {
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "newop").param("companyIdx", "1").param("status", "활성")
+                .param("userId", "newop").param("status", "활성")
                 .param("password", "abcdefgh1").param("passwordConfirm", "abcdefgh1"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
@@ -171,13 +171,16 @@ class ManagerControllerWebTest {
     /** 수정 시 비밀번호를 비워두면(변경하지 않으면) 정책 검사를 건너뛰고 그대로 저장된다. */
     @Test void editWithBlankPasswordStillSucceeds() throws Exception {
         mvc.perform(post("/managers/2").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "kbadmin").param("companyIdx", "1").param("status", "활성"))
+                .param("userId", "kbadmin").param("status", "활성"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/managers/2"));
     }
 
-    /** 고객사명이 조회되지 않는 IDX 는 목록에 "null" 대신 IDX 를 그대로 보여준다. */
-    @Test void listFallsBackToCompanyIdxWhenNameMissing() throws Exception {
+    /**
+     * Task 10 부터 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다).
+     * companyIdx 를 알 수 없는 이름 조회로도 "null" 이 새지 않는지는 여전히 지킨다.
+     */
+    @Test void listRendersRowWithoutLeakingNullForUnknownCompany() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         CcfaManager m = manager(2L, "kbadmin"); m.setCompanyIdx(5L);
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(m)));
@@ -222,7 +225,7 @@ class ManagerControllerWebTest {
             .when(service).update(org.mockito.ArgumentMatchers.eq(2L), any());
 
         mvc.perform(post("/managers/2").session(session).with(user(superUser)).with(csrf())
-                .param("userId", "applicant").param("companyIdx", "1").param("status", "활성"))
+                .param("userId", "applicant").param("status", "활성"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
             .andExpect(content().string(containsString("가입 승인")));

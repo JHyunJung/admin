@@ -11,13 +11,6 @@
       <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
     </div>
     <div class="row g-3">
-      <div class="col-md-6" sec:authorize="hasRole('SUPER')">
-        <label class="form-label">고객사</label>
-        <select th:field="*{companyIdx}" class="form-select">
-          <option value="">선택</option>
-          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
-        </select>
-      </div>
       <div class="col-12">
         <label class="form-label">APPID <span class="text-danger">*</span></label>
         <input th:field="*{appid}" class="form-control" th:classappend="${#fields.hasErrors('appid')} ? 'is-invalid'">

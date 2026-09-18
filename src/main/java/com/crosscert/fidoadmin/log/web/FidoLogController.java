@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.log.web;
 
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.FidoLogs;
 import com.crosscert.fidoadmin.log.service.FidoLogQueryService;
@@ -18,7 +17,6 @@ public class FidoLogController extends ReadOnlyController<FidoLogs, Long, FidoLo
 
     private final FidoLogQueryService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<FidoLogs, Long, FidoLogSearchForm> service() { return service; }
     @Override protected String basePath() { return "/logs/fido"; }
@@ -28,7 +26,6 @@ public class FidoLogController extends ReadOnlyController<FidoLogs, Long, FidoLo
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(FidoLogs e, Model model) {

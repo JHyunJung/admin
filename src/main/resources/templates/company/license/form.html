@@ -10,14 +10,6 @@
       <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
     </div>
     <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">고객사 <span class="text-danger">*</span></label>
-        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
-          <option value="">선택</option>
-          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
-        </select>
-        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
-      </div>
       <div class="col-md-6"><label class="form-label">서비스명</label><input th:field="*{serviceName}" class="form-control"></div>
       <div class="col-md-4"><label class="form-label">담당자</label><input th:field="*{contactName}" class="form-control"></div>
       <div class="col-md-4"><label class="form-label">전화</label><input th:field="*{contactPhone}" class="form-control"></div>

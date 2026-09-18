@@ -16,14 +16,6 @@
         <div class="invalid-feedback" th:errors="*{userId}"></div>
       </div>
       <div class="col-md-6">
-        <label class="form-label">고객사 <span class="text-danger">*</span></label>
-        <select th:field="*{companyIdx}" class="form-select" th:classappend="${#fields.hasErrors('companyIdx')} ? 'is-invalid'">
-          <option value="">선택</option>
-          <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}"></option>
-        </select>
-        <div class="invalid-feedback" th:errors="*{companyIdx}"></div>
-      </div>
-      <div class="col-md-6">
         <label class="form-label" th:text="${isNew} ? '비밀번호 *' : '비밀번호 (변경 시에만 입력)'">비밀번호</label>
         <input type="password" th:field="*{password}" class="form-control" autocomplete="new-password"
                th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">

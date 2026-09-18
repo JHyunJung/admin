@@ -6,13 +6,6 @@
 <main>
   <h1 class="h4 mb-3">대시보드</h1>
   <form method="get" th:action="@{/}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto" sec:authorize="hasRole('SUPER')">
-      <label class="form-label small mb-0">고객사</label>
-      <select name="companyIdx" class="form-select form-select-sm">
-        <option value="">전체</option>
-        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}" th:selected="${search.companyIdx == c.idx}"></option>
-      </select>
-    </div>
     <div class="col-auto">
       <label class="form-label small mb-0">서비스</label>
       <select name="serviceName" class="form-select form-select-sm">

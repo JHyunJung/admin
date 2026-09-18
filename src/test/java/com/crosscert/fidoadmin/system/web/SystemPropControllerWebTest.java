@@ -87,16 +87,15 @@ class SystemPropControllerWebTest {
         mvc.perform(get("/system/props").with(user(companyUser))).andExpect(status().isForbidden());
     }
 
+    /** Task 10 부터 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다). 상세는 여전히 보여준다. */
     @Test void listRendersRowsWithPathLinks() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("id.propKey"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(prop("PW_FAIL_LIMIT", 0L, "5"))));
-        when(companies.names()).thenReturn(Map.of(0L, "전역(시스템)"));
         mvc.perform(get("/system/props").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("system/props/list"))
             .andExpect(content().string(containsString("PW_FAIL_LIMIT")))
-            .andExpect(content().string(containsString("/system/props/PW_FAIL_LIMIT@0")))
-            .andExpect(content().string(containsString("전역(시스템)")));
+            .andExpect(content().string(containsString("/system/props/PW_FAIL_LIMIT@0")));
     }
 
     /** 경로 변수 "PW_FAIL_LIMIT@0" 가 복합키로 변환되어 서비스에 전달된다. */

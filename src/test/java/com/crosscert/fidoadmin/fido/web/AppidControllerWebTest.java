@@ -82,6 +82,7 @@ class AppidControllerWebTest {
     }
 
 
+    /** Task 10: 목록에서 검색 select 뿐 아니라 고객사 컬럼도 뺐다(세션이 테넌트를 정한다). */
     @Test void companyUserSeesListWithoutCompanyFilter() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(appid(1L))));
@@ -90,17 +91,21 @@ class AppidControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(view().name("fido/appid/list"))
             .andExpect(content().string(containsString("https://kbstar.com/facets.json")))
-            .andExpect(content().string(containsString("KB국민은행")))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
     }
 
-    @Test void superUserSeesCompanyFilter() throws Exception {
+    /**
+     * Task 10: 테넌트는 세션이 정하므로 SUPER 도 목록 검색폼에서 고객사를 따로 고르지 않는다.
+     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
+     * 검색폼 select 태그로 특정한다.
+     */
+    @Test void superUserDoesNotSeeCompanyFilterOnList() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         when(companies.all()).thenReturn(List.of(kb()));
         mvc.perform(get("/appids").session(session).with(user(superUser)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("name=\"companyIdx\"")));
+            .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))));
     }
 
     @Test void blankAppidShowsFormAgain() throws Exception {

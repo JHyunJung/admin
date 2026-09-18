@@ -3,8 +3,6 @@ package com.crosscert.fidoadmin.log.web;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
-import com.crosscert.fidoadmin.common.TenantContext;
-import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog;
 import com.crosscert.fidoadmin.log.service.AuditLogQueryService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, AuditLogSearchForm> {
 
     private final AuditLogQueryService service;
-    private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaAuditLog, Long, AuditLogSearchForm> service() { return service; }
     @Override protected String basePath() { return "/logs/audit"; }
@@ -27,6 +23,5 @@ public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, A
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("types", AuditType.values());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 }

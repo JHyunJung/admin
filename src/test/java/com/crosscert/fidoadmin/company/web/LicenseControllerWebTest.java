@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.company.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -76,7 +77,13 @@ class LicenseControllerWebTest {
         mvc.perform(get("/licenses").with(user(companyUser))).andExpect(status().isForbidden());
     }
 
-    @Test void superListRendersRowsWithCompanyName() throws Exception {
+    /**
+     * Task 10: 테넌트는 세션이 정하므로 목록은 더는 고객사 검색 select 나 고객사 컬럼을 보여주지 않는다.
+     * (companyNames 는 상세 화면이 여전히 쓰므로 컨트롤러에는 남아 있다 — 목록 템플릿만 걷어냈다.)
+     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
+     * 검색폼 select 태그로 특정한다.
+     */
+    @Test void superListRendersRowsWithoutCompanyFilter() throws Exception {
         CcfaLicense l = new CcfaLicense(); l.setIdx(1L); l.setCompanyIdx(1L); l.setServiceName("kbstar"); l.setContactName("홍길동");
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(l)));
@@ -85,22 +92,20 @@ class LicenseControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(view().name("company/license/list"))
             .andExpect(content().string(containsString("kbstar")))
-            .andExpect(content().string(containsString("KB국민은행")))
-            .andExpect(content().string(containsString("name=\"companyIdx\"")));
+            .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))));
     }
 
-    @Test void createWithoutCompanyShowsFormAgain() throws Exception {
-        mvc.perform(post("/licenses").session(session).with(user(superUser)).with(csrf()).param("serviceName", "kbstar"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("company/license/form"))
-            .andExpect(content().string(containsString("고객사를 선택하세요.")));
-    }
-
+    /**
+     * Task 10 부터 폼에 고객사 select 가 없다. companyIdx 는 CrudService.create() 가 유효
+     * 테넌트로 채우므로 폼이 이 값을 안 보내도(브라우저가 못 보내므로) 등록은 그대로 성공해야 한다
+     * (LicenseForm.companyIdx 의 @NotNull 을 뺐다 — 안 그러면 select 가 없어졌으므로 모든 등록이
+     * @Valid 단계에서 막힌다). 이전의 "고객사 미선택 시 폼 재표시" 테스트는 그래서 의미가 사라졌다.
+     */
     @Test void createRedirectsToDetail() throws Exception {
         CcfaLicense saved = new CcfaLicense(); saved.setIdx(55L);
         when(service.create(any())).thenReturn(saved);
         when(service.idOf(any())).thenReturn("55");
-        mvc.perform(post("/licenses").session(session).with(user(superUser)).with(csrf()).param("companyIdx", "1").param("serviceName", "kbstar"))
+        mvc.perform(post("/licenses").session(session).with(user(superUser)).with(csrf()).param("serviceName", "kbstar"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/licenses/55"));
     }

@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.fido.web;
 
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.fido.entity.TransactionConfirmation;
 import com.crosscert.fidoadmin.fido.service.TransactionConfirmationQueryService;
@@ -20,7 +19,6 @@ public class TransactionConfirmationController
 
     private final TransactionConfirmationQueryService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<TransactionConfirmation, Long, TransactionConfirmationSearchForm> service() { return service; }
     @Override protected String basePath() { return "/transaction-confirmations"; }
@@ -29,7 +27,6 @@ public class TransactionConfirmationController
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(TransactionConfirmation entity, Model model) {

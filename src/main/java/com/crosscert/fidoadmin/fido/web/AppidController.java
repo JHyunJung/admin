@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.fido.web;
 
 import com.crosscert.fidoadmin.common.CrudController;
 import com.crosscert.fidoadmin.common.CrudService;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.fido.entity.Appid;
 import com.crosscert.fidoadmin.fido.service.AppidService;
@@ -18,7 +17,6 @@ public class AppidController extends CrudController<Appid, Long, AppidForm, Appi
 
     private final AppidService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<Appid, Long, AppidSearchForm> service() { return service; }
     @Override protected String basePath() { return "/appids"; }
@@ -31,12 +29,8 @@ public class AppidController extends CrudController<Appid, Long, AppidForm, Appi
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
     @Override protected void populateDetailModel(Appid e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
-    }
-    @Override protected void populateFormModel(Model model) {
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 }

@@ -59,9 +59,7 @@ public class ManagerController extends CrudController<CcfaManager, Long, Manager
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        model.addAttribute("companies", companies.all());
     }
-    @Override protected void populateFormModel(Model model) { model.addAttribute("companies", companies.all()); }
     @Override protected void populateDetailModel(CcfaManager e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
         model.addAttribute("lockState", service.lockState(e.getUserId()).orElse(null));

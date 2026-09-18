@@ -88,12 +88,18 @@ class FdsPolicyControllerWebTest {
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
     }
 
-    @Test void superUserSeesCompanyFilter() throws Exception {
+    /**
+     * Task 10: 테넌트는 이제 세션이 정하므로, SUPER 도 목록 검색폼에서 고객사를 따로 고르지 않는다.
+     * 고객사를 여전히 골라야 하는 곳은 등록 폼(할당형 PK)뿐이다 — superMustChooseCompanyOnCreate 참고.
+     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
+     * 검색폼 select 태그로 특정한다.
+     */
+    @Test void superUserDoesNotSeeCompanyFilterOnList() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("companyIdx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         mvc.perform(get("/fds-policies").session(session).with(user(superUser)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("name=\"companyIdx\"")));
+            .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))));
     }
 
     @Test void blankAndCountryShowsFormWithMessage() throws Exception {
@@ -122,14 +128,19 @@ class FdsPolicyControllerWebTest {
             .andExpect(redirectedUrl("/fds-policies/1"));
     }
 
-    /** 고객사명이 조회되지 않는 IDX 는 목록에 "null" 대신 "#IDX" 를 보여준다. */
-    @Test void listFallsBackToHashCompanyIdxWhenNameMissing() throws Exception {
+    /**
+     * Task 10 부터 목록은 고객사명을 보여주지 않는다(검색폼과 함께 고객사 컬럼도 뺐다 — 세션이
+     * 테넌트를 정하므로 행마다 소속을 나열할 이유가 없다). 그래서 이 테스트는 더는 "#IDX 로 대체
+     * 표시되는지"를 볼 수 없고, 대신 목록 행이 "null" 을 새지 않고 렌더되는지만 지킨다.
+     * "#IDX" 대체 표시 자체는 editFormFallsBackToHashCompanyIdxWhenNameMissing 이 계속 지킨다.
+     */
+    @Test void listRendersRowWithoutLeakingNull() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("companyIdx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(policy(9L))));
         mvc.perform(get("/fds-policies").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("null"))))
-            .andExpect(content().string(containsString("#9 (9)")));
+            .andExpect(content().string(containsString("KR")));
     }
 
     /** 수정 폼에서도 고객사명이 없으면 "null" 대신 "#IDX" 를 보여준다. */

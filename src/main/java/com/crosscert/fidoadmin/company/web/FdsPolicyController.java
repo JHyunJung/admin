@@ -50,7 +50,6 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
     @Override protected void populateFormModel(Model model) {
         model.addAttribute("companyNames", companies.names());

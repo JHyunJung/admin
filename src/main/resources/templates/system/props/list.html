@@ -14,13 +14,6 @@
       <input name="propKey" th:value="${search.propKey}" class="form-control form-control-sm">
     </div>
     <div class="col-auto">
-      <label class="form-label small mb-0">고객사</label>
-      <select name="companyIdx" class="form-select form-select-sm">
-        <option value="">전체</option>
-        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="|${c.companyName} (${c.idx})|" th:selected="${search.companyIdx == c.idx}"></option>
-      </select>
-    </div>
-    <div class="col-auto">
       <button class="btn btn-outline-secondary btn-sm">검색</button>
       <a th:href="@{/system/props}" class="btn btn-link btn-sm">초기화</a>
     </div>
@@ -29,17 +22,16 @@
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover fa-table mb-0">
       <thead class="table-light">
-        <tr><th>키</th><th>고객사</th><th>값</th><th>공유</th><th>수정일시</th></tr>
+        <tr><th>키</th><th>값</th><th>공유</th><th>수정일시</th></tr>
       </thead>
       <tbody>
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/system/props/{id}(id=${r.pathValue})}" th:text="${r.propKey}">키</a></td>
-          <td th:text="|${companyNames.get(r.companyIdx) ?: '#' + r.companyIdx} (${r.companyIdx})|"></td>
           <td th:text="${#strings.abbreviate(r.propValue, 60)}"></td>
           <td th:text="${r.shareType}"></td>
           <td th:text="${#temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="5" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="4" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>

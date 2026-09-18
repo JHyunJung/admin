@@ -2,7 +2,6 @@ package com.crosscert.fidoadmin.log.web;
 
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
-import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.CcfaExceptions;
 import com.crosscert.fidoadmin.log.service.ExceptionLogQueryService;
@@ -18,7 +17,6 @@ public class ExceptionLogController extends ReadOnlyController<CcfaExceptions, L
 
     private final ExceptionLogQueryService service;
     private final CompanyLookup companies;
-    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaExceptions, Long, ExceptionLogSearchForm> service() { return service; }
     @Override protected String basePath() { return "/logs/exceptions"; }
@@ -28,7 +26,6 @@ public class ExceptionLogController extends ReadOnlyController<CcfaExceptions, L
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(CcfaExceptions e, Model model) {

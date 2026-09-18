@@ -10,13 +10,6 @@
   </div>
 
   <form method="get" th:action="@{/appids}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto" sec:authorize="hasRole('SUPER')">
-      <label class="form-label small mb-0">고객사</label>
-      <select name="companyIdx" class="form-select form-select-sm">
-        <option value="">전체</option>
-        <option th:each="c : ${companies}" th:value="${c.idx}" th:text="${c.companyName}" th:selected="${search.companyIdx == c.idx}"></option>
-      </select>
-    </div>
     <div class="col-auto"><label class="form-label small mb-0">APPID</label><input name="appid" th:value="${search.appid}" class="form-control form-control-sm"></div>
     <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
     <div class="col-auto">
@@ -33,7 +26,7 @@
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover fa-table mb-0">
       <thead class="table-light">
-        <tr><th>IDX</th><th>APPID</th><th>서비스명</th><th>상태</th><th>기기</th><th>기본기기</th><th>고객사</th><th>등록일</th></tr>
+        <tr><th>IDX</th><th>APPID</th><th>서비스명</th><th>상태</th><th>기기</th><th>기본기기</th><th>등록일</th></tr>
       </thead>
       <tbody>
         <tr th:each="r : ${page.content}">
@@ -43,10 +36,9 @@
           <td><span class="badge" th:classappend="${r.status == 'use'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.status}"></span></td>
           <td th:text="${r.device}"></td>
           <td th:text="${r.deviceDefault}"></td>
-          <td th:text="${companyNames.get(r.companyIdx)} ?: ${r.companyIdx}"></td>
           <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="8" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>

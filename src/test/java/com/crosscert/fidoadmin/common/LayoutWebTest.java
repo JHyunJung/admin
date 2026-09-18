@@ -2,16 +2,21 @@ package com.crosscert.fidoadmin.common;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.dashboard.DashboardController;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -44,9 +49,25 @@ class LayoutWebTest {
     }
 
     /**
+     * Task 10 부터 사이드바·상단바가 {@code selectedCompanyName}·{@code selectableCompanies}
+     * (둘 다 CompanyLookup 을 거친다)로 테넌트 선택 여부를 가린다. 목을 기본값(null/빈 리스트)으로
+     * 두면 COMPANY 계정도 "미선택"으로 보여 TENANT 메뉴가 비활성화되므로, 모든 테스트가 공유하는
+     * 기본값을 여기서 채운다. 특정 테넌트 이름이 필요한 SUPER 케이스는 superSelecting() 이 덮어쓴다.
+     */
+    @BeforeEach void stubCompanyLookupDefaults() {
+        when(companies.name(anyLong())).thenReturn("KB");
+        CcfaCompany kb = new CcfaCompany(); kb.setIdx(9L); kb.setCompanyName("KB국민은행");
+        when(companies.all()).thenReturn(List.of(kb));
+    }
+
+    /**
      * SUPER 가 레이아웃 전체를 보려면 유효 테넌트가 있어야 한다(Task 6, TenantSelectionInterceptor).
      * 이 슬라이스에는 TenantSelectionController 가 없으므로 세션 스코프 빈에 직접 선택값을 넣는다.
      * 세션 빈은 요청 스레드에서만 프록시가 풀리므로, 세팅하는 동안만 RequestContextHolder 를 임시로 건다.
+     *
+     * <p>Task 10 부터 사이드바가 {@code selectedCompanyName}(= {@code companies.name(idx)})으로
+     * 테넌트 선택 여부를 가린다. 목이 기본값(null)을 주면 "미선택"으로 보여 TENANT 메뉴가 비활성화되므로
+     * 여기서 함께 이름을 채워 둔다.
      */
     private MockHttpSession superSelecting(long companyIdx) {
         MockHttpSession session = new MockHttpSession();
@@ -58,6 +79,7 @@ class LayoutWebTest {
         } finally {
             RequestContextHolder.resetRequestAttributes();
         }
+        when(companies.name(companyIdx)).thenReturn("KB국민은행");
         return session;
     }
 
@@ -150,5 +172,25 @@ class LayoutWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("/signups")))
             .andExpect(content().string(containsString("가입 승인")));
+    }
+
+    /** TENANT 화면(대시보드)을 보는 SUPER 는 상단 고객사 전환 드롭다운을 본다. */
+    @Test void 테넌트_화면에는_선택기가_보인다() throws Exception {
+        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("tenant-switcher")));
+    }
+
+    /**
+     * SYSTEM 화면에서 SUPER 가 "시스템 관리" 뱃지를 보는지는 이 슬라이스에 SYSTEM 영역
+     * 컨트롤러가 없어(DashboardController 만 로드) 여기서 검증할 수 없다.
+     * {@code CompanyControllerWebTest.시스템_화면에는_시스템_뱃지가_보인다} 가 대신 검증한다.
+     */
+
+    /** COMPANY 계정은 자기 고객사가 고정이므로 선택기를 보지 않는다. */
+    @Test void COMPANY_에게는_선택기가_보이지_않는다() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(1L))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("tenant-switcher"))));
     }
 }

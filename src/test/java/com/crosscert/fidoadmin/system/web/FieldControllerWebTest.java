@@ -40,6 +40,7 @@ class FieldControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean FieldService service;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;

@@ -29,7 +29,7 @@ public class SearchForm {
     private int size = DEFAULT_SIZE;
     /** "속성,asc|desc" */
     private String sort;
-    private Long companyIdx;
+    // companyIdx 삭제 — 테넌트는 세션이 정하며 검색 조건이 아니다
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) private LocalDate fromDate;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) private LocalDate toDate;
 
@@ -65,7 +65,6 @@ public class SearchForm {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("size", size);
         params.put("sort", sort);
-        params.put("companyIdx", companyIdx);
         params.put("fromDate", fromDate);
         params.put("toDate", toDate);
         params.putAll(extraParams());

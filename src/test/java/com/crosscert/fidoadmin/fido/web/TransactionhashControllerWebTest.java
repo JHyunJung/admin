@@ -82,6 +82,7 @@ class TransactionhashControllerWebTest {
     }
 
 
+    /** Task 10: 목록에서 검색 select 뿐 아니라 고객사 컬럼도 뺐다(세션이 테넌트를 정한다). */
     @Test void listHidesContentClob() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(hash())));
@@ -90,7 +91,6 @@ class TransactionhashControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(view().name("fido/transactionhash/list"))
             .andExpect(content().string(containsString("a1b2c3")))
-            .andExpect(content().string(containsString("KB국민은행")))
             .andExpect(content().string(not(containsString(CONTENT_MARKER))))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))))
             .andExpect(content().string(not(containsString("/transaction-hashes/new"))))
@@ -100,12 +100,17 @@ class TransactionhashControllerWebTest {
         org.assertj.core.api.Assertions.assertThat(captor.getValue().getUserid()).isEqualTo("user001");
     }
 
-    @Test void superUserSeesCompanyFilter() throws Exception {
+    /**
+     * Task 10: 테넌트는 세션이 정하므로 SUPER 도 목록 검색폼에서 고객사를 따로 고르지 않는다.
+     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
+     * 검색폼 select 태그로 특정한다.
+     */
+    @Test void superUserDoesNotSeeCompanyFilterOnList() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         mvc.perform(get("/transaction-hashes").session(session).with(user(superUser)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("name=\"companyIdx\"")));
+            .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))));
     }
 
     @Test void detailShowsContent() throws Exception {

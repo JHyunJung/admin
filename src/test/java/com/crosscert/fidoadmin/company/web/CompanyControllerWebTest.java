@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.company.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -37,6 +38,7 @@ class CompanyControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean CompanyService service;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
@@ -57,6 +59,16 @@ class CompanyControllerWebTest {
 
     @Test void companyRoleIsForbidden() throws Exception {
         mvc.perform(get("/companies").with(user(companyUser))).andExpect(status().isForbidden());
+    }
+
+    /** /companies 는 SYSTEM 영역이라 SUPER 는 선택기 대신 "시스템 관리" 뱃지를 본다(Task 10). */
+    @Test void 시스템_화면에는_시스템_뱃지가_보인다() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
+        mvc.perform(get("/companies").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("시스템 관리")))
+            .andExpect(content().string(not(containsString("tenant-switcher"))));
     }
 
     @Test void createWithBlankNameShowsFormAgain() throws Exception {

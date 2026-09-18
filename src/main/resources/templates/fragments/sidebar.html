@@ -1,10 +1,43 @@
 <nav xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
      class="fa-sidebar" th:fragment="sidebar"
      th:with="isSuper=${#authorization.expression('hasRole(''SUPER'')')},
-              groups=${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(@menuRegistry.itemsFor(isSuper))}">
+              tenantItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).TENANT)},
+              systemItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).SYSTEM)},
+              personalItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).PERSONAL)},
+              hasTenant=${selectedCompanyName != null}">
   <div class="fa-brand px-3 py-3">FIDO Admin</div>
-  <div th:each="g : ${groups}" class="mb-2">
+
+  <!-- 테넌트 영역: 선택된 고객사의 데이터 -->
+  <div class="px-3 pb-1 small text-secondary text-truncate"
+       th:text="${selectedCompanyName} ?: '고객사 미선택'">고객사</div>
+  <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(tenantItems)}" class="mb-2"
+       th:classappend="${hasTenant} ? '' : 'opacity-50'">
     <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
+    <a th:each="m : ${g.value}" th:href="${hasTenant} ? @{${m.href}} : 'javascript:void(0)'"
+       th:classappend="${currentPath == m.href} ? 'active' : ''"
+       th:attr="tabindex=${hasTenant} ? null : '-1', aria-disabled=${hasTenant} ? null : 'true'"
+       class="fa-link d-flex align-items-center gap-2 px-3 py-1">
+      <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
+      <span th:text="${m.title}">메뉴</span>
+    </a>
+  </div>
+
+  <!-- 시스템 영역: 선택과 무관한 전역 화면 -->
+  <div th:if="${isSuper}">
+    <hr class="my-2 mx-3">
+    <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(systemItems)}" class="mb-2">
+      <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
+      <a th:each="m : ${g.value}" th:href="@{${m.href}}"
+         th:classappend="${currentPath == m.href} ? 'active' : ''"
+         class="fa-link d-flex align-items-center gap-2 px-3 py-1">
+        <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
+        <span th:text="${m.title}">메뉴</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- 개인 영역 -->
+  <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(personalItems)}" class="mb-2">
     <a th:each="m : ${g.value}" th:href="@{${m.href}}"
        th:classappend="${currentPath == m.href} ? 'active' : ''"
        class="fa-link d-flex align-items-center gap-2 px-3 py-1">

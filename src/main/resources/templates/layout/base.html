@@ -19,8 +19,39 @@
     <header class="fa-topbar d-flex align-items-center justify-content-between px-3">
       <span class="fw-semibold">FIDO Admin</span>
       <div class="d-flex align-items-center gap-3 small">
+
+        <!-- SUPER + 테넌트 영역: 고객사 전환 드롭다운 -->
+        <div class="dropdown" id="tenant-switcher"
+             th:if="${currentArea?.name() == 'TENANT' and !#lists.isEmpty(selectableCompanies)}">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-building" aria-hidden="true"></i>
+            <span th:text="${selectedCompanyName} ?: '고객사 선택'">고객사</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li th:each="c : ${selectableCompanies}">
+              <form method="post" th:action="@{/select-tenant}" class="m-0">
+                <input type="hidden" name="companyIdx" th:value="${c.idx}">
+                <input type="hidden" name="returnTo" th:value="${currentPath}">
+                <button type="submit" class="dropdown-item" th:text="${c.companyName}">고객사</button>
+              </form>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" th:href="@{/select-tenant}">
+              <i class="bi bi-gear" aria-hidden="true"></i> 고객사 선택 화면으로</a></li>
+          </ul>
+        </div>
+
+        <!-- SUPER + 시스템 영역: 테넌트 맥락이 아님을 드러낸다 -->
+        <span class="badge text-bg-dark" sec:authorize="hasRole('SUPER')"
+              th:if="${currentArea?.name() == 'SYSTEM'}">
+          <i class="bi bi-gear" aria-hidden="true"></i> 시스템 관리
+        </span>
+
         <span sec:authentication="principal.userNm">이름</span>
-        <span class="text-secondary" sec:authentication="principal.companyName">고객사</span>
+        <!-- COMPANY 는 자기 고객사가 고정이므로 정적 텍스트 -->
+        <span class="text-secondary" sec:authorize="!hasRole('SUPER')"
+              sec:authentication="principal.companyName">고객사</span>
         <span class="badge text-bg-secondary" sec:authorize="hasRole('SUPER')">SUPER</span>
         <form th:action="@{/logout}" method="post" class="m-0">
           <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>

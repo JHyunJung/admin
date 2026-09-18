@@ -4,13 +4,16 @@ import com.crosscert.fidoadmin.common.ByteSize;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.signup.SignupPolicy;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * CCFA_MANAGER 입력 폼. 비밀번호는 평문으로 받아 컨트롤러가 인코딩한다.
  * 등록 시 필수·수정 시 선택은 컨트롤러 validate() 가 본다(Bean Validation 으로는 구분할 수 없다).
+ *
+ * <p>companyIdx 는 Task 10 부터 폼 select 가 없다 — 세션이 정한 유효 테넌트를
+ * {@code CrudService.create()}/{@code update()} 가 덮어쓴다. 그래서 여기 {@code @NotNull} 을
+ * 두면 폼에 값이 실려 오지 않는 모든 요청이 {@code @Valid} 단계에서 막혀, 등록 자체가 불가능해진다.
  */
 @Getter @Setter
 public class ManagerForm {
@@ -20,7 +23,7 @@ public class ManagerForm {
     @ByteSize(max = 50) private String userNm;
     @ByteSize(max = 256) private String userEmail;
     @ByteSize(max = 20) private String userPhone;
-    @NotNull(message = "고객사를 선택하세요.") private Long companyIdx;
+    private Long companyIdx;
     @NotBlank(message = "상태는 필수입니다.") @ByteSize(max = 20) private String status = "활성";
     @ByteSize(max = 2048) private String etc;
     @ByteSize(max = 32) private String alramType = "none";

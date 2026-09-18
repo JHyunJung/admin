@@ -18,11 +18,12 @@ class SearchFormTest {
         }
     }
 
+    /** companyIdx 는 Task 10 부터 필드가 없다 — 테넌트는 세션이 정하며 검색 조건이 아니다. */
     @Test void queryStringEncodesAndSkipsNullsAndPage() {
         Sub f = new Sub();
-        f.setPage(3); f.setSize(50); f.setCompanyIdx(1L); f.setFromDate(LocalDate.of(2026, 9, 1));
+        f.setPage(3); f.setSize(50); f.setFromDate(LocalDate.of(2026, 9, 1));
         assertThat(f.toQueryString())
-            .isEqualTo("&size=50&companyIdx=1&fromDate=2026-09-01&keyword=%ED%99%8D+%EA%B8%B8%EB%8F%99");
+            .isEqualTo("&size=50&fromDate=2026-09-01&keyword=%ED%99%8D+%EA%B8%B8%EB%8F%99");
     }
 
     @Test void pageableUsesDefaultSortWhenNoneGiven() {

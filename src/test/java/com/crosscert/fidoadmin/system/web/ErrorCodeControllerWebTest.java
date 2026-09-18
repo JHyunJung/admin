@@ -39,6 +39,7 @@ class ErrorCodeControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean ErrorCodeService service;
+    @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
