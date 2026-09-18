@@ -22,11 +22,9 @@ import com.crosscert.fidoadmin.system.web.FidoSettingKey;
  * {@code (PROP_KEY, 유효 테넌트)} 행 하나씩에 들어간다.
  *
  * <p>{@code CrudService} 를 상속하지 않는다. 그쪽은 "행 하나를 CRUD 하는 화면"을 위한
- * 기반이고, 여기는 <b>정해진 22개 키를 한 번에 읽고 한 번에 저장하는</b> 화면이라
+ * 기반이고, 여기는 <b>정해진 키 목록을 한 번에 읽고 한 번에 저장하는</b> 화면이라
  * 목록·상세·삭제 개념이 없다. 대신 테넌트 경계는 같은 규칙을 직접 지킨다 —
  * 읽기는 유효 테넌트로 필터하고, 저장은 유효 테넌트로 식별자를 만든다.
- *
- * <p>키 이름이 아직 운영 서버와 맞춰지지 않았다는 점은 {@link FidoSettingKey} 참고.
  */
 @Service
 @RequiredArgsConstructor
@@ -38,7 +36,7 @@ public class FidoSettingService {
 
     /**
      * 화면에 채울 값. 저장된 행이 없는 키는 {@link FidoSettingKey#defaultValue()} 를 쓴다.
-     * 항상 22개 키를 모두 돌려주므로 템플릿이 null 을 만나지 않는다.
+     * 항상 모든 키를 돌려주므로 템플릿이 null 을 만나지 않는다.
      */
     @Transactional(readOnly = true)
     public Map<String, String> load() {

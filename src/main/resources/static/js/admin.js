@@ -74,21 +74,3 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 })();
-
-// FIDO 서버 설정의 체크박스 → hidden CSV. 체크박스는 선택된 것만 전송되므로
-// "전부 해제" 를 표현할 수 없다. 한 칸에 CSV 로 모아 보내 그 구분을 살린다.
-(function () {
-  var targets = document.querySelectorAll('[data-csv-target]');
-  if (!targets.length) return;
-  function sync(name) {
-    var picked = [];
-    document.querySelectorAll('[data-csv-source="' + name + '"]').forEach(function (box) {
-      if (box.checked) picked.push(box.value);
-    });
-    var hidden = document.getElementById(name);
-    if (hidden) hidden.value = picked.join(',');
-  }
-  document.querySelectorAll('[data-csv-source]').forEach(function (box) {
-    box.addEventListener('change', function () { sync(box.getAttribute('data-csv-source')); });
-  });
-})();

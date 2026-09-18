@@ -57,7 +57,7 @@ class FidoSettingServiceTest {
 
         Map<String, String> values = service.load();
 
-        assertThat(values.get("CHALLENGE_EXPIRE_SECONDS")).isEqualTo("60");
+        assertThat(values.get("CHALLENGE_TERM")).isEqualTo("180");
         assertThat(values.get("SMTP_PORT")).isEqualTo("25");
         assertThat(values).hasSize(FidoSettingKey.values().length);
     }
@@ -65,9 +65,9 @@ class FidoSettingServiceTest {
     /** 저장된 값이 기본값을 덮어쓴다. */
     @Test void 저장된_값이_있으면_그것을_돌려준다() {
         when(repo.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
-            .thenReturn(List.of(prop("CHALLENGE_EXPIRE_SECONDS", 9L, "120")));
+            .thenReturn(List.of(prop("CHALLENGE_TERM", 9L, "120")));
 
-        assertThat(service.load().get("CHALLENGE_EXPIRE_SECONDS")).isEqualTo("120");
+        assertThat(service.load().get("CHALLENGE_TERM")).isEqualTo("120");
     }
 
     /** 행이 없으면 만든다. 식별자의 COMPANY_IDX 는 유효 테넌트여야 한다. */
@@ -75,22 +75,22 @@ class FidoSettingServiceTest {
         when(repo.findById(any(CcfaSystemPropId.class))).thenReturn(Optional.empty());
         when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
 
-        service.save(Map.of("SMTP_HOST", "10.0.0.1"));
+        service.save(Map.of("SMTP_IP", "10.0.0.1"));
 
         ArgumentCaptor<CcfaSystemProp> captor = ArgumentCaptor.forClass(CcfaSystemProp.class);
         verify(repo).save(captor.capture());
-        assertThat(captor.getValue().getId().getPropKey()).isEqualTo("SMTP_HOST");
+        assertThat(captor.getValue().getId().getPropKey()).isEqualTo("SMTP_IP");
         assertThat(captor.getValue().getId().getCompanyIdx()).isEqualTo(9L);
         assertThat(captor.getValue().getPropValue()).isEqualTo("10.0.0.1");
     }
 
     /** 행이 있으면 값만 갱신한다. 식별자를 새로 만들면 다른 행이 생긴다. */
     @Test void 행이_있으면_값만_갱신한다() {
-        CcfaSystemProp existing = prop("SMTP_HOST", 9L, "old");
-        when(repo.findById(new CcfaSystemPropId("SMTP_HOST", 9L))).thenReturn(Optional.of(existing));
+        CcfaSystemProp existing = prop("SMTP_IP", 9L, "old");
+        when(repo.findById(new CcfaSystemPropId("SMTP_IP", 9L))).thenReturn(Optional.of(existing));
         when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
 
-        service.save(Map.of("SMTP_HOST", "10.0.0.2"));
+        service.save(Map.of("SMTP_IP", "10.0.0.2"));
 
         assertThat(existing.getPropValue()).isEqualTo("10.0.0.2");
         assertThat(existing.getId().getCompanyIdx()).isEqualTo(9L);
@@ -106,24 +106,56 @@ class FidoSettingServiceTest {
         when(repo.findById(any(CcfaSystemPropId.class))).thenReturn(Optional.empty());
         when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
 
-        service.save(Map.of("SMTP_HOST", "10.0.0.1"));
+        service.save(Map.of("SMTP_IP", "10.0.0.1"));
 
         verify(audit).log(org.mockito.ArgumentMatchers.eq(AuditType.UPDATE), any(String.class));
     }
 
-    /** 체크박스는 CSV 한 줄로 저장되고 같은 형태로 읽힌다. */
-    @Test void 체크박스_CSV_왕복이_일치한다() {
+    /**
+     * 토글은 키마다 다른 문자열로 저장된다. 폼이 보낸 문자열을 그대로 써야 한다 —
+     * 서비스가 임의로 정규화하면 FIDO 서버가 읽는 표기와 어긋난다.
+     */
+    @Test void 토글_값을_받은_표기_그대로_저장한다() {
         when(repo.findById(any(CcfaSystemPropId.class))).thenReturn(Optional.empty());
         when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
 
-        service.save(Map.of("AUTH_RESPONSE_OPTIONS", "PKCS1,PUBLIC_KEY"));
+        service.save(new java.util.LinkedHashMap<>(Map.of(
+            "CERT_P1", "ENABLE",
+            "FIDO_ATTESTCERT_AAID_CHECK", "Y",
+            "CERT_VERIFY", "no")));
 
         ArgumentCaptor<CcfaSystemProp> captor = ArgumentCaptor.forClass(CcfaSystemProp.class);
-        verify(repo).save(captor.capture());
-        assertThat(captor.getValue().getPropValue()).isEqualTo("PKCS1,PUBLIC_KEY");
+        verify(repo, org.mockito.Mockito.times(3)).save(captor.capture());
+        assertThat(captor.getAllValues())
+            .extracting(p -> p.getId().getPropKey() + "=" + p.getPropValue())
+            .containsExactlyInAnyOrder(
+                "CERT_P1=ENABLE", "FIDO_ATTESTCERT_AAID_CHECK=Y", "CERT_VERIFY=no");
+    }
 
+    /** 토글의 기본값은 꺼짐이다. 행이 없는 신규 고객사가 설정을 켠 상태로 시작하지 않는다. */
+    @Test void 행이_없는_토글은_꺼진_기본값을_돌려준다() {
+        when(repo.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(List.of());
+
+        Map<String, String> values = service.load();
+
+        assertThat(values.get("CERT_P1")).isEqualTo("DISABLE");
+        assertThat(values.get("FIDO_ATTESTCERT_AAID_CHECK")).isEqualTo("N");
+        assertThat(values.get("CERT_VERIFY")).isEqualTo("no");
+    }
+
+    /**
+     * 오래된 고객사에는 나중에 추가된 키의 행이 아예 없다(CERT_P9, FIDO_DETAIL_LOG_DB_SAVE).
+     * 그래도 화면은 열려야 하고, 저장하면 그 고객사에 행이 새로 생겨야 한다.
+     */
+    @Test void 일부_키만_저장된_고객사도_전체_키를_받는다() {
         when(repo.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
-            .thenReturn(List.of(prop("AUTH_RESPONSE_OPTIONS", 9L, "PKCS1,PUBLIC_KEY")));
-        assertThat(service.load().get("AUTH_RESPONSE_OPTIONS")).isEqualTo("PKCS1,PUBLIC_KEY");
+            .thenReturn(List.of(prop("CERT", 9L, "ENABLE")));
+
+        Map<String, String> values = service.load();
+
+        assertThat(values).hasSize(FidoSettingKey.values().length);
+        assertThat(values.get("CERT")).isEqualTo("ENABLE");
+        assertThat(values.get("CERT_P9")).isEqualTo("DISABLE");
+        assertThat(values.get("FIDO_DETAIL_LOG_DB_SAVE")).isEqualTo("DISABLE");
     }
 }

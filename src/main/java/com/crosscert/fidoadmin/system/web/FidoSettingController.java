@@ -17,9 +17,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * <p>SUPER 전용이다. URL 은 {@code SecurityConfig} 의 {@code /system/**} 규칙이 막고,
  * 값은 유효 테넌트로만 저장된다({@link FidoSettingService}).
  *
- * <p>체크박스는 선택된 것만 파라미터로 오므로 {@code @RequestParam Map} 에 키가 아예
- * 없을 수 있다. 그래서 폼에 같은 이름의 hidden 빈 값을 함께 두어 "아무것도 선택 안 함"과
- * "필드가 전송되지 않음"을 구분한다(템플릿 참고).
+ * <p>토글(체크박스)은 켜졌을 때만 파라미터로 온다. 그래서 폼이 같은 이름의 hidden 을
+ * 앞에 두어 "끔" 값을 항상 보낸다 — 그렇지 않으면 토글을 끄는 조작이 전달되지 않는다.
  */
 @Controller
 @RequestMapping("/system/settings")
@@ -32,9 +31,6 @@ public class FidoSettingController {
     public String form(Model model) {
         model.addAttribute("values", service.load());
         model.addAttribute("sections", FidoSettingKey.bySection());
-        model.addAttribute("certVerifyOptions", FidoSettingKey.CERT_VERIFY_OPTIONS);
-        model.addAttribute("tcRetentionOptions", FidoSettingKey.TC_RETENTION_OPTIONS);
-        model.addAttribute("authResponseChoices", FidoSettingKey.AUTH_RESPONSE_CHOICES);
         return "system/settings/form";
     }
 
