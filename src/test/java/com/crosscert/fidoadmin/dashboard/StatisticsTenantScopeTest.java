@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class StatisticsTenantScopeTest {
 
     private final NamedParameterJdbcTemplate jdbc = mock(NamedParameterJdbcTemplate.class);
-    private final StatisticsQueryService service = new StatisticsQueryService(jdbc);
+    private final SelectedTenant selected = new SelectedTenant();
+    private final StatisticsQueryService service = new StatisticsQueryService(jdbc, new TenantContext(selected));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

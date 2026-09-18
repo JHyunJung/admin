@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * 리터럴을 다시 적든 동작은 같고 테스트도 똑같이 통과한다(tasks/lessons.md).
  */
 @WebMvcTest(controllers = PasswordChangeController.class)
-@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class})
+@Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})
 class PasswordChangeControllerWebTest {
 
     @Autowired MockMvc mvc;

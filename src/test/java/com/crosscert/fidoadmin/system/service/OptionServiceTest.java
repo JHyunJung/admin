@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaOption;
 import com.crosscert.fidoadmin.system.entity.CcfaOptions;
 import com.crosscert.fidoadmin.system.repository.CcfaOptionRepository;
@@ -30,7 +32,8 @@ class OptionServiceTest {
     CcfaOptionRepository groups = mock(CcfaOptionRepository.class);
     CcfaOptionsRepository items = mock(CcfaOptionsRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    OptionService service = new OptionService(groups, audit, items);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    OptionService service = new OptionService(groups, audit, items, tenant);
 
     @BeforeEach void loginSuper() { login(0L); }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }

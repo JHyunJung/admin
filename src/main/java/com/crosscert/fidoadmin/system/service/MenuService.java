@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaMenu;
 import com.crosscert.fidoadmin.system.repository.CcfaMenuRepository;
@@ -20,8 +21,8 @@ public class MenuService extends CrudService<CcfaMenu, Long, MenuSearchForm> {
 
     private final CcfaMenuRepository menus;
 
-    public MenuService(CcfaMenuRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public MenuService(CcfaMenuRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
         this.menus = repository;
     }
 

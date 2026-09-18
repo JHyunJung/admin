@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.log.entity.FidoLogs;
 import com.crosscert.fidoadmin.log.repository.FidoLogsRepository;
@@ -32,7 +34,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class FidoLogQueryServiceTest {
 
     FidoLogsRepository repo = mock(FidoLogsRepository.class);
-    FidoLogQueryService service = new FidoLogQueryService(repo, mock(AuditLogger.class));
+    FidoLogQueryService service = new FidoLogQueryService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @BeforeEach void loginCompany() {
         var u = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);

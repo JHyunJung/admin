@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.log.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.log.entity.CcfaMailing;
 import com.crosscert.fidoadmin.log.repository.CcfaMailingRepository;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MailingQueryService extends CrudService<CcfaMailing, Long, MailingSearchForm> {
 
-    public MailingQueryService(CcfaMailingRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public MailingQueryService(CcfaMailingRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<CcfaMailing> toSpecification(MailingSearchForm f) {

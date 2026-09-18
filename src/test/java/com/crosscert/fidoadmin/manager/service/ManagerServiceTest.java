@@ -12,6 +12,8 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.LoginAttemptService;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
@@ -37,7 +39,8 @@ class ManagerServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
-    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

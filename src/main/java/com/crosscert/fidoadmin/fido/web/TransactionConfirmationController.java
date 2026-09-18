@@ -20,6 +20,7 @@ public class TransactionConfirmationController
 
     private final TransactionConfirmationQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<TransactionConfirmation, Long, TransactionConfirmationSearchForm> service() { return service; }
     @Override protected String basePath() { return "/transaction-confirmations"; }
@@ -28,7 +29,7 @@ public class TransactionConfirmationController
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(TransactionConfirmation entity, Model model) {

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemInfo;
 import com.crosscert.fidoadmin.system.repository.CcfaSystemInfoRepository;
 import jakarta.persistence.EntityManager;
@@ -29,7 +31,8 @@ class SystemInfoServiceTest {
     CcfaSystemInfoRepository repo = mock(CcfaSystemInfoRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
-    SystemInfoService service = new SystemInfoService(repo, audit, em);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    SystemInfoService service = new SystemInfoService(repo, audit, em, tenant);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

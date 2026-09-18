@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import java.util.List;
@@ -25,7 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class CompanyLookupTest {
 
     private final CcfaCompanyRepository repository = mock(CcfaCompanyRepository.class);
-    private final CompanyLookup lookup = new CompanyLookup(repository);
+    private final CompanyLookup lookup = new CompanyLookup(repository, new TenantContext(new SelectedTenant()));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
@@ -22,8 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SystemPropService extends AssignedIdCrudService<CcfaSystemProp, CcfaSystemPropId, SystemPropSearchForm> {
 
-    public SystemPropService(CcfaSystemPropRepository repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit, em);
+    public SystemPropService(CcfaSystemPropRepository repository, AuditLogger audit, EntityManager em, TenantContext tenant) {
+        super(repository, audit, em, tenant);
     }
 
     @Override protected Specification<CcfaSystemProp> toSpecification(SystemPropSearchForm f) {

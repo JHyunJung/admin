@@ -19,6 +19,7 @@ public class ChallengeController extends ReadOnlyController<Challenge, Long, Cha
 
     private final ChallengeQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<Challenge, Long, ChallengeSearchForm> service() { return service; }
     @Override protected String basePath() { return "/challenges"; }
@@ -26,7 +27,7 @@ public class ChallengeController extends ReadOnlyController<Challenge, Long, Cha
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(Challenge entity, Model model) {

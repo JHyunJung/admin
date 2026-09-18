@@ -18,6 +18,7 @@ public class FidoLogController extends ReadOnlyController<FidoLogs, Long, FidoLo
 
     private final FidoLogQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<FidoLogs, Long, FidoLogSearchForm> service() { return service; }
     @Override protected String basePath() { return "/logs/fido"; }
@@ -27,7 +28,7 @@ public class FidoLogController extends ReadOnlyController<FidoLogs, Long, FidoLo
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(FidoLogs e, Model model) {

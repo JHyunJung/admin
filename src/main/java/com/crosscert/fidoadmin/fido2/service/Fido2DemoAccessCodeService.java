@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido2.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido2.entity.Fido2DemoAccessCode;
 import com.crosscert.fidoadmin.fido2.repository.Fido2DemoAccessCodeRepository;
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Service;
 public class Fido2DemoAccessCodeService
         extends AssignedIdCrudService<Fido2DemoAccessCode, String, Fido2DemoAccessCodeSearchForm> {
 
-    public Fido2DemoAccessCodeService(Fido2DemoAccessCodeRepository repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit, em);
+    public Fido2DemoAccessCodeService(Fido2DemoAccessCodeRepository repository, AuditLogger audit, EntityManager em, TenantContext tenant) {
+        super(repository, audit, em, tenant);
     }
 
     @Override protected Specification<Fido2DemoAccessCode> toSpecification(Fido2DemoAccessCodeSearchForm f) {

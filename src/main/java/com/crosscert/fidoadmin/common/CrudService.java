@@ -19,10 +19,12 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 
     protected final AdminRepository<E, ID> repository;
     protected final AuditLogger audit;
+    protected final TenantContext tenant;
 
-    protected CrudService(AdminRepository<E, ID> repository, AuditLogger audit) {
+    protected CrudService(AdminRepository<E, ID> repository, AuditLogger audit, TenantContext tenant) {
         this.repository = repository;
         this.audit = audit;
+        this.tenant = tenant;
     }
 
     // ---- 훅 ----
@@ -51,7 +53,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
      * 서비스 계층에서도 막는다.
      */
     protected void requireSuperForGlobalTable() {
-        if (companyIdxAttribute() == null && !TenantContext.isSuper()) {
+        if (companyIdxAttribute() == null && !tenant.require().isSuper()) {
             throw new org.springframework.security.access.AccessDeniedException(
                 tableName() + " 은 최고 관리자 전용입니다");
         }
@@ -63,7 +65,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         Specification<E> spec = toSpecification(form);
         String attr = companyIdxAttribute();
         if (attr != null) {
-            Long filter = TenantContext.isSuper() ? form.getCompanyIdx() : TenantContext.companyIdx();
+            Long filter = tenant.require().isSuper() ? form.getCompanyIdx() : tenant.companyIdx();
             spec = Specs.all(spec, Specs.eq(attr, filter));
         }
         return repository.findAll(spec == null ? Specs.all() : spec, pageable);
@@ -87,8 +89,8 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     @Transactional
     public E create(E entity) {
         requireSuperForGlobalTable();
-        if (companyIdxAttribute() != null && !TenantContext.isSuper()) {
-            setCompanyIdx(entity, TenantContext.companyIdx());
+        if (companyIdxAttribute() != null && !tenant.require().isSuper()) {
+            setCompanyIdx(entity, tenant.companyIdx());
         }
         applyDefaults(entity);
         touchCreated(entity, LocalDateTime.now());
@@ -101,8 +103,8 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     public E update(ID id, Consumer<E> mutator) {
         E e = get(id);
         mutator.accept(e);
-        if (companyIdxAttribute() != null && !TenantContext.isSuper()) {
-            setCompanyIdx(e, TenantContext.companyIdx());
+        if (companyIdxAttribute() != null && !tenant.require().isSuper()) {
+            setCompanyIdx(e, tenant.companyIdx());
         }
         touchUpdated(e, LocalDateTime.now());
         E saved = repository.save(e);
@@ -119,9 +121,9 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     }
 
     protected void checkTenant(E e) {
-        if (companyIdxAttribute() == null || TenantContext.isSuper()) return;
+        if (companyIdxAttribute() == null || tenant.require().isSuper()) return;
         Long owner = companyIdxOf(e);
-        if (owner == null || !owner.equals(TenantContext.companyIdx())) {
+        if (owner == null || !owner.equals(tenant.companyIdx())) {
             throw new TenantMismatchException(tableName() + " " + idOf(e));
         }
     }

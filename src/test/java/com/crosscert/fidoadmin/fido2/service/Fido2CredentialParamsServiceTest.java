@@ -7,6 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.fido2.entity.Fido2CredentialParams;
 import com.crosscert.fidoadmin.fido2.repository.Fido2CredentialParamsRepository;
@@ -22,7 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class Fido2CredentialParamsServiceTest {
 
     Fido2CredentialParamsRepository repo = mock(Fido2CredentialParamsRepository.class);
-    Fido2CredentialParamsService service = new Fido2CredentialParamsService(repo, mock(AuditLogger.class));
+    Fido2CredentialParamsService service = new Fido2CredentialParamsService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
 import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
 import jakarta.persistence.EntityManager;
@@ -28,7 +30,8 @@ class FdsPolicyServiceTest {
     CcfaFdsPolicyRepository repo = mock(CcfaFdsPolicyRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
-    FdsPolicyService service = new FdsPolicyService(repo, audit, em);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    FdsPolicyService service = new FdsPolicyService(repo, audit, em, tenant);
 
     @BeforeEach void stubLock() {
         when(em.createNativeQuery(anyString())).thenReturn(mock(Query.class));

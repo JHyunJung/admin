@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient;
 import com.crosscert.fidoadmin.system.repository.CcfaFidoclientRepository;
@@ -17,8 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class FidoClientService extends AssignedIdCrudService<CcfaFidoclient, String, FidoClientSearchForm> {
 
-    public FidoClientService(CcfaFidoclientRepository repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit, em);
+    public FidoClientService(CcfaFidoclientRepository repository, AuditLogger audit, EntityManager em, TenantContext tenant) {
+        super(repository, audit, em, tenant);
     }
 
     @Override protected Specification<CcfaFidoclient> toSpecification(FidoClientSearchForm f) {

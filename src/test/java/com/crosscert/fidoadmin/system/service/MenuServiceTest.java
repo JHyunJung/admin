@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaMenu;
 import com.crosscert.fidoadmin.system.repository.CcfaMenuRepository;
 import java.util.List;
@@ -27,7 +29,8 @@ class MenuServiceTest {
 
     CcfaMenuRepository repo = mock(CcfaMenuRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    MenuService service = new MenuService(repo, audit);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    MenuService service = new MenuService(repo, audit, tenant);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

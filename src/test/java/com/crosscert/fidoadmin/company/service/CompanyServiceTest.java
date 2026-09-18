@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.fido.repository.AppidRepository;
@@ -25,7 +27,8 @@ class CompanyServiceTest {
     AppidRepository appids = mock(AppidRepository.class);
     UserinfoRepository users = mock(UserinfoRepository.class);
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
-    CompanyService service = new CompanyService(companies, mock(AuditLogger.class), appids, users, managers);
+    CompanyService service = new CompanyService(companies, mock(AuditLogger.class), appids, users, managers,
+        new TenantContext(new SelectedTenant()));
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

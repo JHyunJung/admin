@@ -18,6 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class PasswordChangeController {
 
     private final PasswordChangeService service;
+    private final TenantContext tenant;
 
     @GetMapping
     public String form(Model model) {
@@ -33,7 +34,7 @@ public class PasswordChangeController {
         }
         if (binding.hasErrors()) return "auth/password";
         try {
-            service.change(TenantContext.require().getUserId(), form.getCurrentPassword(), form.getNewPassword());
+            service.change(tenant.require().getUserId(), form.getCurrentPassword(), form.getNewPassword());
         } catch (IllegalArgumentException e) {
             binding.rejectValue("currentPassword", "invalid", e.getMessage());
             return "auth/password";

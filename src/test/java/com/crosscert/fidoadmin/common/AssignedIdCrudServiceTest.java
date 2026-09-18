@@ -34,9 +34,10 @@ class AssignedIdCrudServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
 
     AssignedIdCrudService<CcfaSystemInfo, String, SearchForm> service =
-        new AssignedIdCrudService<>(repo, audit, em) {
+        new AssignedIdCrudService<>(repo, audit, em, tenant) {
             @Override protected Specification<CcfaSystemInfo> toSpecification(SearchForm f) { return null; }
             @Override protected String companyIdxAttribute() { return null; }
             @Override protected Long companyIdxOf(CcfaSystemInfo e) { return null; }

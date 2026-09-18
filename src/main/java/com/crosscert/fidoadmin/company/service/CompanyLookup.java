@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CompanyLookup {
 
     private final CcfaCompanyRepository repository;
+    private final TenantContext tenant;
 
     /**
      * 현재 사용자가 볼 수 있는 고객사 목록. SUPER 는 전체, COMPANY 는 자기 고객사 1건.
@@ -24,10 +25,10 @@ public class CompanyLookup {
      */
     @Transactional(readOnly = true)
     public List<CcfaCompany> all() {
-        if (TenantContext.isSuper()) {
+        if (tenant.require().isSuper()) {
             return repository.findAll(Sort.by("idx"));
         }
-        return repository.findById(TenantContext.companyIdx()).map(List::of).orElseGet(List::of);
+        return repository.findById(tenant.require().getCompanyIdx()).map(List::of).orElseGet(List::of);
     }
 
     /** IDX → 이름. {@link #all()} 과 같은 범위 규칙을 따른다. */
@@ -45,7 +46,7 @@ public class CompanyLookup {
     @Transactional(readOnly = true)
     public String name(Long idx) {
         if (idx == null) return "";
-        if (!TenantContext.isSuper() && !idx.equals(TenantContext.companyIdx())) return "#" + idx;
+        if (!tenant.require().isSuper() && !idx.equals(tenant.require().getCompanyIdx())) return "#" + idx;
         return repository.findById(idx).map(CcfaCompany::getCompanyName).orElse("#" + idx);
     }
 }

@@ -15,6 +15,7 @@ public class DashboardController {
 
     private final StatisticsQueryService stats;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @GetMapping("/")
     public String index(@ModelAttribute("search") DashboardSearchForm search, Model model) {
@@ -22,13 +23,13 @@ public class DashboardController {
         if ((search.getGroupby() == null || search.getGroupby().isBlank()) && !groupbys.isEmpty()) {
             search.setGroupby(groupbys.get(0));
         }
-        Long companyForNames = TenantContext.isSuper() ? search.getCompanyIdx() : TenantContext.companyIdx();
+        Long companyForNames = tenant.companyIdx();
         List<DailyStat> daily = search.getGroupby() == null ? List.of() : stats.daily(search);
         model.addAttribute("groupbys", groupbys);
         model.addAttribute("serviceNames", stats.serviceNames(companyForNames));
         model.addAttribute("daily", daily);
         model.addAttribute("totals", StatTotals.of(daily));
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
         return "dashboard/index";
     }
 }

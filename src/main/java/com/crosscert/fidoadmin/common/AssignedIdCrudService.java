@@ -16,8 +16,9 @@ public abstract class AssignedIdCrudService<E, ID, S extends SearchForm> extends
 
     protected final EntityManager em;
 
-    protected AssignedIdCrudService(AdminRepository<E, ID> repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit);
+    protected AssignedIdCrudService(AdminRepository<E, ID> repository, AuditLogger audit, EntityManager em,
+                                     TenantContext tenant) {
+        super(repository, audit, tenant);
         this.em = em;
     }
 

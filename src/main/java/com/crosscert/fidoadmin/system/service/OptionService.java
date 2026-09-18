@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.system.service;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaOption;
 import com.crosscert.fidoadmin.system.entity.CcfaOptions;
@@ -25,8 +26,8 @@ public class OptionService extends CrudService<CcfaOption, Long, OptionSearchFor
 
     private final CcfaOptionsRepository items;
 
-    public OptionService(CcfaOptionRepository repository, AuditLogger audit, CcfaOptionsRepository items) {
-        super(repository, audit);
+    public OptionService(CcfaOptionRepository repository, AuditLogger audit, CcfaOptionsRepository items, TenantContext tenant) {
+        super(repository, audit, tenant);
         this.items = items;
     }
 

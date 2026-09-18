@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.fido.entity.Transactionhash;
 import com.crosscert.fidoadmin.fido.repository.TransactionhashRepository;
 import org.junit.jupiter.api.Test;
@@ -12,7 +14,7 @@ import org.springframework.data.domain.Sort;
 class TransactionhashQueryServiceTest {
 
     TransactionhashQueryService service =
-        new TransactionhashQueryService(mock(TransactionhashRepository.class), mock(AuditLogger.class));
+        new TransactionhashQueryService(mock(TransactionhashRepository.class), mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @Test void defaultSortIsCreatetimeDescThenIdxDesc() {
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "createtime", "idx"));

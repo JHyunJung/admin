@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaCriteria;
 import com.crosscert.fidoadmin.system.repository.CcfaCriteriaRepository;
 import com.crosscert.fidoadmin.system.web.AdminCriteriaSearchForm;
@@ -28,7 +30,8 @@ class AdminCriteriaServiceTest {
 
     CcfaCriteriaRepository repo = mock(CcfaCriteriaRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    AdminCriteriaService service = new AdminCriteriaService(repo, audit);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    AdminCriteriaService service = new AdminCriteriaService(repo, audit, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

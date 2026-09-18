@@ -51,6 +51,7 @@ class NullCompanyIdxLoginFlowTest {
     @MockitoBean com.crosscert.fidoadmin.dashboard.StatisticsQueryService stats;
     @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companyLookup;
     @MockitoBean LoginAttemptService loginAttempts;
+    @MockitoBean com.crosscert.fidoadmin.common.TenantContext tenant;
 
     /**
      * COMPANY_IDX 가 null 인 계정으로 로그인하면 500 이 아니라 로그인 화면으로 돌아간다.

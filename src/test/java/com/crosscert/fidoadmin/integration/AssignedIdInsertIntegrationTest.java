@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemInfo;
 import com.crosscert.fidoadmin.system.service.SystemInfoService;
 import jakarta.persistence.EntityManager;
@@ -28,7 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import(SystemInfoService.class)
+@Import({SystemInfoService.class, TenantContext.class, SelectedTenant.class})
 class AssignedIdInsertIntegrationTest extends OracleContainerSupport {
 
     @Autowired EntityManager em;

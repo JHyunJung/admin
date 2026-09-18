@@ -19,6 +19,7 @@ public class SignController extends ReadOnlyController<Sign, Long, SignSearchFor
 
     private final SignQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<Sign, Long, SignSearchForm> service() { return service; }
     @Override protected String basePath() { return "/signs"; }
@@ -27,7 +28,7 @@ public class SignController extends ReadOnlyController<Sign, Long, SignSearchFor
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(Sign entity, Model model) {

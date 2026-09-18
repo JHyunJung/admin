@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido.entity.TransactionConfirmation;
 import com.crosscert.fidoadmin.fido.repository.TransactionConfirmationRepository;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Service;
 public class TransactionConfirmationQueryService
         extends CrudService<TransactionConfirmation, Long, TransactionConfirmationSearchForm> {
 
-    public TransactionConfirmationQueryService(TransactionConfirmationRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public TransactionConfirmationQueryService(TransactionConfirmationRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<TransactionConfirmation> toSpecification(TransactionConfirmationSearchForm f) {

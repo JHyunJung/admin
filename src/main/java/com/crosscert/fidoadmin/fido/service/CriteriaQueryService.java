@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
 import com.crosscert.fidoadmin.fido.repository.CriteriaRepository;
@@ -18,8 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSearchForm> {
 
-    public CriteriaQueryService(CriteriaRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public CriteriaQueryService(CriteriaRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<Criteria> toSpecification(CriteriaSearchForm f) {

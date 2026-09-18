@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.fido.entity.Challenge;
 import com.crosscert.fidoadmin.fido.repository.ChallengeRepository;
@@ -24,7 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class ChallengeQueryServiceTest {
 
     ChallengeRepository repo = mock(ChallengeRepository.class);
-    ChallengeQueryService service = new ChallengeQueryService(repo, mock(AuditLogger.class));
+    ChallengeQueryService service = new ChallengeQueryService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.fido.entity.Appid;
 import com.crosscert.fidoadmin.fido.repository.AppidRepository;
 import com.crosscert.fidoadmin.fido.web.AppidSearchForm;
@@ -27,7 +29,9 @@ class AppidServiceTest {
 
     AppidRepository repo = mock(AppidRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    AppidService service = new AppidService(repo, audit);
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
+    AppidService service = new AppidService(repo, audit, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

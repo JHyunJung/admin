@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.company.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
 import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
 import com.crosscert.fidoadmin.company.web.FdsPolicySearchForm;
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class FdsPolicyService extends AssignedIdCrudService<CcfaFdsPolicy, Long, FdsPolicySearchForm> {
 
-    public FdsPolicyService(CcfaFdsPolicyRepository repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit, em);
+    public FdsPolicyService(CcfaFdsPolicyRepository repository, AuditLogger audit, EntityManager em, TenantContext tenant) {
+        super(repository, audit, em, tenant);
     }
 
     @Override protected Specification<CcfaFdsPolicy> toSpecification(FdsPolicySearchForm f) { return null; }

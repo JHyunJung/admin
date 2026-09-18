@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.TenantMismatchException;
 import com.crosscert.fidoadmin.fido.entity.Userinfo;
 import com.crosscert.fidoadmin.fido.repository.UserinfoRepository;
@@ -25,7 +27,8 @@ class UserinfoServiceTest {
 
     UserinfoRepository repo = mock(UserinfoRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    UserinfoService service = new UserinfoService(repo, audit);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    UserinfoService service = new UserinfoService(repo, audit, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

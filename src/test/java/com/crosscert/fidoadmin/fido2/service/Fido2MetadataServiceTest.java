@@ -7,6 +7,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.fido2.entity.Fido2Metadata;
 import com.crosscert.fidoadmin.fido2.repository.Fido2MetadataRepository;
@@ -22,7 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class Fido2MetadataServiceTest {
 
     Fido2MetadataRepository repo = mock(Fido2MetadataRepository.class);
-    Fido2MetadataService service = new Fido2MetadataService(repo, mock(AuditLogger.class));
+    Fido2MetadataService service = new Fido2MetadataService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

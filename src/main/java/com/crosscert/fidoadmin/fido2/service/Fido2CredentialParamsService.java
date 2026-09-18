@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido2.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido2.entity.Fido2CredentialParams;
 import com.crosscert.fidoadmin.fido2.repository.Fido2CredentialParamsRepository;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class Fido2CredentialParamsService extends CrudService<Fido2CredentialParams, Long, Fido2CredentialParamsSearchForm> {
 
-    public Fido2CredentialParamsService(Fido2CredentialParamsRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public Fido2CredentialParamsService(Fido2CredentialParamsRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<Fido2CredentialParams> toSpecification(Fido2CredentialParamsSearchForm f) {

@@ -25,10 +25,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class AuditLogger {
 
     private final AuditLogWriter writer;
+    private final TenantContext tenant;
 
     /** 현재 로그인 사용자·현재 HTTP 요청 기준으로 기록한다. 로그인 사용자가 없으면 기록하지 않는다. */
     public void log(AuditType type, String message) {
-        TenantContext.current().ifPresent(actor -> {
+        tenant.current().ifPresent(actor -> {
             HttpServletRequest req = currentRequest();
             log(actor, type, message, req == null ? null : req.getRemoteAddr(),
                 req == null ? null : req.getHeader("User-Agent"));

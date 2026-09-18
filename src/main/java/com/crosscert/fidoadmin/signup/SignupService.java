@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 가입 신청 저장과 승인·거절. 신청은 인증 없이 호출되므로 {@code common.CrudService} 를
  * 상속하지 않는다. {@code CrudService.create()} 는 테넌트가 있는 테이블이면
- * {@code TenantContext.companyIdx()} 를 부르고, 이는 {@code require()} 로 이어져
+ * {@code tenant.companyIdx()} 를 부르고, 이는 {@code require()} 로 이어져
  * 로그인 사용자가 없으면 예외를 던진다.
  *
  * <p>감사 로그는 {@code apply()} 에만 남지 않는다. AuditLogger 는 로그인 사용자가 없으면

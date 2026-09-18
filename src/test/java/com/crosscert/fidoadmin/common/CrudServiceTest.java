@@ -32,9 +32,11 @@ class CrudServiceTest {
 
     LicenseRepo repo = mock(LicenseRepo.class);
     AuditLogger audit = mock(AuditLogger.class);
+    SelectedTenant selected = new SelectedTenant();
+    TenantContext tenant = new TenantContext(selected);
 
     /** COMPANY_IDX 가 있는 테이블의 대표 구현. */
-    CrudService<CcfaLicense, Long, SearchForm> service = new CrudService<>(repo, audit) {
+    CrudService<CcfaLicense, Long, SearchForm> service = new CrudService<>(repo, audit, tenant) {
         @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }
         @Override protected String companyIdxAttribute() { return "companyIdx"; }
         @Override protected Long companyIdxOf(CcfaLicense e) { return e.getCompanyIdx(); }
@@ -170,7 +172,7 @@ class CrudServiceTest {
     }
     /** COMPANY_IDX 가 없는 테이블은 SUPER 전용이어야 한다(설계 3.3). */
     @Test void globalTableIsSuperOnly() {
-        CrudService<CcfaLicense, Long, SearchForm> global = new CrudService<>(repo, audit) {
+        CrudService<CcfaLicense, Long, SearchForm> global = new CrudService<>(repo, audit, tenant) {
             @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }
             @Override protected String companyIdxAttribute() { return null; }
             @Override protected Long companyIdxOf(CcfaLicense e) { return null; }

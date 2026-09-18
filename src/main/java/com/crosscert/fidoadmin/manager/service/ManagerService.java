@@ -35,8 +35,8 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
 
     public ManagerService(CcfaManagerRepository managers, AuditLogger audit,
                           CcfaManagerPwPolicyRepository policies, LoginAttemptService loginAttempts,
-                          EntityManager em) {
-        super(managers, audit);
+                          EntityManager em, TenantContext tenant) {
+        super(managers, audit, tenant);
         this.managers = managers;
         this.policies = policies;
         this.loginAttempts = loginAttempts;
@@ -114,7 +114,7 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     }
 
     @Override protected void beforeDelete(CcfaManager e) {
-        if (e.getIdx() != null && e.getIdx().equals(TenantContext.require().getIdx())) {
+        if (e.getIdx() != null && e.getIdx().equals(tenant.require().getIdx())) {
             throw new IllegalStateException("자기 자신은 삭제할 수 없습니다.");
         }
     }

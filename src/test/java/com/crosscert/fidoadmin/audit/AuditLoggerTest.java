@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.auth.Sha256PasswordEncoder;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -15,7 +17,7 @@ import org.mockito.ArgumentCaptor;
 class AuditLoggerTest {
 
     private final AuditLogWriter writer = mock(AuditLogWriter.class);
-    private final AuditLogger logger = new AuditLogger(writer);
+    private final AuditLogger logger = new AuditLogger(writer, new TenantContext(new SelectedTenant()));
     private final ManagerUserDetails actor =
         new ManagerUserDetails(1L, "kbadmin", null, "KB운영자", 1L, "KB국민은행", true, true);
 

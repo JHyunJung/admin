@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaFields;
 import com.crosscert.fidoadmin.system.entity.CcfaOption;
@@ -21,8 +22,8 @@ public class FieldService extends CrudService<CcfaFields, Long, FieldSearchForm>
 
     private final CcfaOptionRepository options;
 
-    public FieldService(CcfaFieldsRepository repository, AuditLogger audit, CcfaOptionRepository options) {
-        super(repository, audit);
+    public FieldService(CcfaFieldsRepository repository, AuditLogger audit, CcfaOptionRepository options, TenantContext tenant) {
+        super(repository, audit, tenant);
         this.options = options;
     }
 

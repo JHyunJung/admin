@@ -7,6 +7,8 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.auth.ManagerUserDetailsService;
 import com.crosscert.fidoadmin.common.ManagerStatus;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.manager.service.ManagerService;
@@ -57,7 +59,8 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
     @org.junit.jupiter.api.BeforeEach void prepareManagerService() {
         managerService = new ManagerService(managers, audit,
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository.class),
-            org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em);
+            org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em,
+            new TenantContext(new SelectedTenant()));
         // update() 는 테넌트 검사를 거친다. 이 화면은 SUPER 전용이므로 SUPER 로 로그인한 상태를 만든다.
         var su = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(

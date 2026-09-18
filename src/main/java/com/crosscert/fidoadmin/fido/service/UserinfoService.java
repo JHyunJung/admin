@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.fido.service;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido.entity.Userinfo;
 import com.crosscert.fidoadmin.fido.repository.UserinfoRepository;
@@ -21,8 +22,8 @@ public class UserinfoService extends CrudService<Userinfo, Long, UserSearchForm>
 
     public static final Set<String> STATUSES = Set.of("O", "X");
 
-    public UserinfoService(UserinfoRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public UserinfoService(UserinfoRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<Userinfo> toSpecification(UserSearchForm f) {

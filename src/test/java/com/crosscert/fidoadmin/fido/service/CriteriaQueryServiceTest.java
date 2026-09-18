@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
 import com.crosscert.fidoadmin.fido.repository.CriteriaRepository;
@@ -28,7 +30,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class CriteriaQueryServiceTest {
 
     CriteriaRepository repo = mock(CriteriaRepository.class);
-    CriteriaQueryService service = new CriteriaQueryService(repo, mock(AuditLogger.class));
+    CriteriaQueryService service = new CriteriaQueryService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

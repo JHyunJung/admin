@@ -26,8 +26,8 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
     private final CcfaManagerRepository managers;
 
     public CompanyService(CcfaCompanyRepository repository, AuditLogger audit, AppidRepository appids,
-                          UserinfoRepository users, CcfaManagerRepository managers) {
-        super(repository, audit);
+                          UserinfoRepository users, CcfaManagerRepository managers, TenantContext tenant) {
+        super(repository, audit, tenant);
         this.appids = appids;
         this.users = users;
         this.managers = managers;
@@ -53,12 +53,12 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
         if (e.getMaxUser() == null) e.setMaxUser(0L);
         if (e.getStarttime() == null) e.setStarttime(LocalDateTime.now());
         if (e.getEndtime() == null) e.setEndtime(LocalDateTime.of(9999, 12, 31, 23, 59, 59));
-        if (e.getCreator() == null) e.setCreator(TenantContext.require().getIdx());
+        if (e.getCreator() == null) e.setCreator(tenant.require().getIdx());
     }
     @Override protected void touchCreated(CcfaCompany e, LocalDateTime now) { e.setCreatedtime(now); e.setUpdatedtime(now); }
     @Override protected void touchUpdated(CcfaCompany e, LocalDateTime now) {
         e.setUpdatedtime(now);
-        e.setUpdator(TenantContext.require().getIdx());
+        e.setUpdator(tenant.require().getIdx());
     }
 
     @Override protected void beforeDelete(CcfaCompany e) {

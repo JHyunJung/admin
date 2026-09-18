@@ -19,6 +19,7 @@ public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, A
 
     private final AuditLogQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaAuditLog, Long, AuditLogSearchForm> service() { return service; }
     @Override protected String basePath() { return "/logs/audit"; }
@@ -26,6 +27,6 @@ public class AuditLogController extends ReadOnlyController<CcfaAuditLog, Long, A
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("types", AuditType.values());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 }

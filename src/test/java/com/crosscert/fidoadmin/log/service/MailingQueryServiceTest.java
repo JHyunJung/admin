@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.log.entity.CcfaMailing;
 import com.crosscert.fidoadmin.log.repository.CcfaMailingRepository;
@@ -31,7 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class MailingQueryServiceTest {
 
     CcfaMailingRepository repo = mock(CcfaMailingRepository.class);
-    MailingQueryService service = new MailingQueryService(repo, mock(AuditLogger.class));
+    MailingQueryService service = new MailingQueryService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

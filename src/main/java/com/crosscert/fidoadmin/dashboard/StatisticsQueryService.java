@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StatisticsQueryService {
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final TenantContext tenant;
 
     /** 최대 조회 기간. 지나치게 넓은 범위로 전 기간을 훑지 않도록 제한한다. */
     static final int MAX_RANGE_DAYS = 366;
@@ -32,7 +33,7 @@ public class StatisticsQueryService {
     @Transactional(readOnly = true)
     public List<String> groupbys() {
         Map<String, Object> p = new HashMap<>();
-        p.put("companyIdx", TenantContext.isSuper() ? null : TenantContext.companyIdx());
+        p.put("companyIdx", tenant.companyIdx());
         return jdbc.queryForList(
             "SELECT DISTINCT GROUPBY FROM FIDO_STATISTICS"
                 + " WHERE (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx) ORDER BY GROUPBY",
@@ -43,7 +44,7 @@ public class StatisticsQueryService {
     /** COMPANY 역할은 전달값과 무관하게 자기 고객사로 강제한다. */
     public List<String> serviceNames(Long companyIdx) {
         Map<String, Object> p = new HashMap<>();
-        p.put("companyIdx", TenantContext.isSuper() ? companyIdx : TenantContext.companyIdx());
+        p.put("companyIdx", tenant.companyIdx());
         return jdbc.queryForList(
             "SELECT DISTINCT SERVICE_NAME FROM FIDO_STATISTICS WHERE (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx) ORDER BY SERVICE_NAME",
             p, String.class);
@@ -51,7 +52,7 @@ public class StatisticsQueryService {
 
     @Transactional(readOnly = true)
     public List<DailyStat> daily(DashboardSearchForm f) {
-        Long companyIdx = TenantContext.isSuper() ? f.getCompanyIdx() : TenantContext.companyIdx();
+        Long companyIdx = tenant.companyIdx();
         // 빈 값(?fromDate=)은 필드 기본값을 덮어써 null 이 되므로 여기서 다시 채운다.
         // 뒤집힌 범위는 빈 결과 대신 정상 범위로 바로잡고, 과도하게 넓은 범위는 제한한다.
         LocalDate to = f.getToDate() == null ? LocalDate.now() : f.getToDate();

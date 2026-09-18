@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.fido2.entity.Fido2DemoAccessCode;
 import com.crosscert.fidoadmin.fido2.repository.Fido2DemoAccessCodeRepository;
 import jakarta.persistence.EntityManager;
@@ -29,7 +31,8 @@ class Fido2DemoAccessCodeServiceTest {
     Fido2DemoAccessCodeRepository repo = mock(Fido2DemoAccessCodeRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
-    Fido2DemoAccessCodeService service = new Fido2DemoAccessCodeService(repo, audit, em);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    Fido2DemoAccessCodeService service = new Fido2DemoAccessCodeService(repo, audit, em, tenant);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

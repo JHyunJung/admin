@@ -19,6 +19,7 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
 
     private final FdsPolicyService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<CcfaFdsPolicy, Long, FdsPolicySearchForm> service() { return service; }
     @Override protected String basePath() { return "/fds-policies"; }
@@ -29,7 +30,7 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
 
     /**
      * 할당형 PK 이므로 예외적으로 폼의 companyIdx 를 식별자로 채운다.
-     * COMPANY 역할은 기반 create() 가 insert() 전에 TenantContext.companyIdx() 로 덮어쓰고,
+     * COMPANY 역할은 기반 create() 가 insert() 전에 tenant.companyIdx() 로 덮어쓰고,
      * AssignedIdCrudService.insert() 가 존재 검사 후 persist 하므로 기존 행이 덮어써지지 않는다.
      */
     @Override protected CcfaFdsPolicy toEntity(FdsPolicyForm f) {
@@ -42,18 +43,18 @@ public class FdsPolicyController extends CrudController<CcfaFdsPolicy, Long, Fds
     @Override protected void applyForm(FdsPolicyForm f, CcfaFdsPolicy e) { f.applyTo(e); }
 
     @Override protected void validate(FdsPolicyForm f, boolean isNew, BindingResult binding) {
-        if (isNew && TenantContext.isSuper() && f.getCompanyIdx() == null) {
+        if (isNew && tenant.require().isSuper() && f.getCompanyIdx() == null) {
             binding.rejectValue("companyIdx", "required", "고객사를 선택하세요.");
         }
     }
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
     @Override protected void populateFormModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
     @Override protected void populateDetailModel(CcfaFdsPolicy e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));

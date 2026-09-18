@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.company.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.company.entity.CcfaLicense;
@@ -19,8 +20,8 @@ public class LicenseService extends CrudService<CcfaLicense, Long, LicenseSearch
 
     private final CcfaCompanyRepository companies;
 
-    public LicenseService(CcfaLicenseRepository repository, AuditLogger audit, CcfaCompanyRepository companies) {
-        super(repository, audit);
+    public LicenseService(CcfaLicenseRepository repository, AuditLogger audit, CcfaCompanyRepository companies, TenantContext tenant) {
+        super(repository, audit, tenant);
         this.companies = companies;
     }
 

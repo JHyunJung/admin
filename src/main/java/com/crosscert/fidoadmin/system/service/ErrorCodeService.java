@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.system.entity.CcfaErrorTable;
 import com.crosscert.fidoadmin.system.repository.CcfaErrorTableRepository;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class ErrorCodeService extends AssignedIdCrudService<CcfaErrorTable, String, ErrorCodeSearchForm> {
 
-    public ErrorCodeService(CcfaErrorTableRepository repository, AuditLogger audit, EntityManager em) {
-        super(repository, audit, em);
+    public ErrorCodeService(CcfaErrorTableRepository repository, AuditLogger audit, EntityManager em, TenantContext tenant) {
+        super(repository, audit, em, tenant);
     }
 
     @Override protected Specification<CcfaErrorTable> toSpecification(ErrorCodeSearchForm f) {

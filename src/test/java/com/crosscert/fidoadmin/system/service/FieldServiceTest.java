@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.common.SelectedTenant;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.entity.CcfaFields;
 import com.crosscert.fidoadmin.system.entity.CcfaOption;
 import com.crosscert.fidoadmin.system.repository.CcfaFieldsRepository;
@@ -28,7 +30,8 @@ class FieldServiceTest {
     CcfaFieldsRepository repo = mock(CcfaFieldsRepository.class);
     CcfaOptionRepository options = mock(CcfaOptionRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    FieldService service = new FieldService(repo, audit, options);
+    TenantContext tenant = new TenantContext(new SelectedTenant());
+    FieldService service = new FieldService(repo, audit, options, tenant);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 

@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido.entity.Appid;
 import com.crosscert.fidoadmin.fido.repository.AppidRepository;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AppidService extends CrudService<Appid, Long, AppidSearchForm> {
 
-    public AppidService(AppidRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public AppidService(AppidRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<Appid> toSpecification(AppidSearchForm f) {

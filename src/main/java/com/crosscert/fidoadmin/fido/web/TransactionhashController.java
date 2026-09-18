@@ -19,6 +19,7 @@ public class TransactionhashController extends ReadOnlyController<Transactionhas
 
     private final TransactionhashQueryService service;
     private final CompanyLookup companies;
+    private final TenantContext tenant;
 
     @Override protected CrudService<Transactionhash, Long, TransactionhashSearchForm> service() { return service; }
     @Override protected String basePath() { return "/transaction-hashes"; }
@@ -27,7 +28,7 @@ public class TransactionhashController extends ReadOnlyController<Transactionhas
 
     @Override protected void populateListModel(Model model) {
         model.addAttribute("companyNames", companies.names());
-        if (TenantContext.isSuper()) model.addAttribute("companies", companies.all());
+        if (tenant.require().isSuper()) model.addAttribute("companies", companies.all());
     }
 
     @Override protected void populateDetailModel(Transactionhash entity, Model model) {

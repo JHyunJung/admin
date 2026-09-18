@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.fido2.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
+import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido2.entity.Fido2Metadata;
 import com.crosscert.fidoadmin.fido2.repository.Fido2MetadataRepository;
@@ -15,8 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class Fido2MetadataService extends CrudService<Fido2Metadata, Long, Fido2MetadataSearchForm> {
 
-    public Fido2MetadataService(Fido2MetadataRepository repository, AuditLogger audit) {
-        super(repository, audit);
+    public Fido2MetadataService(Fido2MetadataRepository repository, AuditLogger audit, TenantContext tenant) {
+        super(repository, audit, tenant);
     }
 
     @Override protected Specification<Fido2Metadata> toSpecification(Fido2MetadataSearchForm f) {
