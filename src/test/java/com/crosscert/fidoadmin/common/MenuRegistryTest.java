@@ -49,4 +49,44 @@ class MenuRegistryTest {
         var groups = MenuRegistry.groups(registry.itemsFor(true));
         assertThat(groups.keySet()).containsExactly("대시보드", "고객사", "운영자", "FIDO", "FIDO2", "로그", "시스템");
     }
+
+    @Test void 테넌트_영역_화면은_16개다() {
+        long tenant = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.TENANT).count();
+        assertThat(tenant).isEqualTo(16);
+    }
+
+    @Test void 시스템_영역은_전부_superOnly_다() {
+        assertThat(MenuRegistry.ALL.stream()
+            .filter(m -> m.area() == MenuArea.SYSTEM))
+            .allMatch(MenuItem::superOnly);
+    }
+
+    /** 가입 승인은 COMPANY_IDX = -1 인 미배정 계정을 다루므로 테넌트 영역이 아니다. */
+    @Test void 가입_승인은_시스템_영역이다() {
+        assertThat(area("/signups")).isEqualTo(MenuArea.SYSTEM);
+    }
+
+    /** 라이선스·운영자는 SUPER 전용이지만 실제 테넌트 데이터다. */
+    @Test void 라이선스와_운영자는_테넌트_영역이다() {
+        assertThat(area("/licenses")).isEqualTo(MenuArea.TENANT);
+        assertThat(area("/managers")).isEqualTo(MenuArea.TENANT);
+    }
+
+    @Test void 하위_경로는_가장_긴_접두사로_판정한다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.areaOf("/users/123/edit")).isEqualTo(MenuArea.TENANT);
+        assertThat(r.areaOf("/system/menus/5")).isEqualTo(MenuArea.SYSTEM);
+    }
+
+    // 슈퍼관리자_계정_화면은_시스템_영역이다: /managers/super 는 Task 9 에서 ALL 에 추가된다.
+    // 이 테스트는 그때 함께 작성한다(지금 작성하면 실패하고, @Disabled 는 금지되어 있다).
+
+    @Test void 내_비밀번호_변경은_개인_영역이다() {
+        assertThat(new MenuRegistry().areaOf("/me/password")).isEqualTo(MenuArea.PERSONAL);
+    }
+
+    private MenuArea area(String href) {
+        return MenuRegistry.ALL.stream().filter(m -> m.href().equals(href))
+            .findFirst().orElseThrow().area();
+    }
 }
