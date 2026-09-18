@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.audit;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.auth.Sha256PasswordEncoder;
 import com.crosscert.fidoadmin.common.TenantContext;
+import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.ByteBuffer;
@@ -26,21 +27,38 @@ public class AuditLogger {
 
     private final AuditLogWriter writer;
     private final TenantContext tenant;
+    private final CompanyLookup companies;
 
-    /** 현재 로그인 사용자·현재 HTTP 요청 기준으로 기록한다. 로그인 사용자가 없으면 기록하지 않는다. */
+    /**
+     * 현재 로그인 사용자·현재 HTTP 요청 기준으로 기록한다. 로그인 사용자가 없으면 기록하지 않는다.
+     *
+     * <p>COMPANY_IDX 에는 <b>대상 테넌트</b>를 넣는다. 행위자는 USER_ID 로 식별된다.
+     * 슈퍼관리자가 어느 고객사 데이터를 만졌는지가 이 컬럼에만 남는다
+     * (스키마를 바꿀 수 없어 기존 컬럼을 이렇게 해석한다).
+     * 선택이 없는 전역 작업은 행위자 소속(0)을 그대로 쓴다 — 사실에 맞다.
+     */
     public void log(AuditType type, String message) {
         tenant.current().ifPresent(actor -> {
             HttpServletRequest req = currentRequest();
-            log(actor, type, message, req == null ? null : req.getRemoteAddr(),
+            Long targetCompany = tenant.hasTenant() ? tenant.companyIdx() : actor.getCompanyIdx();
+            String targetName = tenant.hasTenant() ? companies.name(targetCompany) : actor.getCompanyName();
+            log(actor, type, message, targetCompany, targetName,
+                req == null ? null : req.getRemoteAddr(),
                 req == null ? null : req.getHeader("User-Agent"));
         });
     }
 
+    /** 로그인·로그아웃처럼 테넌트가 없는 사건용. 행위자 소속을 그대로 쓴다. */
     public void log(ManagerUserDetails actor, AuditType type, String message, String ip, String ua) {
+        log(actor, type, message, actor.getCompanyIdx(), actor.getCompanyName(), ip, ua);
+    }
+
+    private void log(ManagerUserDetails actor, AuditType type, String message,
+                     Long companyIdx, String companyName, String ip, String ua) {
         try {
             CcfaAuditLog row = new CcfaAuditLog();
-            row.setCompanyIdx(actor.getCompanyIdx());
-            row.setCompanyName(cut(actor.getCompanyName(), 512));
+            row.setCompanyIdx(companyIdx);
+            row.setCompanyName(cut(companyName, 512));
             row.setType(type.name());
             row.setUserId(cut(actor.getUserId(), 64));
             row.setUserName(cut(actor.getUserNm(), 32));

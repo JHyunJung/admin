@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.common.SelectedTenant;
 import com.crosscert.fidoadmin.common.TenantContext;
+import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class AuditLogRoundTripTest {
             return null;
         }).when(writer).write(any());
 
-        new AuditLogger(writer, new TenantContext(new SelectedTenant())).log(actor, AuditType.UPDATE,
+        new AuditLogger(writer, new TenantContext(new SelectedTenant()), mock(CompanyLookup.class)).log(actor, AuditType.UPDATE,
             "한글 메시지 ".repeat(500), "10.0.0.5", "브라우저 ".repeat(500));
 
         em.flush();
