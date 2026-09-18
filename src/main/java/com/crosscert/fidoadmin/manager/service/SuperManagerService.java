@@ -73,6 +73,15 @@ public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerS
      * 전역 테이블" 로 보고 계정이 SUPER 인지 검사한다 — 이 화면은 SUPER 전용이므로
      * 그 부작용을 의도적으로 빌려 쓴다. URL 설정(hasRole("SUPER"))에 더한 서비스 계층의
      * 이중 방어다.
+     *
+     * <p><b>대가(trade-off)</b>: null 을 돌려주면 {@code CrudService.update()} 의 쓰기 측
+     * 정규화(companyIdxAttribute() != null 일 때 mutator 실행 뒤 setCompanyIdx(e,
+     * tenant.companyIdx()) 로 강제하는 부분)도 건너뛴다. checkTenant() 는 get(id) 시점,
+     * 즉 mutator 실행 <b>전</b> 에 걸리므로 "행을 읽을 때 COMPANY_IDX=0 이었는가" 만 보장하고
+     * "저장할 값도 0 인가" 는 보장하지 못한다. ManagerForm.applyTo() 는 폼이 실어온 companyIdx
+     * 를 그대로 엔티티에 쓰므로, 조작된 POST 로 companyIdx=7 을 보내면 이 화면이 관리하는
+     * 행이 다른 테넌트로 옮겨질 수 있다(되돌릴 UI가 없는 편도 함정). 그래서 update() 를
+     * 재정의해 mutator 실행 뒤 companyIdx 를 0 으로 다시 고정한다(아래 update() 참고).
      */
     @Override protected String companyIdxAttribute() { return null; }
     @Override protected Long companyIdxOf(CcfaManager e) { return e.getCompanyIdx(); }
@@ -114,6 +123,13 @@ public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerS
      * {@code ManagerService.update()} 와 같은 규칙이다(설계서 4장) — 승인대기 행의 상태를
      * 조작된 POST 로 활성화하면 가입 승인 절차(감사 로그·상태 재확인·행 잠금)를 건너뛴다.
      * COMPANY_IDX = 0 계정도 가입 신청 상태를 거칠 수 있으므로 이 화면에도 같은 검사가 필요하다.
+     *
+     * <p>companyIdx 를 0 으로 다시 고정하는 이유는 companyIdxAttribute() 의 주석을 참고한다.
+     * companyIdxAttribute() 가 null 이라 CrudService.update() 의 쓰기 측 정규화가 건너뛰어지고,
+     * checkTenant() 는 mutator 실행 전(행을 읽을 때)만 검사하므로, ManagerForm 이 실어온
+     * companyIdx 를 그대로 두면 조작된 POST 로 이 화면이 관리하는 행을 다른 테넌트로 옮길 수
+     * 있다(되돌릴 UI가 없는 편도 함정). mutator 가 어떤 값을 쓰든 마지막에 0 으로 되돌려
+     * "이 화면이 저장하는 행은 항상 COMPANY_IDX = 0" 이라는 불변조건을 지킨다.
      */
     @Override
     @Transactional
@@ -121,6 +137,7 @@ public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerS
         return super.update(id, e -> {
             String before = e.getStatus();
             mutator.accept(e);
+            e.setCompanyIdx(SignupPolicy.SUPER_COMPANY_IDX);
             if (SignupPolicy.isSignupStatus(before) && !before.equals(e.getStatus())) {
                 e.setStatus(before);
                 throw new IllegalStateException(

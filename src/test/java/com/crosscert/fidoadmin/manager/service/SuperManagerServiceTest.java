@@ -156,6 +156,7 @@ class SuperManagerServiceTest {
             .isInstanceOf(DataIntegrityViolationException.class)
             .hasMessageContaining("kbadmin");
         verify(managers, never()).save(any());
+        verify(audit, never()).log(any(), any());
     }
 
     /**
@@ -213,6 +214,27 @@ class SuperManagerServiceTest {
 
         assertThat(m.getStatus()).isEqualTo(SignupPolicy.STATUS_PENDING);
         verify(managers, never()).save(any());
+    }
+
+    /**
+     * 조작된 POST 로 companyIdx 를 다른 테넌트로 실어 보내도 저장되는 값은 항상 0 이어야 한다.
+     * companyIdxAttribute() 가 null 이라 CrudService.update() 의 쓰기 측 정규화가 건너뛰어지고,
+     * checkTenant() 는 mutator 실행 전(행을 읽을 때)만 검사하므로 이 clamp 가 없으면
+     * ManagerForm.applyTo() 가 그대로 옮긴 companyIdx=7 이 저장되어, 이 화면이 관리하던 행이
+     * 다른 테넌트로 옮겨지는 편도 함정(되돌릴 UI가 없다)이 생긴다.
+     */
+    @Test void 수정_시_companyIdx_를_조작해도_0_으로_저장된다() {
+        loginSuperSelecting(9L);
+        CcfaManager m = manager(2L, 0L, "superadmin");
+        when(managers.findById(2L)).thenReturn(Optional.of(m));
+        when(managers.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CcfaManager saved = service.update(2L, e -> e.setCompanyIdx(7L));
+
+        assertThat(saved.getCompanyIdx()).isEqualTo(0L);
+        ArgumentCaptor<CcfaManager> captor = ArgumentCaptor.forClass(CcfaManager.class);
+        verify(managers).save(captor.capture());
+        assertThat(captor.getValue().getCompanyIdx()).isEqualTo(0L);
     }
 
     /**
