@@ -41,7 +41,8 @@ class ManagerServiceTest {
     Query lockQuery = mock(Query.class);
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
-    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant);
+    ManagerUserIdGuard userIdGuard = new ManagerUserIdGuard(managers, em);
+    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

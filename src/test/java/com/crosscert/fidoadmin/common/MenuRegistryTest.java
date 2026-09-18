@@ -78,8 +78,17 @@ class MenuRegistryTest {
         assertThat(r.areaOf("/system/menus/5")).isEqualTo(MenuArea.SYSTEM);
     }
 
-    // 슈퍼관리자_계정_화면은_시스템_영역이다: /managers/super 는 Task 9 에서 ALL 에 추가된다.
-    // 이 테스트는 그때 함께 작성한다(지금 작성하면 실패하고, @Disabled 는 금지되어 있다).
+    /**
+     * /managers/super 는 /managers(TENANT) 의 하위 경로처럼 보이지만 SYSTEM 이어야 한다.
+     * 가장 긴 접두사로 판정해야 하는 이유가 바로 이 쌍이다 — 짧은 쪽이 먼저 맞으면
+     * 슈퍼관리자 계정 화면이 테넌트 선택을 요구하게 된다.
+     */
+    @Test void 슈퍼관리자_계정_화면은_시스템_영역이다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.areaOf("/managers/super")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/managers/super/3")).isEqualTo(MenuArea.SYSTEM);
+        assertThat(r.areaOf("/managers")).isEqualTo(MenuArea.TENANT);
+    }
 
     @Test void 내_비밀번호_변경은_개인_영역이다() {
         assertThat(new MenuRegistry().areaOf("/me/password")).isEqualTo(MenuArea.PERSONAL);

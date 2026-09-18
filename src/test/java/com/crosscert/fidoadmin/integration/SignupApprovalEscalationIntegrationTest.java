@@ -61,7 +61,8 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
         managerService = new ManagerService(managers, audit,
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository.class),
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em,
-            new TenantContext(selected));
+            new TenantContext(selected),
+            new com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard(managers, em));
         // update() 는 테넌트 검사를 거친다. 이 화면은 SUPER 전용이므로 SUPER 로 로그인한 상태를 만든다.
         var su = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(

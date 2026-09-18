@@ -38,7 +38,8 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "시스템", "어드민 기준", "/system/criteria", true, "bi-ui-checks"),
         new MenuItem(MenuArea.SYSTEM, "시스템", "메뉴 정의", "/system/menus", true, "bi-list-nested"),
         new MenuItem(MenuArea.SYSTEM, "시스템", "코드 그룹/코드", "/system/options", true, "bi-tags"),
-        new MenuItem(MenuArea.SYSTEM, "시스템", "필드 정의", "/system/fields", true, "bi-input-cursor-text"));
+        new MenuItem(MenuArea.SYSTEM, "시스템", "필드 정의", "/system/fields", true, "bi-input-cursor-text"),
+        new MenuItem(MenuArea.SYSTEM, "시스템", "슈퍼관리자 계정", "/managers/super", true, "bi-person-gear"));
 
     public List<MenuItem> itemsFor(boolean isSuper) {
         return isSuper ? ALL : ALL.stream().filter(m -> !m.superOnly()).toList();
