@@ -40,39 +40,52 @@ public class AuditLogger {
     public void log(AuditType type, String message) {
         tenant.current().ifPresent(actor -> {
             HttpServletRequest req = currentRequest();
-            Long targetCompany = tenant.hasTenant() ? tenant.companyIdx() : actor.getCompanyIdx();
-            String targetName = tenant.hasTenant() ? companies.name(targetCompany) : actor.getCompanyName();
-            log(actor, type, message, targetCompany, targetName,
+            logResolvingTarget(actor, type, message,
                 req == null ? null : req.getRemoteAddr(),
                 req == null ? null : req.getHeader("User-Agent"));
         });
     }
 
-    /** 로그인·로그아웃처럼 테넌트가 없는 사건용. 행위자 소속을 그대로 쓴다. */
-    public void log(ManagerUserDetails actor, AuditType type, String message, String ip, String ua) {
-        log(actor, type, message, actor.getCompanyIdx(), actor.getCompanyName(), ip, ua);
-    }
-
-    private void log(ManagerUserDetails actor, AuditType type, String message,
-                     Long companyIdx, String companyName, String ip, String ua) {
+    /**
+     * 대상 테넌트를 여기서 해석한다({@code companies.name(...)} 의 DB 조회 포함).
+     * 해석과 기록을 같은 try/catch 보호 구역에 두어, 해석 실패도 기록 실패와 똑같이
+     * 삼켜야 "실패해도 호출자 트랜잭션을 깨지 않는다"는 클래스 불변식이 지켜진다.
+     */
+    private void logResolvingTarget(ManagerUserDetails actor, AuditType type, String message, String ip, String ua) {
         try {
-            CcfaAuditLog row = new CcfaAuditLog();
-            row.setCompanyIdx(companyIdx);
-            row.setCompanyName(cut(companyName, 512));
-            row.setType(type.name());
-            row.setUserId(cut(actor.getUserId(), 64));
-            row.setUserName(cut(actor.getUserNm(), 32));
-            row.setMessage(cut(message, 4000));
-            row.setIp(cut(ip, 15));
-            row.setUa(cut(ua, 2048));
-            // Oracle TIMESTAMP 은 소수점 6자리(마이크로초)까지만 보존한다.
-            // 나노초를 그대로 두면 저장 후 읽은 값으로 해시를 재계산할 수 없다.
-            row.setCreatedtime(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
-            row.setIntergrityHash(integrityHash(row));
-            writer.write(row);
+            Long targetCompany = tenant.hasTenant() ? tenant.companyIdx() : actor.getCompanyIdx();
+            String targetName = tenant.hasTenant() ? companies.name(targetCompany) : actor.getCompanyName();
+            writeRow(actor, type, message, targetCompany, targetName, ip, ua);
         } catch (RuntimeException e) {
             log.error("감사 로그 기록 실패: type={} message={}", type, message, e);
         }
+    }
+
+    /** 로그인·로그아웃처럼 테넌트가 없는 사건용. 행위자 소속을 그대로 쓴다. */
+    public void log(ManagerUserDetails actor, AuditType type, String message, String ip, String ua) {
+        try {
+            writeRow(actor, type, message, actor.getCompanyIdx(), actor.getCompanyName(), ip, ua);
+        } catch (RuntimeException e) {
+            log.error("감사 로그 기록 실패: type={} message={}", type, message, e);
+        }
+    }
+
+    private void writeRow(ManagerUserDetails actor, AuditType type, String message,
+                          Long companyIdx, String companyName, String ip, String ua) {
+        CcfaAuditLog row = new CcfaAuditLog();
+        row.setCompanyIdx(companyIdx);
+        row.setCompanyName(cut(companyName, 512));
+        row.setType(type.name());
+        row.setUserId(cut(actor.getUserId(), 64));
+        row.setUserName(cut(actor.getUserNm(), 32));
+        row.setMessage(cut(message, 4000));
+        row.setIp(cut(ip, 15));
+        row.setUa(cut(ua, 2048));
+        // Oracle TIMESTAMP 은 소수점 6자리(마이크로초)까지만 보존한다.
+        // 나노초를 그대로 두면 저장 후 읽은 값으로 해시를 재계산할 수 없다.
+        row.setCreatedtime(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        row.setIntergrityHash(integrityHash(row));
+        writer.write(row);
     }
 
     /**
