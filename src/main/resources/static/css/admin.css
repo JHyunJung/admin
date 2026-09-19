@@ -94,6 +94,9 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 .fa-table td, .fa-table th { white-space: nowrap; }
 .fa-table th { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding: 12px 14px; }
 .fa-table td { padding: 11px 14px; vertical-align: middle; }
+/* 행 전체가 상세로 가는 목록. admin.js 가 링크 있는 행에만 이 클래스를 단다
+   (빈 목록의 "데이터가 없습니다" 행은 클릭되지 않으므로 커서도 바뀌지 않는다). */
+.fa-table tbody tr.fa-row-link { cursor: pointer; }
 .table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
 .fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
 /* ---------- 대시보드 요약 카드 ----------

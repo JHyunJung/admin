@@ -104,6 +104,47 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 })();
 
+// 목록 표: 행 아무 데나 클릭하면 그 행의 상세로 간다.
+//
+// 대표값 링크(<a>)는 그대로 둔다. 이 스크립트는 그 링크를 "행이 가리키는 곳"으로 읽어
+// 쓸 뿐이라, 스크립트가 없으면 예전처럼 대표값을 눌러 들어가면 된다. tr 에 onclick 을
+// 심는 방식을 쓰지 않는 이유이기도 하다 — 그러면 키보드·스크린리더로 들어갈 길이 사라진다.
+//
+// 문서 하나에 리스너 하나만 건다(이벤트 위임). 행이 수백 개여도 비용이 같고,
+// 나중에 추가되는 목록 화면도 표식을 달 필요 없이 그대로 동작한다.
+(function () {
+  // 행이 가리키는 곳. 첫 번째 링크를 대표로 본다(목록 템플릿은 행당 상세 링크가 하나다).
+  function rowHref(row) {
+    var a = row.querySelector('a[href]');
+    return a && a.getAttribute('href');
+  }
+
+  document.addEventListener('click', function (e) {
+    var row = e.target.closest('.fa-table tbody tr');
+    if (!row) return;
+
+    // 링크·버튼·입력을 직접 누른 경우는 브라우저가 알아서 처리한다.
+    // 여기서 또 이동시키면 같은 이동이 두 번 일어난다.
+    if (e.target.closest('a, button, input, label, select, textarea')) return;
+
+    // 텍스트를 드래그해 읽으려던 것이면 이동하지 않는다.
+    var sel = window.getSelection();
+    if (sel && sel.toString().length) return;
+
+    var href = rowHref(row);
+    if (!href) return; // "데이터가 없습니다" 행에는 링크가 없다.
+
+    // Ctrl/⌘/가운데 클릭은 링크와 같게 새 탭으로 연다.
+    if (e.metaKey || e.ctrlKey || e.button === 1) window.open(href, '_blank');
+    else window.location.href = href;
+  });
+
+  // 링크가 있는 행에만 포인터 커서를 준다. 빈 목록 행이 클릭될 것처럼 보이면 안 된다.
+  document.querySelectorAll('.fa-table tbody tr').forEach(function (row) {
+    if (rowHref(row)) row.classList.add('fa-row-link');
+  });
+})();
+
 // data-auto-submit 폼: 입력이 바뀌면 조회 버튼 없이 바로 제출한다.
 //
 // change 를 쓰는 이유: input 이벤트로 걸면 날짜를 타이핑하는 중간 상태
