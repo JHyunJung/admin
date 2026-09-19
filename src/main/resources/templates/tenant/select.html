@@ -7,9 +7,14 @@
   <h1 class="h4 mb-1">고객사 선택</h1>
   <p class="text-secondary small mb-3">작업할 고객사의 행을 클릭하세요. 선택한 고객사의 데이터만 조회·수정합니다.</p>
 
-  <div class="mb-3">
+  <div class="d-flex align-items-center gap-3 mb-3">
     <input type="text" id="tenantFilter" class="form-control form-control-sm"
            style="max-width:320px" placeholder="고객사 이름 검색" autocomplete="off">
+    <!--/* 고객사가 수십·수백 개가 되면 지금 몇 건을 보고 있는지가 필요하다. 검색 중에는
+           admin.js 가 "N / 전체 M건" 으로 바꿔 준다(다른 목록 화면의 "총 N건" 과 같은 자리다). */-->
+    <span id="tenantCount" class="small text-secondary text-nowrap"
+          th:attr="data-total=${#lists.size(companies)}"
+          th:text="|총 ${#lists.size(companies)}건|">총 0건</span>
   </div>
 
   <div class="table-responsive bg-white border rounded">
@@ -46,6 +51,14 @@
         </tr>
         <tr th:if="${#lists.isEmpty(companies)}">
           <td colspan="3" class="text-center text-secondary py-4">선택할 수 있는 고객사가 없습니다.</td>
+        </tr>
+        <!--/* 검색으로 모든 행이 숨겨졌을 때. 위 행과 상황이 다르다 — 고객사는 있는데 검색어에
+               맞는 것이 없을 뿐이다. 안내가 없으면 헤더만 남은 빈 표가 되어 검색이 고장난 것처럼
+               보인다. admin.js 가 필터 결과에 따라 보였다 숨겼다 한다. */-->
+        <tr id="tenantNoMatch" hidden>
+          <td colspan="3" class="text-center text-secondary py-4">
+            검색어와 일치하는 고객사가 없습니다.
+          </td>
         </tr>
       </tbody>
     </table>

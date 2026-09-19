@@ -68,12 +68,26 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
   var input = document.getElementById('tenantFilter');
   if (!input) return;
+  var noMatch = document.getElementById('tenantNoMatch');
+  var count = document.getElementById('tenantCount');
+  var total = count ? Number(count.getAttribute('data-total')) : 0;
+
   input.addEventListener('input', function () {
     var q = input.value.trim().toLowerCase();
+    var shown = 0;
     document.querySelectorAll('[data-tenant-card]').forEach(function (card) {
       var name = (card.getAttribute('data-name') || '').toLowerCase();
-      card.style.display = name.indexOf(q) === -1 ? 'none' : '';
+      var hit = name.indexOf(q) !== -1;
+      card.style.display = hit ? '' : 'none';
+      if (hit) shown++;
     });
+
+    // 검색으로 모두 숨겨지면 헤더만 남은 빈 표가 된다. 검색이 고장난 것처럼 보이지 않게 알린다.
+    // 애초에 고객사가 0건이면 서버가 그린 안내가 이미 있으므로 건드리지 않는다.
+    if (noMatch && total > 0) noMatch.hidden = shown !== 0;
+
+    // 몇 건이 걸렸는지 보여 준다. 검색어가 없으면 원래의 총 건수로 되돌린다.
+    if (count) count.textContent = q ? (shown + ' / 전체 ' + total + '건') : ('총 ' + total + '건');
   });
 })();
 

@@ -121,6 +121,63 @@ class TenantSelectionControllerWebTest {
     }
 
     /**
+     * 고객사가 늘어나면 지금 몇 건을 보고 있는지가 필요하다(다른 목록 화면의 "총 N건" 과 같다).
+     * 검색 중에는 admin.js 가 "N / 전체 M건" 으로 바꾸므로 총계를 data-total 로 넘긴다.
+     */
+    @Test void 총_건수를_보여준다() throws Exception {
+        when(companies.all()).thenReturn(List.of(company(9L, "가"), company(10L, "나"), company(11L, "다")));
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("총 3건");
+        assertThat(html).contains("data-total=\"3\"");
+    }
+
+    /**
+     * 검색으로 모든 행이 숨겨졌을 때 쓸 안내를 미리 심어 둔다(admin.js 가 보였다 숨겼다 한다).
+     *
+     * <p>없으면 헤더만 남은 빈 표가 되어 검색이 고장난 것처럼 보인다. 목록이 0건일 때 서버가
+     * 그리는 "선택할 수 있는 고객사가 없습니다" 와는 다른 상황이라 문구도 행도 따로 둔다.
+     */
+    @Test void 검색_결과_없음_안내를_품고_있다() throws Exception {
+        when(companies.all()).thenReturn(List.of(company(9L, "테스트고객사")));
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("id=\"tenantNoMatch\"");
+        assertThat(html).contains("검색어와 일치하는 고객사가 없습니다");
+        // 평소에는 감춰져 있어야 한다 — 검색 전부터 보이면 목록과 함께 나와 혼란스럽다.
+        String row = html.substring(html.indexOf("id=\"tenantNoMatch\""));
+        assertThat(row.substring(0, row.indexOf(">"))).contains("hidden");
+    }
+
+    /**
+     * 템플릿이 심어 둔 두 요소를 admin.js 가 실제로 다루는지 본다.
+     *
+     * <p>한쪽만 남으면 조용히 죽는다 — 요소는 있는데 아무도 토글하지 않아 안내가 영영 안 뜨거나,
+     * 건수가 검색과 무관하게 총계로 고정된다. 화면을 열어 보기 전에는 눈치채기 어렵다.
+     */
+    @Test void 검색_스크립트가_안내와_건수를_함께_다룬다() throws Exception {
+        String js = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/static/js/admin.js"),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+        assertThat(js).contains("tenantNoMatch");
+        assertThat(js).contains("tenantCount");
+    }
+
+    private static CcfaCompany company(long idx, String name) {
+        CcfaCompany c = new CcfaCompany();
+        c.setIdx(idx);
+        c.setCompanyName(name);
+        return c;
+    }
+
+    /**
      * 행 클릭으로 선택하되, 스크립트 없이도 선택할 수 있어야 한다.
      *
      * <p>행 클릭은 admin.js 가 data-tenant-row 를 잡아 폼을 제출하는 방식이다. 그래서
