@@ -16,8 +16,11 @@ class MenuRegistryTest {
         assertThat(registry.itemsFor(false)).noneMatch(MenuItem::superOnly);
         assertThat(registry.itemsFor(false)).extracting(MenuItem::href)
             .contains("/", "/appids", "/users", "/logs/fido", "/fds-policies")
+            // /fido2/demo-access-codes 는 메뉴에서 뺐다. 여기 남겨두면 "SUPER 전용이라 안 보인다" 가
+            // 아니라 "메뉴에 아예 없어서 안 보인다" 로 통과해, 아무것도 검증하지 않는 단언이 된다.
+            // 그 화면이 되살아나는 것은 아래 전용 테스트가 막는다.
             .doesNotContain("/companies", "/managers", "/system/props",
-                "/criteria", "/fido2/metadata", "/fido2/credential-params", "/fido2/demo-access-codes",
+                "/criteria", "/fido2/metadata", "/fido2/credential-params",
                 "/signups");
     }
 
@@ -72,6 +75,19 @@ class MenuRegistryTest {
      */
     @Test void 메뉴_정의_화면은_메뉴에_없다() {
         assertThat(MenuRegistry.ALL).extracting(MenuItem::href).doesNotContain("/system/menus");
+    }
+
+    /**
+     * 필드 정의(/system/fields)는 메뉴 정의 화면과 같은 이유로 메뉴에서 뺐다. CCFA_FIELDS 를
+     * 고쳐도 Thymeleaf 템플릿이 그리는 화면은 바뀌지 않는다. 데모 접근코드는 데모용이라
+     * 운영 동선에 없다. 둘 다 화면·컨트롤러는 남아 있어 URL 로는 열린다(메뉴에서만 감췄다).
+     *
+     * <p>되살릴 때는 이 테스트를 지우는 것으로 끝내지 말고, 필드 정의는 사이드바가 실제로
+     * 그 데이터를 읽게 만든 뒤여야 한다.
+     */
+    @Test void 운영_동선에서_치운_화면은_메뉴에_없다() {
+        assertThat(MenuRegistry.ALL).extracting(MenuItem::href)
+            .doesNotContain("/system/fields", "/fido2/demo-access-codes");
     }
 
     @Test void 시스템_영역은_전부_superOnly_다() {

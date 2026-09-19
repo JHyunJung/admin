@@ -17,6 +17,16 @@ public class MenuRegistry {
      * 전자는 대시보드가 같은 일을 하고, 후자는 대응하는 화면이 없다. 화면 없는 메뉴는
      * 404 나 빈 페이지로 이어지므로, 화면이 생길 때 함께 추가한다.
      *
+     * <p>"필드 정의"(/system/fields)와 "데모 접근코드"(/fido2/demo-access-codes)는 메뉴에서 뺐다
+     * (설계서 1의 "프로토타입 확인 후 불필요한 화면은 제외한다"). 화면과 컨트롤러는 남아 있어
+     * URL 로는 열리지만, 운영자의 동선에서는 치운다.
+     *
+     * <p>필드 정의를 뺀 이유는 메뉴 정의 화면을 제거한 이유와 같다. CCFA_FIELDS 는 화면 필드를
+     * 데이터로 정의하려던 구조인데 새 어드민은 Thymeleaf 템플릿에 직접 쓴다. 즉 이 화면에서
+     * 값을 바꿔도 화면은 바뀌지 않는다 — 반영된 줄 아는 상태가 해롭다는 같은 판단이다
+     * (docs/erd/2026-09-18-테이블-존치-검토.md 가 CCFA_MENU 와 한 문단에서 함께 지목했다).
+     * 데모 접근코드는 이름 그대로 데모용이라 운영 동선에 들어오지 않는다.
+     *
      * <p>"시스템관리"는 테넌트 항목(운영자·라이선스·시스템 설정)과 전역 항목이 섞인
      * 유일한 그룹이다. 사이드바가 영역별로 나눠 그리므로 이 제목은 테넌트 구역과
      * 시스템 구역에 각각 한 번씩 나타난다. 의미상 맞는 표시다 — 위쪽은 선택한 고객사의
@@ -48,7 +58,6 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "인증기기 기준", "/criteria", true, "bi-fingerprint"),
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "메타데이터", "/fido2/metadata", true, "bi-card-list"),
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true, "bi-shield-lock"),
-        new MenuItem(MenuArea.SYSTEM, "FIDO2", "데모 접근코드", "/fido2/demo-access-codes", true, "bi-ticket-perforated"),
         // 이전 어드민의 "시스템관리 → 업체 관리 / 관리자 설정 / 라이선스관리 / 시스템 설정".
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "고객사", "/companies", true, "bi-building"),
         new MenuItem(MenuArea.TENANT, "시스템관리", "운영자", "/managers", true, "bi-person-badge"),
@@ -62,7 +71,6 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "FIDO 서버", "/system/fido-clients", true, "bi-server"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "어드민 기준", "/system/criteria", true, "bi-ui-checks"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "코드 그룹/코드", "/system/options", true, "bi-tags"),
-        new MenuItem(MenuArea.SYSTEM, "시스템관리", "필드 정의", "/system/fields", true, "bi-input-cursor-text"),
         new MenuItem(MenuArea.PERSONAL, "내 정보", "내 비밀번호 변경", "/me/password", false, "bi-key"));
 
     public List<MenuItem> itemsFor(boolean isSuper) {
