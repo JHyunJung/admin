@@ -60,6 +60,73 @@ class TenantSelectionControllerWebTest {
             .andExpect(view().name("tenant/select"));
     }
 
+    /**
+     * 화면에 IDX 를 드러내지 않는다. 내부 식별자를 운영자에게 보일 이유가 없다.
+     *
+     * <p>선택하려면 IDX 가 폼으로는 가야 하므로 hidden 필드에는 남는다. 그래서 "본문에
+     * 9 가 없다" 로는 확인할 수 없고, 사람이 읽는 자리에 노출되지 않는지를 본다 —
+     * 이전 화면은 "IDX 9" 라는 문구를 카드에 직접 찍었다.
+     */
+    @Test void 화면에_IDX_를_드러내지_않는다() throws Exception {
+        CcfaCompany c = new CcfaCompany();
+        c.setIdx(9L);
+        c.setCompanyName("테스트고객사");
+        when(companies.all()).thenReturn(List.of(c));
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("테스트고객사");
+        assertThat(html).doesNotContain("IDX 9");
+        assertThat(html).doesNotContainIgnoringCase(">IDX");
+        // 선택 자체는 계속 가능해야 한다(hidden 으로는 남는다).
+        assertThat(html).contains("name=\"companyIdx\"");
+    }
+
+    /** 카드가 아니라 목록(표)으로 보여준다. */
+    @Test void 고객사를_목록으로_보여준다() throws Exception {
+        CcfaCompany c = new CcfaCompany();
+        c.setIdx(9L);
+        c.setCompanyName("테스트고객사");
+        when(companies.all()).thenReturn(List.of(c));
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("<table");
+        // 이름 검색이 계속 동작하려면 행에 표식과 이름이 남아 있어야 한다.
+        assertThat(html).contains("data-tenant-card");
+        assertThat(html).contains("data-name=\"테스트고객사\"");
+    }
+
+    /**
+     * 행 클릭으로 선택하되, 스크립트 없이도 선택할 수 있어야 한다.
+     *
+     * <p>행 클릭은 admin.js 가 data-tenant-row 를 잡아 폼을 제출하는 방식이다. 그래서
+     * 각 행은 여전히 폼이고 고객사 이름이 submit 버튼이다 — tr 에 onclick 만 다는 구현으로
+     * 바뀌면 스크립트가 없는 환경과 키보드·스크린리더에서 선택할 길이 사라진다.
+     * 그 회귀를 여기서 막는다(대시보드가 조회 버튼을 남겨둔 것과 같은 이유다).
+     */
+    @Test void 스크립트_없이도_선택할_수_있다() throws Exception {
+        CcfaCompany c = new CcfaCompany();
+        c.setIdx(9L);
+        c.setCompanyName("테스트고객사");
+        when(companies.all()).thenReturn(List.of(c));
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        // 행 클릭 배선
+        assertThat(html).contains("data-tenant-row");
+        assertThat(html).contains("data-tenant-form");
+        // 스크립트가 없을 때의 선택 수단: 행 안의 실제 폼과 submit 버튼
+        assertThat(html).contains("<form method=\"post\" action=\"/select-tenant\"");
+        assertThat(html).contains("type=\"submit\"");
+    }
+
     /** COMPANY 는 고를 것이 없다. */
     @Test void COMPANY_는_대시보드로_보낸다() throws Exception {
         mvc.perform(get("/select-tenant").with(user(companyUser(5L))))

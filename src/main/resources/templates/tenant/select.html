@@ -5,28 +5,50 @@
 <body>
 <main>
   <h1 class="h4 mb-1">고객사 선택</h1>
-  <p class="text-secondary small mb-3">작업할 고객사를 선택하세요. 선택한 고객사의 데이터만 조회·수정합니다.</p>
+  <p class="text-secondary small mb-3">작업할 고객사의 행을 클릭하세요. 선택한 고객사의 데이터만 조회·수정합니다.</p>
 
   <div class="mb-3">
     <input type="text" id="tenantFilter" class="form-control form-control-sm"
            style="max-width:320px" placeholder="고객사 이름 검색" autocomplete="off">
   </div>
 
-  <div class="row g-2">
-    <div class="col-md-4" th:each="c : ${companies}" data-tenant-card
-         th:attr="data-name=${c.companyName}">
-      <form method="post" th:action="@{/select-tenant}" class="m-0">
-        <input type="hidden" name="companyIdx" th:value="${c.idx}">
-        <input type="hidden" name="returnTo" value="/">
-        <button type="submit" class="btn btn-outline-secondary w-100 text-start p-3">
-          <span class="d-block fw-semibold" th:text="${c.companyName}">고객사</span>
-          <span class="d-block small text-secondary" th:text="|IDX ${c.idx}|">IDX</span>
-        </button>
-      </form>
-    </div>
-    <div class="col-12" th:if="${#lists.isEmpty(companies)}">
-      <div class="text-center text-secondary py-4">선택할 수 있는 고객사가 없습니다.</div>
-    </div>
+  <div class="table-responsive bg-white border rounded">
+    <table class="table table-sm table-hover fa-table mb-0 align-middle">
+      <thead class="table-light"><tr><th>고객사</th><th>구분</th><th>사용</th></tr></thead>
+      <tbody>
+        <!--/*
+          행 전체를 클릭하면 선택된다(data-tenant-row 를 admin.js 가 잡는다).
+
+          그래도 각 행은 여전히 폼이고 고객사 이름은 submit 버튼이다. 스크립트가 없어도
+          이름을 눌러(또는 Tab 으로 옮겨 Enter 로) 선택할 수 있어야 하기 때문이다 —
+          tr 에 onclick 만 달면 키보드와 스크린리더에서 선택할 방법이 사라진다.
+
+          IDX 는 표시하지 않는다. 선택에 필요한 값이라 hidden 으로만 넘긴다.
+        */-->
+        <tr th:each="c : ${companies}" data-tenant-card data-tenant-row
+            th:attr="data-name=${c.companyName}">
+          <td class="fw-semibold">
+            <form method="post" th:action="@{/select-tenant}" class="m-0" data-tenant-form>
+              <input type="hidden" name="companyIdx" th:value="${c.idx}">
+              <input type="hidden" name="returnTo" value="/">
+              <button type="submit" class="btn btn-link p-0 text-reset text-decoration-none fw-semibold"
+                      th:text="${c.companyName}"
+                      th:attr="aria-label=|${c.companyName} 선택|">고객사</button>
+            </form>
+          </td>
+          <td class="text-secondary" th:text="${c.companyType} ?: '-'">구분</td>
+          <!--/* ENABLE_TYPE 은 Y/N 이다(고객사 화면과 같은 표기를 쓴다). */-->
+          <td>
+            <span class="badge"
+                  th:classappend="${c.enableType == 'Y'} ? 'text-bg-success' : 'text-bg-secondary'"
+                  th:text="${c.enableType} ?: '-'">사용</span>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(companies)}">
+          <td colspan="3" class="text-center text-secondary py-4">선택할 수 있는 고객사가 없습니다.</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <hr class="my-4">

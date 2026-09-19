@@ -62,7 +62,9 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// 고객사 선택 화면의 이름 검색. 카드가 많아도 서버를 다시 부르지 않는다.
+// 고객사 선택 화면의 이름 검색. 행이 많아도 서버를 다시 부르지 않는다.
+// data-tenant-card 는 목록의 각 행(tr)에 붙는다 — 표시 방식과 무관하게 이 표식만 보므로
+// 카드에서 목록으로 바꿀 때 이 코드는 그대로 두었다.
 (function () {
   var input = document.getElementById('tenantFilter');
   if (!input) return;
@@ -71,6 +73,33 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-tenant-card]').forEach(function (card) {
       var name = (card.getAttribute('data-name') || '').toLowerCase();
       card.style.display = name.indexOf(q) === -1 ? 'none' : '';
+    });
+  });
+})();
+
+// 고객사 선택 화면: 행 아무 데나 클릭하면 그 고객사를 선택한다.
+//
+// 행 안의 폼을 제출하는 방식이라, 스크립트가 없으면 고객사 이름(submit 버튼)을 눌러
+// 선택하는 길이 그대로 남는다. tr 에 onclick 만 다는 방식을 쓰지 않는 이유다 —
+// 그러면 키보드·스크린리더 사용자가 선택할 방법이 없어진다.
+(function () {
+  var rows = document.querySelectorAll('[data-tenant-row]');
+  if (!rows.length) return;
+
+  rows.forEach(function (row) {
+    var form = row.querySelector('[data-tenant-form]');
+    if (!form) return;
+
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', function (e) {
+      // 이름 버튼을 직접 누른 경우는 브라우저가 알아서 제출한다. 여기서 또 제출하면
+      // 같은 폼이 두 번 나간다.
+      if (e.target.closest('button, a, input, label')) return;
+      // 텍스트를 드래그해 선택하려던 것이면 제출하지 않는다.
+      var sel = window.getSelection();
+      if (sel && sel.toString().length) return;
+      if (form.requestSubmit) form.requestSubmit();
+      else form.submit();
     });
   });
 })();
