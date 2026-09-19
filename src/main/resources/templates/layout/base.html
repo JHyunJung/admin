@@ -28,18 +28,25 @@
             <i class="bi bi-building" aria-hidden="true"></i>
             <span th:text="${selectedCompanyName} ?: '고객사 선택'">고객사</span>
           </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li th:each="c : ${selectableCompanies}">
-              <form method="post" th:action="@{/select-tenant}" class="m-0">
-                <input type="hidden" name="companyIdx" th:value="${c.idx}">
-                <input type="hidden" name="returnTo" th:value="${currentPath}">
-                <button type="submit" class="dropdown-item" th:text="${c.companyName}">고객사</button>
-              </form>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" th:href="@{/select-tenant}">
-              <i class="bi bi-gear" aria-hidden="true"></i> 고객사 선택 화면으로</a></li>
-          </ul>
+          <!--/* 고객사가 수십 개가 되면 목록이 화면 밖으로 흘러 아래쪽 항목은 고를 수 없게 된다
+                 (스크롤도 되지 않아 아예 선택 불가였다). 목록에만 최대 높이와 스크롤을 준다.
+                 "선택 화면으로" 는 목록 길이와 무관하게 늘 보여야 하므로 스크롤 영역 밖의
+                 별도 ul 에 둔다 — ul 안에 div 를 넣으면 브라우저가 DOM 을 재배치한다. */-->
+          <div class="dropdown-menu dropdown-menu-end fa-tenant-menu">
+            <ul class="fa-tenant-list list-unstyled m-0">
+              <li th:each="c : ${selectableCompanies}">
+                <form method="post" th:action="@{/select-tenant}" class="m-0">
+                  <input type="hidden" name="companyIdx" th:value="${c.idx}">
+                  <input type="hidden" name="returnTo" th:value="${currentPath}">
+                  <button type="submit" class="dropdown-item text-truncate" th:text="${c.companyName}"
+                          th:title="${c.companyName}">고객사</button>
+                </form>
+              </li>
+            </ul>
+            <hr class="dropdown-divider">
+            <a class="dropdown-item" th:href="@{/select-tenant}">
+              <i class="bi bi-gear" aria-hidden="true"></i> 고객사 선택 화면으로</a>
+          </div>
         </div>
 
         <!-- SUPER + 시스템 영역: 테넌트 맥락이 아님을 드러낸다 -->

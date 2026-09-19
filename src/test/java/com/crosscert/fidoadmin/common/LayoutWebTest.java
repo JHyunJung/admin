@@ -169,6 +169,56 @@ class LayoutWebTest {
             .andExpect(redirectedUrl("/select-tenant"));
     }
 
+    /**
+     * 고객사가 많아져도 전환 드롭다운의 모든 항목에 닿을 수 있어야 한다.
+     *
+     * <p>예전에는 목록에 최대 높이가 없어 화면 밖으로 흘렀고, 드롭다운 자체는 스크롤되지 않아
+     * 아래쪽 고객사는 <em>아예 고를 수 없었다</em>(63개로 재현했을 때 29개만 보이고 35개가
+     * 접근 불가였다). 스크롤 컨테이너를 씌워 해결했다.
+     *
+     * <p>높이는 CSS 가 정하므로 서버 테스트로는 볼 수 없다. 대신 그 배선(스크롤 영역과
+     * 그 밖의 "선택 화면으로")이 유지되는지, 항목이 빠짐없이 렌더링되는지를 고정한다.
+     */
+    @Test void 고객사가_많아도_전환_목록이_스크롤_영역에_담긴다() throws Exception {
+        List<CcfaCompany> many = new java.util.ArrayList<>();
+        for (int i = 1; i <= 40; i++) {
+            CcfaCompany c = new CcfaCompany();
+            c.setIdx((long) (100 + i));
+            c.setCompanyName("고객사" + i);
+            many.add(c);
+        }
+        when(companies.all()).thenReturn(many);
+
+        String html = mvc.perform(get("/").session(superSelecting(9L))
+                .with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        String switcher = html.substring(html.indexOf("id=\"tenant-switcher\""));
+        switcher = switcher.substring(0, switcher.indexOf("</div>", switcher.indexOf("fa-tenant-list")));
+
+        assertThat(switcher).as("목록을 감싸는 스크롤 영역이 있어야 한다").contains("fa-tenant-list");
+        assertThat(switcher).as("40개가 모두 렌더링되어야 한다").contains("고객사1\"", "고객사40");
+
+        // "선택 화면으로" 는 목록이 길어도 늘 보여야 하므로 스크롤 영역 밖에 있어야 한다.
+        int listEnd = html.indexOf("</ul>", html.indexOf("fa-tenant-list"));
+        int fallbackLink = html.indexOf("고객사 선택 화면으로");
+        assertThat(fallbackLink).as("'선택 화면으로' 가 렌더링되어야 한다").isGreaterThan(0);
+        assertThat(fallbackLink).as("'선택 화면으로' 는 스크롤 영역 밖에 있어야 한다").isGreaterThan(listEnd);
+    }
+
+    /** 스크롤을 거는 CSS 가 실제로 있어야 배선이 의미를 가진다(클래스만 붙고 스타일이 없으면 그대로 흘러넘친다). */
+    @Test void 전환_목록에_최대높이와_스크롤이_설정되어_있다() throws Exception {
+        String css = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/static/css/admin.css"),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+        String rule = css.substring(css.indexOf(".fa-tenant-list"));
+        rule = rule.substring(0, rule.indexOf("}"));
+        assertThat(rule).contains("max-height");
+        assertThat(rule).contains("overflow-y");
+    }
+
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */
     @Test void sidebarRendersMenuIcons() throws Exception {
         mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))

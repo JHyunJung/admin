@@ -66,6 +66,15 @@ body { background: var(--bs-body-bg); color: var(--bs-body-color); }
 .fa-sidebar { width: var(--fa-sidebar-w); flex: 0 0 var(--fa-sidebar-w); background: var(--fa-navy); color: var(--fa-navy-text); }
 .fa-brand { color: #fff; font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; padding: 18px 20px !important; border-bottom: 1px solid var(--fa-navy-2); }
 
+/* ---------- 헤더 고객사 전환 드롭다운 ----------
+   고객사가 수십 개로 늘면 목록이 화면 밖으로 흘러 아래쪽은 고를 수 없게 된다(드롭다운 자체는
+   스크롤되지 않는다). 목록에만 최대 높이를 주어 그 안에서 스크롤하게 한다.
+   60vh 는 화면 높이에 따라 줄어들므로 노트북 화면에서도 하단 "선택 화면으로" 가 함께 보인다. */
+.fa-tenant-menu { max-width: 320px; }
+.fa-tenant-list { max-height: 60vh; overflow-y: auto; }
+/* 긴 상호가 드롭다운 폭을 밀어내지 않게 한 줄로 자른다(전체 이름은 title 로 본다). */
+.fa-tenant-menu .dropdown-item { max-width: 100%; }
+
 /* ---------- 사이드바 테넌트 배너 ----------
    아래 업무 메뉴가 전부 이 선택에 걸려 있으므로, 그룹 라벨보다 눈에 먼저 들어와야 한다.
    눌러서 고객사 선택 화면으로 간다(전환 수단이 헤더 드롭다운 하나뿐이면 찾기 어렵다). */
