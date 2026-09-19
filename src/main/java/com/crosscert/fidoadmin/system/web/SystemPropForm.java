@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.system.web;
 
 import com.crosscert.fidoadmin.common.ByteSize;
+import com.crosscert.fidoadmin.system.SecretProps;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
 import jakarta.validation.constraints.NotBlank;
@@ -22,10 +23,12 @@ public class SystemPropForm {
     @ByteSize(max = 4000) private String propValue;
     @NotBlank @ByteSize(max = 20) private String shareType = "NO";
 
+    /** 수정 폼. 비밀값은 실제 값 대신 마스크를 채운다(textarea 에 그대로 실리면 소스로 읽힌다). */
     public static SystemPropForm from(CcfaSystemProp p) {
         SystemPropForm f = new SystemPropForm();
         f.propKey = p.getId().getPropKey();
-        f.propValue = p.getPropValue(); f.shareType = p.getShareType();
+        f.propValue = SecretProps.forDisplay(f.propKey, p.getPropValue());
+        f.shareType = p.getShareType();
         return f;
     }
 
@@ -37,9 +40,16 @@ public class SystemPropForm {
         return p;
     }
 
-    /** 수정 가능한 값만 반영한다. 식별자는 건드리지 않는다. */
+    /**
+     * 수정 가능한 값만 반영한다. 식별자는 건드리지 않는다.
+     *
+     * <p>비밀값은 폼이 마스크를 받아 돌아오므로, 그대로 저장하면 실제 값이 "********" 로
+     * 덮어써진다. 입력이 있을 때만 바꾸고 아니면 기존 값을 둔다.
+     */
     public void applyTo(CcfaSystemProp p) {
-        p.setPropValue(propValue);
+        if (SecretProps.shouldSave(p.getId() == null ? propKey : p.getId().getPropKey(), propValue)) {
+            p.setPropValue(propValue);
+        }
         p.setShareType(shareType);
     }
 }

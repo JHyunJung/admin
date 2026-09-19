@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.system;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,6 +69,62 @@ class FidoSettingServiceTest {
             .thenReturn(List.of(prop("CHALLENGE_TERM", 9L, "120")));
 
         assertThat(service.load().get("CHALLENGE_TERM")).isEqualTo("120");
+    }
+
+    /**
+     * 비밀값은 화면으로 내보내지 않는다.
+     *
+     * <p>{@code input type=password} 는 눈에만 가려 줄 뿐, th:value 에 들어간 값은 HTML 소스에
+     * 그대로 실린다("소스 보기" 로 읽힌다). 그래서 서비스가 값 자체를 마스크로 바꿔 준다.
+     */
+    @Test void 비밀번호는_실제_값_대신_마스크를_돌려준다() {
+        when(repo.findAll(any(org.springframework.data.jpa.domain.Specification.class)))
+            .thenReturn(List.of(prop("SMTP_PASSWORD", 9L, "SuperSecret!234")));
+
+        String shown = service.load().get("SMTP_PASSWORD");
+
+        assertThat(shown).isEqualTo(SecretProps.MASK);
+        assertThat(shown).doesNotContain("SuperSecret");
+    }
+
+    /** 설정되지 않은 비밀번호는 빈 값이다 — 마스크를 주면 "설정되어 있음" 으로 잘못 읽힌다. */
+    @Test void 설정되지_않은_비밀번호는_빈_값이다() {
+        when(repo.findAll(any(org.springframework.data.jpa.domain.Specification.class))).thenReturn(List.of());
+
+        assertThat(service.load().get("SMTP_PASSWORD")).isEmpty();
+    }
+
+    /**
+     * 이 테스트가 이번 변경의 핵심이다.
+     *
+     * <p>화면은 실제 비밀번호를 모른 채 폼을 돌려보낸다. 다른 항목만 바꿔 저장했을 때
+     * 그 빈 값(또는 마스크)을 그대로 쓰면 비밀번호가 조용히 지워진다.
+     */
+    @Test void 다른_설정만_바꿔_저장해도_비밀번호는_유지된다() {
+        CcfaSystemProp saved = prop("SMTP_PASSWORD", 9L, "SuperSecret!234");
+        when(repo.findById(new CcfaSystemPropId("SMTP_PASSWORD", 9L))).thenReturn(Optional.of(saved));
+        when(repo.findById(argThat(id -> !"SMTP_PASSWORD".equals(id.getPropKey()))))
+            .thenReturn(Optional.empty());
+        when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
+
+        // 화면이 돌려보내는 모습: 비밀번호 칸은 비어 있고, 다른 항목만 바뀌었다.
+        service.save(Map.of("CHALLENGE_TERM", "300", "SMTP_PASSWORD", ""));
+
+        assertThat(saved.getPropValue()).isEqualTo("SuperSecret!234");
+        // 마스크가 그대로 돌아온 경우도 같다.
+        service.save(Map.of("SMTP_PASSWORD", SecretProps.MASK));
+        assertThat(saved.getPropValue()).isEqualTo("SuperSecret!234");
+    }
+
+    /** 새 값을 입력하면 교체된다 — 위 규칙이 변경 자체를 막아서는 안 된다. */
+    @Test void 새_비밀번호를_입력하면_교체된다() {
+        CcfaSystemProp saved = prop("SMTP_PASSWORD", 9L, "OldSecret");
+        when(repo.findById(new CcfaSystemPropId("SMTP_PASSWORD", 9L))).thenReturn(Optional.of(saved));
+        when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.save(Map.of("SMTP_PASSWORD", "NewSecret!999"));
+
+        assertThat(saved.getPropValue()).isEqualTo("NewSecret!999");
     }
 
     /** 행이 없으면 만든다. 식별자의 COMPANY_IDX 는 유효 테넌트여야 한다. */

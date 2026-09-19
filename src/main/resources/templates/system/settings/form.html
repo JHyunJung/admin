@@ -40,10 +40,18 @@
                    th:if="${k.type().name() == 'TEXT'}"
                    th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}">
 
-            <input type="password" class="form-control form-control-sm" style="max-width:420px"
-                   th:if="${k.type().name() == 'PASSWORD'}"
-                   th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}"
-                   autocomplete="new-password">
+            <!--/* 저장된 값은 내려보내지 않는다(서비스가 마스크로 바꾼다). 값이 비어 있는 것이
+                   아니라 감춘 것이므로, 그대로 두면 기존 값이 유지된다는 점을 알려야 한다. */-->
+            <div th:if="${k.type().name() == 'PASSWORD'}" style="max-width:420px">
+              <input type="password" class="form-control form-control-sm"
+                     th:name="${k.key()}" th:id="${k.key()}" th:value="${values.get(k.key())}"
+                     autocomplete="new-password">
+              <div class="form-text">
+                <span th:if="${!#strings.isEmpty(values.get(k.key()))}">설정되어 있습니다. </span>
+                <span th:if="${#strings.isEmpty(values.get(k.key()))}">설정되어 있지 않습니다. </span>
+                바꿀 때만 입력하세요. 그대로 두면 기존 값이 유지됩니다.
+              </div>
+            </div>
           </div>
         </div>
       </div>

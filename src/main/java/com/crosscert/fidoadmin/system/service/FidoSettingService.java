@@ -4,6 +4,7 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
+import com.crosscert.fidoadmin.system.SecretProps;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
 import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository;
@@ -47,7 +48,9 @@ public class FidoSettingService {
         Map<String, String> values = new LinkedHashMap<>();
         for (FidoSettingKey k : FidoSettingKey.values()) {
             String v = stored.get(k.key());
-            values.put(k.key(), v == null ? k.defaultValue() : v);
+            // 비밀값은 실제 값을 화면으로 내보내지 않는다. input type=password 는 눈에만 가려 줄 뿐
+            // th:value 로 들어간 값이 HTML 소스에 그대로 실린다.
+            values.put(k.key(), SecretProps.forDisplay(k.key(), v == null ? k.defaultValue() : v));
         }
         return values;
     }
@@ -65,6 +68,9 @@ public class FidoSettingService {
         for (FidoSettingKey k : FidoSettingKey.values()) {
             String value = submitted.get(k.key());
             if (value == null) continue;
+            // 비밀값은 화면이 실제 값을 모른 채 돌아온다. 빈 값이나 마스크를 그대로 저장하면
+            // 다른 항목만 바꿔 저장했을 때 비밀번호가 지워진다. 입력이 있을 때만 교체한다.
+            if (!SecretProps.shouldSave(k.key(), value)) continue;
             CcfaSystemPropId id = new CcfaSystemPropId(k.key(), company);
             CcfaSystemProp row = repository.findById(id).orElseGet(() -> {
                 CcfaSystemProp fresh = new CcfaSystemProp();

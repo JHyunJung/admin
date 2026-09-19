@@ -24,7 +24,7 @@
   <tr><th>AAID</th><td class="fa-mono" th:text="${item.aaid}"></td></tr>
   <tr><th>생체 유형</th><td th:text="${item.bioType}"></td></tr>
   <tr><th>인증기기 버전</th><td th:text="${item.authenticatorversion}"></td></tr>
-  <tr><th>KEYID</th><td class="fa-mono fa-pre" th:text="${item.keyid}"></td></tr>
+  <tr><th>KEYID (앞 16자)</th><td class="fa-mono" th:text="${item.keyidHead != null} ? |${item.keyidHead}…| : ''"></td></tr>
   <tr><th>PUBKEY (앞 16자)</th><td class="fa-mono" th:text="${item.pubkeyHead != null} ? |${item.pubkeyHead}…| : ''"></td></tr>
   <tr><th>CERTIFICATE (앞 16자)</th><td class="fa-mono" th:text="${item.certificateHead != null} ? |${item.certificateHead}…| : ''"></td></tr>
   <tr><th>UVS</th><td th:text="${item.uvs}"></td></tr>
