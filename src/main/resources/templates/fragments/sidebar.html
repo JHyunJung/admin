@@ -6,9 +6,17 @@
               hasTenant=${selectedCompanyName != null}">
   <div class="fa-brand px-3 py-3">FIDO Admin</div>
 
-  <!-- 테넌트 영역: 선택된 고객사의 데이터 -->
-  <div class="px-3 pb-1 small text-secondary text-truncate"
-       th:text="${selectedCompanyName} ?: '고객사 미선택'">고객사</div>
+  <!--/* 지금 어느 고객사를 보고 있는지. 아래 업무 메뉴가 전부 이 선택에 걸려 있어서
+         그룹 라벨과 섞이지 않게 별도 배너로 둔다. 눌러서 바로 전환할 수 있다. */-->
+  <a th:href="@{/select-tenant}" class="fa-tenant" th:classappend="${hasTenant} ? '' : 'fa-tenant-none'"
+     th:title="${hasTenant} ? |선택된 고객사: ${selectedCompanyName} (눌러서 전환)| : '고객사를 선택해야 업무 메뉴가 열립니다'">
+    <span class="fa-tenant-label">
+      <i class="bi" th:classappend="${hasTenant} ? 'bi-building' : 'bi-exclamation-triangle'" aria-hidden="true"></i>
+      <span th:text="${hasTenant} ? '선택된 고객사' : '고객사 미선택'">선택된 고객사</span>
+    </span>
+    <span class="fa-tenant-name text-truncate"
+          th:text="${hasTenant} ? ${selectedCompanyName} : '선택하기'">고객사</span>
+  </a>
   <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(tenantItems)}" class="mb-2"
        th:classappend="${hasTenant} ? '' : 'opacity-50'">
     <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>

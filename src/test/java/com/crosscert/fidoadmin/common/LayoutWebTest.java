@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -135,6 +136,37 @@ class LayoutWebTest {
         assertThat(sidebar).as("사이드바에 '내 정보' 그룹이 남아 있다").doesNotContain("내 정보");
         // 업무 메뉴는 그대로 있어야 한다 — 위 단언이 사이드바를 통째로 비워도 통과하지 않게 한다.
         assertThat(sidebar).contains("/appids");
+    }
+
+    /**
+     * 지금 어느 고객사를 보고 있는지가 사이드바에 드러난다.
+     *
+     * <p>아래 업무 메뉴가 전부 이 선택에 걸려 있는데, 예전에는 그룹 라벨과 같은 작은 회색
+     * 글씨 한 줄이라 눈에 들어오지 않았다. 전용 배너로 두고 눌러서 전환할 수 있게 했다.
+     */
+    @Test void 사이드바가_선택된_고객사를_배너로_보여준다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L))
+                .with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        String sidebar = html.substring(html.indexOf("fa-sidebar"), html.indexOf("fa-main"));
+        assertThat(sidebar).contains("fa-tenant");
+        assertThat(sidebar).as("선택된 고객사 이름이 보여야 한다").contains("KB국민은행");
+        assertThat(sidebar).as("배너를 눌러 전환할 수 있어야 한다").contains("/select-tenant");
+        // 선택된 상태이므로 미선택 경고 스킨이 붙으면 안 된다.
+        assertThat(sidebar).doesNotContain("fa-tenant-none");
+    }
+
+    /**
+     * 고객사를 고르지 않으면 업무 화면은 선택 화면으로 보낸다(TenantSelectionInterceptor).
+     * 배너의 "미선택" 표시는 이 리다이렉트를 빠져나가는 화면(SYSTEM·PERSONAL)에서 보이는 것이므로,
+     * 여기서는 리다이렉트 자체를 고정한다 — 사용자가 미선택 상태로 업무 화면에 머무를 수 없어야 한다.
+     */
+    @Test void 고객사_미선택이면_업무_화면은_선택_화면으로_보낸다() throws Exception {
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/select-tenant"));
     }
 
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */

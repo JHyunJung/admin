@@ -84,6 +84,25 @@ class TenantSelectionControllerWebTest {
         assertThat(html).contains("name=\"companyIdx\"");
     }
 
+    /**
+     * 고객사를 고르지 않은 상태에서는 사이드바 배너가 경고로 보인다.
+     *
+     * <p>이 화면은 선택 화면이라 인터셉터의 리다이렉트를 빠져나간다 — 미선택 상태의
+     * 사이드바를 실제로 렌더링해 볼 수 있는 자리다. 업무 메뉴가 열리지 않는 상태이므로
+     * 색과 문구로 구분되어야 한다(LayoutWebTest 는 선택된 쪽을 본다).
+     */
+    @Test void 고객사_미선택이면_사이드바_배너가_경고로_보인다() throws Exception {
+        when(companies.all()).thenReturn(List.of());
+
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        String sidebar = html.substring(html.indexOf("fa-sidebar"), html.indexOf("fa-main"));
+        assertThat(sidebar).contains("fa-tenant-none");
+        assertThat(sidebar).contains("고객사 미선택");
+    }
+
     /** 카드가 아니라 목록(표)으로 보여준다. */
     @Test void 고객사를_목록으로_보여준다() throws Exception {
         CcfaCompany c = new CcfaCompany();
