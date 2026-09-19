@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -99,6 +100,41 @@ class LayoutWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("/system/props"))))
             .andExpect(content().string(containsString("/appids")));
+    }
+
+    /**
+     * 본인 계정 메뉴(MenuArea.PERSONAL)는 사이드바가 아니라 헤더의 사용자 드롭다운에 있다.
+     * 업무 메뉴와 성격이 달라 옮겼다.
+     *
+     * <p>"어딘가에 /me/password 가 있다" 로는 옮겨졌는지 알 수 없다(옮기기 전에도 통과한다).
+     * 그래서 드롭다운 컨테이너와 그 안의 항목을 함께 본다.
+     */
+    @Test void 개인_메뉴는_헤더_드롭다운에_있다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L))
+                .with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("id=\"account-menu\"");
+
+        String dropdown = html.substring(html.indexOf("id=\"account-menu\""));
+        dropdown = dropdown.substring(0, dropdown.indexOf("</div>", dropdown.indexOf("</ul>")));
+        assertThat(dropdown).as("개인 메뉴가 헤더 드롭다운 안에 있어야 한다").contains("/me/password");
+        assertThat(dropdown).as("로그아웃도 같은 드롭다운으로 모았다").contains("/logout");
+    }
+
+    /** 사이드바에는 개인 메뉴를 그리지 않는다(헤더로 옮긴 것이 사이드바에도 남으면 중복이다). */
+    @Test void 사이드바에는_개인_메뉴가_없다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L))
+                .with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        String sidebar = html.substring(html.indexOf("fa-sidebar"), html.indexOf("fa-main"));
+        assertThat(sidebar).as("사이드바에 개인 메뉴가 남아 있다").doesNotContain("/me/password");
+        assertThat(sidebar).as("사이드바에 '내 정보' 그룹이 남아 있다").doesNotContain("내 정보");
+        // 업무 메뉴는 그대로 있어야 한다 — 위 단언이 사이드바를 통째로 비워도 통과하지 않게 한다.
+        assertThat(sidebar).contains("/appids");
     }
 
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */

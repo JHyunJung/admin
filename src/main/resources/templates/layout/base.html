@@ -48,14 +48,43 @@
           <i class="bi bi-gear" aria-hidden="true"></i> 시스템 관리
         </span>
 
-        <span sec:authentication="principal.userNm">이름</span>
-        <!-- COMPANY 는 자기 고객사가 고정이므로 정적 텍스트 -->
-        <span class="text-secondary" sec:authorize="!hasRole('SUPER')"
-              sec:authentication="principal.companyName">고객사</span>
-        <span class="badge text-bg-secondary" sec:authorize="hasRole('SUPER')">SUPER</span>
-        <form th:action="@{/logout}" method="post" class="m-0">
-          <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>
-        </form>
+        <!-- 본인 계정 메뉴. 업무 메뉴(사이드바)와 성격이 달라 여기 모은다.
+             항목은 MenuArea.PERSONAL 에서 읽으므로 개인 화면이 늘면 여기 자동으로 들어온다. -->
+        <div class="dropdown" id="account-menu"
+             th:with="personalItems=${@menuRegistry.itemsFor(
+                        #authorization.expression('hasRole(''SUPER'')'),
+                        T(com.crosscert.fidoadmin.common.MenuArea).PERSONAL)}">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
+                  type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle" aria-hidden="true"></i>
+            <span sec:authentication="principal.userNm">이름</span>
+            <span class="badge text-bg-secondary" sec:authorize="hasRole('SUPER')">SUPER</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="px-3 py-1 small text-secondary">
+              <!-- 소속. SUPER 는 전역이라 고정 문구가 아니라 실제 소속명을 그대로 보여준다. -->
+              <span sec:authentication="principal.companyName">고객사</span>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li th:each="m : ${personalItems}">
+              <a class="dropdown-item d-flex align-items-center gap-2" th:href="@{${m.href}}"
+                 th:classappend="${currentPath == m.href} ? 'active' : ''">
+                <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
+                <span th:text="${m.title}">메뉴</span>
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <!-- 로그아웃은 상태를 바꾸므로 링크가 아니라 POST 폼이다(CSRF 토큰이 함께 간다). -->
+              <form th:action="@{/logout}" method="post" class="m-0">
+                <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
+                  <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                  <span>로그아웃</span>
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
       </div>
     </header>
     <div class="fa-content p-3">

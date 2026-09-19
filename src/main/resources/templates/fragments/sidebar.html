@@ -3,7 +3,6 @@
      th:with="isSuper=${#authorization.expression('hasRole(''SUPER'')')},
               tenantItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).TENANT)},
               systemItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).SYSTEM)},
-              personalItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).PERSONAL)},
               hasTenant=${selectedCompanyName != null}">
   <div class="fa-brand px-3 py-3">FIDO Admin</div>
 
@@ -36,14 +35,8 @@
     </div>
   </div>
 
-  <!-- 개인 영역 -->
-  <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(personalItems)}" class="mb-2">
-    <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
-    <a th:each="m : ${g.value}" th:href="@{${m.href}}"
-       th:classappend="${currentPath == m.href} ? 'active' : ''"
-       class="fa-link d-flex align-items-center gap-2 px-3 py-1">
-      <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
-      <span th:text="${m.title}">메뉴</span>
-    </a>
-  </div>
+  <!--/* 개인 영역(MenuArea.PERSONAL)은 여기서 그리지 않는다. 본인 계정 관련 메뉴라
+         업무 메뉴와 성격이 달라 헤더 우측의 사용자 드롭다운으로 옮겼다(layout/base.html).
+         MenuRegistry 의 항목 자체는 남아 있다 — 그 영역 값이 테넌트 선택 인터셉터의
+         판정 근거이기도 하다(개인 화면은 고객사 선택 없이 열려야 한다). */-->
 </nav>
