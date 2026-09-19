@@ -74,3 +74,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 })();
+
+// data-auto-submit 폼: 입력이 바뀌면 조회 버튼 없이 바로 제출한다.
+//
+// change 를 쓰는 이유: input 이벤트로 걸면 날짜를 타이핑하는 중간 상태
+// ("2026-0" 같은 값)마다 제출이 나간다. change 는 입력이 확정될 때만 뜬다.
+//
+// 조회 버튼은 남겨 둔다. 이 스크립트가 로드되지 않는 환경에서도 조회할 수 있어야 한다.
+(function () {
+  document.querySelectorAll('form[data-auto-submit]').forEach(function (form) {
+    form.addEventListener('change', function (e) {
+      if (!e.target.matches('input, select')) return;
+      // requestSubmit() 은 form.submit() 과 달리 제약 검증(required, type=date 형식)을
+      // 건너뛰지 않는다. 잘못된 날짜를 그대로 서버로 보내지 않기 위해 이쪽을 쓴다.
+      if (form.requestSubmit) form.requestSubmit();
+      else form.submit();
+    });
+  });
+})();

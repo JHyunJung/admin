@@ -5,7 +5,11 @@
 <body>
 <main>
   <h1 class="h4 mb-3">대시보드</h1>
-  <form method="get" th:action="@{/}" class="row g-2 align-items-end mb-3">
+  <!--
+    data-auto-submit: 입력이 바뀌면 조회 버튼 없이 바로 조회한다(admin.js).
+    조회 버튼은 남겨 둔다 — 스크립트가 로드되지 않아도 조회할 수 있어야 한다.
+  -->
+  <form method="get" th:action="@{/}" class="row g-2 align-items-end mb-3" data-auto-submit>
     <div class="col-auto">
       <label class="form-label small mb-0">서비스</label>
       <select name="serviceName" class="form-select form-select-sm">
