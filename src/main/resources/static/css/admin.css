@@ -97,6 +97,17 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 /* 행 전체가 상세로 가는 목록. admin.js 가 링크 있는 행에만 이 클래스를 단다
    (빈 목록의 "데이터가 없습니다" 행은 클릭되지 않으므로 커서도 바뀌지 않는다). */
 .fa-table tbody tr.fa-row-link { cursor: pointer; }
+/* 행 전체가 클릭되므로 대표값만 파랗게 두면 "여기만 눌러야 하나" 로 읽힌다.
+   글자색은 본문과 같게 두고 굵기로만 대표값임을 알린다.
+
+   링크 자체는 남긴다(스타일만 죽인다). admin.js 가 이 href 를 읽어 행의 목적지를
+   정하고, 키보드·스크린리더는 이 링크로 상세에 들어가며, 우클릭 "새 탭에서 열기"도
+   진짜 <a> 여야 동작한다. */
+.fa-table tbody tr.fa-row-link a { color: inherit; text-decoration: none; font-weight: 600; }
+/* 행에 마우스를 올리면 밑줄로 갈 곳이 있음을 알린다(행 전체가 과녁이라 hover 를 행에 건다). */
+.fa-table tbody tr.fa-row-link:hover a { text-decoration: underline; }
+/* 키보드 초점은 그대로 보이게 둔다 — 마우스가 없는 사용자의 유일한 단서다. */
+.fa-table tbody tr.fa-row-link a:focus-visible { text-decoration: underline; }
 .table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
 .fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
 /* ---------- 대시보드 요약 카드 ----------
