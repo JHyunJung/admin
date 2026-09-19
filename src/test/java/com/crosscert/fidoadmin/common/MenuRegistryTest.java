@@ -8,8 +8,11 @@ class MenuRegistryTest {
 
     MenuRegistry registry = new MenuRegistry();
 
+    /** SUPER 는 역할로 가려지는 메뉴가 없다. 감춘 항목(hidden)은 누구에게도 보이지 않으므로 뺀다. */
     @Test void superSeesEveryMenu() {
-        assertThat(registry.itemsFor(true)).hasSize(MenuRegistry.ALL.size());
+        long visible = MenuRegistry.ALL.stream().filter(m -> !m.hidden()).count();
+        assertThat(registry.itemsFor(true)).hasSize((int) visible);
+        assertThat(registry.itemsFor(true)).noneMatch(MenuItem::hidden);
     }
 
     @Test void companyDoesNotSeeSuperOnlyMenus() {
@@ -65,6 +68,7 @@ class MenuRegistryTest {
         long system = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.SYSTEM).count();
         long personal = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.PERSONAL).count();
         assertThat(tenant + system + personal).isEqualTo(MenuRegistry.ALL.size());
+        // 감춘 항목(hidden)도 ALL 에는 남는다 — 경로의 영역 판정에 필요하다.
         assertThat(tenant).isEqualTo(17);
     }
 
@@ -80,14 +84,31 @@ class MenuRegistryTest {
     /**
      * 필드 정의(/system/fields)는 메뉴 정의 화면과 같은 이유로 메뉴에서 뺐다. CCFA_FIELDS 를
      * 고쳐도 Thymeleaf 템플릿이 그리는 화면은 바뀌지 않는다. 데모 접근코드는 데모용이라
-     * 운영 동선에 없다. 둘 다 화면·컨트롤러는 남아 있어 URL 로는 열린다(메뉴에서만 감췄다).
+     * 운영 동선에 없다. 메일/SMS 큐는 어드민이 읽기만 하는 화면인데 운영에서 쓰지 않는다.
+     * 셋 다 화면·컨트롤러는 남아 있어 URL 로는 열린다(사이드바에서만 감췄다).
      *
      * <p>되살릴 때는 이 테스트를 지우는 것으로 끝내지 말고, 필드 정의는 사이드바가 실제로
-     * 그 데이터를 읽게 만든 뒤여야 한다.
+     * 그 데이터를 읽게 만든 뒤여야 하고, 메일/SMS 큐는 발송 주체가 동작하는지 확인한 뒤여야 한다.
      */
     @Test void 운영_동선에서_치운_화면은_메뉴에_없다() {
-        assertThat(MenuRegistry.ALL).extracting(MenuItem::href)
-            .doesNotContain("/system/fields", "/fido2/demo-access-codes");
+        assertThat(registry.itemsFor(true)).extracting(MenuItem::href)
+            .doesNotContain("/system/fields", "/fido2/demo-access-codes", "/logs/mailing");
+    }
+
+    /**
+     * 감춘 TENANT 화면도 영역 판정은 살아 있어야 한다.
+     *
+     * <p>목록에서 통째로 지우면 areaOf 가 그 경로를 몰라 SYSTEM 으로 떨어지고, 테넌트 선택
+     * 인터셉터가 막지 못한다. 그러면 서비스 계층이 NoTenantSelectedException 을 던지고
+     * GlobalExceptionHandler 가 "인터셉터가 놓친 경로" 경고를 남긴다 — 화면 동작은 같지만
+     * 운영 로그에 계속 쌓인다. 실제로 그 상태를 한 번 만들었다가 되돌린 이력이 있다.
+     */
+    @Test void 감춘_화면도_영역_판정은_유지된다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.areaOf("/logs/mailing")).isEqualTo(MenuArea.TENANT);
+        assertThat(r.areaOf("/logs/mailing/1")).isEqualTo(MenuArea.TENANT);
+        // 감췄어도 목록 경로 절상은 그대로여야 한다(테넌트 전환 후 돌아갈 곳).
+        assertThat(r.listPathFor("/logs/mailing/1")).isEqualTo("/logs/mailing");
     }
 
     @Test void 시스템_영역은_전부_superOnly_다() {

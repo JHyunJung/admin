@@ -27,6 +27,16 @@ public class MenuRegistry {
      * (docs/erd/2026-09-18-테이블-존치-검토.md 가 CCFA_MENU 와 한 문단에서 함께 지목했다).
      * 데모 접근코드는 이름 그대로 데모용이라 운영 동선에 들어오지 않는다.
      *
+     * <p>"메일/SMS 큐"(/logs/mailing)도 운영에서 쓰지 않아 뺐다. 어드민은 CCFA_MAILING 을
+     * 읽기만 하고 발송은 다른 시스템이 한다 — 존치 검토 문서가 "그 발송 주체가 지금도
+     * 동작하는가" 를 확인 사항으로 남겨 둔 화면이다. 발송 주체가 살아 있고 큐를 봐야 할
+     * 일이 생기면 그때 되살린다.
+     *
+     * <p>다만 이것은 목록에서 지우지 않고 {@code hidden} 으로 감춘다. TENANT 경로라서
+     * 지우면 {@link #areaOf} 가 SYSTEM 으로 판정해 테넌트 선택 인터셉터가 막지 못한다
+     * (자세한 이유는 {@link MenuItem} 주석에 있다). 위의 두 화면은 SYSTEM 이라 지워도
+     * 판정이 달라지지 않아 그대로 두었다.
+     *
      * <p>"시스템관리"는 테넌트 항목(운영자·라이선스·시스템 설정)과 전역 항목이 섞인
      * 유일한 그룹이다. 사이드바가 영역별로 나눠 그리므로 이 제목은 테넌트 구역과
      * 시스템 구역에 각각 한 번씩 나타난다. 의미상 맞는 표시다 — 위쪽은 선택한 고객사의
@@ -38,7 +48,9 @@ public class MenuRegistry {
         new MenuItem(MenuArea.TENANT, "로그", "FIDO 로그", "/logs/fido", false, "bi-journal-text"),
         new MenuItem(MenuArea.TENANT, "로그", "감사 로그", "/logs/audit", false, "bi-clipboard-check"),
         new MenuItem(MenuArea.TENANT, "로그", "예외 로그", "/logs/exceptions", false, "bi-exclamation-triangle"),
-        new MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope"),
+        // 메일/SMS 큐는 사이드바에서 감췄다(hidden). 항목을 지우지 않는 이유는 MenuItem 주석에 있다 —
+        // TENANT 경로를 목록에서 빼면 areaOf 가 SYSTEM 으로 판정해 인터셉터가 막지 못한다.
+        new MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope", true),
         // 이전 어드민의 "이상 징후 탐지 → 정책관리". 모니터링 화면은 아직 없다.
         new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "앱 ID", "/appids", false, "bi-app-indicator"),
@@ -73,8 +85,18 @@ public class MenuRegistry {
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "코드 그룹/코드", "/system/options", true, "bi-tags"),
         new MenuItem(MenuArea.PERSONAL, "내 정보", "내 비밀번호 변경", "/me/password", false, "bi-key"));
 
+    /**
+     * 화면에 내놓을 메뉴. {@code hidden} 항목은 뺀다.
+     *
+     * <p>{@link #ALL} 을 직접 쓰지 않는 이유가 여기 있다 — ALL 은 "이 경로가 어느 영역인가" 를
+     * 아는 원본이고(areaOf·listPathFor), 이 메서드는 "사람에게 보여 줄 목록" 이다. 둘을 갈라
+     * 두어야 화면에서 감춘 것이 경로 판정까지 바꾸지 않는다.
+     */
     public List<MenuItem> itemsFor(boolean isSuper) {
-        return isSuper ? ALL : ALL.stream().filter(m -> !m.superOnly()).toList();
+        return ALL.stream()
+            .filter(m -> !m.hidden())
+            .filter(m -> isSuper || !m.superOnly())
+            .toList();
     }
 
     /**
