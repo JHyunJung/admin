@@ -2,9 +2,16 @@ package com.crosscert.fidoadmin.company.service;
 
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
+import com.crosscert.fidoadmin.company.web.FdsMonitorRow;
 import com.crosscert.fidoadmin.log.service.FidoLogTable;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,5 +64,83 @@ public class FdsMonitorQueryService {
     static Optional<Integer> shorter(Optional<Integer> a, Optional<Integer> b) {
         if (a.isPresent() && b.isPresent()) return Optional.of(Math.min(a.get(), b.get()));
         return a.isPresent() ? a : b;
+    }
+
+    /**
+     * 그 날짜에서, 같은 SERIALCODE 의 직전 또는 직후 요청이 {@code term} 초 이내인 행.
+     *
+     * <p>자기 조인이나 상관 서브쿼리를 쓰지 않는다. 이전 어드민은 행마다 ±N초 안의 건수를
+     * 세었는데 그것은 행 수 제곱에 비례한다. 창 함수는 한 번의 스캔이다.
+     *
+     * <p>{@code term} 은 바인드 파라미터다. 테이블 이름 외에는 SQL 에 문자열로 들어가는 값이 없다.
+     */
+    @Transactional(readOnly = true)
+    public Page<FdsMonitorRow> search(LocalDate date, String servicename, int term, Pageable pageable) {
+        if (term <= 0) throw new IllegalArgumentException("반복 주기는 1초 이상이어야 합니다");
+        Long companyIdx = tenant.companyIdx();
+        String table = tables.nameFor(date);
+        if (!tables.exists(table)) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        var params = new MapSqlParameterSource()
+            .addValue("companyIdx", companyIdx)
+            .addValue("servicename", like(servicename))
+            .addValue("term", term);
+
+        // 테넌트·서비스명 조건은 창 함수 안쪽에 둔다. 바깥에 두면 다른 고객사(또는 다른 서비스)의
+        // 요청이 PREV_TIME/NEXT_TIME 에 섞여 "같은 기기의 반복"이 아닌 것이 잡힌다.
+        // SERIALCODE IS NOT NULL — NULL 끼리 한 묶음이 되어 서로 무관한 요청이 반복으로 잡히는 것을 막는다.
+        String flagged = """
+            SELECT IDX, SERVICENAME, SERIALCODE, CREATEDTIME, PREV_TIME, NEXT_TIME, REPEATS
+              FROM (
+                SELECT IDX, SERVICENAME, SERIALCODE, CREATEDTIME,
+                       LAG(CREATEDTIME)  OVER (PARTITION BY SERIALCODE ORDER BY CREATEDTIME, IDX) AS PREV_TIME,
+                       LEAD(CREATEDTIME) OVER (PARTITION BY SERIALCODE ORDER BY CREATEDTIME, IDX) AS NEXT_TIME,
+                       COUNT(*)          OVER (PARTITION BY SERIALCODE)                             AS REPEATS
+                  FROM %s
+                 WHERE COMPANY_IDX = :companyIdx
+                   AND SERIALCODE IS NOT NULL
+                   AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)
+              )
+             WHERE (PREV_TIME IS NOT NULL AND CREATEDTIME - PREV_TIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+                OR (NEXT_TIME IS NOT NULL AND NEXT_TIME - CREATEDTIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+            """.formatted(table);
+
+        Long total = jdbc.queryForObject("SELECT COUNT(*) FROM (" + flagged + ")", params, Long.class);
+        if (total == null || total == 0) {
+            return new PageImpl<>(List.of(), pageable, 0);
+        }
+
+        // Oracle 페이징. rownum 은 정렬 전에 매겨지므로 정렬을 끝낸 결과를 한 번 감싼다.
+        params.addValue("offset", pageable.getOffset())
+              .addValue("limit", pageable.getPageSize());
+        String sql = "SELECT * FROM ("
+            + "  SELECT b.*, rownum AS RN FROM ("
+            + flagged
+            + "     ORDER BY CREATEDTIME DESC, IDX DESC"
+            + "  ) b WHERE rownum <= (:offset + :limit)"
+            + ") WHERE RN > :offset";
+
+        List<FdsMonitorRow> rows = jdbc.query(sql, params, (rs, i) -> FdsMonitorRow.of(
+            rs.getLong("IDX"),
+            rs.getString("SERVICENAME"),
+            rs.getString("SERIALCODE"),
+            toLocal(rs.getTimestamp("CREATEDTIME")),
+            toLocal(rs.getTimestamp("PREV_TIME")),
+            toLocal(rs.getTimestamp("NEXT_TIME")),
+            rs.getLong("REPEATS")));
+
+        return new PageImpl<>(rows, pageable, total);
+    }
+
+    private static java.time.LocalDateTime toLocal(java.sql.Timestamp ts) {
+        return ts == null ? null : ts.toLocalDateTime();
+    }
+
+    /** 부분 일치 검색어. 빈 값은 null 로 바꿔 조건을 건너뛰게 한다. */
+    private static String like(String value) {
+        if (value == null || value.isBlank()) return null;
+        return "%" + value.trim() + "%";
     }
 }
