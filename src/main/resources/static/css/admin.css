@@ -178,6 +178,18 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 .page-link { border-radius: 8px !important; margin: 0 2px; }
 .pagination { --bs-pagination-active-bg: var(--fa-accent); --bs-pagination-active-border-color: var(--fa-accent); --bs-pagination-color: #374151; }
 
+/* ---------- 이전 어드민 목록 규격 (AppID 관리 · 멤버코드 관리 · AAID(정책) 보기) ---------- */
+/* 검색 패널: 회색 바탕에 오른쪽 정렬, 노란 검색 버튼 */
+.fa-search-panel { background: #f4f5f7; border: 1px solid var(--fa-line); border-radius: var(--bs-border-radius); padding: 14px 16px; margin-bottom: 18px; }
+.fa-search-panel .form-control, .fa-search-panel .form-select { min-height: 38px; }
+.btn-search { --bs-btn-bg: #f3b84a; --bs-btn-border-color: #f3b84a; --bs-btn-color: #fff; --bs-btn-hover-bg: #e5a72e; --bs-btn-hover-border-color: #e5a72e; --bs-btn-active-bg: #d99a23; --bs-btn-active-border-color: #d99a23; --bs-btn-active-color: #fff; min-width: 180px; font-weight: 600; }
+/* 결과 건수: 파란 알약 배지 */
+.fa-result-badge { display: inline-block; background: #1e9bd8; color: #fff; font-size: .8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+/* 상태 배지는 이전 어드민처럼 진한 바탕 + 흰 글자 */
+.fa-list-legacy .badge.text-bg-success { background: #5cb85c !important; color: #fff !important; border-radius: 3px; }
+.fa-list-legacy .badge.text-bg-danger { background: #d9534f !important; color: #fff !important; border-radius: 3px; }
+.fa-list-legacy .fa-table th { text-transform: none; letter-spacing: 0; font-size: .82rem; }
+
 /* ---------- 텍스트 유틸 ---------- */
 .fa-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
 .fa-pre { white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto; }

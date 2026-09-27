@@ -2,10 +2,10 @@
 <html lang="ko"
       xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
-<head><title>AAID(정책)</title></head>
+<head><title>AAID(정책) 보기</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3">AAID(정책)</h1>
+<main class="fa-list-legacy">
+  <h1 class="h4 mb-3">AAID(정책) 보기</h1>
 
   <div th:if="${statusMessage != null}"
        class="alert alert-success py-2"
@@ -14,17 +14,14 @@
   </div>
 
   <form method="get" th:action="@{/criteria}"
-        class="row g-2 align-items-end justify-content-end mb-3">
+        class="fa-search-panel row g-2 align-items-center justify-content-end">
     <div class="col-auto">
-      <label class="form-label small mb-0">AAID</label>
       <input name="aaid"
              th:value="${search.aaid}"
-             class="form-control form-control-sm">
+             class="form-control" placeholder="AAID" aria-label="AAID">
     </div>
-    <div class="col-auto">
-      <button class="btn btn-outline-secondary btn-sm">검색</button>
-      <a th:href="@{/criteria}" class="btn btn-link btn-sm">초기화</a>
-    </div>
+    <div class="col-auto"><button class="btn btn-search"><i class="bi bi-search me-1"></i>검색</button></div>
+    <div class="col-auto"><a th:href="@{/criteria}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
 
   <!-- 전체 토글. 검색·페이지 상태를 hidden 으로 실어 돌아올 자리를 지킨다. -->
@@ -113,10 +110,7 @@
     </table>
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|${page.totalElements}건이 검색되었습니다.|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
-  </div>
+  <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
 </main>
 </body>
 </html>

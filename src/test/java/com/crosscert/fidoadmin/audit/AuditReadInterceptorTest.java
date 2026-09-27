@@ -60,7 +60,7 @@ class AuditReadInterceptorTest {
 
         ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
         verify(audit).log(eq(AuditType.MENU_VIEW), msg.capture());
-        assertThat(msg.getValue()).isEqualTo("사용자 화면 조회");
+        assertThat(msg.getValue()).isEqualTo("FIDO 등록자 관리 화면 조회");
     }
 
     /** 컨트롤러가 AuditView 로 대상을 적어 두면 그 건수만큼 DATA_VIEW 가 남는다. */
@@ -73,7 +73,7 @@ class AuditReadInterceptorTest {
         ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
         verify(audit, times(2)).log(eq(AuditType.DATA_VIEW), msg.capture());
         assertThat(msg.getAllValues())
-            .containsExactly("사용자 상세 조회 (ID: 5)", "사용자 상세 조회 (ID: 6)");
+            .containsExactly("FIDO 등록자 관리 상세 조회 (ID: 5)", "FIDO 등록자 관리 상세 조회 (ID: 6)");
         verify(audit, never()).log(eq(AuditType.MENU_VIEW), anyString());
     }
 

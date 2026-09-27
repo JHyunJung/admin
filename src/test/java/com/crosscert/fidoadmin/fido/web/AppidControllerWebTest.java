@@ -94,6 +94,29 @@ class AppidControllerWebTest {
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
     }
 
+    /** 이전 어드민 "AppID 관리" 목록 규격 — 장치/기본값/상태를 코드가 아니라 표시어로 보여 준다. */
+    @Test void listRendersLegacyColumnsAndLabels() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(appid(1L))));
+        when(companies.names()).thenReturn(Map.of(1L, "KB국민은행"));
+        String html = mvc.perform(get("/appids").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html)
+            .contains("AppID 관리")
+            .contains("추가하기")
+            .contains(">Android<")          // device=android
+            .contains(">설정<")             // deviceDefault=T
+            .contains(">활성<")             // status=use
+            .contains("1건이 검색되었습니다.")
+            .doesNotContain(">use<");
+        // 컬럼 순서: 번호 · APPID · 서비스명 · 장치 · 설명 · 기본값 · 생성일 · 수정일 · 상태
+        int[] pos = { html.indexOf("<th>번호</th>"), html.indexOf("<th>APPID</th>"), html.indexOf("<th>서비스명</th>"),
+            html.indexOf("<th>장치</th>"), html.indexOf("<th>설명</th>"), html.indexOf("<th>기본값</th>"),
+            html.indexOf("<th>생성일</th>"), html.indexOf("<th>수정일</th>"), html.indexOf("<th>상태</th>") };
+        for (int i = 0; i < pos.length; i++) org.assertj.core.api.Assertions.assertThat(pos[i]).as("column " + i).isGreaterThan(i == 0 ? -1 : pos[i - 1]);
+    }
+
     /**
      * Task 10: 테넌트는 세션이 정하므로 SUPER 도 목록 검색폼에서 고객사를 따로 고르지 않는다.
      * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로

@@ -60,20 +60,21 @@ public class MenuRegistry {
         // 반복 주기 조건만 본다(docs/superpowers/specs/2026-09-27-fds-monitor-design.md).
         new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
         new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "모니터링", "/fds-monitor", false, "bi-activity"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "앱 ID", "/appids", false, "bi-app-indicator"),
+        // 이전 어드민의 "FIDO 서버 관리" 이름·순서를 그대로 쓴다(AppID 관리 … TC원문 보기).
+        // 서명(SIGN)은 이전 어드민에 없던 화면이라 같은 관례("… 보기")로 맨 끝에 둔다.
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AppID 관리", "/appids", false, "bi-app-indicator"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "멤버코드 관리",
                 "/appservers", false, "bi-hdd-network"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "사용자", "/users", false, "bi-people"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "챌린지", "/challenges", false, "bi-patch-question"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명", "/signs", false, "bi-pen"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "거래 해시", "/transaction-hashes", false, "bi-hash"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "거래 확인", "/transaction-confirmations", false, "bi-check2-square"),
-        // 이전 어드민의 "FIDO 서버 관리 → AAID(정책) 보기" 자리로 되돌렸다. 기준 데이터
-        // (CRITERIA)는 COMPANY_IDX 가 없는 전역 테이블이지만, 이 화면이 실제로 하는 일은
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "CHALLENGE 보기", "/challenges", false, "bi-patch-question"),
+        // 기준 데이터(CRITERIA)는 COMPANY_IDX 가 없는 전역 테이블이지만, 이 화면이 실제로 하는 일은
         // 고객사별 활성/비활성 토글이다(CCFA_COMPANY_AAID). 그래서 TENANT 이고 superOnly 가
         // 아니다 — 같은 이유로 SecurityConfig 의 SUPER 목록에도 /criteria 가 없다.
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책)",
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책) 보기",
                 "/criteria", false, "bi-fingerprint"),
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "FIDO 등록자 관리", "/users", false, "bi-people"),
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TransactionHash 보기", "/transaction-hashes", false, "bi-hash"),
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TC원문 보기", "/transaction-confirmations", false, "bi-check2-square"),
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명 보기", "/signs", false, "bi-pen"),
         // FIDO2 는 이전 어드민에 없던 그룹이다. FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "메타데이터", "/fido2/metadata", true, "bi-card-list"),
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true, "bi-shield-lock"),

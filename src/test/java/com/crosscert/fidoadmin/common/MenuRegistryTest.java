@@ -76,10 +76,10 @@ class MenuRegistryTest {
 
     /** 감사 로그의 화면 이름. areaOf 와 같은 최장 접두사 규칙이라 /managers/super 가 운영자로 뭉개지지 않는다. */
     @Test void titleFor_resolves_longest_prefix_and_falls_back_to_path() {
-        assertThat(registry.titleFor("/users/5")).isEqualTo("사용자");
+        assertThat(registry.titleFor("/users/5")).isEqualTo("FIDO 등록자 관리");
         assertThat(registry.titleFor("/managers/super/1")).isEqualTo("슈퍼관리자 계정");
         assertThat(registry.titleFor("/managers/1")).isEqualTo("운영자");
-        assertThat(registry.titleFor("/criteria")).isEqualTo("AAID(정책)");
+        assertThat(registry.titleFor("/criteria")).isEqualTo("AAID(정책) 보기");
         assertThat(registry.titleFor("/fds-monitor")).isEqualTo("모니터링");
         assertThat(registry.titleFor("/nowhere")).isEqualTo("/nowhere");
         assertThat(registry.titleFor(null)).isEqualTo("/");
