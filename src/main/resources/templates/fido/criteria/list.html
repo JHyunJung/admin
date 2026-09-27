@@ -53,9 +53,9 @@
         <th class="text-nowrap">Assertion Schemes</th>
         <th class="text-nowrap">User Verification</th>
         <th class="text-nowrap">메타데이터 해쉬 값</th>
+        <th class="text-nowrap">상태</th>
         <th class="text-nowrap">생성일</th>
         <th class="text-nowrap">수정일</th>
-        <th class="text-nowrap">상태</th>
       </tr>
       </thead>
 
@@ -71,10 +71,6 @@
         <td class="fa-mono"
             style="white-space: normal; overflow-wrap: anywhere; min-width: 260px;"
             th:text="${r.metahash}"></td>
-        <td class="text-nowrap"
-            th:text="${r.createtime == null ? '-' : #temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        <td class="text-nowrap"
-            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         <td th:with="disabled=${disabledAaids.contains(r.aaid)}">
           <div class="d-flex align-items-center gap-2">
             <span class="badge text-nowrap"
@@ -99,6 +95,10 @@
             </form>
           </div>
         </td>
+        <td class="text-nowrap"
+            th:text="${r.createtime == null ? '-' : #temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td class="text-nowrap"
+            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
       </tr>
 
       <tr th:if="${page.totalElements == 0}">

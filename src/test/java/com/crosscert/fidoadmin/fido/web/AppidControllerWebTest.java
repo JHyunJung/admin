@@ -110,10 +110,10 @@ class AppidControllerWebTest {
             .contains(">활성<")             // status=use
             .contains("1건이 검색되었습니다.")
             .doesNotContain(">use<");
-        // 컬럼 순서: 번호 · APPID · 서비스명 · 장치 · 설명 · 기본값 · 생성일 · 수정일 · 상태
+        // 컬럼 순서: 번호 · APPID · 서비스명 · 장치 · 설명 · 기본값 · 상태 · 생성일 · 수정일 (날짜는 항상 맨 끝)
         int[] pos = { html.indexOf("<th>번호</th>"), html.indexOf("<th>APPID</th>"), html.indexOf("<th>서비스명</th>"),
             html.indexOf("<th>장치</th>"), html.indexOf("<th>설명</th>"), html.indexOf("<th>기본값</th>"),
-            html.indexOf("<th>생성일</th>"), html.indexOf("<th>수정일</th>"), html.indexOf("<th>상태</th>") };
+            html.indexOf("<th>상태</th>"), html.indexOf("<th>생성일</th>"), html.indexOf("<th>수정일</th>") };
         for (int i = 0; i < pos.length; i++) org.assertj.core.api.Assertions.assertThat(pos[i]).as("column " + i).isGreaterThan(i == 0 ? -1 : pos[i - 1]);
     }
 

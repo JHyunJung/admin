@@ -14,8 +14,8 @@
       <tr><th>USERID</th><td th:text="${item.userid}"></td></tr>
       <tr><th>AAID</th><td th:text="${item.aaid}"></td></tr>
       <tr><th>CONTENTTYPE</th><td th:text="${item.contenttype}"></td></tr>
-      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
       <tr><th>CONTENT</th><td class="fa-pre" th:text="${item.content}"></td></tr>
+      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
     </tbody></table>
   </div>
 </main>

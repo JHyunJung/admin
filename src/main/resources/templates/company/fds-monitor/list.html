@@ -54,18 +54,17 @@
       <thead class="table-light">
       <tr>
         <th class="text-nowrap">IDX</th>
-        <th class="text-nowrap">일시</th>
         <th>서비스명</th>
         <th class="text-nowrap">시리얼</th>
         <th class="text-nowrap text-end">직전 요청과 간격(초)</th>
         <th class="text-nowrap text-end">직후 요청과 간격(초)</th>
         <th class="text-nowrap text-end">그날 이 기기 요청 수</th>
-      </tr>
+              <th class="text-nowrap">일시</th>
+</tr>
       </thead>
       <tbody>
       <tr th:each="r : ${page.content}">
         <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}" th:text="${r.idx}"></a></td>
-        <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss.SSS')}"></td>
         <td th:text="${r.servicename}"></td>
         <td class="fa-mono text-nowrap" th:text="${r.serialcode}"></td>
         <td class="text-end fa-mono"
@@ -75,6 +74,7 @@
             th:text="${r.gapAfterSec == null} ? '-' : ${#numbers.formatDecimal(r.gapAfterSec, 1, 3)}"
             th:classappend="${r.gapAfterSec != null and r.gapAfterSec <= effectiveTerm} ? 'text-danger fw-semibold'"></td>
         <td class="text-end" th:text="${r.repeats}"></td>
+        <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss.SSS')}"></td>
       </tr>
       <tr th:if="${page.totalElements == 0}">
         <td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td>

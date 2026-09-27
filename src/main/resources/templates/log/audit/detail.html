@@ -10,7 +10,6 @@
   <div class="bg-white border rounded">
     <table class="table table-sm fa-detail mb-0"><tbody>
       <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-      <tr><th>일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
       <tr><th>고객사</th><td th:text="|${item.companyName} (${item.companyIdx})|"></td></tr>
       <tr><th>유형</th><td th:text="${item.type}"></td></tr>
       <tr><th>사용자</th><td th:text="|${item.userName} (${item.userId})|"></td></tr>
@@ -18,6 +17,7 @@
       <tr><th>IP</th><td th:text="${item.ip}"></td></tr>
       <tr><th>User-Agent</th><td class="fa-pre" th:text="${item.ua}"></td></tr>
       <tr><th>무결성 해시</th><td class="fa-mono" th:text="${item.intergrityHash}"></td></tr>
+      <tr><th>일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
     </tbody></table>
   </div>
 </main>

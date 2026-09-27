@@ -37,20 +37,20 @@
           <td class="fa-pre" th:text="${item.note}"></td>
         </tr>
         <tr>
-          <th>생성일</th>
-          <td th:text="${item.createdtime == null ? '-' : #temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        </tr>
-        <tr>
-          <th>수정일</th>
-          <td th:text="${item.updatedtime == null ? '-' : #temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        </tr>
-        <tr>
           <th>상태</th>
           <td>
             <span class="badge"
                   th:classappend="${item.type == 'use' ? 'text-bg-success' : (item.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
                   th:text="${item.type == 'use' ? '활성' : (item.type == 'unuse' ? '비활성' : '미확인')}"></span>
           </td>
+        </tr>
+        <tr>
+          <th>생성일</th>
+          <td th:text="${item.createdtime == null ? '-' : #temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        </tr>
+        <tr>
+          <th>수정일</th>
+          <td th:text="${item.updatedtime == null ? '-' : #temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
       </tbody>
     </table>

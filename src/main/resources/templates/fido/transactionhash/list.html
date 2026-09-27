@@ -13,13 +13,13 @@
   </form>
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>일시</th><th>USERID</th><th>CONTENTHASH</th></tr></thead>
+      <thead class="table-light"><tr><th>IDX</th><th>USERID</th><th>CONTENTHASH</th><th>생성일</th></tr></thead>
       <tbody>
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/transaction-hashes/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
           <td th:text="${r.userid}"></td>
           <td class="fa-mono" th:text="${r.contenthash}"></td>
+          <td th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
         <tr th:if="${page.totalElements == 0}"><td colspan="4" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>

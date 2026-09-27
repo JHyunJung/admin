@@ -14,9 +14,9 @@
       <tr><th>USERID</th><td th:text="${item.userid}"></td></tr>
       <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
       <tr><th>챌린지코드</th><td class="fa-mono" th:text="${item.challengecode}"></td></tr>
-      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
       <tr><th>LOGIDX</th><td th:text="${item.logidx}"></td></tr>
       <tr><th>UV</th><td th:text="${item.uv}"></td></tr>
+      <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
     </tbody></table>
   </div>
 </main>

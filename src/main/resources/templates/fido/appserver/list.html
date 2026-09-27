@@ -42,9 +42,9 @@
         <th>멤버코드</th>
         <th>멤버키</th>
         <th>설명</th>
+        <th>상태</th>
         <th>생성일</th>
         <th>수정일</th>
-        <th>상태</th>
       </tr>
       </thead>
 
@@ -58,15 +58,15 @@
         <td th:text="${r.memberId}"></td>
         <td th:text="${r.note}"
             style="white-space: normal; overflow-wrap: anywhere;"></td>
-        <td class="text-nowrap"
-            th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        <td class="text-nowrap"
-            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         <td>
           <span class="badge text-nowrap"
                 th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
                 th:text="${r.type == 'use' ? '활성' : (r.type == 'unuse' ? '비활성' : '미확인')}"></span>
         </td>
+        <td class="text-nowrap"
+            th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td class="text-nowrap"
+            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
       </tr>
 
       <tr th:if="${page.totalElements == 0}">

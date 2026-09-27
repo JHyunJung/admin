@@ -10,13 +10,13 @@
   <div class="bg-white border rounded">
     <table class="table table-sm fa-detail mb-0"><tbody>
       <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-      <tr><th>일시</th><td th:text="${item.createdtime}"></td></tr>
       <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
       <tr><th>유형</th><td th:text="${item.type}"></td></tr>
       <tr><th>레벨</th><td th:text="${item.level}"></td></tr>
       <tr><th>메시지</th><td class="fa-pre" th:text="${item.message}"></td></tr>
       <tr><th>상세 메시지</th><td class="fa-pre" th:text="${item.detailMessage}"></td></tr>
       <tr><th>예외 데이터</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.data}"></pre></td></tr>
+      <tr><th>일시</th><td th:text="${item.createdtime}"></td></tr>
     </tbody></table>
   </div>
 </main>
