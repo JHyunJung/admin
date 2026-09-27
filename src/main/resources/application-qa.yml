@@ -1,6 +1,24 @@
-# QA. DB 접속은 환경 변수(SPRING_DATASOURCE_URL/USERNAME/PASSWORD)로만 받는다 — 기본값 없음.
-# 로그는 콘솔과 파일 둘 다(logback-spring.xml 의 qa 프로필). 앱 로그는 DEBUG 라 재현·분석에 쓴다.
+# QA. 로그는 콘솔과 파일 둘 다(logback-spring.xml 의 qa 프로필). 앱 로그는 DEBUG 라 재현·분석에 쓴다.
 spring:
+  # DB 접속 정보는 환경 변수로만 받는다 — 기본값 없음(없으면 기동 실패). 비밀번호를 이 파일에 적지 않는다.
+  #   SPRING_DATASOURCE_URL      예) jdbc:oracle:thin:@qa-db.example.local:1521/KBFIDO
+  #   SPRING_DATASOURCE_USERNAME
+  #   SPRING_DATASOURCE_PASSWORD
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+      pool-name: fido-admin-qa
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000      # 풀에서 커넥션을 기다리는 최대 시간(ms)
+      validation-timeout: 5000
+      idle-timeout: 300000           # 5분 쉬면 반납
+      max-lifetime: 1800000          # 30분 — DB·방화벽의 유휴 연결 끊김보다 짧게
+      leak-detection-threshold: 20000  # 20초 넘게 안 돌려준 커넥션을 WARN 으로 알림(QA 에서 누수 찾기)
+      connection-test-query: SELECT 1 FROM DUAL
   jpa:
     show-sql: false
   thymeleaf:
