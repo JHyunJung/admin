@@ -29,8 +29,13 @@ public class FidoSettingController {
 
     @GetMapping
     public String form(Model model) {
-        model.addAttribute("values", service.load());
+        var values = service.load();
+        model.addAttribute("values", values);
         model.addAttribute("sections", FidoSettingKey.bySection());
+        // 이전 어드민 규격의 위젯(슬라이더·드롭다운). 저장값이 범위·목록 밖이어도 깎이지 않게 여기서 넓힌다.
+        model.addAttribute("challengeValue", FidoSettingOptions.challengeValue(values.get("CHALLENGE_TERM")));
+        model.addAttribute("challengeMax", FidoSettingOptions.challengeMax(values.get("CHALLENGE_TERM")));
+        model.addAttribute("tcOptions", FidoSettingOptions.tcOptions(values.get("TC_ORIGIN_TERM")));
         return "system/settings/form";
     }
 

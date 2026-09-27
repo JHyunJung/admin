@@ -98,7 +98,20 @@ class FidoSettingControllerWebTest {
         assertThat(html).contains("name=\"CERT_P1\" value=\"DISABLE\"");
         assertThat(html).contains("name=\"CERT_P1\" value=\"ENABLE\"");
         assertThat(html).contains("name=\"FIDO_ATTESTCERT_AAID_CHECK\" value=\"N\"");
-        assertThat(html).contains("name=\"CERT_VERIFY\" value=\"no\"");
+        // CERT_VERIFY 는 이전 화면처럼 드롭다운이다. 저장값(no)이 선택된 채로 그려진다.
+        assertThat(html).containsPattern("<option value=\"no\"\\s+selected=\"selected\">검증안함</option>");
+        assertThat(html).contains("<option value=\"yes\">검증함</option>");
+    }
+
+    /** 섹션 순서: 알림메일 → 부가기능 → 인증서. 위젯은 이전 어드민 규격. */
+    @Test void 섹션_순서와_위젯이_이전_규격을_따른다() throws Exception {
+        String html = mvc.perform(get("/system/settings").session(session).with(user(superUser)))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(html.indexOf(">알림메일 설정<")).isLessThan(html.indexOf(">FIDO 부가기능 설정<"));
+        assertThat(html.indexOf(">FIDO 부가기능 설정<")).isLessThan(html.indexOf(">인증서 설정<"));
+        assertThat(html).contains("type=\"range\"").contains("180 sec")
+            .contains(">영구저장<").contains(">사용안함<").contains(">검증함<")
+            .contains("인증 응답시 추가 옵션").contains("PKCS #7 + PKCS #9");
     }
 
     @Test void 세_섹션이_모두_그려진다() throws Exception {
@@ -140,6 +153,7 @@ class FidoSettingControllerWebTest {
 
         for (FidoSettingKey k : FidoSettingKey.values()) {
             if (k.type() != FidoSettingKey.Type.TOGGLE) continue;
+            if (k == FidoSettingKey.CERT_VERIFY) continue; // 드롭다운이다(한 값만 전송)
             int checkbox = html.indexOf("name=\"" + k.key() + "\" value=\"" + k.style().on() + "\"");
             int hidden = html.indexOf("name=\"" + k.key() + "\" value=\"" + k.style().off() + "\"");
             assertThat(checkbox).as("%s 체크박스가 렌더되지 않았다", k.key()).isGreaterThanOrEqualTo(0);
