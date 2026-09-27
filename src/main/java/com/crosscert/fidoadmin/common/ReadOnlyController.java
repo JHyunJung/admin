@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import com.crosscert.fidoadmin.audit.AuditView;
 import org.springframework.data.domain.Page;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +43,8 @@ public abstract class ReadOnlyController<E, ID, S extends SearchForm> {
         model.addAttribute("item", toDetailView(entity));
         model.addAttribute("basePath", basePath());
         populateDetailModel(entity, model);
+        // 어느 레코드를 보여 줬는지 남긴다. AuditReadInterceptor 가 응답 뒤 DATA_VIEW 로 기록한다.
+        AuditView.add(model, service().tableName(), service().idOf(entity));
         return viewDir() + "/detail";
     }
 }

@@ -4,7 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
-/** 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다. COMPANY_IDX 가 없는 테이블(CRITERIA, FIDO2_*, 시스템)의 화면은 SUPER 전용이다(설계 3.3). */
+/**
+ * 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다.
+ *
+ * <p>COMPANY_IDX 가 없는 테이블(FIDO2_*, 시스템)의 화면은 SUPER 전용이다(설계 3.3).
+ * CRITERIA 는 예외다 — 테이블은 전역이지만 화면의 용도가 고객사별 토글이라
+ * TENANT 로 두었다(아래 /criteria 항목의 주석 참고).
+ */
 @Component("menuRegistry")
 public class MenuRegistry {
 
@@ -54,20 +60,20 @@ public class MenuRegistry {
         // 이전 어드민의 "이상 징후 탐지 → 정책관리". 모니터링 화면은 아직 없다.
         new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "앱 ID", "/appids", false, "bi-app-indicator"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "앱 서버", "/appservers", false, "bi-hdd-network"),
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "멤버코드 관리",
+                "/appservers", false, "bi-hdd-network"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "사용자", "/users", false, "bi-people"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "챌린지", "/challenges", false, "bi-patch-question"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명", "/signs", false, "bi-pen"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "거래 해시", "/transaction-hashes", false, "bi-hash"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "거래 확인", "/transaction-confirmations", false, "bi-check2-square"),
-        // FIDO2 는 이전 어드민에 없던 그룹이다. FIDO 서버 관리에 합치면 12개가 되어 따로 둔다.
-        //
-        // 인증기기 기준(CRITERIA)은 이전 어드민에서 "AAID(정책) 보기" 로 FIDO 서버 관리에
-        // 있었지만 여기서는 FIDO2 에 둔다. COMPANY_IDX 가 없는 전역 테이블이라 SYSTEM 영역인데,
-        // FIDO 서버 관리의 나머지 7개는 전부 TENANT 다. 같은 그룹에 두면 사이드바가 영역별로
-        // 나눠 그리면서 "FIDO 서버 관리" 제목이 두 번 나오고 이 항목만 아래쪽에 홀로 떨어진다.
-        // 성격상으로도 FIDO2 메타데이터와 함께 있는 편이 맞다(둘 다 SUPER 전용 전역 기준 데이터).
-        new MenuItem(MenuArea.SYSTEM, "FIDO2", "인증기기 기준", "/criteria", true, "bi-fingerprint"),
+        // 이전 어드민의 "FIDO 서버 관리 → AAID(정책) 보기" 자리로 되돌렸다. 기준 데이터
+        // (CRITERIA)는 COMPANY_IDX 가 없는 전역 테이블이지만, 이 화면이 실제로 하는 일은
+        // 고객사별 활성/비활성 토글이다(CCFA_COMPANY_AAID). 그래서 TENANT 이고 superOnly 가
+        // 아니다 — 같은 이유로 SecurityConfig 의 SUPER 목록에도 /criteria 가 없다.
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책)",
+                "/criteria", false, "bi-fingerprint"),
+        // FIDO2 는 이전 어드민에 없던 그룹이다. FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "메타데이터", "/fido2/metadata", true, "bi-card-list"),
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true, "bi-shield-lock"),
         // 이전 어드민의 "시스템관리 → 업체 관리 / 관리자 설정 / 라이선스관리 / 시스템 설정".
@@ -148,6 +154,20 @@ public class MenuRegistry {
             .max(java.util.Comparator.comparingInt(m -> m.href().length()))
             .map(MenuItem::href)
             .orElse("/");
+    }
+
+    /**
+     * 경로가 속한 메뉴의 화면 이름. "/users/123" → "사용자".
+     * 일치하는 메뉴가 없으면 경로를 그대로 돌려준다 — 감사 로그에 남길 이름이
+     * 비는 것보다 경로라도 남는 편이 낫다.
+     */
+    public String titleFor(String path) {
+        if (path == null) return "/";
+        return ALL.stream()
+            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
+            .max(java.util.Comparator.comparingInt(m -> m.href().length()))
+            .map(MenuItem::title)
+            .orElse(path);
     }
 
     /**

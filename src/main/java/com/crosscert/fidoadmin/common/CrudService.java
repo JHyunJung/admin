@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import com.crosscert.fidoadmin.audit.AuditChanges;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import jakarta.persistence.EntityNotFoundException;
@@ -102,13 +103,15 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     @Transactional
     public E update(ID id, Consumer<E> mutator) {
         E e = get(id);
+        // 변경 전 값을 떠 둔다. mutator 가 같은 객체를 고치므로 이 시점이어야 한다.
+        var before = AuditChanges.snapshot(e);
         mutator.accept(e);
         if (companyIdxAttribute() != null) {
             setCompanyIdx(e, tenant.companyIdx());
         }
         touchUpdated(e, LocalDateTime.now());
         E saved = repository.save(e);
-        audit.log(AuditType.UPDATE, tableName() + " UPDATE " + idOf(saved));
+        AuditChanges.record(audit, tableName(), idOf(saved), before, saved);
         return saved;
     }
 

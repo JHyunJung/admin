@@ -29,6 +29,9 @@ dependencies {
     implementation 'org.webjars.npm:chart.js:4.5.0'
     implementation 'org.webjars.npm:bootstrap-icons:1.13.1'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+    // ojdbc 단독으로는 AL32UTF8 외 문자셋(KO16MSWIN949 등)을 해석하지 못해
+    // 한글이 물음표로 읽힌다. orai18n 이 있어야 변환 테이블이 붙는다.
+    runtimeOnly 'com.oracle.database.nls:orai18n:23.7.0.25.01'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

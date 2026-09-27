@@ -3,6 +3,8 @@ package com.crosscert.fidoadmin.manager.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -198,7 +200,7 @@ class ManagerServiceTest {
 
         assertThat(m.getUserNm()).isEqualTo("바뀐 이름");
         assertThat(m.getStatus()).isEqualTo(SignupPolicy.STATUS_PENDING);
-        verify(audit).log(AuditType.UPDATE, "CCFA_MANAGER UPDATE 2");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_MANAGER UPDATE 2"));
     }
 
     /** 정상 상태(활성/비활성) 행의 상태 변경은 기존 화면 그대로 동작해야 한다. */
@@ -211,7 +213,7 @@ class ManagerServiceTest {
         service.update(2L, e -> e.setStatus("비활성"));
 
         assertThat(m.getStatus()).isEqualTo("비활성");
-        verify(audit).log(AuditType.UPDATE, "CCFA_MANAGER UPDATE 2");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_MANAGER UPDATE 2"));
     }
 
     @Test void lockStateReadsLatestPolicyRow() {

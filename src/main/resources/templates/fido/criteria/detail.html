@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
-<head><title>인증기기 기준 상세</title></head>
+<head><title>AAID(정책) 상세</title></head>
 <body>
 <main>
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0" th:text="|인증기기 기준 #${item.idx}|"></h1>
+    <h1 class="h4 mb-0" th:text="|AAID(정책) #${item.idx}|"></h1>
     <a th:href="@{/criteria}" class="btn btn-link btn-sm">목록</a>
   </div>
   <div th:replace="~{fragments/detail-section :: section('식별 정보', ~{this :: idRows})}"></div>

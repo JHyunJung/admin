@@ -187,3 +187,10 @@ body.bg-light { background: var(--bs-body-bg) !important; }
 body.bg-light .card { border: 1px solid var(--fa-line); }
 
 @media (max-width: 900px) { .fa-sidebar { display: none; } }
+
+/* ---------- 사용자 상세: 기기 전환 ---------- */
+/* 계정 표는 컬럼이 많아 좁은 화면에서 줄바꿈으로 뭉개진다. 최소 폭을 주어 가로 스크롤로 넘긴다. */
+.user-account-table { width: 100%; min-width: 760px; table-layout: fixed; }
+/* flex 항목의 기본 min-width:auto 를 풀어야 긴 AAID 가 칸을 밀어내지 않는다. */
+.user-min-width { min-width: 0; }
+.user-break { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }

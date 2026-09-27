@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.config;
 
+import com.crosscert.fidoadmin.audit.AuditReadInterceptor;
 import com.crosscert.fidoadmin.common.TenantSelectionInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.server.ErrorPage;
@@ -17,6 +18,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final TenantSelectionInterceptor tenantSelection;
+    private final AuditReadInterceptor auditRead;
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
@@ -33,6 +35,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
             .excludePathPatterns("/login", "/logout", "/signup", "/select-tenant", "/api/svc/**",
                 "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                 "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png");
+
+        // 화면 조회 기록. 정적 자원과 인증 경로는 남길 조회가 아니다.
+        // /api/** 는 화면이 아니라 서버 간 호출이라 뺀다(자가등록 경로 포함).
+        registry.addInterceptor(auditRead)
+            .excludePathPatterns(
+                "/login", "/logout", "/signup", "/error", "/error/**",
+                "/api/**", "/webjars/**", "/css/**", "/js/**",
+                "/fonts/**", "/favicon*");
     }
 
     @Bean

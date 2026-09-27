@@ -3,6 +3,8 @@ package com.crosscert.fidoadmin.system.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,7 +62,7 @@ class AdminCriteriaServiceTest {
         service.update(7L, c -> c.setMetahash("h2"));
         assertThat(existing.getCreatetime()).isEqualTo(java.time.LocalDateTime.of(2026, 1, 1, 0, 0));
         assertThat(existing.getUpdatedtime()).isAfter(existing.getCreatetime());
-        verify(audit).log(AuditType.UPDATE, "CCFA_CRITERIA UPDATE 7");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_CRITERIA UPDATE 7"));
     }
 
     /** COMPANY_IDX 가 없는 테이블은 SUPER 전용(설계 3.3). */

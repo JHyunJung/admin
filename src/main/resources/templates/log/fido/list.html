@@ -8,8 +8,8 @@
   <form method="get" th:action="@{/logs/fido}" class="row g-2 align-items-end mb-3">
     <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
     <div class="col-auto"><label class="form-label small mb-0">시리얼</label><input name="serialcode" th:value="${search.serialcode}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">시작일</label><input type="date" name="fromDate" th:value="${search.fromDate}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">종료일</label><input type="date" name="toDate" th:value="${search.toDate}" class="form-control form-control-sm"></div>
+    <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
+    <div class="col-auto"><label class="form-label small mb-0">조회 날짜</label><input type="date" name="logDate" th:value="${search.logDate}" class="form-control form-control-sm" required></div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
   <div class="table-responsive bg-white border rounded">
@@ -17,7 +17,8 @@
       <thead class="table-light"><tr><th>IDX</th><th>일시</th><th>서비스명</th><th>시리얼</th></tr></thead>
       <tbody>
         <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/logs/fido/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+          <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
+                 th:text="${r.idx}">0</a></td>
           <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
           <td th:text="${r.servicename}"></td>
           <td class="fa-mono" th:text="${r.serialcode}"></td>

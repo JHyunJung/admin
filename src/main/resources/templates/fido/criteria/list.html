@@ -1,34 +1,100 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
-<head><title>인증기기 기준</title></head>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>AAID(정책)</title></head>
 <body>
 <main>
-  <h1 class="h4 mb-3">인증기기 기준</h1>
-  <form method="get" th:action="@{/criteria}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">AAID</label><input name="aaid" th:value="${search.aaid}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/criteria}" class="btn btn-link btn-sm">초기화</a></div>
+  <h1 class="h4 mb-3">AAID(정책)</h1>
+
+  <div th:if="${statusMessage != null}"
+       class="alert alert-success py-2"
+       role="status"
+       th:text="${statusMessage}">
+  </div>
+
+  <form method="get" th:action="@{/criteria}"
+        class="row g-2 align-items-end justify-content-end mb-3">
+    <div class="col-auto">
+      <label class="form-label small mb-0">AAID</label>
+      <input name="aaid"
+             th:value="${search.aaid}"
+             class="form-control form-control-sm">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary btn-sm">검색</button>
+      <a th:href="@{/criteria}" class="btn btn-link btn-sm">초기화</a>
+    </div>
   </form>
+
   <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>AAID</th><th>벤더</th><th>UV</th><th>키보호</th><th>매처보호</th><th>버전</th><th>METAHASH</th><th>수정일시</th></tr></thead>
+    <table class="table table-sm table-hover align-middle fa-table mb-0">
+      <thead class="table-light">
+      <tr>
+        <th class="text-nowrap">번호</th>
+        <th>AAID</th>
+        <th class="text-nowrap">Assertion Schemes</th>
+        <th class="text-nowrap">User Verification</th>
+        <th class="text-nowrap">메타데이터 해쉬 값</th>
+        <th class="text-nowrap">생성일</th>
+        <th class="text-nowrap">수정일</th>
+        <th class="text-nowrap">상태</th>
+      </tr>
+      </thead>
+
       <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/criteria/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${r.aaid}"></td>
-          <td th:text="${r.vendorids}"></td>
-          <td th:text="${r.userverification}"></td>
-          <td th:text="${r.keyprotection}"></td>
-          <td th:text="${r.matcherprotection}"></td>
-          <td th:text="${r.authenticatorversion}"></td>
-          <td class="fa-mono" th:text="${#strings.abbreviate(r.metahash, 24)}"></td>
-          <td th:text="${#temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm')}"></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="9" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      <tr th:each="r : ${page.content}">
+        <td>
+          <a th:href="@{/criteria/{id}(id=${r.idx})}"
+             th:text="${r.idx}"></a>
+        </td>
+        <td class="text-nowrap" th:text="${r.aaid}"></td>
+        <td th:text="${r.assertionschemes}"></td>
+        <td th:text="${r.userverification}"></td>
+        <td class="fa-mono"
+            style="white-space: normal; overflow-wrap: anywhere; min-width: 260px;"
+            th:text="${r.metahash}"></td>
+        <td class="text-nowrap"
+            th:text="${r.createtime == null ? '-' : #temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td class="text-nowrap"
+            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td th:with="disabled=${disabledAaids.contains(r.aaid)}">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge text-nowrap"
+                  th:classappend="${disabled} ? 'text-bg-danger' : 'text-bg-success'"
+                  th:text="${disabled} ? '비활성' : '활성'">
+            </span>
+
+            <form th:action="@{/criteria/{id}/status(id=${r.idx})}"
+                  method="post"
+                  class="m-0"
+                  onsubmit="return confirm('선택한 고객사의 AAID 정책 상태를 변경하시겠습니까?');">
+              <input type="hidden" name="enabled" th:value="${disabled}">
+              <input type="hidden" name="aaid" th:value="${search.aaid}">
+              <input type="hidden" name="page" th:value="${page.number}">
+              <input type="hidden" name="size" th:value="${page.size}">
+              <button type="submit"
+                      class="btn btn-sm text-nowrap"
+                      th:classappend="${disabled}
+                          ? 'btn-outline-success' : 'btn-outline-danger'"
+                      th:text="${disabled} ? '활성화' : '비활성화'">
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+
+      <tr th:if="${page.totalElements == 0}">
+        <td colspan="8" class="text-center text-secondary py-4">
+          데이터가 없습니다.
+        </td>
+      </tr>
       </tbody>
     </table>
   </div>
+
   <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
+    <span th:text="|${page.totalElements}건이 검색되었습니다.|"></span>
     <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
   </div>
 </main>

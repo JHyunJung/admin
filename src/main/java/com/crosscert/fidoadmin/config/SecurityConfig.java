@@ -36,8 +36,12 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/signup", "/api/svc/**", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
                 // /signups(복수)는 가입 승인 화면이다. 위 permitAll 의 /signup(단수, 신청)과 다르다.
+                //
+                // /criteria 는 여기 없다. AAID(정책)는 기준 데이터 자체는 전역이지만 화면의 용도가
+                // 고객사별 활성/비활성 토글이라 COMPANY 운영자도 쓴다. 고객사 경계는
+                // CriteriaQueryService 가 유효 테넌트로 건다.
                 .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**",
-                                 "/criteria/**", "/fido2/**", "/signups", "/signups/**").hasRole("SUPER")
+                                 "/fido2/**", "/signups", "/signups/**").hasRole("SUPER")
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 .loginPage("/login")

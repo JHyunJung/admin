@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -100,6 +102,6 @@ class FdsPolicyServiceTest {
         assertThat(existing.getAndTerm()).isEqualTo("60");
         assertThat(existing.getCreatedtime()).isEqualTo(java.time.LocalDateTime.of(2026, 1, 1, 0, 0));
         assertThat(existing.getUpdatedtime()).isAfter(existing.getCreatedtime());
-        verify(audit).log(AuditType.UPDATE, "CCFA_FDS_POLICY UPDATE 1");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_FDS_POLICY UPDATE 1"));
     }
 }

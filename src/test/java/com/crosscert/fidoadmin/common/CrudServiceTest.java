@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -131,7 +132,7 @@ class CrudServiceTest {
 
         assertThat(existing.getServiceName()).isEqualTo("kbstar");
         assertThat(existing.getUpdatedtime()).isNotNull();
-        verify(audit).log(AuditType.UPDATE, "CCFA_LICENSE UPDATE 9");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_LICENSE UPDATE 9"));
     }
 
     @Test void deleteChecksTenantAndAudits() {

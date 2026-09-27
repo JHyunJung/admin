@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -64,7 +66,7 @@ class SystemInfoServiceTest {
         CcfaSystemInfo out = service.update("VERSION", i -> i.setPropValue("1.1.0"));
         assertThat(out.getPropValue()).isEqualTo("1.1.0");
         assertThat(out.getUpdatedtime()).isNotNull();
-        verify(audit).log(AuditType.UPDATE, "CCFA_SYSTEM_INFO UPDATE VERSION");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_SYSTEM_INFO UPDATE VERSION"));
     }
 
     @Test void sortDefaultsToKey() {

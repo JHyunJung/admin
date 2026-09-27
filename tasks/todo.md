@@ -1,451 +1,105 @@
-# FIDO Admin 1부 — 기반 구현
-
-Plan: docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md
-Spec: docs/superpowers/specs/2026-09-16-fido-admin-design.md
-Branch: feature/part1-foundation
-
-각 태스크: 구현자 → 스펙 리뷰 → 코드 품질 리뷰 → Codex 리뷰(랜딩 게이트)
-
-- [x] Task 1: Gradle 프로젝트 스캐폴드와 부팅 확인
-- [x] Task 2: 로컬 검증용 Docker Oracle 스키마·시드
-- [x] Task 3: SHA-256 비밀번호 인코더
-- [x] Task 4: 엔티티 39개와 ERD 정합성 테스트
-- [x] Task 5: 로그인 사용자 모델, TenantContext, 감사 로그
-- [x] Task 6: Spring Security 로그인·잠금·역할
-- [x] Task 7: 레이아웃, 메뉴, 오류 페이지, 예외 핸들러
-- [x] Task 8: 공통 CRUD 기반
-- [x] Task 9: 참조 CRUD 화면 — 고객사
-- [x] Task 10: 참조 조회 화면 — 감사 로그
-- [x] Task 11: 대시보드
-- [x] Task 12: 내 비밀번호 변경
-- [x] Task 13: Testcontainers 통합 테스트
-- [x] Task 14: README와 1부 최종 검증
-
-## Review (2026-09-17)
-
-1부 기반 14개 태스크 완료. 94개 테스트 통과(실패 0, 스킵 0), 통합 테스트 4건 실제 실행.
-
-### 각 태스크 3중 게이트 통과 결과
-| Task | 커밋 | Codex 최초 | 조치 |
-|---|---|---|---|
-| 1 스캐폴드 | e9a30c7 | PASS | - |
-| 2 Docker Oracle | 9950be4 | FAIL 2 | 864a1b4 |
-| 3 SHA-256 | b118fa8 | NITS | 24f946c |
-| 4 엔티티 39 | c5a918e | PASS | - |
-| 5 인증·감사 | 528b209 | FAIL 4 | f74d52c, 9df4319 |
-| 6 Security | a33fbb0 | FAIL 4 | a90e03d, cbf0720 |
-| 7 레이아웃 | 2f2cc18 | PASS | - |
-| 8 CRUD 기반 | d864051 | FAIL 5 | c087484, 48813d1, dcbe54b |
-| 9 고객사 CRUD | 5be75d6 | FAIL 3 | 698250b |
-| 10/11/12 병렬 | abcba2c, 7d38858, b042b34 | FAIL 2 | 36187f1, f2306f4 |
-| 13 통합 테스트 | 90ccfb9 | FAIL 3 | 6bc1fed |
-| 14 README·검증 | a3f9c66 | FAIL 2 | b70b514 |
-
-### 최종 실측 검증
-- clean test 94/94, bootRun 부팅 성공
-- SUPER: 대시보드·고객사·감사로그·비밀번호변경 전부 200
-- COMPANY(kbadmin): /companies /licenses /managers /system/props 403, 사이드바 SUPER 메뉴 0건
-- 테넌트 격리 실측: 감사로그 11행 vs 20행, 대시보드 562 vs 604
-- ?companyIdx=2 변조 시 응답 동일(CSRF 토큰 외 차이 없음)
-- 외부 자원 호출 0건, JS alert/confirm/prompt 0건
-
-### 2부 시작 전 처리 필요
-- 할당형 PK 화면(CCFA_SYSTEM_INFO, CCFA_ERROR_TABLE, CCFA_FIDOCLIENT,
-  FIDO2_DEMO_ACCESS_CODE, CCFA_FDS_POLICY) 만들기 전 create() 를 persist 기반
-  삽입 전용 경로로 전환. 현재는 save() 가 MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
-- 운영자·사용자 화면은 toListView/toDetailView 를 반드시 구현해 USER_PW,
-  PUBKEY, CERTIFICATE 를 제외하거나 앞 16자만 남긴다.
-
-### 수용한 잔여 위험
-- IPv6 절단(IP VARCHAR2(15)) — 스키마 무변경 제약, 설계 3.5 에 명시된 동작
-- salt 없는 SHA-256 — 설계 3.4/12, 범위 밖
-- 고객사 삭제 TOCTOU, 테넌트 재배정 경쟁 — ERD 에 FK 없음, 관리자 소수 전제
-- 로그인 실패 타이밍 차이 — 사내망 전제
-
-# FIDO Admin 2부 — 업무 화면
-
-Plan: docs/superpowers/plans/2026-09-17-fido-admin-part2-screens.md
-Branch: feature/part2-screens
-
-각 태스크: 구현자 → 스펙 리뷰 → 코드 품질 리뷰 → Codex 리뷰(랜딩 게이트)
-
-- [x] Task 1: 공통 기반 보강 (AssignedIdCrudService, validate 훅, JsonPretty, CRITERIA·FIDO2 SUPER 전용)
-- [x] Task 2: FDS 정책
-- [x] Task 3: 라이선스
-- [x] Task 4: 운영자 (+잠금 해제)
-- [x] Task 5: 앱 ID
-- [x] Task 6: 앱 서버
-- [x] Task 7: 사용자 (조회+상태 변경)
-- [x] Task 8: 챌린지
-- [x] Task 9: 서명
-- [x] Task 10: 거래 해시
-- [x] Task 11: 거래 확인
-- [x] Task 12: 인증기기 기준
-- [x] Task 13: FIDO2 메타데이터
-- [x] Task 14: FIDO2 크리덴셜 파라미터
-- [x] Task 15: FIDO2 데모 접근코드
-- [x] Task 16: FIDO 로그
-- [x] Task 17: 예외 로그
-- [x] Task 18: 메일/SMS 큐
-- [x] Task 19: 2부 최종 검증
-
-## Review (2026-09-17)
-
-- clean test: 총 260개, 실패 0, 스킵 0 (통합 테스트 실제 실행 여부: 예 — RepositoryIntegrationTest 4건, Docker Oracle 대상)
-- SUPER 경로 18개: 전부 200 (예외 없음)
-- COMPANY 경로: 200 12개 / 403 6개 (표와 일치 — `/licenses` `/managers` `/criteria` `/fido2/metadata` `/fido2/credential-params` `/fido2/demo-access-codes` 403, 나머지 200)
-- 테넌트 격리: /users tester 0건, /users user001 1건 이상, /logs/fido SN-0003 0건, ?companyIdx=2 변조(logs/fido, users) 무시(둘 다 0건 유지), /users/3 404
-- 브라우저 체크리스트 10항목: curl 로 기능 등가 검증(HTTP 코드·플래시 문구·감사 로그·DB 상태) 완료. 시각 확인은 2026-09-17 Playwright(Chromium, curl 로 받은 세션 쿠키 주입)로 완료: `/users/1` 상태 변경 모달 "상태를 변경하시겠습니까?"/버튼 "변경"(btn-primary) → 확인 후 플래시 "상태가 변경되었습니다." 와 배지 O→X→O, `/managers/2` 잠금 해제 모달 "잠금을 해제하시겠습니까?"/"해제"(btn-primary) → 플래시 "잠금이 해제되었습니다.", `/companies/1` 삭제 모달 "정말 삭제하시겠습니까?"/"삭제"(btn-danger, 취소로 닫힘). 네이티브 alert/confirm/prompt 0건(page.on('dialog') 감시), 콘솔 JS 오류 0건(favicon.ico 404 만 있음), 감사 로그에 `USERINFO STATUS 1 O->X`, `X->O`, `CCFA_MANAGER UNLOCK kbadmin` 기록 확인.
-  - (curl 로 완료한 기능 검증 내역)
-  - FDS 정책 중복 등록 시 LOCK TABLE 경로 정상 동작(에러 없음, 기존 행 보존)
-  - 운영자 등록→5회 실패 잠김→잠금해제→재로그인 성공, 감사 로그 CREATE/UNLOCK 확인
-  - 운영자 빈 비밀번호 검증 메시지 확인
-  - 데모 접근코드 중복(LOCK TABLE 경로) 및 신규 등록 확인
-  - 라이선스 고객사명 표시, CLOB 목록 제외/상세 노출(criteria, fido2/metadata), JSONDATA pretty-print 확인
-  - 사용자 상태 변경 O→X→O, 감사 로그 STATUS 2건(kbadmin) 확인
-  - 앱 ID 강제 COMPANY_IDX, 사이드바 메뉴 제한, /fido2/metadata 403 확인
-- 외부 자원 호출 0건, JS alert/confirm/prompt 0건
-
-### 3부 시작 전 처리 필요
-- 브라우저 시각 확인: 2026-09-17 Playwright 로 완료(위 2부 Review 참조). 남은 것 없음.
-
-### 수용한 잔여 위험
-- IPv6 절단(IP VARCHAR2(15)) — 스키마 무변경 제약, 설계 3.5 에 명시된 동작
-- salt 없는 SHA-256 — 설계 3.4/12, 범위 밖
-- 고객사 삭제 TOCTOU, 테넌트 재배정 경쟁 — ERD 에 FK 없음, 관리자 소수 전제
-- 로그인 실패 타이밍 차이 — 사내망 전제
-
-# FIDO Admin 3부 — 시스템 화면과 최종 검증
-
-Plan: docs/superpowers/plans/2026-09-17-fido-admin-part3-system.md
-Branch: feature/part3-system
-
-- [x] Task 1: 시스템 설정 (복합키)
-- [x] Task 2: 시스템 정보
-- [x] Task 3: 에러 코드
-- [x] Task 4: FIDO 서버
-- [x] Task 5: 어드민 기준
-- [x] Task 6: 메뉴 정의
-- [x] Task 7: 코드 그룹/코드
-- [x] Task 8: 필드 정의
-- [x] Task 9: 최종 검증과 인도물
-
-## Review (2026-09-17)
-
-- clean test: tests=386 skipped=0 failures=0 errors=0 (통합 테스트 실제 실행 여부: 예 — `AssignedIdInsertIntegrationTest` 2건 신규 + `RepositoryIntegrationTest` 4건, Docker Oracle(Testcontainers, gvenzl/oracle-free:23-slim) 대상. `AssignedIdCrudService.insert()` 의 `LOCK TABLE CCFA_SYSTEM_INFO IN EXCLUSIVE MODE` 가 실제 Oracle 에서 오류·타임아웃 없이 수행됨을 확인)
-- SUPER 29개 경로 전부 200 (`SUPER non-200: 0`), COMPANY `/system/*` 8개 전부 403 (`COMPANY non-403: 0`)
-- 브라우저 확인 목록 12항목: 브라우저 대신 curl 로 기능 동등 검증 완료(HTTP 코드·플래시 문구·감사 로그·DB 상태 실측). 11항목은 브리핑과 완전히 일치, **1항목 문구 불일치**:
-  - 시스템 설정 등록 거부 문구, `PW_FAIL_LIMIT@0` 값 6→5 되돌리기, `VERSION`/`IT_MANUAL` 등록·삭제, 에러 코드 `1200` 거부·`9999` 등록/수정/삭제, FIDO 서버 `FIDO01` 거부·`FIDO03` 상태 기본값 ON, 어드민 기준 JSON 검증·pretty-print, 메뉴 부모 select 자기 제외·`최상위` 존재·하위 메뉴 있는 메뉴 삭제 차단 플래시, 코드 그룹 `hold` 추가·삭제·코드 남은 그룹 삭제 차단, 필드 정의 코드 그룹 select·목록 그룹명, 감사 로그 CREATE/DELETE 4건 확인, kbadmin 사이드바 시스템 그룹 미노출·`/system/menus` 403 — 모두 curl 실측대로 통과.
-  - **불일치**: 키에 `/` 를 넣어 등록하면 브리핑은 "키에 '/' 는 쓸 수 없습니다."를 기대했으나, 실제 메시지는 `SystemPropForm`/`SystemInfoForm`의 `@Pattern(regexp = "[A-Za-z0-9._-]+")` 검증 문구인 "키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다."이다. 동작(등록 거부)은 기대대로지만 문구가 다르다. 코드는 수정하지 않았다(범위 밖 지시에 따름).
-  - 실제 브라우저(시각) 확인: 2026-09-17 Playwright(Chromium, curl 세션 쿠키 주입)로 완료. 시스템 8개 화면 모두 목록 200(행 1~3건)·`등록` 링크·`/new` 폼 200·첫 행 상세(`/system/props/PW_FAIL_LIMIT@0`, `/system/info/BUILD_DATE`, `/system/error-codes/1200`, `/system/fido-clients/FIDO01`, `/system/criteria/1`, `/system/menus/1`, `/system/options/1`, `/system/fields/1`)·삭제 모달("정말 삭제하시겠습니까?"/"삭제", 코드 그룹은 "그룹을 삭제하시겠습니까? 하위 코드가 있으면 삭제되지 않습니다.") 확인, 취소로 닫힘. 네이티브 dialog 0건, 콘솔 JS 오류 0건(favicon.ico 404 만 있음). 2부의 `/users/1`, `/managers/2`, `/companies/1` 확인도 같은 세션에서 완료(2부 Review 참조).
-- 정적 자원 규칙: `grep -rn "alert(\|confirm(\|prompt(" src/main/resources` 출력 없음(종료 코드 1), `grep -rn "https\?://" src/main/resources/templates | grep -v "thymeleaf.org\|w3.org"` 출력 없음(종료 코드 1) — 둘 다 기대대로.
-- bootRun: `docker/docker-compose.yml` Oracle 이미 healthy 상태에서 `./gradlew bootRun --args='--spring.profiles.active=local'` 기동, `/tmp/fido-admin-bootrun.log` 에 `Started FidoAdminApplication in 2.732 seconds` 확인. 검증 후 `pkill -f 'FidoAdminApplication'` 로 종료, 포트 8080 반환 확인.
-- 남은 위험: 시퀀스 이름 `<TABLE>_SEQ` 임시(README 절차대로 교체 전 운영 INSERT 보장 없음), 1부 Review 의 수용 위험 유지, 시스템 설정 등록 폼의 문자 제약 오류 문구가 설계 문서 문구와 다름(동작은 일치, 문구만 차이 — 위 참고).
-
-## 디자인 테마 적용 (2026-09-17)
-
-사용자 선택: "A(밝은 SaaS 톤)로 가되 사이드바만 B(남색)처럼".
-
-- [x] `static/css/admin.css` 재작성 — Bootstrap CSS 변수 재정의(본문 배경 `#f4f6fb`, 12px 모서리, 파란 액센트 `#2563eb`), 남색 사이드바(`#1e2a44`, 활성 메뉴 왼쪽 액센트 바), 카드형 목록·상세·검색 폼, 연한 배경 배지, 대문자 표 헤더. 외부 자원·마크업 변경 없음(템플릿 무수정).
-- [x] `application.yml` 에 `spring.web.resources.chain.strategy.content` 추가 — `max-age: 1d` 캐시 때문에 배포 후 옛 CSS 가 보이는 문제를 콘텐츠 해시 URL(`/css/admin-<md5>.css`, `/js/admin-<md5>.js`, WebJars 포함)로 해결. `@{...}` 링크가 자동 변환되며 원본 경로도 계속 200.
-- [x] 검증: `./gradlew test` 389건 통과, bootRun 재기동 후 로그인·대시보드 HTML 에서 해시 경로 확인 및 해당 경로 200, 새 브라우저 컨텍스트(Playwright)에서 목록·상세·대시보드·폼·로그인 스크린샷으로 테마 적용 확인.
-- 미적용(선택지로 남김): 메뉴 아이콘, 상세 화면 카드 분할, 대시보드 카드 색, 번들 폰트, favicon.
-
-## 사이드바 메뉴 아이콘 (2026-09-17)
-
-- [x] `org.webjars.npm:bootstrap-icons:1.13.1` WebJar 추가 — 외부 CDN 금지 조건 유지(설계 §정적 자원). `base.html` 에 `@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}` 링크 추가.
-- [x] `MenuItem` 에 `icon` 컴포넌트 추가(Bootstrap Icons 클래스명), `MenuRegistry.ALL` 29개 메뉴에 각각 의미에 맞는 아이콘 지정.
-- [x] `sidebar.html` 을 `<i class="bi bi-*">` + 제목 `<span>` 구조로 변경, `admin.css` 에 아이콘 너비 고정(1.1rem)·색(`--fa-navy-muted`, 활성/호버 시 흰색) 규칙 추가.
-- [x] 테스트 2건 추가: `MenuRegistryTest.everyMenuHasAnIcon`(모든 메뉴가 `bi-` 접두 아이콘 보유), `LayoutWebTest.sidebarRendersMenuIcons`(아이콘 CSS 링크·렌더된 아이콘 클래스). 전체 391건 통과, 실패 0.
-- [x] 브라우저 확인: SUPER 29개·COMPANY 14개 메뉴 모두 아이콘 렌더, 아이콘 폰트 로드 성공(`document.fonts.check`), 활성 메뉴 아이콘 흰색 전환, 콘솔 오류 0건. 아이콘 폰트(woff2, 134KB)도 콘텐츠 해시 경로로 200 서빙 확인.
-
-## 상세 화면 카드 분할 (2026-09-17)
-
-- [x] `fragments/detail-section.html` 추가 — 제목 붙은 카드 안에 이름/값 표를 담는 재사용 구획. 쓰는 쪽은 `~{this :: xxxRows}` 로 행 묶음을 넘긴다.
-- [x] 항목이 많은 상세 화면 10개를 구획으로 분할:
-  - 사용자(15) 기본 정보/인증기기 정보/상태·이력, 고객사(19) 기본 정보/연락처/계약·한도/비고·이력, 운영자(16) 기본 정보/계정 상태/알림·이력,
-    라이선스(13) 기본 정보/연락처/라이선스·이력, FDS 정책(10) 기본 정보/AND 조건/OR 조건/이력, 인증기기 기준(17) 식별 정보/인증 정책/원본 데이터·이력,
-    서명(11) 기본 정보/서명 데이터, 메일·SMS 큐(10) 기본 정보/메일/SMS, 메뉴 정의(13) 기본 정보/화면 연결/표시 옵션, FIDO2 메타데이터(23) 식별 정보/인증기기 사양/보안 속성/인증서·자원.
-  - 항목이 9개 이하인 나머지 17개 화면은 한 카드 그대로 둔다.
-- [x] `admin.css` 에 `.fa-section`(구획 간격), `.fa-section-title`(구획 제목) 규칙 추가.
-- [x] 테스트 2건 추가: `UserControllerWebTest.detailSplitsRowsIntoTitledSections`(구획 제목과 전 항목 유지), `detailRendersEachRowExactlyOnce`(각 행 정확히 1회 렌더). 전체 393건 통과, 실패 0.
-- [x] 함정과 해결: `th:fragment` 를 단 `<tbody>` 를 `<main>` 안에 두면 카드 밖에 평문으로 **중복 출력**된다(브라우저 확인에서 발견, 스크린샷으로 확인). 프래그먼트 정의를 `<main>` 밖으로 옮겨 해결했고, 중복을 잡는 회귀 테스트를 남겼다.
-- [x] 검증: 10개 화면 전부 HTTP 200, 구획 수 의도대로(2~4), 중복 0건, 렌더된 `<th>` 항목 수가 변경 전 템플릿과 전부 일치(누락 0). 콘솔 오류 0건(기존 favicon 404 제외).
-
-## favicon (2026-09-17)
-
-- [x] 크로스서트 공식 사이트(https://www.crosscert.com/)와 같은 아이콘 사용 — `favicon.ico`(32x32) 와 `images/favicon.png`(192x192) 를 받아 `static/` 에 두었다. 외부 요청 없이 우리 서버가 서빙한다.
-- [x] `layout/base.html`, `login.html`, `error/{403,404,500}.html` 다섯 곳 head 에 `rel="icon"`(ico/png) 과 `rel="apple-touch-icon"` 링크 추가. 다른 정적 자원과 같이 `th:href="@{...}"` 를 써서 콘텐츠 해시 버전닝을 받는다.
-- [x] **보안 설정 수정**: `SecurityConfig` 의 permitAll 목록에 `/favicon.ico` 만 있어 PNG 와 해시 경로(`favicon-<md5>.ico`)가 302 로 로그인에 리다이렉트됐다(로그인 화면에 아이콘이 안 나오는 상태). `/favicon.png`, `/favicon-*.ico`, `/favicon-*.png` 를 추가했다.
-- [x] 테스트 2건 추가: `LayoutWebTest.pagesLinkFavicon`(링크 존재), `anonymousCanFetchFavicon`(로그인 전 접근 시 302 가 아님 — 위 회귀를 실제로 잡는 것을 임시 되돌리기로 확인). 전체 394건 통과, 실패 0.
-- [x] 검증: 네 경로(`/favicon.ico`, `/favicon.png`, 해시 ico/png) 모두 인증 없이 200, 타입·크기 정상. 브라우저 콘솔 오류 0건 — 그동안 남아 있던 `/favicon.ico` 404 가 해소됐다.
-- 참고: 아이콘은 크로스서트 상표 이미지이며 사내 관리 도구용으로 저장소에 포함했다.
-
-## 대시보드 카드 색 (2026-09-17)
-
-- [x] 요약 카드 4개를 지표별 색으로 구분 — 위쪽 3px 색 띠와 같은 색 아이콘: 인증(파랑 #2563eb, `bi-shield-check`), 등록(초록 #16a34a, `bi-person-plus`), 해지(주황 #f59e0b, `bi-person-dash`), 거래확인(보라 #7c3aed, `bi-check2-square`). 인증·등록 색은 차트 선 색과 같다.
-- [x] 숫자를 1.5rem 굵게 키우고 실패 수치만 빨강으로 남겼다. 카드 색은 띠·아이콘에만 쓰고 숫자는 검게 두어 가독성을 지켰다.
-- [x] `admin.css` 에 `.fa-stat` 계열 규칙 추가(카드별 색은 `--fa-stat-color` 변수 하나로 갈아끼운다).
-- [x] 테스트 1건 추가: `DashboardControllerWebTest.summaryCardsAreColorCoded`(카드별 클래스·아이콘·수치 유지). 전체 396건 통과, 실패 0.
-- [x] 검증: 카드 4개 높이 모두 114px 로 동일, 좁은 화면(430px)에서 2열로 접히며 색 구분 유지, 콘솔 오류 0건.
-
-## 번들 폰트 Pretendard (2026-09-17)
-
-- [x] **설계서 문구 변경**: `docs/superpowers/specs/2026-09-16-fido-admin-design.md` 1.1 고정 제약의 "폰트는 시스템 폰트 스택" → Pretendard 한글 상용 서브셋 번들 + 서브셋 밖 글자는 시스템 폰트가 받음. 외부 호출 금지 원칙은 그대로다.
-- [x] WebJar 조사 결과 Maven Central 에 Pretendard·Noto Sans KR WebJar 가 없어(둘 다 404) npm tarball 에서 받아 `static/fonts/` 에 직접 넣었다. 라이선스 OFL-1.1, `fonts/LICENSE.txt` 동봉(OFL 의무).
-- [x] 무게 3개(Regular 400 / Medium 500 / SemiBold 600–700)의 **정적 서브셋** woff2 사용, 합계 786KB. 대안 비교: 전체 woff2 무게당 ~780KB(3무게 2.3MB), 가변폰트 2MB, 동적 서브셋 92조각·Regular만 1.1MB → 서브셋이 가장 유리.
-- [x] `admin.css` 에 `@font-face` 3개 추가하고 `--bs-body-font-family` 맨 앞에 Pretendard 배치. 시스템 폰트 스택은 뒤에 남겨 서브셋 밖 글자를 받게 했다.
-- [x] `SecurityConfig` permitAll 에 `/fonts/**` 추가(favicon 때와 같은 302 문제를 테스트가 먼저 잡았다).
-- [x] 테스트 1건 추가: `LayoutWebTest.anonymousCanFetchBundledFont`. 전체 397건 통과, 실패 0.
-- [x] 검증:
-  - **글리프 커버리지 실측** — 템플릿·자바 소스의 한글 429자를 모두 추출해 서브셋(한글 2,780자)과 대조: **누락 0자**.
-  - 서브셋 밖 글자 처리 — 희귀 한자(龘齉齾) 렌더 폭이 0 이 아님(=fallback 이 정상 수신, 두부 현상 없음).
-  - 폰트 3개 모두 인증 없이 200(`font/woff2`), 브라우저 네트워크에서 콘텐츠 해시 경로로 수신 확인(CSS 내부 상대경로도 Spring 이 해시로 변환).
-  - body·제목·사이드바·표·버튼·`.form-select` 등 전 요소가 Pretendard 로 계산됨(폼 요소 포함), 400/500/600/700 네 굵기 모두 로드. 콘솔 오류 0건.
-- 비용: 저장소에 786KB 증가(기존 .git 8.5MB). 첫 방문 시 폰트 전송량은 Bootstrap Icons(134KB) 포함 약 920KB, 이후 캐시된다.
-
-## 운영자 가입 신청·승인 (2026-09-17)
-
-Spec: `docs/superpowers/specs/2026-09-17-fido-admin-signup-design.md`
-Plan: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`
-
-사용자가 스스로 가입을 신청하고 슈퍼 관리자가 승인해야 로그인할 수 있는 흐름. 스키마는 건드리지 않았고
-신청 행은 `CCFA_MANAGER` 에 `STATUS = 승인대기`, `COMPANY_IDX = -1`(미배정) 로 저장한다. 로그인 차단은
-기존 `ManagerUserDetailsService` 의 상태 검사가 그대로 처리한다 — 새 차단 경로를 만들지 않았다.
-
-- [x] Task 1: (선행 수정) `COMPANY_IDX` 가 null 이면 슈퍼 관리자가 되는 결함 차단
-- [x] Task 2: 비밀번호 정책·상태 상수 공통화 (`PasswordPolicy`, `ManagerStatus`, `SignupPolicy`)
-- [x] Task 3: 가입 신청 서비스 (`SignupService.apply()`)
-- [x] Task 4: 가입 신청 화면 (`/signup`, 로그인 불필요)
-- [x] Task 5: 승인·거절 서비스 (권한 상승 차단 4중 가드)
-- [x] Task 6: 가입 승인 화면 (`/signups`, SUPER 전용)
-- [x] Task 7: 인증 흐름 통합 검증과 문서 갱신
-
-### 설계 검토에서 먼저 잡은 것
-
-- [x] **기존 권한 상승 결함 (설계 3.3)** — 가입 기능과 무관하게 이미 있던 결함이다.
-  `ManagerUserDetailsService` 에 `null` 을 `0` 으로 **명시적으로 치환하는 한 줄**이 있었다:
-  `long companyIdx = m.getCompanyIdx() == null ? 0L : m.getCompanyIdx();`
-  0 은 SUPER 를 뜻하므로, `COMPANY_IDX` 가 비어 있는 계정은 차단되기는커녕 **슈퍼 관리자로 로그인**했다.
-  `ManagerUserDetails` 생성자에 null 을 거부하는 방어가 이미 있었지만, 이 치환 때문에 도달하지 못했다.
-  즉 방어를 무력화한 것은 실수가 아니라 의도적으로 쓴 한 줄이었다 — null 을 "안전한 기본값"으로 다루려다
-  가장 높은 권한값을 골라 버린 경우다. 치환을 제거해 생성자의 방어가 실제로 동작하게 했다.
-  외부 입력이 계정 행을 만들기 **전에** 고쳐야 하는 문제라 다른 무엇보다 먼저 처리했다.
-  (`ManagerUserDetailsServiceTest`, `NullCompanyIdxLoginFlowTest`)
-
-### 의도적으로 감수한 것
-
-- [x] **계정 열거(account enumeration) 트레이드오프 — 사용자가 명시적으로 선택했다.**
-  아이디 중복 시 "이미 사용 중인 아이디"라고 그대로 알려준다. 이 응답으로 특정 아이디의 존재 여부를
-  확인할 수 있다. 모호한 문구로 감추는 대신 신청자가 곧바로 다른 아이디를 고를 수 있는 쪽을 택했다.
-  사내망 전용이고 신청 자체가 승인 없이는 아무 권한도 주지 않기 때문이다.
-  **재검토 조건: 이 화면이 사내망 밖(인터넷)에 노출되는 순간.** 그때는 응답을 모호하게 바꾸고
-  아래의 rate limit 을 함께 넣어야 한다. 둘 중 하나만 해서는 효과가 없다.
-
-### 구현 중 잡은 결함
-
-- [x] **`@ByteSize` vs `@Size`** — 이 스키마는 바이트 의미(`NLS_LENGTH_SEMANTICS=BYTE`, `AL32UTF8`)라
-  한글 1자가 3바이트다. 글자 수 기준인 `@Size` 를 쓰면 검증을 통과한 뒤 `ORA-12899` 로 저장에 실패한다.
-  즉 한글 입력에서만 터지는 결함이다. 가입 폼의 길이 제한을 전부 `@ByteSize` 로 맞췄다.
-  (`SignupControllerWebTest.rejectsNameOverByteLimit` / `rejectsReasonOverByteLimit`,
-  `SignupApprovalEscalationIntegrationTest.longKoreanRejectReasonFitsInColumn` 은 실제 Oracle 로 확인한다)
-
-아래 세 건은 **다른 리뷰어들이 모두 승인한 뒤 Codex 리뷰 게이트가 잡아냈다.** 기록해 둘 가치가 있다 —
-정상 경로만 보면 셋 다 보이지 않는다.
-
-- [x] **공백 결함(가장 무거웠다)** — 가입은 아이디를 trim 하지 않고 저장하는데 로그인은 trim 한다.
-  `" hong"` 으로 신청하면 그대로 저장되고, 로그인은 `"hong"` 을 찾으므로 영영 일치하지 않는다.
-  승인까지 정상적으로 끝난 계정이 **영구히 사용 불가**가 되는데, 화면 어디에도 이상 징후가 없다.
-  신청 시점에 trim 하도록 고쳤고 공백만으로 이루어진 아이디도 거부한다. 중복 검사도 trim 후 값으로 한다.
-  (`SignupControllerWebTest.trimsSurroundingWhitespaceFromUserId`,
-  `detectsDuplicateDespiteSurroundingWhitespace`, `rejectsWhitespaceOnlyUserId`)
-- [x] **없는 고객사로도 승인됐다** — 승인은 `companyIdx` 가 0(SUPER)이나 -1(미배정)인지는 봤지만
-  그 고객사가 **실재하는지**는 확인하지 않았다. 존재하지 않는 IDX 로 승인하면 어느 고객사에도 속하지
-  않는 계정이 만들어진다(ERD 에 FK 가 없어 DB 도 막지 못한다). 존재 검사를 추가했다.
-  (`SignupApprovalServiceTest.approveRejectsCompanyThatDoesNotExist`,
-  `SignupApprovalEscalationIntegrationTest.approveRejectsCompanyThatDoesNotExist`)
-- [x] **Enter 키로 확인 모달을 건너뛸 수 있었다** — 거절 사유 입력란에서 Enter 를 치면 폼이 곧바로
-  제출되어, 되돌릴 수 없는 처리의 확인 모달이 통째로 생략됐다. 모달을 붙여 놓고도 우회로가 열려 있던 셈이다.
-  (`SignupAdminControllerWebTest.rejectFormIsWiredToConfirmModal`)
-
-### 테스트 — 설계서 8장 대조
-
-8장의 모든 항목에 대응하는 테스트가 있다. **단, 동시성 2건은 제외했다(아래 사유).**
-
-| 8장 항목 | 검증하는 테스트 |
-| --- | --- |
-| `COMPANY_IDX` null 이 SUPER 가 되지 않는가 (3.3) | `ManagerUserDetailsServiceTest.nullCompanyIdxIsRejectedInsteadOfBecomingSuper`, `NullCompanyIdxLoginFlowTest` |
-| 신청에 `companyIdx=0`·`status=활성` 을 실어도 무시되는가 | `SignupControllerWebTest.injectedCompanyIdxAndStatusAreIgnored`, `SignupServiceTest.applyForcesPendingStatusAndUnassignedCompany` |
-| 승인 시 `companyIdx = 0` 이 거부되는가 | `SignupApprovalServiceTest.approveRejectsSuperCompanyIdx`, `SignupApprovalEscalationIntegrationTest.approveCannotCreateSuperAccount` |
-| 이미 `활성` 인 계정에 승인이 적용되지 않는가 | `SignupApprovalServiceTest.approveRejectsAlreadyActiveAccount`, `SignupApprovalEscalationIntegrationTest.approvedAccountCannotBeReassigned` |
-| `승인대기` 계정으로 로그인 실패 | `SignupEscalationIntegrationTest.appliedAccountCannotLogInAndIsNotSuper` (실제 Oracle + 실제 인증 코드) |
-| 승인 후 로그인 성공, 소속이 지정한 고객사 | `SignupApprovalEscalationIntegrationTest.approvedAccountBecomesCompanyUserNotSuper` |
-| `거절` 계정으로 로그인 실패 | `SignupApprovalEscalationIntegrationTest.rejectedAccountCannotBeApproved` |
-| 아이디 중복 시 거부 | `SignupControllerWebTest.rejectsDuplicateUserId`, `SignupServiceTest.applyRejectsDuplicateUserId`, `SignupEscalationIntegrationTest.duplicateUserIdIsRejectedOnRealDatabase` |
-| 비밀번호 정책 위반 시 거부 | `PasswordPolicyTest`(8건), `SignupControllerWebTest.rejectsWeakPassword` |
-| 비밀번호 확인 불일치 시 거부 | `PasswordPolicyTest.rejectsConfirmMismatch`, `SignupControllerWebTest.rejectsConfirmMismatch` |
-| 인증 없이 `/signup` 이 열리는가 | `SignupControllerWebTest.formIsPublic` |
-| 고객사 계정이 `/signups` 에 접근하면 403 | `SignupAdminControllerWebTest.companyUserIsForbidden` |
-| 고객사 사이드바에 가입 승인 메뉴가 없는가 | **Task 7 신규** `LayoutWebTest.companySidebarHidesSignupApprovalMenu` (+ 짝이 되는 `superSidebarShowsSignupApprovalMenu`) |
-| 같은 아이디 동시 신청 시 하나만 저장 | **작성하지 않음 — 아래 사유** |
-| 같은 신청 동시 승인 시 한 번만 적용 | **작성하지 않음 — 아래 사유** |
-
-- [x] **동시성 2건을 작성하지 않은 이유(정직하게 남긴다).** 이 프로젝트의 통합 테스트는 `@DataJpaTest` 라
-  테스트 메서드 전체가 하나의 트랜잭션으로 감싸였다가 롤백된다. 다른 스레드는 그 트랜잭션이 만든 행을
-  **볼 수 없다.** 그래서 스레드를 띄워 봐야 경쟁을 재현하지 못하고, 통과하더라도 동시성을 검증한 것이
-  아니라 아무것도 검증하지 않은 테스트가 된다. **통과하는데 이유가 틀린 테스트를 남기느니 없는 쪽이 낫다고 판단했다.**
-  대신 실제 방어 장치 두 개를 실제 Oracle 로 각각 확인한다:
-  `apply()` 의 `LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE` 가 문법 오류·타임아웃 없이 도는 것
-  (`SignupEscalationIntegrationTest.duplicateUserIdIsRejectedOnRealDatabase`), 그리고 승인이 행 잠금
-  **이후** 상태를 다시 읽어 판단하는 것(`SignupApprovalServiceTest.approveRechecksStatusAfterRowLock`,
-  `SignupApprovalEscalationIntegrationTest.approvedAccountCannotBeReassigned` — 후자는 flush + clear 로
-  1차 캐시가 아니라 DB 를 읽게 만들어야 의미가 있다). 진짜 동시성 검증이 필요해지면 `@DataJpaTest` 가 아닌
-  별도 하네스(커밋되는 트랜잭션 + 실제 커넥션 2개)가 필요하다.
-
-- [x] **Task 7 에서 추가한 테스트 4건** — 8장 대조 중 실제로 비어 있던 두 자리를 채웠다.
-  - `LayoutWebTest.companySidebarHidesSignupApprovalMenu` / `superSidebarShowsSignupApprovalMenu` —
-    기존 `MenuRegistryTest.signupApprovalMenuIsSuperOnly` 는 레지스트리 **데이터**가 `superOnly` 인지만 본다.
-    정작 메뉴가 새는 곳은 렌더된 HTML 이다. 템플릿이 `itemsFor(isSuper)` 대신 `MenuRegistry.ALL` 을 쓰도록
-    바뀌면 데이터 테스트는 그대로 통과하면서 메뉴는 노출된다. 실제로 그렇게 바꿔 보니 새 테스트가 실패했고,
-    되돌리니 통과했다(= 회귀를 잡는다는 것을 확인했다).
-  - `SignupControllerWebTest.loginPageLinksToSignupForm` / `loginPageShowsNoticeAfterApplying` —
-    `/signup` 이 살아 있어도 로그인 화면에 링크가 없으면 도달할 길이 없다. 신청 후 돌아오는
-    `/login?signup` 의 접수 안내까지 확인해 진입점과 복귀점을 모두 고정했다. 링크를 지워 보고 실패를 확인했다.
-  - 나머지 항목은 Task 1~6 에서 이미 덮고 있어 중복해 만들지 않았다.
-
-- [x] 전체 테스트 481건 통과, 실패 0, 건너뜀 0.
-
-### 사람이 판단해야 할 후속 과제 (이번 범위 밖, 그러나 실재한다)
-
-- [ ] **가입 엔드포인트에 rate limit 이 없다.** `/signup` 은 인증 없이 열려 있어 아이디 존재 여부를
-  빠르게 훑는 데 쓸 수 있고, 승인대기 행으로 테이블을 채울 수도 있다. 현재 완화책은 **사내망 전용이라는 것뿐**이다.
-  위 계정 열거 트레이드오프와 같은 조건에서 함께 재검토해야 한다(인터넷 노출 시).
-- [ ] **가입 신청은 감사 기록이 남지 않는다.** `AuditLogger` 가 인증된 주체가 없으면 조용히 아무것도 하지 않기
-  때문이다(가입은 익명 호출이다). 승인·거절은 슈퍼 관리자가 로그인한 상태라 정상 기록된다. 신청 이력을
-  남기려면 익명 경로용 기록 수단을 따로 만들어야 하며, 이는 감사 로그의 의미를 바꾸는 결정이라 위임하지 않는다.
-- [ ] **trim 수정 이전에 만들어진 행은 앞뒤 공백이 붙은 아이디를 가질 수 있다.** 그런 행은 승인해도 로그인되지
-  않는다. 운영 DB 에 이미 그런 행이 있는지 확인이 필요하다:
-  `SELECT IDX, USER_ID FROM CCFA_MANAGER WHERE USER_ID <> TRIM(USER_ID);`
-  데이터 정정이라 코드로 일괄 처리하지 않았다.
-- [x] **`/managers` 편집 화면으로 승인 절차를 우회할 수 있었다 — 막았다.**
-  기존 운영자 편집 화면의 상태 선택지는 `활성`/`비활성` 두 개뿐이라 `승인대기`·`거절` 을 표현하지 못한다.
-  승인대기 행을 그 화면에서 열면 상태가 **`활성` 으로 선택되어 보이고**, 관리자가 이름만 고쳐 저장해도
-  상태가 `활성` 으로 바뀐다. 실제로 재현했다: 승인대기 행을 열어 이름만 바꿔 저장하니
-  `STATUS=활성, COMPANY_IDX=1` 이 되었다.
-
-  **권한 상승은 아니다.** `/managers` 는 이미 SUPER 전용이고, SUPER 는 원래 그 화면에서 운영자를
-  직접 만들 수 있다. 이 브랜치가 권한 경계를 넓힌 것은 아니다.
-
-  **문제는 두 가지다.** (1) 이 경로로 활성화하면 `SignupService.approve()` 를 거치지 않으므로
-  승인 감사 로그(`CCFA_MANAGER SIGNUP APPROVE ...`)가 남지 않고, 승인대기 상태 재확인과 행 잠금도
-  건너뛴다. (2) 설계서 4장은 승인 경로가 유일한 활성화 수단인 것처럼 읽히는데, 사실이 아니다.
-
-  **선택한 해법: 가입 상태 행의 상태 편집 자체를 막는다.** (선택지에 `승인대기`·`거절` 을 더하는 쪽은
-  그 화면에서 승인 상태를 임의로 되돌릴 수 있게 만들어 승인 절차를 더 약하게 만든다.)
-
-  - **서버 검사는 `ManagerService.update()` 에 뒀다.** 템플릿은 조작된 POST 를 막지 못하고,
-    컨트롤러의 `validate(form, isNew, binding)` 훅은 폼만 받아 대상 행의 **현재** 상태를 알 수 없다
-    (그 정보가 있는 곳은 `applyForm(form, entity)` 인데, 그건 웹 계층이라 다른 호출자를 지켜주지 못한다).
-    현재 상태를 볼 수 있으면서 `update()` 의 모든 호출자에 한 번에 적용되는 곳이 서비스다.
-    조용히 값을 되돌리지 않고 `IllegalStateException` 을 던진다 — 관리자가 바꿨다고 믿은 값이
-    반영되지 않은 채 "수정되었습니다" 만 뜨는 편이 더 나쁘다. `CrudController.update()` 가 그 예외를
-    500 이 아니라 폼 오류 메시지로 돌려준다(기존 `delete()` 의 `IllegalStateException` 처리와 같은 방식).
-  - **화면(affordance)**: 상태가 `승인대기`·`거절` 이면 상태 입력란을 읽기 전용으로 보여주고
-    "가입 승인 화면에서만 변경할 수 있습니다." 를 붙인다. 판정은 `SignupPolicy.isSignupStatus()` 한 곳이다.
-  - **기존 동작은 그대로**: 막는 것은 상태 변경뿐이다. 같은 행의 이름·연락처 등 다른 필드 수정과,
-    정상 상태(`활성`/`비활성`) 행의 상태 변경은 이전과 똑같이 동작한다(각각 테스트로 고정했다).
-    신규 등록의 기본값 `활성` 도 그대로다.
-  - **테스트**: 우회를 재현하는 테스트를 먼저 썼고, 고치기 전 `main` 에서 실패하는 것을 확인했다.
-    `ManagerServiceTest.updateCannotActivatePendingRow`/`updateCannotChangeStatusOfRejectedRow`,
-    `ManagerControllerWebTest.editFormShowsStatusReadOnlyForPendingRow`/`craftedPostCannotActivatePendingRow`,
-    그리고 실제 Oracle 에 대고 저장을 재현하는
-    `SignupApprovalEscalationIntegrationTest.managerEditCannotActivatePendingRow`.
-    가드를 임시로 무력화해 이 5건이 실제로 실패하는 것도 확인했다(= 회귀를 잡는다).
-  - **목록 화면 상태 필터는 이번 범위에서 손대지 않았다.** 필터 기본값이 "전체"(빈 값 = 필터 없음)라
-    **승인대기·거절 행은 이미 목록에 보인다.** 필터로 그 상태만 따로 추려내지 못할 뿐이고, 이는
-    편의성 문제지 결함이 아니다. 우회 경로가 결함이었고 그것은 닫혔다.
-  - 설계서 4장의 우회 경로 서술도 현재 동작에 맞게 고쳤다(방어가 세 겹 → 네 겹).
-
-- [x] **`auth/PasswordChangeForm` 의 비밀번호 정규식 세 번째 선언을 없앴다.**
-  `@Pattern(regexp = PasswordPolicy.PATTERN)`, `@Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH)`
-  로 바꿨다. 어노테이션 속성은 컴파일 상수여야 해서 `validatePassword()` 호출이 아니라 상수 참조를 쓴다.
-  이제 정규식 리터럴은 코드베이스 전체에서 `PasswordPolicy` 한 곳에만 있다(`grep 'A-Za-z0-9'` 로 확인).
-
-  - **테스트로 보장되지 않는 것을 분명히 해 둔다.** 자바는 `static final` 상수를 컴파일 시 호출부에
-    값으로 박아 넣는다. 그래서 "폼의 정규식이 정책의 정규식과 같은가" 를 보는 테스트는 상수를
-    참조하든 리터럴을 다시 적든 **똑같이 통과한다**. 단일 선언은 테스트가 아니라 **구조**로 보장된다 —
-    선언이 하나고 나머지가 그것을 가리킨다. 그래서 연결을 고정하는 척하는 테스트는 쓰지 않았다.
-  - 그 대신 **동작이 바뀌지 않았음**을 고정했다. 기존 `PasswordPolicyTest.patternConstantIsTheSharedRegex`
-    는 리터럴 값을 비교하며 주석으로 "PasswordChangeForm 이 같은 규칙을 쓰도록 고정한다"고 주장했는데,
-    바로 위 이유로 거짓이었다. 규칙 자체를 확인하는 `constantsExpressTheIntendedRule` 로 교체했다.
-  - **`/me/password` 화면에는 웹 테스트가 아예 없었다** — 어노테이션 경로가 통째로 미검증이었다.
-    `PasswordChangeControllerWebTest` 8건을 새로 만들어 길이 경계(8·64 통과, 4·65 거부), 세 문자 종류
-    누락 거부, 메시지 문구, 확인 불일치, 정상 통과를 고정했다. `MIN_LENGTH` 를 4로 바꿔 보니
-    이 테스트가 실패했다 — 어노테이션이 실제로 `PasswordPolicy` 상수를 따라간다는 확인이다
-    (컴파일 시점의 확인이며, 리터럴 재선언까지 막지는 못한다).
-
-- [ ] **스키마 테이블 존치 검토 — 39개 중 11개가 확인 대상.**
-  `docs/erd/2026-09-18-테이블-존치-검토.md` 에 근거와 확인용 질의를 정리했다.
-  가장 시급한 것은 `BAK_FIDO_LOGS_BAK` 로, 원본에 없는 `DEC_JSONDATA`(복호화) 컬럼을 가진
-  FIDO 로그 사본이다. 운영 스키마에 남은 테스트 테이블(`BAK_FIDO_LOGS_TEST`)과
-  쓰지 않는 연동의 토큰(`AWS_INFO.AMZ_TOKEN`)도 함께 봐야 한다.
-  어떤 테이블도 문서만으로 삭제해서는 안 된다. 다른 시스템이 읽고 있는지 확인이 먼저다.
-
-## Review — 테넌트 선택 기반 UI/UX, Task 12 (2026-09-18)
-
-Spec/Plan: `.superpowers/sdd/2026-09-18-tenant-scoped-ui/` (task-12-brief.md, task-12-deferred-tests.md, task-12-report.md)
-
-Task 1~11 로 SUPER 계정을 세션 선택 테넌트(`SelectedTenant`)로 한 번에 한 고객사만 보게 좁혔다.
-Task 12 는 이 계획의 마지막 태스크로, Task 3.5 가 Task 12 로 미뤄 둔 실패 2건을 새 모델에 맞게
-재작성하고 전체 스위트를 검증했다.
-
-- [x] **이연된 실패 2건 재작성** — `SignupApprovalEscalationIntegrationTest`.
-  두 테스트가 다루던 행(승인대기, `COMPANY_IDX = -1` 미배정)은 어떤 유효 테넌트로도 선택할 수 없어
-  `ManagerService.update()` → `get()` 의 `checkTenant()` 가 원래 검증하려던 상태 가드
-  (`IllegalStateException`)보다 먼저 `TenantMismatchException` 을 던진다. 셋업 문제가 아니라
-  새 모델이 만든 더 강한 보장이다. 각 테스트를 두 조각으로 나눴다(삭제·`@Disabled`·단언 약화 없음).
-  1. **`미배정_행은_운영자_수정_경로로_도달할_수_없다`(신규)** — 유효 테넌트(고객사 1)를 선택한 채로
-     미배정(-1) 행을 열면 `TenantMismatchException` 인지 고정한다(404 매핑, 403 아님).
-  2. **`managerEditCannotActivateAssignedPendingRow`(신규, 기존 의도 이전)** /
-     **`managerEditStillUpdatesOtherFieldsOfPendingRow`(기존 이름 유지, 대상만 이전)** — 소속이
-     실재 고객사(1)로 배정된 승인대기 행을 리포지터리로 직접 구성해, 상태 가드가 여전히 상태 변경만
-     막고 다른 필드 수정은 통과시키는지 검증한다.
-     **주의:** "소속 배정 + 가입 상태" 조합은 현재 가입 워크플로(승인/거절)로는 생성되지 않는다
-     (`approve()` 는 배정하며 활성으로 바꾸고, `reject()` 는 미배정을 유지한다). 테스트가 이 행을
-     직접 만든 것은 통합 시나리오가 아니라 `ManagerService.update()` 의 서비스 계층 규칙 자체를
-     검증하기 위함이다 — 다음 사람이 통합 시나리오로 오해하지 않도록 테스트 주석에도 명시했다.
-  - 프로덕션 코드는 변경하지 않았다(브리프의 명시적 금지).
-
-- [x] **전체 스위트 검증** — Docker Oracle(healthy) 기동 상태에서 `./gradlew clean test`.
-  결과: **tests=577, failures=0, errors=0, skipped=0** (아래 집계 명령으로 확인).
-  ```
-  for k in tests failures errors skipped; do printf "%-9s " "$k"; \
-    grep -ho "$k=\"[0-9]*\"" build/test-results/test/*.xml | grep -o '[0-9]*' | awk '{s+=$1} END {print s+0}'; done
-  ```
-  (Task 3.5 시점 576/2/0/0 → 이번 재작성으로 테스트 1건이 늘어 577/0/0/0.)
-
-- [x] **README 갱신** — "실행" 절 아래 "테넌트 선택" 절을 추가했다. 슈퍼관리자의 `/select-tenant` +
-  상단 선택기, 테넌트/시스템/개인 세 영역과 대표 화면, `/managers/super` 가 필요한 이유
-  (`COMPANY_IDX = 0` 은 어떤 테넌트로도 선택되지 않아 일반 운영자 목록에 나타나지 않음),
-  그리고 COMPANY 역할 계정의 동작은 이번 작업 전과 동일하다는 점을 명시했다.
-
-- [x] **손 확인(브라우저 없이 가능한 범위)** —
-  `./gradlew bootRun --args='--spring.profiles.active=local'` 로 기동 후 `curl` 로:
-  - `curl -sD - http://localhost:8080/` → `302` + `Location: http://localhost:8080/login` (미인증 리다이렉트 확인).
-  - `curl http://localhost:8080/login` → `200`.
-  - 부팅 로그(`Started FidoAdminApplication in 2.797 seconds`)에 컨텍스트 로드 오류·경고 없음
-    (`grep -iE "error|exception|WARN"` 결과 없음).
-  - 확인 후 프로세스 정상 종료.
-  **브라우저가 필요해 손대지 못한 항목**(브리프의 Step 3 목록, 사람이 확인해야 함):
-  로그인 화면 자체의 시각적 렌더링, `/select-tenant` 선택 화면 흐름, 상단 선택기(Bootstrap
-  드롭다운) 렌더링과 동작, 고객사 전환 시 목록 데이터 변화, 상세 화면(`/users/{id}`)에서 테넌트
-  전환 시 목록으로 리다이렉트되는지, 다른 테넌트 ID 직접 URL 접근 시 404, 사이드바 사이즈/디밍
-  표시, `/managers/super`·`/managers` 분리 노출, 감사 로그의 대상 테넌트 기록, `kbadmin` 계정의
-  무회귀 확인.
-
-## 남은 과제 (인간 리뷰어에게)
-
-- **테넌트를 선택 중이던 세션의 고객사가 그 사이 삭제된 경우**: `CompanyService.beforeDelete` 가
-  비어 있지 않은 고객사의 삭제를 막으므로, 최악의 경우도 데이터 유출이 아니라 빈 화면이다.
-- **Bootstrap 드롭다운 렌더링과 사이드바 디밍은 어떤 에이전트도 시각적으로 확인한 적이 없다.**
-  사람이 브라우저로 확인해야 한다.
+# 제공 코드 모음 적용 — 미구현분 전체 구현
+
+출처: 사용자 제공 "FIDO Admin — 제공 코드 모음" (2026-09-26)
+브랜치: main
+
+## 사전 확인 결과
+
+8개 묶음 중 대부분이 미구현이었다. 확인 방법은 파일 존재 + 식별 문자열 grep.
+
+| 묶음 | 상태 |
+|---|---|
+| 1. 시퀀스 (Appid) | 시퀀스명만 다름 (`APPID_SEQ` → `SEQ_APPID`) |
+| 2. 감사로그 | 파일 3개 전부 없음 (AuditView, AuditChanges, AuditReadInterceptor) |
+| 3. 사용자 상세 | 미구현 |
+| 4. FIDO 로그 | **구조 변경 필요** (아래 참조) |
+| 5. Oracle 문자셋 | 미구현 |
+| 6. 메뉴 | 멤버코드 명칭 미반영 |
+| 7. AAID 정책 | disabledAaids/changeStatus 등 미구현 |
+| 8. 멤버코드 | 템플릿 3종 미반영 |
+
+## 결정 사항 (사용자 확인함)
+
+- **`/criteria` 접근**: COMPANY 역할도 허용. SecurityConfig의 `hasRole("SUPER")`에서
+  `/criteria/**`를 뺀다. 고객사별 AAID 토글이 `CCFA_COMPANY_AAID`를 쓰므로
+  고객사 맥락이 필수이고, 메뉴도 TENANT 영역으로 옮기는 것과 일관된다.
+- **검증**: 컴파일 + 기존 테스트 + 신규 단위 테스트.
+
+## 범위를 벗어나 확인이 필요했던 것
+
+**4번 FIDO 로그**는 제공 조각이 현재 구조와 다르다.
+현재: `@Table("FIDO_LOGS")` JPA 엔티티 + `ReadOnlyController` (단일 테이블).
+제공: `FIDO_LOGS_YYYYMMDD` 분할 테이블을 JDBC로 조회, URL `/logs/fido/{date}/{id}`.
+
+제공된 조각(검색폼 필드, tableName 헬퍼, 존재확인 SQL, 상세 SQL, 링크 2개)만으로는
+동작하지 않는다. 서비스 전체·컨트롤러·목록 템플릿을 새로 써야 한다.
+레거시 매퍼 문서(`docs/legacy/mybatis-mappers.md`)의 `log.getList`가 같은 분할
+테이블 방식을 쓰므로 방향 자체는 레거시와 일치한다. 제공 조각을 중심으로 나머지를 채운다.
+
+## 태스크
+
+- [x] Task 1: 시퀀스명 정정 (Appid)
+- [x] Task 2: Oracle 문자셋 의존성 (build.gradle)
+- [x] Task 3: 감사로그 — AuditType 확장, AuditView, AuditChanges
+- [x] Task 4: 감사로그 — AuditReadInterceptor, WebMvcConfig 등록
+- [x] Task 5: 감사로그 — CrudService 변경 기록, FidoSettingService 변경 기록
+- [x] Task 6: AAID 정책 — 서비스 (disabledAaids, changeStatus)
+- [x] Task 7: AAID 정책 — 컨트롤러, SecurityConfig, CriteriaRow
+- [x] Task 8: AAID 정책 — 템플릿 (list, detail)
+- [x] Task 9: 멤버코드 — 메뉴, 템플릿 3종
+- [x] Task 10: 사용자 상세 — 기기 목록 링크, CSS
+- [x] Task 11: FIDO 로그 — 날짜별 분할 테이블 조회
+- [x] Task 12: 신규 테스트 작성
+- [x] Task 13: 전체 빌드 + 테스트, 리뷰 섹션 작성
+
+## 리뷰
+
+(아래에 기록)
+
+### 결과 (2026-09-27)
+
+`./gradlew test`: 657건 중 653 통과, skipped 0. 실패 4건은 모두 Oracle Testcontainers 가
+필요한 기존 테스트(AuditLogRoundTripTest, LoginLockLoadTest, SelectedTenantWiringTest,
+EntityBootTest)로, 작업 전 clean baseline(`git stash`)에서도 같은 4건이 같은 이유로 실패함을
+확인했다. 이번 변경과 무관하다.
+
+신규 테스트 5클래스: AuditChangesTest(8), AuditReadInterceptorTest(8),
+CriteriaQueryServiceTest(10, 재작성), FidoLogQueryServiceTest(10, 재작성),
+MenuRegistryTest(+1).
+
+### 제공 코드와 달리 판단한 것
+
+- **AuditReadInterceptor 의 의존성을 ObjectProvider 로 받는다.** 생성자 주입 그대로 두면
+  WebMvcConfig 를 @Import 하는 @WebMvcTest 조각 30여 개가 AuditLogger 빈이 없어 컨텍스트
+  자체가 뜨지 않는다(284건 실패). 조회 기록은 부수 작업이라 없으면 건너뛴다.
+- **AuditChanges 의 비밀값 판별에 필드명→컬럼명 정규화를 넣었다.** SecretProps.isSecret 은
+  컬럼명 규칙(`_PW` 접미)인데 엔티티 필드는 `userPw` 라 그대로는 걸리지 않아 운영자 비밀번호
+  해시가 UPDATE 로그에 실린다. 테스트 작성 중 발견해 고쳤다.
+- **AuditView.add 를 ReadOnlyController/CrudController.detail 에 넣었다.** "각 상세
+  컨트롤러"를 하나씩 손대는 대신 기반 클래스 두 곳 + 자체 상세를 가진 UserController,
+  FidoLogController 로 전부 덮는다.
+- **FIDO 로그는 서비스·컨트롤러·템플릿을 새로 썼다.** 제공 조각은 날짜별 분할 테이블
+  (FIDO_LOGS_YYYYMMDD) 전제였고 기존 구조는 단일 테이블 JPA 였다. 조각을 중심으로 나머지를
+  채웠고, 상세 URL 은 `/logs/fido/{date}/{id}` 다. ReadOnlyController 를 상속하지 않는다.
+- **/criteria 를 SecurityConfig 의 SUPER 목록에서 뺐다**(사용자 확인). 서비스의
+  requireSuperForGlobalTable 재정의만으로는 URL 매처가 여전히 막아 무의미했다.
+  메뉴도 TENANT/"FIDO 서버 관리 > AAID(정책)" 으로 옮겼다(제공 코드대로).
+- **사용자 상세의 기기 전환 목록은 controller 가 `devices`/`back` 을 실어 준다.** 제공
+  템플릿 조각만으로는 모델에 그 값이 없어 동작하지 않았다. credentials 화면 링크에 `back` 을
+  실어 왕복이 되게 했다.
+
+### 기존 테스트 정리(lessons.md 2026-09-18 "낡은 셋업 vs 옛 동작 정당화" 기준)
+
+- 옛 동작을 정당화하던 것 → 이름·단언을 다시 씀: `CriteriaQueryServiceTest.companyRoleIsDeniedOnSearchAndGet`
+  → `companyRoleCanSearchAndGet`, `CriteriaControllerWebTest.companyRoleIsForbidden` → `companyRoleCanView`,
+  `MenuRegistryTest.테넌트_영역_화면은_17개다` → `18개다`.
+- 셋업만 낡은 것 → 셋업만 고침: UPDATE 감사 메시지 정확 일치 8건 → `startsWith`(메시지 뒤에
+  변경 내역이 붙음), FidoLogControllerWebTest 의 서비스 API 변경.
+
+### 남긴 것
+
+- 커밋하지 않았다(요청 없음). 43 files changed, +1156/−686.
+- `orai18n` 은 testRuntimeClasspath 해석에 포함되어 빌드가 통과했다. Windows 에서
+  `gradlew.bat dependencyInsight --dependency orai18n` 로 재확인할 수 있다.
+- 수정 폼(`/{id}/edit`)도 레코드를 보여 주지만 DATA_VIEW 를 남기지 않는다. 제공 범위가
+  "상세 응답"이라 두었다. 필요하면 CrudController.editForm 에 한 줄이다.

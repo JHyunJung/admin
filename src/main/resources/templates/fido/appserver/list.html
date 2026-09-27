@@ -1,48 +1,92 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
-<head><title>앱 서버</title></head>
+<head><title>멤버코드 관리</title></head>
 <body>
 <main>
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">앱 서버</h1>
-    <a th:href="@{/appservers/new}" class="btn btn-primary btn-sm">등록</a>
+    <h1 class="h4 mb-0">멤버코드 관리</h1>
+    <a th:href="@{/appservers/new}" class="btn btn-primary btn-sm">
+      추가하기
+    </a>
   </div>
 
-  <form method="get" th:action="@{/appservers}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">코드</label><input name="memberCode" th:value="${search.memberCode}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">ID</label><input name="memberId" th:value="${search.memberId}" class="form-control form-control-sm"></div>
+  <form method="get" th:action="@{/appservers}"
+        class="row g-2 align-items-end mb-3">
     <div class="col-auto">
-      <label class="form-label small mb-0">유형</label>
+      <label class="form-label small mb-0">멤버코드</label>
+      <input name="memberCode" th:value="${search.memberCode}"
+             class="form-control form-control-sm">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small mb-0">멤버키</label>
+      <input name="memberId" th:value="${search.memberId}"
+             class="form-control form-control-sm">
+    </div>
+
+    <div class="col-auto">
+      <label class="form-label small mb-0">상태</label>
       <select name="type" class="form-select form-select-sm">
         <option value="">전체</option>
-        <option value="use" th:selected="${search.type == 'use'}">use</option>
-        <option value="unuse" th:selected="${search.type == 'unuse'}">unuse</option>
+        <option value="use" th:selected="${search.type == 'use'}">활성</option>
+        <option value="unuse" th:selected="${search.type == 'unuse'}">비활성</option>
       </select>
     </div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/appservers}" class="btn btn-link btn-sm">초기화</a></div>
+
+    <div class="col-auto">
+      <button class="btn btn-outline-secondary btn-sm">검색</button>
+      <a th:href="@{/appservers}" class="btn btn-link btn-sm">초기화</a>
+    </div>
   </form>
 
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover fa-table mb-0">
       <thead class="table-light">
-        <tr><th>IDX</th><th>코드</th><th>ID</th><th>유형</th><th>비고</th><th>등록일</th></tr>
+      <tr>
+        <th>번호</th>
+        <th>멤버코드</th>
+        <th>멤버키</th>
+        <th>설명</th>
+        <th>생성일</th>
+        <th>수정일</th>
+        <th>상태</th>
+      </tr>
       </thead>
+
       <tbody>
-        <tr th:each="r : ${page.content}">
-          <td th:text="${r.idx}">0</td>
-          <td><a th:href="@{/appservers/{id}(id=${r.idx})}" th:text="${r.memberCode}">code</a></td>
-          <td th:text="${r.memberId}"></td>
-          <td><span class="badge" th:classappend="${r.type == 'use'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.type}"></span></td>
-          <td th:text="${#strings.abbreviate(r.note, 40)}"></td>
-          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm')}"></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+      <tr th:each="r : ${page.content}">
+        <td th:text="${r.idx}"></td>
+        <td>
+          <a th:href="@{/appservers/{id}(id=${r.idx})}"
+             th:text="${r.memberCode}"></a>
+        </td>
+        <td th:text="${r.memberId}"></td>
+        <td th:text="${r.note}"
+            style="white-space: normal; overflow-wrap: anywhere;"></td>
+        <td class="text-nowrap"
+            th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td class="text-nowrap"
+            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+        <td>
+          <span class="badge text-nowrap"
+                th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
+                th:text="${r.type == 'use' ? '활성' : (r.type == 'unuse' ? '비활성' : '미확인')}"></span>
+        </td>
+      </tr>
+
+      <tr th:if="${page.totalElements == 0}">
+        <td colspan="7" class="text-center text-secondary py-4">
+          데이터가 없습니다.
+        </td>
+      </tr>
       </tbody>
     </table>
   </div>
+
   <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
+    <span th:text="|${page.totalElements}건이 검색되었습니다.|"></span>
     <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
   </div>
 </main>

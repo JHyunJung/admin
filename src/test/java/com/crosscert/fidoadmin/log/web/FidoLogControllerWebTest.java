@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.log.web;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -18,8 +19,8 @@ import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
-import com.crosscert.fidoadmin.log.entity.FidoLogs;
 import com.crosscert.fidoadmin.log.service.FidoLogQueryService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -53,14 +53,14 @@ class FidoLogControllerWebTest {
     ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
-    private FidoLogs log(long idx, String json) {
-        FidoLogs l = new FidoLogs();
-        l.setIdx(idx); l.setCompanyIdx(1L); l.setSerialcode("SN-0001"); l.setServicename("kbstar");
-        l.setJsondata(json); l.setCreatedtime(LocalDateTime.of(2026, 9, 16, 10, 0));
-        return l;
+    private FidoLogRow row(long idx) {
+        return new FidoLogRow(idx, 1L, "SN-0001", "kbstar", LocalDateTime.of(2026, 9, 16, 10, 0));
     }
 
-    /** COMPANY 역할: 고객사 select 가 없고, CLOB(JSONDATA) 은 목록에 나오지 않는다. */
+    private FidoLogView detailOf(long idx, String json) {
+        return FidoLogView.of(idx, 1L, "SN-0001", "kbstar",
+            LocalDateTime.of(2026, 9, 16, 10, 0), json);
+    }
 
     /**
      * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
@@ -81,14 +81,18 @@ class FidoLogControllerWebTest {
     }
 
     @Test void companyListHidesCompanyFilterAndClob() throws Exception {
-        when(service.defaultSort()).thenReturn(Sort.by("idx"));
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(log(5L, "MARKER_JSON_ONLY_IN_DETAIL"))));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(row(5L))));
         mvc.perform(get("/logs/fido").param("servicename", "kbstar").with(user(companyUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("log/fido/list"))
             .andExpect(content().string(containsString("SN-0001")))
-            .andExpect(content().string(not(containsString("MARKER_JSON_ONLY_IN_DETAIL"))))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
+        // CLOB 은 목록 DTO(FidoLogRow)에 자리 자체가 없다. 화면 문자열이 아니라
+        // 구조로 막혀 있음을 확인한다 — 템플릿을 고쳐도 되살아나지 않는다.
+        org.assertj.core.api.Assertions
+            .assertThat(java.util.Arrays.stream(FidoLogRow.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName))
+            .doesNotContain("jsondata", "jsondataPretty");
         ArgumentCaptor<FidoLogSearchForm> captor = ArgumentCaptor.forClass(FidoLogSearchForm.class);
         verify(service).search(captor.capture(), any());
         org.assertj.core.api.Assertions.assertThat(captor.getValue().getServicename()).isEqualTo("kbstar");
@@ -100,7 +104,6 @@ class FidoLogControllerWebTest {
      * 검색폼 select 태그로 특정한다.
      */
     @Test void superListDoesNotShowCompanyFilter() throws Exception {
-        when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         mvc.perform(get("/logs/fido").session(session).with(user(superUser)))
             .andExpect(status().isOk())
@@ -113,9 +116,10 @@ class FidoLogControllerWebTest {
      * 정리된 형태 `"op" : "Auth"` 는 HTML 에서 `&quot;op&quot; : &quot;Auth&quot;` 로 나타난다.
      */
     @Test void detailPrettyPrintsJson() throws Exception {
-        when(service.get(5L)).thenReturn(log(5L, "{\"op\":\"Auth\",\"result\":\"1200\"}"));
+        when(service.get(any(LocalDate.class), eq(5L)))
+            .thenReturn(detailOf(5L, "{\"op\":\"Auth\",\"result\":\"1200\"}"));
         when(companies.name(1L)).thenReturn("KB국민은행");
-        mvc.perform(get("/logs/fido/5").with(user(companyUser)))
+        mvc.perform(get("/logs/fido/2026-09-16/5").with(user(companyUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("log/fido/detail"))
             .andExpect(content().string(containsString("&quot;op&quot; : &quot;Auth&quot;")))

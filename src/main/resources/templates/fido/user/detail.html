@@ -5,8 +5,25 @@
 <main>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0" th:text="|사용자 #${item.idx}|">사용자</h1>
-    <a th:href="@{/users}" class="btn btn-link btn-sm">목록</a>
+    <a th:href="${back != null and !back.isEmpty()} ? ${back} : @{/users}"
+       class="btn btn-link btn-sm">목록</a>
   </div>
+
+  <!-- 같은 사용자의 기기가 둘 이상일 때만 내놓는다. 한 대뿐이면 지금 보는 것과 같아 소용이 없다. -->
+  <div class="mb-3" th:if="${devices != null and devices.size() > 1}">
+    <div class="small text-secondary mb-1"
+         th:text="|이 사용자의 등록 기기 ${devices.size()}대|"></div>
+    <div class="list-group list-group-horizontal-md flex-wrap">
+      <a th:each="device : ${devices}"
+         th:href="@{/users/{id}(id=${device.idx},back=${back})}"
+         class="list-group-item list-group-item-action py-2 user-min-width"
+         th:classappend="${device.idx == item.idx} ? 'active' : ''">
+        <strong class="d-block small" th:text="|등록 기기 #${device.idx}|"></strong>
+        <span class="fa-mono small user-break" th:text="${device.aaid}"></span>
+      </a>
+    </div>
+  </div>
+
   <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
   <div th:replace="~{fragments/detail-section :: section('인증기기 정보', ~{this :: deviceRows})}"></div>
   <div th:replace="~{fragments/detail-section :: section('상태 · 이력', ~{this :: statusRows})}"></div>

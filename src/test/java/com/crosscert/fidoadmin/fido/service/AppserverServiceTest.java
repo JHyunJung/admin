@@ -2,6 +2,8 @@ package com.crosscert.fidoadmin.fido.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +64,7 @@ class AppserverServiceTest {
 
         assertThat(existing.getCreatedtime()).isEqualTo(created);
         assertThat(existing.getUpdatedtime()).isAfter(created);
-        verify(audit).log(AuditType.UPDATE, "APPSERVER UPDATE 3");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("APPSERVER UPDATE 3"));
     }
 
     @Test void companyRoleCreateForcesOwnTenant() {

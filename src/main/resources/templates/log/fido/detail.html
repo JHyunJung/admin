@@ -5,7 +5,8 @@
 <main>
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0" th:text="|FIDO 로그 #${item.idx}|"></h1>
-    <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">목록</a>
+    <a th:href="@{/logs/fido(logDate=${logDate})}"
+       class="btn btn-link btn-sm">목록</a>
   </div>
   <div class="bg-white border rounded">
     <table class="table table-sm fa-detail mb-0"><tbody>

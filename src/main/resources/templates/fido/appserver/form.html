@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
-<head><title th:text="${isNew} ? '앱 서버 등록' : '앱 서버 수정'">앱 서버</title></head>
+<head><title th:text="${isNew} ? '멤버코드 등록' : '멤버코드 수정'">멤버코드</title></head>
 <body>
 <main>
-  <h1 class="h4 mb-3" th:text="${isNew} ? '앱 서버 등록' : '앱 서버 수정'">앱 서버</h1>
+  <h1 class="h4 mb-3" th:text="${isNew} ? '멤버코드 등록' : '멤버코드 수정'">멤버코드</h1>
   <form th:action="${isNew} ? @{/appservers} : @{/appservers/{id}(id=${id})}" th:object="${form}" method="post"
         class="bg-white border rounded p-3" style="max-width: 760px;">
     <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
@@ -12,20 +12,23 @@
     </div>
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">코드 <span class="text-danger">*</span></label>
+        <label class="form-label">멤버코드 <span class="text-danger">*</span></label>
         <input th:field="*{memberCode}" class="form-control" th:classappend="${#fields.hasErrors('memberCode')} ? 'is-invalid'">
         <div class="invalid-feedback" th:errors="*{memberCode}"></div>
       </div>
       <div class="col-md-6">
-        <label class="form-label">ID <span class="text-danger">*</span></label>
+        <label class="form-label">멤버키 <span class="text-danger">*</span></label>
         <input th:field="*{memberId}" class="form-control" th:classappend="${#fields.hasErrors('memberId')} ? 'is-invalid'">
         <div class="invalid-feedback" th:errors="*{memberId}"></div>
       </div>
       <div class="col-md-3">
-        <label class="form-label">유형 <span class="text-danger">*</span></label>
-        <select th:field="*{type}" class="form-select"><option value="use">use</option><option value="unuse">unuse</option></select>
+        <label class="form-label">상태 <span class="text-danger">*</span></label>
+        <select th:field="*{type}" class="form-select">
+          <option value="use">활성</option>
+          <option value="unuse">비활성</option>
+        </select>
       </div>
-      <div class="col-12"><label class="form-label">비고</label><input th:field="*{note}" class="form-control"></div>
+      <div class="col-12"><label class="form-label">설명</label><input th:field="*{note}" class="form-control"></div>
     </div>
     <div class="mt-3 d-flex gap-2">
       <button class="btn btn-primary">저장</button>

@@ -21,6 +21,7 @@ import com.crosscert.fidoadmin.fido.entity.Criteria;
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @WebMvcTest(controllers = CriteriaController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class,
@@ -37,6 +42,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class CriteriaControllerWebTest {
 
     @Autowired MockMvc mvc;
+    @Autowired com.crosscert.fidoadmin.common.SelectedTenant selected;
     @MockitoBean CriteriaQueryService service;
     @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
@@ -46,6 +52,24 @@ class CriteriaControllerWebTest {
 
     ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+
+    /**
+     * /criteria 는 TENANT 영역이라 미선택 SUPER 는 TenantSelectionInterceptor 가
+     * /select-tenant 로 돌려보낸다. SUPER 요청에는 미리 테넌트를 선택해 둔다.
+     */
+    MockHttpSession session;
+
+    @BeforeEach void selectTenant() {
+        session = new MockHttpSession();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setSession(session);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        try {
+            selected.select(9L);
+        } finally {
+            RequestContextHolder.resetRequestAttributes();
+        }
+    }
 
     private Criteria criteria() {
         Criteria c = new Criteria();
@@ -58,16 +82,25 @@ class CriteriaControllerWebTest {
         return c;
     }
 
-    /** COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용. URL 매처가 403 으로 막는다. */
-    @Test void companyRoleIsForbidden() throws Exception {
-        mvc.perform(get("/criteria").with(user(companyUser))).andExpect(status().isForbidden());
-        mvc.perform(get("/criteria/1").with(user(companyUser))).andExpect(status().isForbidden());
+    /**
+     * 화면의 용도가 고객사별 AAID 토글이라 COMPANY 역할도 연다.
+     * 예전에는 SUPER 전용이라 403 이었다 — 그 제약이 풀렸음을 못 박는다.
+     */
+    @Test void companyRoleCanView() throws Exception {
+        when(service.disabledAaids()).thenReturn(java.util.Set.of());
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(criteria())));
+        when(service.get(1L)).thenReturn(criteria());
+
+        mvc.perform(get("/criteria").with(user(companyUser))).andExpect(status().isOk());
+        mvc.perform(get("/criteria/1").with(user(companyUser))).andExpect(status().isOk());
     }
 
     @Test void superSeesListWithoutJsonAndWithoutCompanyFilter() throws Exception {
+        when(service.disabledAaids()).thenReturn(java.util.Set.of());
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(criteria())));
-        mvc.perform(get("/criteria").param("aaid", "0012").with(user(superUser)))
+        mvc.perform(get("/criteria").param("aaid", "0012").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("fido/criteria/list"))
             .andExpect(content().string(containsString("0012#0001")))
@@ -84,7 +117,7 @@ class CriteriaControllerWebTest {
     /** 상세의 JSONDATA 는 JsonPretty 로 정리되어 "key" : "value" 형태(이스케이프된 &quot;)로 나온다. */
     @Test void detailShowsPrettyJson() throws Exception {
         when(service.get(1L)).thenReturn(criteria());
-        mvc.perform(get("/criteria/1").with(user(superUser)))
+        mvc.perform(get("/criteria/1").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("fido/criteria/detail"))
             .andExpect(content().string(containsString("&quot;aaid&quot; : &quot;0012#0001&quot;")))

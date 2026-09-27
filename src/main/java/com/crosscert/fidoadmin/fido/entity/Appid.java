@@ -20,7 +20,7 @@ public class Appid {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "appidSeq")
-    @SequenceGenerator(name = "appidSeq", sequenceName = "APPID_SEQ", allocationSize = 1)
+    @SequenceGenerator(name = "appidSeq", sequenceName = "SEQ_APPID", allocationSize = 1)
     @Column(name = "IDX")
     private Long idx;
 

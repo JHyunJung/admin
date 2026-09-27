@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web;
 
+import com.crosscert.fidoadmin.audit.AuditView;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.fido.service.UserAccountService;
 import com.crosscert.fidoadmin.fido.service.UserinfoService;
@@ -68,14 +69,34 @@ public class UserController {
         return "fido/user/credentials";
     }
 
-    /** 기기 한 건의 상세. {@code service.get} 이 테넌트를 검사한다(불일치는 404). */
+    /**
+     * 기기 한 건의 상세. {@code service.get} 이 테넌트를 검사한다(불일치는 404).
+     *
+     * <p>같은 사용자의 다른 기기도 함께 실어 준다. 한 사람이 기기를 여럿 등록하면
+     * 어느 기기의 문제인지 비교해 봐야 하는데, 매번 목록으로 나갔다 들어오면
+     * 어느 것을 봤는지 놓친다.
+     *
+     * <p>{@code back} 은 돌아갈 곳이다. 이 화면에는 목록(/users)과 기기 목록
+     * (/users/{userid}/credentials) 두 경로로 들어올 수 있어, 왔던 쪽으로 돌려보낸다.
+     */
     @GetMapping("/{id:\\d+}")
-    public String detail(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id,
+                         @RequestParam(required = false) String back,
+                         Model model) {
         var entity = service.get(id);
         model.addAttribute("item", UserView.from(entity));
         model.addAttribute("basePath", "/users");
         model.addAttribute("companyName", companies.name(entity.getCompanyIdx()));
         model.addAttribute("statuses", UserinfoService.STATUSES.stream().sorted().toList());
+
+        // 같은 (USERID, SERVICENAME) 묶음의 기기들. 목록 화면과 같은 기준으로 묶는다.
+        var devices = accounts
+            .credentialsOf(entity.getUserid(), entity.getServicename() == null ? "" : entity.getServicename())
+            .stream().map(UserRow::from).toList();
+        model.addAttribute("devices", devices);
+        model.addAttribute("back", back);
+        // 기기 상세는 PUBKEY·CERTIFICATE 앞부분을 보여 준다. 누가 어느 기기를 열었는지 남긴다.
+        AuditView.add(model, "USERINFO", String.valueOf(entity.getIdx()));
         return "fido/user/detail";
     }
 

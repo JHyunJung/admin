@@ -1,7 +1,7 @@
 package com.crosscert.fidoadmin.system.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
-import com.crosscert.fidoadmin.audit.AuditType;
+import com.crosscert.fidoadmin.audit.AuditChanges;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.SecretProps;
@@ -64,13 +64,17 @@ public class FidoSettingService {
     @Transactional
     public void save(Map<String, String> submitted) {
         Long company = tenant.companyIdx();
-        int changed = 0;
         for (FidoSettingKey k : FidoSettingKey.values()) {
             String value = submitted.get(k.key());
             if (value == null) continue;
             // 비밀값은 화면이 실제 값을 모른 채 돌아온다. 빈 값이나 마스크를 그대로 저장하면
             // 다른 항목만 바꿔 저장했을 때 비밀번호가 지워진다. 입력이 있을 때만 교체한다.
             if (!SecretProps.shouldSave(k.key(), value)) continue;
+
+            // Oracle 은 빈 문자열을 NULL 로 저장한다. 비교 전에 맞추지 않으면
+            // 빈 값으로 둔 항목이 저장할 때마다 변경으로 잡힌다.
+            if (value.isEmpty()) value = null;
+
             CcfaSystemPropId id = new CcfaSystemPropId(k.key(), company);
             CcfaSystemProp row = repository.findById(id).orElseGet(() -> {
                 CcfaSystemProp fresh = new CcfaSystemProp();
@@ -78,13 +82,17 @@ public class FidoSettingService {
                 fresh.setShareType("NO");
                 return fresh;
             });
+            if (java.util.Objects.equals(row.getPropValue(), value)) {
+                continue;
+            }
+
+            var before = AuditChanges.snapshot(row);
             row.setPropValue(value);
             row.setUpdatedtime(LocalDateTime.now());
-            repository.save(row);
-            changed++;
-        }
-        if (changed > 0) {
-            audit.log(AuditType.UPDATE, "CCFA_SYSTEM_PROP FIDO SETTINGS " + changed + "건");
+            CcfaSystemProp saved = repository.save(row);
+
+            AuditChanges.record(audit, "CCFA_SYSTEM_PROP",
+                saved.getId().toPathValue(), before, saved);
         }
     }
 }

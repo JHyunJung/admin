@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,7 +78,7 @@ class FidoClientServiceTest {
         CcfaFidoclient out = service.update("FIDO01", c -> c.setStatus("OFF"));
         assertThat(out.getCreatedtime()).isEqualTo(java.time.LocalDateTime.of(2026, 1, 1, 0, 0));
         assertThat(out.getUpdatedtime()).isNotNull();
-        verify(audit).log(AuditType.UPDATE, "CCFA_FIDOCLIENT UPDATE FIDO01");
+        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_FIDOCLIENT UPDATE FIDO01"));
     }
 
     @Test void sortDefaultsToCode() {
