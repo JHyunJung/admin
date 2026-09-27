@@ -23,12 +23,21 @@ public class FidoLogSearchForm extends SearchForm {
 
     private String servicename;
     private String serialcode;
+    /** 구분(Reg/Auth/Dereg). 그 밖의 값은 조건 없음. */
+    private String op;
+    /** 사용자 ID 부분 일치. */
+    private String userid;
+    /** 결과 필터(success/fail). 그 밖의 값은 조건 없음. */
+    private String outcome;
 
     @Override protected Map<String, Object> extraParams() {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("logDate", logDate);
         m.put("servicename", servicename);
         m.put("serialcode", serialcode);
+        m.put("op", op);
+        m.put("userid", userid);
+        m.put("outcome", outcome);
         return m;
     }
 }

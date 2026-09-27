@@ -5,25 +5,61 @@
 <body>
 <main>
   <h1 class="h4 mb-3">FIDO 로그</h1>
+  <!--/* 구분·사용자·결과는 JSONDATA 안의 값이다(FidoLogJson). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
   <form method="get" th:action="@{/logs/fido}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">시리얼</label><input name="serialcode" th:value="${search.serialcode}" class="form-control form-control-sm"></div>
     <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
     <div class="col-auto"><label class="form-label small mb-0">조회 날짜</label><input type="date" name="logDate" th:value="${search.logDate}" class="form-control form-control-sm" required></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">구분</label>
+      <select name="op" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option value="Reg" th:selected="${search.op == 'Reg'}">등록</option>
+        <option value="Auth" th:selected="${search.op == 'Auth'}">인증</option>
+        <option value="Dereg" th:selected="${search.op == 'Dereg'}">해지</option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">사용자</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">결과</label>
+      <select name="outcome" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option value="success" th:selected="${search.outcome == 'success'}">성공</option>
+        <option value="fail" th:selected="${search.outcome == 'fail'}">실패</option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">시리얼</label><input name="serialcode" th:value="${search.serialcode}" class="form-control form-control-sm"></div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
   <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>일시</th><th>서비스명</th><th>시리얼</th></tr></thead>
+    <table class="table table-sm table-hover align-middle fa-table mb-0">
+      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>사용자</th><th>결과</th><th>서비스명</th><th>시리얼</th><th>일시</th></tr></thead>
       <tbody>
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
                  th:text="${r.idx}">0</a></td>
-          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          <td>
+            <span th:if="${r.op == null}" class="text-secondary">-</span>
+            <span th:unless="${r.op == null}" class="badge"
+                  th:classappend="${r.op == 'Reg'} ? 'text-bg-primary' : (${r.op == 'Auth'} ? 'text-bg-secondary' : (${r.op == 'Dereg'} ? 'text-bg-warning' : 'text-bg-secondary'))"
+                  th:text="${r.opLabel()}"></span>
+          </td>
+          <td th:text="${r.userid ?: '-'}"></td>
+          <td>
+            <span th:if="${r.result == null}" class="text-secondary">-</span>
+            <th:block th:unless="${r.result == null}">
+              <span class="badge" th:classappend="${r.success()} ? 'text-bg-success' : 'text-bg-danger'"
+                    th:text="${r.success()} ? '성공' : '실패'"></span>
+              <!--/* 실패면 코드와 사전(CCFA_ERROR_TABLE) 메시지를 함께. 성공(1200)은 배지만으로 충분하다. */-->
+              <small th:unless="${r.success()}" class="text-secondary fa-mono ms-1"
+                     th:text="${r.resultMessage != null} ? |${r.result} ${r.resultMessage}| : ${r.result}"></small>
+            </th:block>
+          </td>
           <td th:text="${r.servicename}"></td>
           <td class="fa-mono" th:text="${r.serialcode}"></td>
+          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="4" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>

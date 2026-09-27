@@ -54,12 +54,35 @@ class FidoLogControllerWebTest {
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     private FidoLogRow row(long idx) {
-        return new FidoLogRow(idx, 1L, "SN-0001", "kbstar", LocalDateTime.of(2026, 9, 16, 10, 0));
+        return row(idx, "Auth", "user001", "1200", null);
+    }
+
+    private FidoLogRow row(long idx, String op, String userid, String result, String message) {
+        return new FidoLogRow(idx, 1L, "SN-0001", "kbstar", LocalDateTime.of(2026, 9, 16, 10, 0),
+            op, userid, result, message);
     }
 
     private FidoLogView detailOf(long idx, String json) {
         return FidoLogView.of(idx, 1L, "SN-0001", "kbstar",
-            LocalDateTime.of(2026, 9, 16, 10, 0), json);
+            LocalDateTime.of(2026, 9, 16, 10, 0), json, "Auth", "user001", "1200", null);
+    }
+
+    /** 목록은 JSON 을 열지 않고도 구분·사용자·결과를 보여 준다. 실패는 코드와 사전 메시지를 함께. */
+    @Test void listShowsOpUserAndResultFromJson() throws Exception {
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(
+            row(1L, "Reg", "user101", "1200", null),
+            row(2L, "Auth", "user102", "1491", "Request Invalid"),
+            row(3L, null, null, null, null))));
+        String html = mvc.perform(get("/logs/fido").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html)
+            .contains(">등록<").contains(">인증<")
+            .contains("user101").contains("user102")
+            .contains(">성공<").contains(">실패<")
+            .contains("1491 Request Invalid")
+            .contains("name=\"op\"").contains("name=\"outcome\"").contains("name=\"userid\"")
+            .doesNotContain(">Reg<").doesNotContain(">Auth<");
     }
 
     /**
@@ -115,6 +138,16 @@ class FidoLogControllerWebTest {
      * 상세는 JSONDATA 를 정리해 보여준다. th:text 는 따옴표를 &quot; 로 이스케이프하므로
      * 정리된 형태 `"op" : "Auth"` 는 HTML 에서 `&quot;op&quot; : &quot;Auth&quot;` 로 나타난다.
      */
+    /** 서비스가 404 로 던진 ResponseStatusException 은 500 이 아니라 404 화면이어야 한다(없는 날짜 분할 테이블 등). */
+    @Test void detailNotFoundRendersNotFoundPage() throws Exception {
+        when(service.get(any(LocalDate.class), eq(9L)))
+            .thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "FIDO 로그 9"));
+        mvc.perform(get("/logs/fido/2026-09-25/9").with(user(companyUser)))
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("error/404"));
+    }
+
     @Test void detailPrettyPrintsJson() throws Exception {
         when(service.get(any(LocalDate.class), eq(5L)))
             .thenReturn(detailOf(5L, "{\"op\":\"Auth\",\"result\":\"1200\"}"));

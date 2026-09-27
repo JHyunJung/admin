@@ -105,6 +105,55 @@ class FidoLogQueryServiceTest {
         assertThat(params.getValue().getValue("serialcode")).isEqualTo("%SN-1%");
     }
 
+    /** 구분·사용자·결과는 DB 가 JSON_VALUE 로 꺼내고 거른다. 결과 메시지는 CCFA_ERROR_TABLE 에서. */
+    @Test void jsonFieldsAreSelectedAndFilteredInSql() {
+        tableExists(true);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(1L);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
+            .thenReturn(java.util.List.of());
+
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setOp("Auth");
+        f.setUserid("user1");
+        f.setOutcome("fail");
+        service.search(f, PageRequest.of(0, 20));
+
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).query(sql.capture(), params.capture(), any(RowMapper.class));
+
+        assertThat(sql.getValue())
+            .contains("JSON_VALUE(JSONDATA, '$.op') AS LOG_OP")
+            .contains("JSON_VALUE(JSONDATA, '$.userid') AS LOG_USERID")
+            .contains("JSON_VALUE(JSONDATA, '$.result') AS LOG_RESULT")
+            .contains("FROM CCFA_ERROR_TABLE e WHERE e.ERROR_CODE = JSON_VALUE(JSONDATA, '$.result')")
+            .contains(":outcome = 'fail'");
+        assertThat(params.getValue().getValue("op")).isEqualTo("Auth");
+        assertThat(params.getValue().getValue("userid")).isEqualTo("%user1%");
+        assertThat(params.getValue().getValue("outcome")).isEqualTo("fail");
+        assertThat(params.getValue().getValue("successCode")).isEqualTo("1200");
+    }
+
+    /** 모르는 구분/결과 값은 조건 없음(null)으로 간다 — SQL 에 사용자 문자열이 실리지 않는다. */
+    @Test void unknownOpAndOutcomeBecomeNull() {
+        tableExists(true);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(1L);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
+            .thenReturn(java.util.List.of());
+
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setOp("bogus");
+        f.setOutcome("bogus");
+        f.setUserid(" ");
+        service.search(f, PageRequest.of(0, 20));
+
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).query(anyString(), params.capture(), any(RowMapper.class));
+        assertThat(params.getValue().getValue("op")).isNull();
+        assertThat(params.getValue().getValue("outcome")).isNull();
+        assertThat(params.getValue().getValue("userid")).isNull();
+    }
+
     /** 총 건수가 0이면 목록 조회로 나가지 않는다. */
     @Test void zeroCountSkipsRowQuery() {
         tableExists(true);
