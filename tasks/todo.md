@@ -115,8 +115,10 @@ MenuRegistryTest(+1).
 - [x] 3. AAID 전체 활성/비활성 (`basic.disableCompanyAllAAID` — 중복 insert 는 NOT EXISTS 로 막음)
 - [x] 4. 잠금 N분 자동 해제 (`scheduler.updateManagerPwPolicyUnlock` — 배치 대신 로그인 시도 시점 판정, `PW_LOCK_MINUTES` 기본 30)
 - [x] 5. VENDOR_CODE 중복 검사 (`manager.selectVendorCode` — CrudController 에 id 를 받는 validate 오버로드 추가)
-- [ ] 1. FDS 모니터링 화면 — 레거시 쿼리의 LONGIP/UA/COUNTRY/ACCESSIP/USERNAME 과 CCFA_FIDO_TLOG 가
-      현재 ERD·스키마에 없음. "현재 컬럼으로 재정의" 결정 → 별도 설계(architectural)
+- [x] 1. FDS 모니터링 화면 — 현재 컬럼으로 재정의(같은 기기 SERIALCODE 의 N초 이내 반복). 스펙
+      docs/superpowers/specs/2026-09-27-fds-monitor-design.md, 계획 docs/superpowers/plans/2026-09-27-fds-monitor.md,
+      브랜치 feature/fds-monitor(6 커밋, subagent-driven). 702건 중 기존 DB 의존 4건만 실패, skipped 0.
+      후속: 출시 전 운영 파티션의 CREATEDTIME 이 TIMESTAMP 인지 ALL_TAB_COLUMNS 로 확인, Oracle 통합 테스트 추가
 
 결과: 674건 중 670 통과, skipped 0. 실패 4건은 기존 DB 의존 테스트.
 신규 테스트 17건(CompanyServiceTest 4, CriteriaQueryServiceTest 3, CriteriaControllerWebTest 1,
