@@ -118,7 +118,8 @@ MenuRegistryTest(+1).
 - [x] 1. FDS 모니터링 화면 — 현재 컬럼으로 재정의(같은 기기 SERIALCODE 의 N초 이내 반복). 스펙
       docs/superpowers/specs/2026-09-27-fds-monitor-design.md, 계획 docs/superpowers/plans/2026-09-27-fds-monitor.md,
       브랜치 feature/fds-monitor(6 커밋, subagent-driven). 702건 중 기존 DB 의존 4건만 실패, skipped 0.
-      후속: 출시 전 운영 파티션의 CREATEDTIME 이 TIMESTAMP 인지 ALL_TAB_COLUMNS 로 확인, Oracle 통합 테스트 추가
+      로컬 Oracle(docker) 기동 검증(2026-09-27): CREATEDTIME 은 TIMESTAMP(6), 창 함수 SQL 이 1.25초 간격 반복 2건을
+      잡고 다른 고객사 행은 걸렀다. 후속: 운영 파티션도 TIMESTAMP 인지 ALL_TAB_COLUMNS 로 확인, Oracle 통합 테스트 추가
 
 결과: 674건 중 670 통과, skipped 0. 실패 4건은 기존 DB 의존 테스트.
 신규 테스트 17건(CompanyServiceTest 4, CriteriaQueryServiceTest 3, CriteriaControllerWebTest 1,
