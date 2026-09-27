@@ -142,3 +142,39 @@ LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWeb
 - [x] GET 검색 폼의 `<select>` 는 고르는 즉시 제출, 텍스트는 검색 버튼/Enter 로만 적용. 예외는 `data-no-auto-submit`, 전체 즉시 제출 폼(`data-auto-submit`)은 기존 블록 유지
 - [x] 브라우저 확인: /appids 에서 서비스명 타이핑만으로는 URL 불변, 상태를 비활성으로 고르자 `?servicename=kbpay&status=unuse` 로 즉시 조회
 - [x] 고객사 화면 "벤더코드" → "업체 코드" (form/list/detail 라벨, 중복 검사 메시지, 테스트)
+
+## 2026-09-27 FIDO 로그 더미 (어제·오늘 분할 테이블) + ResponseStatusException 404 처리
+- [x] 03-dummy.sql 14절: FIDO_LOGS_20260926(10건)·FIDO_LOGS_20260927(30건, 반복 패턴 5건 포함, 고객사 2 각 1건) — 없을 때만 CREATE 하는 PL/SQL 블록. 실제 FIDO 서버가 날마다 만드는 분할 테이블과 같은 모양
+- [x] 확인: /logs/fido(오늘) 30건, 어제 10건, servicename=kbstar 18건, /fds-monitor 오늘 5건, 상세 /logs/fido/2026-09-27/401 200
+- [x] 발견·수정: 서비스가 던진 ResponseStatusException(404/400)이 catch-all 에 걸려 500 으로 나갔다 → GlobalExceptionHandler 에 전용 핸들러(404→error/404, 403→error/403, 그 외 그 상태 코드로 error/500). FidoLogControllerWebTest 에 404 케이스 추가
+- 전체 테스트 704건 중 통합(Testcontainers) 29건만 실패 — Oracle 컨테이너 exit 77(메모리), 코드와 무관. 통합 제외 실패 0
+
+## 2026-09-27 FIDO 로그 목록에 구분·사용자·결과 표시 + 필터
+- [x] `FidoLogJson`(키 경로 상수 op/userid/result, 성공 코드 1200, 표시어) — 실제 서버 키가 다르면 여기만 수정
+- [x] `FidoLogQueryService`: JSON_VALUE 로 세 값 SELECT, CCFA_ERROR_TABLE 메시지는 스칼라 서브쿼리(PK 없어 JOIN 시 행 불어남 방지), 구분/사용자/결과 필터. 상세도 동일
+- [x] 목록 컬럼 번호·일시·구분(배지)·사용자·결과(성공/실패 + 코드·메시지)·서비스명·시리얼, 검색에 구분·결과 드롭다운(즉시 적용)·사용자 추가. 상세에 세 행 추가
+- [x] 테스트: FidoLogJsonTest 4, FidoLogQueryServiceTest 9, FidoLogControllerWebTest 5 통과. 로컬 Oracle 더미 30건으로 필터 합 검증(op 22+1+7, outcome 20+10)
+- 교훈: 텍스트 블록 조각을 + 로 이어 붙이면 블록마다 들여쓰기가 따로 벗겨져 앞 공백이 사라짐(`FROM 테이블명WHERE` → ORA-03048). SQL 조각은 일반 문자열로
+- 전제(확인 필요): 운영 Oracle 12.1+ (JSON_VALUE). 실제 FIDO 서버 JSON 키 이름 확인
+
+## 2026-09-27 qa/prod 프로필 + 환경별 로깅 + 코드 로그 보강
+- [x] `application-qa.yml`, `application-prod.yml` (DB 는 환경 변수, prod 풀 20, 세션 쿠키 secure/http-only, 오류 화면 스택 미포함, 레벨 qa DEBUG/INFO · prod INFO/WARN)
+- [x] `logback-spring.xml`: local 콘솔 / qa 콘솔+파일 / prod·미지정 파일만 / test 콘솔 WARN. `${LOG_PATH:-./logs}/fido-admin.log` + `-error.log`(WARN↑), 일자+100MB 롤링, 30일, 3GB/1GB 상한. 모든 줄에 `[req= user= tenant=]`
+- [x] `RequestLogFilter`(@Component, HIGHEST_PRECEDENCE — 시큐리티 앞, 사용자는 세션 SPRING_SECURITY_CONTEXT 에서): MDC, X-Request-Id 헤더, 4xx/5xx·1초↑ WARN, 정적 자원 제외. 테스트 6건
+- [x] 로그 문장: 로그인 성공/로그아웃, 테넌트 선택, CrudService CREATE/UPDATE/DELETE(테이블·ID 만), 계정 잠금 WARN/해제 INFO, 기동 시 프로필·로그 경로
+- [x] README 표·기동 예시. 검증: qa 기동 → 콘솔+./logs 파일, prod 기동 → 콘솔 무출력·파일만, 404 요청이 error.log 에 WARN. 통합 제외 전체 테스트 실패 0
+- 교훈: logback `<springProfile>` 식은 `|` 와 `&` 를 괄호 없이 못 섞는다 → `prod | (!local & !qa & !test)`. 잘못되면 @WebMvcTest 컨텍스트 전부 실패
+
+## 2026-09-27 모든 목록의 생성일/수정일을 맨 끝 열로
+- [x] AppID·멤버코드·AAID(정책): 상태를 날짜 앞으로. CHALLENGE·서명·TransactionHash·TC원문: 둘째 열 "일시"(CREATEDTIME)를 맨 끝 "생성일"로
+- 이미 끝이던 화면(시스템 설정·정보·어드민 기준·FIDO 서버·FIDO2·고객사·FDS 정책·라이선스)은 그대로. 로그 화면(FIDO/감사/예외 로그, 모니터링)의 "일시"는 사건 시각이라 첫 열 유지
+- 참고: 앞서 맞춘 이전 어드민 규격(상태가 맨 끝)과 다르지만 이번 지시가 우선
+- [x] (추가) 빠졌던 화면도 적용: 로그 목록(감사·예외·FIDO 로그, 모니터링)의 "일시"를 맨 끝 열로, 상세 화면(멤버코드·CHALLENGE·TransactionHash·TC원문·감사/예외/FIDO 로그)의 생성일/수정일/일시 행을 맨 아래로. 전체 템플릿 스캔으로 남은 곳 없음 확인
+- 제외(생성/수정 시각이 아님): 데모 접근 코드 시작/종료일시(유효 기간), 운영자 최근 접속·잠금 시각, 메일 발송시각
+
+## 2026-09-27 FIDO 서버 설정 화면을 이전 어드민 규격으로
+- [x] 섹션 순서 부가기능 → 인증서 → 알림메일(이전 화면에 없던 섹션, 같은 형식). 토글 "사용안함 [스위치] 사용함", 섹션 머리글 스위치(CERT·SMTP), Challenge 슬라이더+sec 배지, TC 저장 기간 드롭다운(영구저장=9999), 등록시 인증서 검증 드롭다운(yes/no), 추가 옵션 체크박스 한 줄, 폭 전체 노란 저장 버튼
+- [x] `FidoSettingOptions`: 슬라이더 최대는 저장값까지 확장, 목록 밖 TC 값은 "N일" 로 끼워 넣음 — 열고 저장만 해도 값이 깎이지 않게
+- [x] 저장 방식·키·값 표기 불변. 테스트: FidoSettingControllerWebTest 9, FidoSettingOptionsTest 2 통과. 브라우저 저장 왕복 확인(ENABLE/DISABLE, yes, N, 180, 9999 저장), 검증 행은 삭제
+- 가정: TC 선택지(30/90/180일, 1/3/5년, 영구)와 슬라이더 10~180초는 이전 어드민 실제 값 미확인
+- [x] (후속) 섹션 순서 알림메일 → 부가기능 → 인증서, 섹션 안 항목 3열 그리드(1400px↓ 2열, 900px↓ 1열). "인증 응답시 추가 옵션"은 체크박스 6개라 행 전체 폭. 테스트 순서 검사 갱신
