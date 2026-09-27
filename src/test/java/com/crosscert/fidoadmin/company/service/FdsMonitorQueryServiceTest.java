@@ -90,7 +90,7 @@ class FdsMonitorQueryServiceTest {
     @Test void policyTermReadsTheEffectiveTenant() {
         policy("10", null);
         service.policyTerm();
-        org.mockito.Mockito.verify(policies).findById(1L);
+        verify(policies).findById(1L);
     }
 
     // ---- 조회 ----
@@ -140,6 +140,27 @@ class FdsMonitorQueryServiceTest {
         assertThat(params.getValue().getValue("companyIdx")).isEqualTo(1L);
         assertThat(params.getValue().getValue("term")).isEqualTo(30);
         assertThat(s).doesNotContain("SECOND') OR 30").doesNotContain("<= 30");
+    }
+
+    /**
+     * 서비스명 필터는 창 함수 <b>바깥</b> WHERE 에 있어야 한다. 설계(§1)의 반복 정의에 서비스는
+     * 없다 — 안쪽에 두면 서비스명으로 좁히는 순간 PREV_TIME/NEXT_TIME/REPEATS 가 "그 서비스만의"
+     * 값으로 바뀌어 탐지 결과와 REPEATS("그날 그 기기 전체 요청 수")가 필터에 따라 달라진다.
+     */
+    @Test void servicenameFilterIsOutsideTheWindow() {
+        table(true);
+        rowsExist(3);
+
+        service.search(LocalDate.of(2026, 9, 27), "kb", 30, PageRequest.of(0, 20));
+
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
+        String s = sql.getValue();
+        // :servicename 은 바깥 WHERE(PREV_TIME IS NOT NULL 조건 이후)에 있다.
+        assertThat(s.indexOf(":servicename")).isGreaterThan(s.indexOf("PREV_TIME IS NOT NULL"));
+        // COMPANY_IDX 는 안쪽 WHERE — LAG( 의 서브쿼리를 닫는 괄호(안쪽 WHERE 절 직전) 보다 앞이다.
+        assertThat(s.indexOf("COMPANY_IDX = :companyIdx")).isLessThan(s.indexOf("PREV_TIME IS NOT NULL"));
+        assertThat(s.indexOf("COMPANY_IDX = :companyIdx")).isGreaterThan(s.indexOf("LAG("));
     }
 
     /** SERIALCODE 가 NULL 인 행끼리 한 묶음이 되어 서로 무관한 요청이 반복으로 잡히는 것을 막는다. */
@@ -200,6 +221,19 @@ class FdsMonitorQueryServiceTest {
             .doesNotContain("ORDER BY servicename")
             .doesNotContain("servicename DESC")
             .doesNotContain("servicename ASC");
+    }
+
+    /** Oracle rownum 페이징 — offset 은 page*size, limit 은 size. */
+    @Test void pagingBindsOffsetAndLimit() {
+        table(true);
+        rowsExist(50);
+
+        service.search(LocalDate.of(2026, 9, 27), null, 30, PageRequest.of(2, 20));
+
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).query(anyString(), params.capture(), any(RowMapper.class));
+        assertThat(params.getValue().getValue("offset")).isEqualTo(40L);
+        assertThat(params.getValue().getValue("limit")).isEqualTo(20);
     }
 
     @Test void nonPositiveTermIsRejected() {

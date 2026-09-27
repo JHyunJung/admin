@@ -88,9 +88,15 @@ public class FdsMonitorQueryService {
             .addValue("servicename", like(servicename))
             .addValue("term", term);
 
-        // 테넌트·서비스명 조건은 창 함수 안쪽에 둔다. 바깥에 두면 다른 고객사(또는 다른 서비스)의
-        // 요청이 PREV_TIME/NEXT_TIME 에 섞여 "같은 기기의 반복"이 아닌 것이 잡힌다.
+        // 테넌트·NULL 시리얼 조건은 창 함수 안쪽에 둔다. 바깥에 두면 다른 고객사의 요청이
+        // PREV_TIME/NEXT_TIME 에 섞여 "같은 기기의 반복"이 아닌 것이 잡힌다.
         // SERIALCODE IS NOT NULL — NULL 끼리 한 묶음이 되어 서로 무관한 요청이 반복으로 잡히는 것을 막는다.
+        //
+        // 서비스명 필터는 일부러 바깥(창 함수 밖) WHERE 에 둔다. 설계(§1)의 반복 정의는
+        // "같은 기기가 짧은 시간에 여러 번 요청"이고, 서비스는 그 정의에 없다. 안쪽에 두면
+        // 서비스명으로 좁히는 순간 PREV_TIME/NEXT_TIME 과 REPEATS 가 "그 서비스만의 반복/건수"로
+        // 바뀌어 탐지 결과와 REPEATS("그날 그 기기 전체 요청 수")가 필터에 따라 달라진다.
+        // 바깥에 두면 탐지와 REPEATS 는 전체 요청 기준으로 그대로이고, 화면에 무엇을 보여줄지만 좁아진다.
         String flagged = """
             SELECT IDX, SERVICENAME, SERIALCODE, CREATEDTIME, PREV_TIME, NEXT_TIME, REPEATS
               FROM (
@@ -101,10 +107,10 @@ public class FdsMonitorQueryService {
                   FROM %s
                  WHERE COMPANY_IDX = :companyIdx
                    AND SERIALCODE IS NOT NULL
-                   AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)
               )
-             WHERE (PREV_TIME IS NOT NULL AND CREATEDTIME - PREV_TIME <= NUMTODSINTERVAL(:term, 'SECOND'))
-                OR (NEXT_TIME IS NOT NULL AND NEXT_TIME - CREATEDTIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+             WHERE ((PREV_TIME IS NOT NULL AND CREATEDTIME - PREV_TIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+                 OR (NEXT_TIME IS NOT NULL AND NEXT_TIME - CREATEDTIME <= NUMTODSINTERVAL(:term, 'SECOND')))
+               AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)
             """.formatted(table);
 
         Long total = jdbc.queryForObject("SELECT COUNT(*) FROM (" + flagged + ")", params, Long.class);

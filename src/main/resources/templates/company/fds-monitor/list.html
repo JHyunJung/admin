@@ -14,7 +14,7 @@
   <div class="small text-secondary mb-2">
     <span th:if="${policyTerm != null}" th:text="|정책 반복 주기: ${policyTerm}초|"></span>
     <span th:if="${policyTerm == null}">정책에 반복 주기가 없습니다.</span>
-    <span th:if="${effectiveTerm != null and effectiveTerm != policyTerm}"
+    <span th:if="${searched and effectiveTerm != policyTerm}"
           class="ms-2 badge text-bg-warning" th:text="|이 조회는 ${effectiveTerm}초 기준|"></span>
   </div>
 
@@ -49,7 +49,7 @@
     — 또는 위 "반복 주기(초)"에 값을 넣어 이번 조회에만 적용할 수 있습니다.
   </div>
 
-  <div th:if="${effectiveTerm != null}" class="table-responsive bg-white border rounded">
+  <div th:if="${searched}" class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover align-middle fa-table mb-0">
       <thead class="table-light">
       <tr>
@@ -83,8 +83,8 @@
     </table>
   </div>
 
-  <div th:if="${effectiveTerm != null}" class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|${page.totalElements}건이 검색되었습니다.|"></span>
+  <div th:if="${searched}" class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
+    <span th:text="|총 ${page.totalElements}건|"></span>
     <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
   </div>
 </main>

@@ -58,6 +58,7 @@ IP·기기·국가는 데이터가 생기기 전까지 보지 않는다. FDS 정
 | 반복 주기(초) | `term` | 정책값 | 비어 있으면 정책값. 있으면 양의 정수여야 한다 |
 
 목록 컬럼: 일시 · 서비스명 · 시리얼 · 직전 요청과 간격(초) · 직후 요청과 간격(초) · 그날 그 기기 요청 수 · IDX.
+IDX 는 형제 화면(FIDO 로그 목록)과 같이 첫 컬럼에 둔다.
 IDX 는 `/logs/fido/{logDate}/{idx}` 상세로 간다. 정렬은 `CREATEDTIME DESC, IDX DESC` 고정.
 페이징은 다른 목록과 같은 `fragments/pagination`.
 
@@ -88,14 +89,16 @@ JDBC. 날짜별 테이블이라 JPA 엔티티로 다룰 수 없다(`FidoLogQuery
                COUNT(*)          OVER (PARTITION BY SERIALCODE)                             AS REPEATS
           FROM FIDO_LOGS_20260927
          WHERE COMPANY_IDX = :companyIdx
-           AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)
       )
-     WHERE (PREV_TIME IS NOT NULL AND CREATEDTIME - PREV_TIME <= NUMTODSINTERVAL(:term, 'SECOND'))
-        OR (NEXT_TIME IS NOT NULL AND NEXT_TIME - CREATEDTIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+     WHERE ((PREV_TIME IS NOT NULL AND CREATEDTIME - PREV_TIME <= NUMTODSINTERVAL(:term, 'SECOND'))
+         OR (NEXT_TIME IS NOT NULL AND NEXT_TIME - CREATEDTIME <= NUMTODSINTERVAL(:term, 'SECOND')))
+       AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)
      ORDER BY CREATEDTIME DESC, IDX DESC
 
 - 테넌트 조건은 창 함수 **안쪽** `WHERE` 에 있어야 한다. 바깥에 두면 다른 고객사의 요청이
   `PREV_TIME`/`NEXT_TIME` 에 섞여 들어온다.
+- 서비스명 조건은 창 함수 **바깥**에 둔다. §1 의 반복 정의에 서비스는 없으므로 필터는 표시만
+  좁히고 탐지와 REPEATS 는 바꾸지 않는다.
 - `:term` 은 바인드 파라미터다. 문자열로 조립하지 않는다.
 - `REPEATS` 는 그날 그 기기의 전체 요청 수다(플래그된 행 수가 아니다). "이 기기가 오늘 몇 번 왔나" 가
   운영자에게 더 쓸모 있다.

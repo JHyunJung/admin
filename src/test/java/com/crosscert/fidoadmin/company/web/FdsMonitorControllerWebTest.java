@@ -98,7 +98,11 @@ class FdsMonitorControllerWebTest {
 
         mvc.perform(get("/fds-monitor").param("term", "abc").with(user(companyUser)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("is-invalid")));
+            .andExpect(content().string(containsString("is-invalid")))
+            .andExpect(content().string(containsString("반복 주기는 숫자여야 합니다.")))
+            .andExpect(content().string(not(containsString("Failed to convert"))))
+            .andExpect(content().string(not(containsString("총 "))))
+            .andExpect(content().string(not(containsString("데이터가 없습니다."))));
 
         verify(service, never()).search(any(), any(), anyInt(), any());
     }
@@ -109,7 +113,10 @@ class FdsMonitorControllerWebTest {
 
         mvc.perform(get("/fds-monitor").param("term", "86401").with(user(companyUser)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("is-invalid")));
+            .andExpect(content().string(containsString("is-invalid")))
+            .andExpect(content().string(not(containsString("총 "))))
+            .andExpect(content().string(not(containsString("데이터가 없습니다."))))
+            .andExpect(content().string(not(containsString("이 조회는 86401초 기준"))));
 
         verify(service, never()).search(any(), any(), anyInt(), any());
     }

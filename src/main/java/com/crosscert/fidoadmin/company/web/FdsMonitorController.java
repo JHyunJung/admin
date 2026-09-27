@@ -44,7 +44,13 @@ public class FdsMonitorController {
 
         // 폼 오류(term 이 숫자가 아니거나 범위 밖)나 기준 없음이면 조회하지 않는다.
         // 기준 없이 조회하면 "오늘은 이상 없음"처럼 보여 정책이 빠진 것을 가린다.
-        if (binding.hasErrors() || effective == null) {
+        // searched 는 "실제로 조회가 나갔는가"다 — 폼 오류가 나면 effectiveTerm 은 여전히
+        // null 이 아닐 수 있어(정책값이 있으므로) 이 플래그 없이는 화면이 "검색했지만 0건"으로
+        // 보인다. 조회가 나가지 않았으면 결과 영역 전체(표·건수·페이징)를 감춘다.
+        boolean searched = !binding.hasErrors() && effective != null;
+        model.addAttribute("searched", searched);
+
+        if (!searched) {
             model.addAttribute("page", Page.empty());
             return "company/fds-monitor/list";
         }
