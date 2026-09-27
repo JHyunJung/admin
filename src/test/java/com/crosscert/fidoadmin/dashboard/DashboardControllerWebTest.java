@@ -36,6 +36,8 @@ class DashboardControllerWebTest {
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
     @MockitoBean com.crosscert.fidoadmin.auth.ManagerUserDetailsService uds;
 
+    private final ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+
     @Test void rendersTotalsAndSerializedRows() throws Exception {
         when(stats.groupbys()).thenReturn(List.of("day"));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
@@ -84,5 +86,44 @@ class DashboardControllerWebTest {
             // 네 지표의 수치는 그대로 남는다
             .andExpect(content().string(containsString("1,200")))
             .andExpect(content().string(containsString("성공률 97.6%")));
+    }
+
+    /** 통계가 아예 없는 고객사: 조회하지 않고 원인을 알린다. */
+    @Test void 통계가_없는_고객사는_원인을_알린다() throws Exception {
+        when(stats.groupbys()).thenReturn(List.of());
+        when(stats.serviceNames()).thenReturn(List.of());
+        mvc.perform(get("/").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("이 고객사에는 통계 데이터가 없습니다")));
+        org.mockito.Mockito.verify(stats, org.mockito.Mockito.never()).daily(any());
+    }
+
+    /** 기간에 데이터가 없으면 기간과 마지막 집계일을 알린다. */
+    @Test void 기간에_데이터가_없으면_마지막_집계일을_알린다() throws Exception {
+        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
+        when(stats.daily(any())).thenReturn(List.of());
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.of(2026, 9, 19)));
+        mvc.perform(get("/").param("fromDate", "2026-01-01").param("toDate", "2026-01-31").with(user(companyUser)))
+            .andExpect(content().string(containsString("선택한 기간(2026-01-01 ~ 2026-01-31)에 데이터가 없습니다.")))
+            .andExpect(content().string(containsString("마지막 집계일: 2026-09-19")));
+    }
+
+    /** 데이터가 있지만 마지막 집계일이 종료일보다 이르면 배치 지연을 알린다. */
+    @Test void 마지막_집계일_이후가_비면_알린다() throws Exception {
+        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
+        when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 19), 1, 0, 0, 0, 0, 0, 0, 0)));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.of(2026, 9, 19)));
+        mvc.perform(get("/").param("fromDate", "2026-09-01").param("toDate", "2026-09-28").with(user(companyUser)))
+            .andExpect(content().string(containsString("마지막 집계일은 2026-09-19 입니다")));
+    }
+
+    /** 집계 단위는 대소문자만 다르면 목록 값으로 맞춘다(DAY → day). */
+    @Test void 집계_단위는_대소문자를_가리지_않는다() {
+        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby("DAY", List.of("day", "month"))).isEqualTo("day");
+        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(" Month ", List.of("day", "month"))).isEqualTo("month");
+        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby("week", List.of("day"))).isEqualTo("day");
+        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(null, List.of())).isNull();
     }
 }

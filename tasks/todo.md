@@ -178,3 +178,8 @@ LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWeb
 - [x] 저장 방식·키·값 표기 불변. 테스트: FidoSettingControllerWebTest 9, FidoSettingOptionsTest 2 통과. 브라우저 저장 왕복 확인(ENABLE/DISABLE, yes, N, 180, 9999 저장), 검증 행은 삭제
 - 가정: TC 선택지(30/90/180일, 1/3/5년, 영구)와 슬라이더 10~180초는 이전 어드민 실제 값 미확인
 - [x] (후속) 섹션 순서 알림메일 → 부가기능 → 인증서, 섹션 안 항목 3열 그리드(1400px↓ 2열, 900px↓ 1열). "인증 응답시 추가 옵션"은 체크박스 6개라 행 전체 폭. 테스트 순서 검사 갱신
+
+## 2026-09-28 대시보드 그래프가 비는 이유를 알리고 집계 단위 대소문자 무시
+- [x] GROUPBY 비교를 UPPER 로(쿼리), 요청값은 목록 표기로 맞춤(DashboardController.resolveGroupby) — ?groupby=DAY 도 day 데이터 표시
+- [x] 안내 문구 구분: 통계 없는 고객사 / 선택 기간에 데이터 없음 + 마지막 집계일 / 조건(서비스)에 데이터 없음 / 데이터 있으나 마지막 집계일 이후 비어 있음(배치 확인)
+- [x] StatisticsQueryService.rangeOf(기간 보정 로직 분리)·lastStatDate(MAX(CREATEDTIME), 테넌트 스코프). 테스트: DashboardControllerWebTest 7, StatisticsTenantScopeTest 6 통과, 로컬 DB 로 4가지 경우 확인

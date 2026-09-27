@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -56,11 +57,14 @@ public class StatisticsQueryService {
             p, String.class);
     }
 
-    @Transactional(readOnly = true)
-    public List<DailyStat> daily(DashboardSearchForm f) {
-        Long companyIdx = tenant.companyIdx();
-        // 빈 값(?fromDate=)은 필드 기본값을 덮어써 null 이 되므로 여기서 다시 채운다.
-        // 뒤집힌 범위는 빈 결과 대신 정상 범위로 바로잡고, 과도하게 넓은 범위는 제한한다.
+    /** 실제 조회 기간. 화면 안내 문구도 이 값을 쓴다(폼 값과 다를 수 있다). */
+    public record Range(LocalDate from, LocalDate to) {}
+
+    /**
+     * 빈 값(?fromDate=)은 필드 기본값을 덮어써 null 이 되므로 여기서 다시 채운다.
+     * 뒤집힌 범위는 빈 결과 대신 정상 범위로 바로잡고, 과도하게 넓은 범위는 제한한다.
+     */
+    public static Range rangeOf(DashboardSearchForm f) {
         LocalDate to = f.getToDate() == null ? LocalDate.now() : f.getToDate();
         LocalDate from = f.getFromDate() == null ? to.minusDays(29) : f.getFromDate();
         if (from.isAfter(to)) {
@@ -69,6 +73,34 @@ public class StatisticsQueryService {
         if (from.isBefore(to.minusDays(MAX_RANGE_DAYS))) {
             from = to.minusDays(MAX_RANGE_DAYS);
         }
+        return new Range(from, to);
+    }
+
+    /**
+     * 같은 조건(집계 단위·서비스)에서 가장 최근 집계일. 기간과 무관하다.
+     * 그래프가 비었을 때 "데이터가 언제까지 있는지", 배치가 멈췄는지를 알려 주는 데 쓴다.
+     */
+    @Transactional(readOnly = true)
+    public Optional<LocalDate> lastStatDate(DashboardSearchForm f) {
+        Map<String, Object> p = new HashMap<>();
+        p.put("groupby", f.getGroupby());
+        p.put("companyIdx", tenant.companyIdx());
+        p.put("serviceName", f.getServiceName() == null || f.getServiceName().isBlank() ? null : f.getServiceName());
+        Timestamp last = jdbc.queryForObject("""
+            SELECT MAX(CREATEDTIME) FROM FIDO_STATISTICS
+             WHERE UPPER(GROUPBY) = UPPER(:groupby)
+               AND (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx)
+               AND (:serviceName IS NULL OR SERVICE_NAME = :serviceName)
+            """, p, Timestamp.class);
+        return Optional.ofNullable(last).map(t -> t.toLocalDateTime().toLocalDate());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DailyStat> daily(DashboardSearchForm f) {
+        Long companyIdx = tenant.companyIdx();
+        Range range = rangeOf(f);
+        LocalDate from = range.from();
+        LocalDate to = range.to();
         Map<String, Object> p = new HashMap<>();
         p.put("groupby", f.getGroupby());
         p.put("from", Timestamp.valueOf(from.atStartOfDay()));
@@ -80,7 +112,8 @@ public class StatisticsQueryService {
                    NVL(SUM(AUTH_S),0) AUTH_S, NVL(SUM(AUTH_F),0) AUTH_F, NVL(SUM(TC_S),0) TC_S, NVL(SUM(TC_F),0) TC_F,
                    NVL(SUM(REG_S),0) REG_S, NVL(SUM(REG_F),0) REG_F, NVL(SUM(DEREG_S),0) DEREG_S, NVL(SUM(DEREG_F),0) DEREG_F
               FROM FIDO_STATISTICS
-             WHERE GROUPBY = :groupby
+             -- 운영 데이터의 GROUPBY 표기가 섞여 있어도(day/DAY) 같은 단위로 본다
+             WHERE UPPER(GROUPBY) = UPPER(:groupby)
                AND CREATEDTIME >= :from AND CREATEDTIME < :to
                AND (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx)
                AND (:serviceName IS NULL OR SERVICE_NAME = :serviceName)

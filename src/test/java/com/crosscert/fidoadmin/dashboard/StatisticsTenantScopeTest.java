@@ -123,4 +123,23 @@ class StatisticsTenantScopeTest {
         assertThatThrownBy(() -> service.daily(form(null)))
             .isInstanceOf(NoTenantSelectedException.class);
     }
+
+    /** 집계 단위 비교는 대소문자를 가리지 않는다. 마지막 집계일 조회도 테넌트를 건다. */
+    @Test
+    @SuppressWarnings("unchecked")
+    void groupbyIsCaseInsensitiveAndLastDateIsTenantScoped() {
+        login(1L);
+        when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
+            .thenReturn(List.of());
+        service.daily(form(null));
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(jdbc).query(sql.capture(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class));
+        assertThat(sql.getValue()).contains("UPPER(GROUPBY) = UPPER(:groupby)");
+
+        when(jdbc.queryForObject(anyString(), any(Map.class), any(Class.class))).thenReturn(null);
+        assertThat(service.lastStatDate(form(2L))).isEmpty();
+        ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
+        verify(jdbc).queryForObject(anyString(), params.capture(), any(Class.class));
+        assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);
+    }
 }

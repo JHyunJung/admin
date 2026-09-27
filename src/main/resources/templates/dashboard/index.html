@@ -87,7 +87,17 @@
   <div class="bg-white border rounded p-3">
     <div class="small text-secondary mb-2">일별 인증·등록 추이</div>
     <canvas id="dailyChart" height="90"></canvas>
-    <p class="text-secondary small mb-0 mt-2" th:if="${#lists.isEmpty(daily)}">기간 내 통계가 없습니다.</p>
+    <!--/* 그래프가 비거나 끝이 잘린 이유를 구분해 알린다. */-->
+    <p class="text-secondary small mb-0 mt-2" th:if="${noStatsAtAll}">
+      이 고객사에는 통계 데이터가 없습니다. FIDO 서버의 통계 집계가 아직 한 번도 돌지 않았을 수 있습니다.
+    </p>
+    <p class="text-secondary small mb-0 mt-2" th:if="${!noStatsAtAll and #lists.isEmpty(daily)}">
+      <span th:text="|선택한 기간(${range.from()} ~ ${range.to()})에 데이터가 없습니다.|"></span>
+      <span th:if="${lastStatDate != null}" th:text="|마지막 집계일: ${lastStatDate}|"></span>
+      <span th:if="${lastStatDate == null}">이 조건(집계 단위·서비스)에는 집계된 데이터가 없습니다.</span>
+    </p>
+    <p class="text-secondary small mb-0 mt-2" th:if="${staleAfterLast}"
+       th:text="|마지막 집계일은 ${lastStatDate} 입니다. 이후 날짜는 아직 집계되지 않았습니다(통계 배치 확인 필요).|"></p>
   </div>
 
   <script th:inline="javascript">
