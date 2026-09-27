@@ -103,3 +103,21 @@ MenuRegistryTest(+1).
   `gradlew.bat dependencyInsight --dependency orai18n` 로 재확인할 수 있다.
 - 수정 폼(`/{id}/edit`)도 레코드를 보여 주지만 DATA_VIEW 를 남기지 않는다. 제공 범위가
   "상세 응답"이라 두었다. 필요하면 CrudController.editForm 에 한 줄이다.
+
+---
+
+# 레거시 매퍼 갭 반영 (2026-09-27)
+
+출처: docs/legacy/mybatis-mappers.md 를 현재 어드민과 대조한 갭 분석. 배치 성격
+(통계 집계·만료 정리·로그 아카이브)은 레거시 배치가 계속 돈다는 확인을 받아 제외.
+
+- [x] 2. 고객사 생성 시 회사 0 의 SHARE_TYPE='NO' 설정 복사, 삭제 시 정리 (`manager.insertSystemProp`/`deleteSystemProp`)
+- [x] 3. AAID 전체 활성/비활성 (`basic.disableCompanyAllAAID` — 중복 insert 는 NOT EXISTS 로 막음)
+- [x] 4. 잠금 N분 자동 해제 (`scheduler.updateManagerPwPolicyUnlock` — 배치 대신 로그인 시도 시점 판정, `PW_LOCK_MINUTES` 기본 30)
+- [x] 5. VENDOR_CODE 중복 검사 (`manager.selectVendorCode` — CrudController 에 id 를 받는 validate 오버로드 추가)
+- [ ] 1. FDS 모니터링 화면 — 레거시 쿼리의 LONGIP/UA/COUNTRY/ACCESSIP/USERNAME 과 CCFA_FIDO_TLOG 가
+      현재 ERD·스키마에 없음. "현재 컬럼으로 재정의" 결정 → 별도 설계(architectural)
+
+결과: 674건 중 670 통과, skipped 0. 실패 4건은 기존 DB 의존 테스트.
+신규 테스트 17건(CompanyServiceTest 4, CriteriaQueryServiceTest 3, CriteriaControllerWebTest 1,
+LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWebTest 2).

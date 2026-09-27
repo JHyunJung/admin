@@ -1,5 +1,8 @@
 package com.crosscert.fidoadmin.company.web;
 
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+import java.util.Optional;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.common.GlobalExceptionHandler;
 import com.crosscert.fidoadmin.common.MenuRegistry;
@@ -122,5 +126,36 @@ class CompanyControllerWebTest {
         mvc.perform(get("/companies/abc").with(user(superUser)))
             .andExpect(status().isNotFound())
             .andExpect(view().name("error/404"));
+    }
+
+    private CcfaCompany other(long idx, String name) {
+        CcfaCompany c = new CcfaCompany(); c.setIdx(idx); c.setCompanyName(name); return c;
+    }
+
+    /** VENDOR_CODE 는 DB 유니크 제약이 없어 화면에서 막는다. */
+    @Test void duplicateVendorCodeIsRejectedOnCreate() throws Exception {
+        when(service.findByVendorCode("V01")).thenReturn(Optional.of(other(9L, "다른회사")));
+
+        mvc.perform(post("/companies").with(user(superUser)).with(csrf())
+                .param("companyName", "새회사").param("enableType", "Y").param("vendorCode", "V01")
+                .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("company/company/form"))
+            .andExpect(content().string(containsString("이미 사용 중인 벤더 코드")));
+
+        verify(service, never()).create(any());
+    }
+
+    /** 수정 때는 자기 자신의 코드를 중복으로 보지 않는다. */
+    @Test void ownVendorCodeIsAllowedOnUpdate() throws Exception {
+        when(service.findByVendorCode("V01")).thenReturn(Optional.of(other(9L, "나")));
+
+        mvc.perform(post("/companies/9").with(user(superUser)).with(csrf())
+                .param("companyName", "나").param("enableType", "Y").param("vendorCode", "V01")
+                .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/companies/9"));
+
+        verify(service).update(eq(9L), any());
     }
 }

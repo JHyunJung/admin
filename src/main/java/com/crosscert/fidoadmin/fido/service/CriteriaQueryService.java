@@ -121,6 +121,51 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
         return true;
     }
 
+    /**
+     * 현재 고객사의 모든 AAID 를 한 번에 켜거나 끈다. 실제로 바뀐 건수를 돌려준다.
+     *
+     * <p>이전 어드민의 {@code disableCompanyAllAAID} 를 잇는다. 그쪽은 CRITERIA 전체를
+     * 무조건 insert 해서 이미 꺼 둔 AAID 가 두 번 들어갔다 — 여기서는 NOT EXISTS 로 거른다.
+     * "전체 활성"은 이전 어드민에 없었지만 짝이 없으면 되돌릴 방법이 화면에 없어 함께 둔다.
+     */
+    @Transactional
+    public int changeStatusAll(boolean enabled) {
+        Long companyIdx = tenant.companyIdx();
+        var params = new MapSqlParameterSource("companyIdx", companyIdx);
+
+        // 단건 토글과 같은 잠금. 전체 비활성과 단건 활성이 겹치면 한쪽이 다른 쪽을 되돌린다.
+        jdbc.queryForObject("""
+            SELECT IDX FROM CCFA_COMPANY
+             WHERE IDX = :companyIdx
+               FOR UPDATE
+            """, params, Long.class);
+
+        int changed;
+        if (enabled) {
+            changed = jdbc.update("""
+                DELETE FROM CCFA_COMPANY_AAID
+                 WHERE COMPANY_IDX = :companyIdx
+                """, params);
+        } else {
+            changed = jdbc.update("""
+                INSERT INTO CCFA_COMPANY_AAID (COMPANY_IDX, AAID)
+                SELECT :companyIdx, c.AAID
+                  FROM CRITERIA c
+                 WHERE c.AAID IS NOT NULL
+                   AND NOT EXISTS (
+                       SELECT 1 FROM CCFA_COMPANY_AAID b
+                        WHERE b.COMPANY_IDX = :companyIdx AND b.AAID = c.AAID
+                   )
+                """, params);
+        }
+        if (changed > 0) {
+            audit.log(AuditType.STATUS,
+                "AAID(정책) 전체 " + (enabled ? "활성" : "비활성")
+                    + " | 고객사: " + companyIdx + " | " + changed + "건");
+        }
+        return changed;
+    }
+
     @Override protected Specification<Criteria> toSpecification(CriteriaSearchForm f) {
         return Specs.all(Specs.like("aaid", f.getAaid()));
     }

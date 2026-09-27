@@ -123,3 +123,18 @@ FIDO 서버 설정 화면의 토글 6종이 **켜지지 않았다.** 화면은 �
   적용됐는지부터 의심한다.
 - 필드명으로 비밀값을 판별할 때 규칙이 컬럼명 기준(`_PW`)인지 확인한다. `userPw` 는
   `USERPW` 가 되어 걸리지 않는다 — `AuditChanges.columnName` 이 그래서 있다.
+
+## 2026-09-27 — 생성자 의존성을 더하면 그 클래스를 @Import 하는 슬라이스 테스트를 먼저 찾는다
+
+`ManagerUserDetailsService` 에 `LoginAttemptService` 를 주입했더니, 그 서비스를
+`@DataJpaTest` + `@Import` 로 끌어오던 통합 테스트 15건이 컨텍스트 로딩에 실패했다.
+단위 테스트는 생성자 호출을 grep 해 고쳤지만 `@Import` 는 놓쳤다 — 컴파일은 통과하고
+실행해야 드러난다. 같은 세션 앞부분의 `AuditReadInterceptor` 건(@WebMvcTest 284건)과
+같은 유형이다.
+
+- 서비스 생성자에 협력자를 더할 때는 `new X(` 뿐 아니라 `@Import.*X\.class` 도 grep 한다.
+- 슬라이스에 새 협력자를 함께 `@Import` 하면 된다. 협력자가 부수 작업(감사 로그 등)이면
+  `ObjectProvider` 로 받아 없을 때 건너뛰게 하는 편이 낫고, 핵심 로직(잠금 판정)이면
+  실제 빈을 넣어 기존 단언이 의미를 잃지 않게 한다 — mock 으로 넣으면 "항상 안 잠김"이 된다.
+- `verify(repo).delete(any())` 는 `JpaSpecificationExecutor.delete(Specification)` 과
+  모호하다. `any(Entity.class)` 로 쓴다.

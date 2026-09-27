@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
+import com.crosscert.fidoadmin.auth.LoginAttemptService;
 import com.crosscert.fidoadmin.auth.ManagerUserDetailsService;
 import com.crosscert.fidoadmin.common.ManagerStatus;
 import com.crosscert.fidoadmin.common.SelectedTenant;
@@ -40,7 +41,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({SignupService.class, ManagerUserDetailsService.class})
+@Import({SignupService.class, ManagerUserDetailsService.class, LoginAttemptService.class})
 class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
 
     @Autowired SignupService signups;

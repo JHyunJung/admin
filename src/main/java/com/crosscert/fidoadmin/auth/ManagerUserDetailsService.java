@@ -6,6 +6,7 @@ import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,14 +21,18 @@ public class ManagerUserDetailsService implements UserDetailsService {
     private final CcfaManagerRepository managers;
     private final CcfaManagerPwPolicyRepository policies;
     private final CcfaCompanyRepository companies;
+    private final LoginAttemptService attempts;
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) {
         CcfaManager m = managers.findByUserId(username)
             .orElseThrow(() -> new UsernameNotFoundException("운영자 없음: " + username));
+        // 잠금 판정은 LoginAttemptService 에 모아 둔다 — 잠근 지 N분이 지나면 풀린 것으로 본다.
+        // 여기서는 읽기만 하고, 실제로 푸는 것은 로그인 성공(onSuccess) 쪽이다.
+        LocalDateTime now = LocalDateTime.now();
         boolean locked = policies.findFirstByUserIdOrderByIdxDesc(username)
-            .map(p -> "Y".equalsIgnoreCase(p.getAccountLock())).orElse(false);
+            .map(p -> attempts.isLocked(p, now)).orElse(false);
         // COMPANY_IDX 가 null 이어도 0 으로 치환하지 않는다. 0 은 SUPER 이므로 치환은 권한 상승이다.
         // null 은 ManagerUserDetails 생성자가 거부한다.
         Long companyIdx = m.getCompanyIdx();

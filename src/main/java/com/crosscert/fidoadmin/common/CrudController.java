@@ -56,6 +56,12 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
      */
     protected void validate(F form, boolean isNew, BindingResult binding) {}
 
+    /**
+     * 식별자가 필요한 검증(수정 시 자기 자신을 제외하는 중복 검사 등).
+     * 등록이면 {@code id} 는 null 이다. 기본 구현은 위 훅으로 넘기므로 기존 컨트롤러는 영향이 없다.
+     */
+    protected void validate(F form, ID id, BindingResult binding) { validate(form, id == null, binding); }
+
     @GetMapping
     public String list(@ModelAttribute("search") S search, Model model) {
         Page<E> page = service().search(search, search.toPageable(service().defaultSort(), service().sortableProperties()));
@@ -78,7 +84,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     @PostMapping
     public String create(@Valid @ModelAttribute("form") F form, BindingResult binding, Model model,
                          RedirectAttributes redirect) {
-        validate(form, true, binding);
+        validate(form, (ID) null, binding);
         if (binding.hasErrors()) return backToForm(model, true);
         try {
             E saved = service().create(toEntity(form));
@@ -116,7 +122,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     public String update(@PathVariable ID id, @Valid @ModelAttribute("form") F form, BindingResult binding,
                          Model model, RedirectAttributes redirect) {
         model.addAttribute("id", id);
-        validate(form, false, binding);
+        validate(form, id, binding);
         if (binding.hasErrors()) return backToForm(model, false);
         try {
             service().update(id, entity -> applyForm(form, entity));

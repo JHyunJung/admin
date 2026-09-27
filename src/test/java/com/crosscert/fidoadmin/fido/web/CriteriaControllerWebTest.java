@@ -1,5 +1,9 @@
 package com.crosscert.fidoadmin.fido.web;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -123,5 +127,18 @@ class CriteriaControllerWebTest {
             .andExpect(content().string(containsString("&quot;aaid&quot; : &quot;0012#0001&quot;")))
             .andExpect(content().string(containsString("UAFV1TLV")))
             .andExpect(content().string(not(containsString("data-confirm-form"))));
+    }
+
+    /** 전체 토글 후 검색·페이지 상태를 유지한 채 목록으로 돌아간다. */
+    @Test void bulkStatusRedirectsBackWithSearchStateAndMessage() throws Exception {
+        when(service.changeStatusAll(false)).thenReturn(4);
+
+        mvc.perform(post("/criteria/status").with(user(companyUser)).with(csrf())
+                .param("enabled", "false").param("aaid", "0012").param("page", "1").param("size", "20"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/criteria?aaid=0012&page=1&size=20"))
+            .andExpect(flash().attribute("statusMessage", "전체 비활성: 4건을 변경했습니다."));
+
+        verify(service).changeStatusAll(false);
     }
 }

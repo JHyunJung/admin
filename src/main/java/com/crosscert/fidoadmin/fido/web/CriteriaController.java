@@ -59,4 +59,21 @@ public class CriteriaController extends ReadOnlyController<Criteria, Long, Crite
         redirect.addAttribute("size", search.getSize());
         return "redirect:/criteria";
     }
+
+    /** 현재 고객사의 AAID 전체 활성/비활성. 검색·페이지 상태는 단건 토글과 같이 유지한다. */
+    @PostMapping("/status")
+    public String changeStatusAll(
+            @RequestParam("enabled") boolean enabled,
+            @ModelAttribute("search") CriteriaSearchForm search,
+            RedirectAttributes redirect) {
+        int changed = service.changeStatusAll(enabled);
+        redirect.addFlashAttribute("statusMessage",
+            changed == 0
+                ? "이미 모두 해당 상태입니다."
+                : (enabled ? "전체 활성: " : "전체 비활성: ") + changed + "건을 변경했습니다.");
+        redirect.addAttribute("aaid", search.getAaid());
+        redirect.addAttribute("page", search.getPage());
+        redirect.addAttribute("size", search.getSize());
+        return "redirect:/criteria";
+    }
 }

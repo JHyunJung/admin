@@ -8,6 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
+import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
@@ -23,7 +25,10 @@ class ManagerUserDetailsServiceTest {
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
     CcfaManagerPwPolicyRepository policies = mock(CcfaManagerPwPolicyRepository.class);
     CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
-    ManagerUserDetailsService service = new ManagerUserDetailsService(managers, policies, companies);
+    CcfaSystemPropRepository props = mock(CcfaSystemPropRepository.class);
+    // 잠금 판정은 실제 LoginAttemptService 로 한다(mock 이면 항상 "안 잠김"이 되어 기존 잠금 테스트가 무의미해진다).
+    LoginAttemptService attempts = new LoginAttemptService(managers, policies, props, 5, 30);
+    ManagerUserDetailsService service = new ManagerUserDetailsService(managers, policies, companies, attempts);
 
     private CcfaManager manager(String status, Long companyIdx) {
         CcfaManager m = new CcfaManager();
@@ -101,5 +106,24 @@ class ManagerUserDetailsServiceTest {
         when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.empty());
         when(companies.findById(1L)).thenReturn(Optional.empty());
         assertThat(service.loadUserByUsername("kbadmin")).extracting("userNm").isEqualTo("kbadmin");
+    }
+
+    /** 잠근 지 30분이 지난 계정은 ACCOUNT_LOCK='Y' 여도 로그인할 수 있다. */
+    @Test void expiredLockIsTreatedAsUnlocked() {
+        when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager("활성", 1L)));
+        CcfaManagerPwPolicy p = new CcfaManagerPwPolicy();
+        p.setAccountLock("Y"); p.setUpdatedtime(LocalDateTime.now().minusMinutes(31));
+        when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.of(p));
+
+        assertThat(service.loadUserByUsername("kbadmin").isAccountNonLocked()).isTrue();
+    }
+
+    @Test void freshLockIsStillLocked() {
+        when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager("활성", 1L)));
+        CcfaManagerPwPolicy p = new CcfaManagerPwPolicy();
+        p.setAccountLock("Y"); p.setUpdatedtime(LocalDateTime.now().minusMinutes(5));
+        when(policies.findFirstByUserIdOrderByIdxDesc("kbadmin")).thenReturn(Optional.of(p));
+
+        assertThat(service.loadUserByUsername("kbadmin").isAccountNonLocked()).isFalse();
     }
 }

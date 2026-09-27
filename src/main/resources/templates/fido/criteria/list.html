@@ -27,6 +27,26 @@
     </div>
   </form>
 
+  <!-- 전체 토글. 검색·페이지 상태를 hidden 으로 실어 돌아올 자리를 지킨다. -->
+  <div class="d-flex justify-content-end gap-2 mb-3">
+    <form th:action="@{/criteria/status}" method="post" class="m-0"
+          onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 활성화하시겠습니까?');">
+      <input type="hidden" name="enabled" value="true">
+      <input type="hidden" name="aaid" th:value="${search.aaid}">
+      <input type="hidden" name="page" th:value="${page.number}">
+      <input type="hidden" name="size" th:value="${page.size}">
+      <button type="submit" class="btn btn-outline-success btn-sm text-nowrap">전체 활성화</button>
+    </form>
+    <form th:action="@{/criteria/status}" method="post" class="m-0"
+          onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 비활성화하시겠습니까? 이 고객사의 모든 인증기기가 거부됩니다.');">
+      <input type="hidden" name="enabled" value="false">
+      <input type="hidden" name="aaid" th:value="${search.aaid}">
+      <input type="hidden" name="page" th:value="${page.number}">
+      <input type="hidden" name="size" th:value="${page.size}">
+      <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap">전체 비활성화</button>
+    </form>
+  </div>
+
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover align-middle fa-table mb-0">
       <thead class="table-light">
