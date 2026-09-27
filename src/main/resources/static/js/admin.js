@@ -176,3 +176,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 })();
+
+// 목록 검색 폼(GET)의 드롭다운은 고르는 즉시 적용한다. 텍스트 검색어는 검색 버튼을 눌러야 적용된다.
+//
+// 드롭다운은 값을 고르는 것이 곧 입력의 끝이라 버튼을 한 번 더 누르게 할 이유가 없다.
+// 반면 텍스트는 타이핑 도중 상태가 있어 버튼(또는 Enter)으로 확정한다.
+// 전체를 즉시 제출하는 폼(data-auto-submit)은 위 블록이 맡으므로 여기서는 건드리지 않고,
+// 예외로 두고 싶은 select 나 form 에는 data-no-auto-submit 을 붙인다.
+(function () {
+  document.addEventListener('change', function (e) {
+    var select = e.target;
+    if (!select.matches || !select.matches('select')) return;
+    var form = select.form;
+    if (!form || (form.method || '').toLowerCase() !== 'get') return;
+    if (form.hasAttribute('data-auto-submit')) return;
+    if (form.hasAttribute('data-no-auto-submit') || select.hasAttribute('data-no-auto-submit')) return;
+    if (form.requestSubmit) form.requestSubmit();
+    else form.submit();
+  });
+})();
