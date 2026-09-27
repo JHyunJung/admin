@@ -35,7 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 class FidoLogQueryServiceTest {
 
     NamedParameterJdbcTemplate jdbc = mock(NamedParameterJdbcTemplate.class);
-    FidoLogQueryService service = new FidoLogQueryService(jdbc, new TenantContext(new SelectedTenant()));
+    FidoLogQueryService service = new FidoLogQueryService(jdbc, new TenantContext(new SelectedTenant()), new FidoLogTable(jdbc));
 
     @BeforeEach void loginCompany() {
         var u = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
@@ -55,28 +55,6 @@ class FidoLogQueryServiceTest {
         FidoLogSearchForm f = new FidoLogSearchForm();
         f.setLogDate(date);
         return f;
-    }
-
-    @Test void tableNameIsDatePartitioned() {
-        assertThat(service.tableName(LocalDate.of(2026, 9, 26))).isEqualTo("FIDO_LOGS_20260926");
-        assertThat(service.tableName(LocalDate.of(2026, 1, 2))).isEqualTo("FIDO_LOGS_20260102");
-    }
-
-    /**
-     * 날짜가 없으면 읽을 테이블이 정해지지 않는다. 400 으로 끊는다
-     * (이름을 만들 수 없는데 SQL 을 조립하면 "FIDO_LOGS_null" 같은 것이 나간다).
-     */
-    @Test void missingDateIsRejected() {
-        assertThatThrownBy(() -> service.tableName(null)).isInstanceOf(ResponseStatusException.class);
-    }
-
-    /**
-     * 연도가 네 자리를 벗어나면 이름의 자릿수가 달라진다. SQL 에 문자열로 들어가는
-     * 유일한 값이라 형태를 벗어나는 입력을 여기서 끊는다.
-     */
-    @Test void outOfRangeYearIsRejected() {
-        assertThatThrownBy(() -> service.tableName(LocalDate.of(0, 1, 1)))
-            .isInstanceOf(ResponseStatusException.class);
     }
 
     /** 그날 로그가 없으면 테이블 자체가 없다. 오류가 아니라 빈 목록이다. */
