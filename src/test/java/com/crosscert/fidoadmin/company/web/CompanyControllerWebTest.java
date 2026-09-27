@@ -141,7 +141,7 @@ class CompanyControllerWebTest {
                 .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
             .andExpect(status().isOk())
             .andExpect(view().name("company/company/form"))
-            .andExpect(content().string(containsString("이미 사용 중인 벤더 코드")));
+            .andExpect(content().string(containsString("이미 사용 중인 업체 코드")));
 
         verify(service, never()).create(any());
     }

@@ -34,6 +34,6 @@ public class CompanyController extends CrudController<CcfaCompany, Long, Company
         service.findByVendorCode(form.getVendorCode())
             .filter(other -> id == null || !id.equals(other.getIdx()))
             .ifPresent(other -> binding.rejectValue("vendorCode", "duplicate",
-                "이미 사용 중인 벤더 코드입니다 (고객사 #" + other.getIdx() + " " + other.getCompanyName() + ")"));
+                "이미 사용 중인 업체 코드입니다 (고객사 #" + other.getIdx() + " " + other.getCompanyName() + ")"));
     }
 }
