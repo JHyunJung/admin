@@ -19,9 +19,8 @@ public class MenuRegistry {
      * FIDO 서버 관리·시스템관리). 기존 사용자가 찾던 자리에서 찾게 하려는 것이므로,
      * 테이블 성격이 아니라 <b>업무 성격</b>으로 묶는다.
      *
-     * <p>이전 어드민에 있던 "통계 → 통계관리"와 "이상 징후 탐지 → 모니터링"은 넣지 않았다.
-     * 전자는 대시보드가 같은 일을 하고, 후자는 대응하는 화면이 없다. 화면 없는 메뉴는
-     * 404 나 빈 페이지로 이어지므로, 화면이 생길 때 함께 추가한다.
+     * <p>이전 어드민에 있던 "통계 → 통계관리"는 넣지 않았다. 대시보드가 같은 일을 한다.
+     * 화면 없는 메뉴는 404 나 빈 페이지로 이어지므로, 화면이 생길 때 함께 추가한다.
      *
      * <p>"필드 정의"(/system/fields)와 "데모 접근코드"(/fido2/demo-access-codes)는 메뉴에서 뺐다
      * (설계서 1의 "프로토타입 확인 후 불필요한 화면은 제외한다"). 화면과 컨트롤러는 남아 있어
@@ -57,8 +56,10 @@ public class MenuRegistry {
         // 메일/SMS 큐는 사이드바에서 감췄다(hidden). 항목을 지우지 않는 이유는 MenuItem 주석에 있다 —
         // TENANT 경로를 목록에서 빼면 areaOf 가 SYSTEM 으로 판정해 인터셉터가 막지 못한다.
         new MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope", true),
-        // 이전 어드민의 "이상 징후 탐지 → 정책관리". 모니터링 화면은 아직 없다.
+        // 이전 어드민의 "이상 징후 탐지 → 정책관리 / 모니터링". 모니터링은 현재 컬럼으로 성립하는
+        // 반복 주기 조건만 본다(docs/superpowers/specs/2026-09-27-fds-monitor-design.md).
         new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
+        new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "모니터링", "/fds-monitor", false, "bi-activity"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "앱 ID", "/appids", false, "bi-app-indicator"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "멤버코드 관리",
                 "/appservers", false, "bi-hdd-network"),

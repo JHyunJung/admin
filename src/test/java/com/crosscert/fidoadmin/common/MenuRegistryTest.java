@@ -64,14 +64,14 @@ class MenuRegistryTest {
     }
 
     /** 숫자만 맞추지 않도록, 영역 합이 전체와 같은지도 함께 본다. */
-    @Test void 테넌트_영역_화면은_18개다() {
+    @Test void 테넌트_영역_화면은_19개다() {
         long tenant = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.TENANT).count();
         long system = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.SYSTEM).count();
         long personal = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.PERSONAL).count();
         assertThat(tenant + system + personal).isEqualTo(MenuRegistry.ALL.size());
         // 감춘 항목(hidden)도 ALL 에는 남는다 — 경로의 영역 판정에 필요하다.
-        // AAID(정책)(/criteria)이 SYSTEM 에서 TENANT 로 옮겨 와 17 → 18 이다.
-        assertThat(tenant).isEqualTo(18);
+        // 모니터링(/fds-monitor)이 더해져 18 → 19 다.
+        assertThat(tenant).isEqualTo(19);
     }
 
     /** 감사 로그의 화면 이름. areaOf 와 같은 최장 접두사 규칙이라 /managers/super 가 운영자로 뭉개지지 않는다. */
@@ -80,6 +80,7 @@ class MenuRegistryTest {
         assertThat(registry.titleFor("/managers/super/1")).isEqualTo("슈퍼관리자 계정");
         assertThat(registry.titleFor("/managers/1")).isEqualTo("운영자");
         assertThat(registry.titleFor("/criteria")).isEqualTo("AAID(정책)");
+        assertThat(registry.titleFor("/fds-monitor")).isEqualTo("모니터링");
         assertThat(registry.titleFor("/nowhere")).isEqualTo("/nowhere");
         assertThat(registry.titleFor(null)).isEqualTo("/");
     }
@@ -209,6 +210,12 @@ class MenuRegistryTest {
 
     @Test void listPathFor_은_루트_자기_자신에서_루트를_반환한다() {
         assertThat(new MenuRegistry().listPathFor("/")).isEqualTo("/");
+    }
+
+    /** 모니터링은 고객사 데이터를 보므로 TENANT 다. SYSTEM 이면 미선택 SUPER 가 테넌트 선택 없이 들어온다. */
+    @Test void fdsMonitorIsTenantAreaAndNotSuperOnly() {
+        assertThat(registry.areaOf("/fds-monitor")).isEqualTo(MenuArea.TENANT);
+        assertThat(registry.itemsFor(false)).extracting(MenuItem::href).contains("/fds-monitor");
     }
 
     private MenuArea area(String href) {
