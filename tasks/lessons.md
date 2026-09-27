@@ -138,3 +138,8 @@ FIDO 서버 설정 화면의 토글 6종이 **켜지지 않았다.** 화면은 �
   실제 빈을 넣어 기존 단언이 의미를 잃지 않게 한다 — mock 으로 넣으면 "항상 안 잠김"이 된다.
 - `verify(repo).delete(any())` 는 `JpaSpecificationExecutor.delete(Specification)` 과
   모호하다. `any(Entity.class)` 로 쓴다.
+
+## 2026-09-27 ERD 에 없는 테이블에 의존한 기능을 만들었다
+- 상황: 제공 코드/레거시 매퍼가 쓰는 `CCFA_COMPANY_AAID` 를 그대로 믿고 AAID 토글을 구현. ERD(`docs/erd/kbfido-columns.txt`)에는 없는 테이블이었고, 로컬 도커에도 없어 /criteria 500.
+- 규칙: 새 SQL/엔티티가 참조하는 테이블·컬럼·시퀀스는 **구현 전에 ERD 파일로 존재를 확인**한다. 없으면 코드를 쓰기 전에 사용자에게 "ERD 에 없음 — 만들 것인지, 기능을 뺄 것인지"를 먼저 묻는다. 레거시 매퍼·제공 코드는 ERD 를 대신하지 못한다.
+- 규칙: "DB 변경 없음"이라고 답할 때는 DDL 유무만이 아니라 **코드가 기대하는 DB 객체가 ERD 에 다 있는지**까지 포함해서 답한다.

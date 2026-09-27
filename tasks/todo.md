@@ -124,3 +124,21 @@ MenuRegistryTest(+1).
 결과: 674건 중 670 통과, skipped 0. 실패 4건은 기존 DB 의존 테스트.
 신규 테스트 17건(CompanyServiceTest 4, CriteriaQueryServiceTest 3, CriteriaControllerWebTest 1,
 LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWebTest 2).
+
+## 2026-09-27 로컬 더미 데이터 (docker/init/03-dummy.sql)
+- [x] 13종 × 10건 = 130건 투입, 기동 중인 로컬 Oracle(fido-admin-oracle)에 적용 완료
+- [x] 화면 검증: /appids 12, /appservers 11, /signs 11, /transaction-hashes 11, /transaction-confirmations 11, /logs/exceptions 11, /logs/mailing 11, /criteria 12, /licenses 11, /managers 14, /fido2/metadata 12, /system/error-codes 12, /logs/fido(2021-01-02) 9, /fds-monitor(2021-01-02) 5건(SN-D001×3, SN-D002×2 — 고객사 2 행은 제외됨)
+- [x] 발견·수정: 로컬 스키마에 `CCFA_COMPANY_AAID`(레거시, 운영엔 있음) 와 `SEQ_APPID` 가 없어 /criteria 500 → 01-schema.sql 에 추가(로컬 전용)
+- 가드: DB_NAME 이 FREE/FREEPDB1 이 아니면 중단. 되돌리기 쿼리는 03-dummy.sql 하단 주석
+
+## 2026-09-27 이전 어드민 목록 규격 맞춤 (AppID 관리 · 멤버코드 관리 · AAID(정책) 보기)
+- [x] AppID 목록 컬럼을 이전 순서(번호·APPID·서비스명·장치·설명·기본값·생성일·수정일·상태)로, 장치/기본값/상태는 표시어(Android·iOS / 설정 / 활성·비활성)
+- [x] 공통 조각 `fragments/list-footer.html`(파란 건수 배지 + 가운데 « 1 » 페이지네이션), `admin.css` 의 `.fa-search-panel/.btn-search/.fa-result-badge/.fa-list-legacy`
+- [x] 메뉴 이름·순서: AppID 관리, 멤버코드 관리, CHALLENGE 보기, AAID(정책) 보기, FIDO 등록자 관리, TransactionHash 보기, TC원문 보기, 서명 보기(신규 화면, 맨 끝)
+- [x] 검증: MenuRegistry/Appid/Appserver/Criteria/TenantSelection/AuditReadInterceptor 테스트 통과, 로컬 기동(`--spring.profiles.active=local`) 후 세 화면 스크린샷 확인(.playwright-mcp/appids.png, criteria.png)
+- 참고: 전체 스위트의 통합 테스트 29건은 Testcontainers Oracle 이 exit 77(메모리 부족 — 로컬 Oracle 2개 기동 중)로 못 떠서 실패. 코드와 무관, 컨테이너 내려 두고 재실행 필요
+
+## 2026-09-27 검색 필터 드롭다운 즉시 적용 (admin.js)
+- [x] GET 검색 폼의 `<select>` 는 고르는 즉시 제출, 텍스트는 검색 버튼/Enter 로만 적용. 예외는 `data-no-auto-submit`, 전체 즉시 제출 폼(`data-auto-submit`)은 기존 블록 유지
+- [x] 브라우저 확인: /appids 에서 서비스명 타이핑만으로는 URL 불변, 상태를 비활성으로 고르자 `?servicename=kbpay&status=unuse` 로 즉시 조회
+- [x] 고객사 화면 "벤더코드" → "업체 코드" (form/list/detail 라벨, 중복 검사 메시지, 테스트)
