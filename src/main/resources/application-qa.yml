@@ -1,0 +1,21 @@
+# QA. DB 접속은 환경 변수(SPRING_DATASOURCE_URL/USERNAME/PASSWORD)로만 받는다 — 기본값 없음.
+# 로그는 콘솔과 파일 둘 다(logback-spring.xml 의 qa 프로필). 앱 로그는 DEBUG 라 재현·분석에 쓴다.
+spring:
+  jpa:
+    show-sql: false
+  thymeleaf:
+    cache: true
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+  error:
+    include-stacktrace: never
+    include-message: always
+logging:
+  level:
+    com.crosscert.fidoadmin: debug
+    org.springframework: info
+    org.hibernate: info

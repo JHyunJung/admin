@@ -7,11 +7,13 @@ import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
 import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository;
 import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 로그인 성공/실패에 따른 CCFA_MANAGER, CCFA_MANAGER_PW_POLICY 갱신. */
+@Slf4j
 @Service
 public class LoginAttemptService {
 
@@ -118,6 +120,7 @@ public class LoginAttemptService {
                 }
                 // 잠금이 만료된 뒤의 첫 실패. 처음부터 다시 센다.
                 // 이전 카운터를 이어 가면 만료 직후 한 번만 틀려도 즉시 다시 잠긴다.
+                log.info("계정 잠금 만료로 해제: userId={}", userId);
                 p.setAccountLock("N");
                 p.setPwFailCnt(0L);
                 m.setBlockTime(null);
@@ -127,6 +130,7 @@ public class LoginAttemptService {
             p.setPwFailCnt(cnt);
             p.setUpdatedtime(now);
             if (cnt >= failLimit()) {
+                log.warn("계정 잠금: userId={} failCount={} lockMinutes={}", userId, cnt, lockMinutes());
                 p.setAccountLock("Y");
                 m.setBlockTime(now);
                 m.setUpdatedtime(now);
@@ -153,6 +157,7 @@ public class LoginAttemptService {
         managers.findByUserIdForUpdate(userId).ifPresent(m -> {
             LocalDateTime now = LocalDateTime.now();
             CcfaManagerPwPolicy p = policyOrNew(userId, now);
+            log.info("계정 잠금 수동 해제: userId={}", userId);
             p.setAccountLock("N");
             p.setPwFailCnt(0L);
             p.setUpdatedtime(now);

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  환경별 로그 출력.
+    local        : 콘솔(색상)만. SQL 은 application-local.yml 의 레벨로 켠다.
+    qa           : 콘솔 + 파일.
+    prod, 미지정 : 파일만. 프로필을 안 준 기동은 어느 환경인지 모르므로 운영과 같게(보수적으로) 둔다.
+
+  파일: ${LOG_PATH:-./logs}/fido-admin.log  (전체, 일자별 롤링 + 100MB 분할, 30일 / 총 3GB 보관)
+        ${LOG_PATH:-./logs}/fido-admin-error.log (WARN 이상만, 같은 정책)
+
+  줄마다 [req=요청ID user=로그인ID tenant=고객사] 가 붙는다. RequestLogFilter 가 MDC 에 채운다.
+  요청 밖(기동, 스케줄러)에서는 "-" 로 찍힌다.
+-->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
+  <property name="APP_NAME" value="fido-admin"/>
+  <property name="MDC" value="[req=%X{req:--} user=%X{user:--} tenant=%X{tenant:--}]"/>
+  <property name="FILE_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%15.15t] ${MDC} %-40.40logger{39} : %m%n%wEx"/>
+  <property name="CONSOLE_PATTERN"
+            value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(${MDC}){cyan} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>${CONSOLE_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${APP_NAME}.log</file>
+    <encoder>
+      <pattern>${FILE_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>3GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <!-- WARN 이상만 따로. 장애 때 전체 로그를 뒤지지 않아도 되게. -->
+  <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${APP_NAME}-error.log</file>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>WARN</level>
+    </filter>
+    <encoder>
+      <pattern>${FILE_PATTERN}</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${APP_NAME}-error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>1GB</totalSizeCap>
+    </rollingPolicy>
+  </appender>
+
+  <!-- 감사 로그 DB 기록 실패는 어느 환경이든 반드시 남긴다. 레벨을 낮춰도 이건 살아 있다. -->
+  <logger name="com.crosscert.fidoadmin.audit.AuditLogger" level="INFO"/>
+
+  <springProfile name="local">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="com.crosscert.fidoadmin" level="DEBUG"/>
+  </springProfile>
+
+  <springProfile name="qa">
+    <root level="INFO">
+      <appender-ref ref="CONSOLE"/>
+      <appender-ref ref="FILE"/>
+      <appender-ref ref="ERROR_FILE"/>
+    </root>
+  </springProfile>
+
+  <!-- 운영, 그리고 프로필을 지정하지 않은 기동 -->
+  <springProfile name="prod | (!local &amp; !qa &amp; !test)">
+    <root level="INFO">
+      <appender-ref ref="FILE"/>
+      <appender-ref ref="ERROR_FILE"/>
+    </root>
+  </springProfile>
+
+  <!-- 테스트는 콘솔만, 조용하게 -->
+  <springProfile name="test">
+    <root level="WARN">
+      <appender-ref ref="CONSOLE"/>
+    </root>
+  </springProfile>
+</configuration>

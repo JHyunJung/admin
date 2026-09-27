@@ -9,7 +9,21 @@
 2. 애플리케이션: `./gradlew bootRun --args='--spring.profiles.active=local'`
 3. `http://localhost:8080` — 계정 `superuser / Admin1234!` (SUPER), `kbadmin / Company1234!` (고객사 운영자)
 
-운영 환경은 `local` 프로파일 대신 환경 변수 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` 를 준다. 기본값은 없다.
+QA·운영은 `local` 대신 `qa` / `prod` 프로파일로 띄우고, DB 는 환경 변수 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` 로 준다. 기본값은 없다.
+
+```
+SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/SVC SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
+  java -jar fido-admin.jar --spring.profiles.active=prod
+```
+
+| 프로파일 | DB | SQL 출력 | 로그 레벨(앱/프레임워크) | 로그 출력 |
+|---|---|---|---|---|
+| `local` | 로컬 도커 고정 | 켬 | DEBUG / INFO | 콘솔 |
+| `qa` | 환경 변수 | 끔 | DEBUG / INFO | 콘솔 + 파일 |
+| `prod` (또는 미지정) | 환경 변수 | 끔 | INFO / WARN | 파일 |
+
+로그 파일은 `LOG_PATH`(기본 `./logs`, `logging.file.path` 로도 지정) 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)이며 일자별로 롤링해 30일 보관한다.
+모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙고, 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나간다 — 오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
 
 설계 5.2 의 화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
 

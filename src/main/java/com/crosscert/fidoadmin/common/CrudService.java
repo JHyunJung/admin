@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import lombok.extern.slf4j.Slf4j;
 import com.crosscert.fidoadmin.audit.AuditChanges;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 화면용 CRUD 공통 처리: 테넌트 필터·검사, 기본값, 타임스탬프, 감사 로그.
  * 하위 클래스는 @Service 를 붙이고 훅만 구현한다.
  */
+@Slf4j
 public abstract class CrudService<E, ID, S extends SearchForm> {
 
     protected final AdminRepository<E, ID> repository;
@@ -97,6 +99,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         touchCreated(entity, LocalDateTime.now());
         E saved = insert(entity);
         audit.log(AuditType.CREATE, tableName() + " CREATE " + idOf(saved));
+        log.info("{} CREATE id={}", tableName(), idOf(saved));
         return saved;
     }
 
@@ -112,6 +115,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         touchUpdated(e, LocalDateTime.now());
         E saved = repository.save(e);
         AuditChanges.record(audit, tableName(), idOf(saved), before, saved);
+        log.info("{} UPDATE id={}", tableName(), idOf(saved));
         return saved;
     }
 
@@ -121,6 +125,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         beforeDelete(e);
         repository.delete(e);
         audit.log(AuditType.DELETE, tableName() + " DELETE " + idOf(e));
+        log.info("{} DELETE id={}", tableName(), idOf(e));
     }
 
     protected void checkTenant(E e) {

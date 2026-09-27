@@ -4,6 +4,7 @@ import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.signup.SignupPolicy;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * (SignupService.approve() 가 같은 이유로 리포지터리를 쓴다).
  */
 @Controller
+@Slf4j
 @RequiredArgsConstructor
 public class TenantSelectionController {
 
@@ -51,6 +53,7 @@ public class TenantSelectionController {
             return "redirect:/select-tenant";
         }
         selected.select(companyIdx);
+        log.info("테넌트 선택: userId={} -> company={}", tenant.require().getUserId(), companyIdx);
         return "redirect:" + safeReturnTo(returnTo);
     }
 

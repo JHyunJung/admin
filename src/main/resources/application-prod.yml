@@ -1,0 +1,26 @@
+# 운영. DB 접속은 환경 변수(SPRING_DATASOURCE_URL/USERNAME/PASSWORD)로만 받는다 — 기본값 없음.
+# 로그는 파일만(logback-spring.xml 의 prod 프로필). 앱 INFO, 프레임워크 WARN.
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    show-sql: false
+  thymeleaf:
+    cache: true
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-exception: false
+logging:
+  level:
+    com.crosscert.fidoadmin: info
+    org.springframework: warn
+    org.hibernate: warn
