@@ -414,6 +414,8 @@ CREATE TABLE CCFA_MANAGER (
   ALRAM_LEVEL                  VARCHAR2(20) DEFAULT '0' NOT NULL,
   CREATEDTIME                  TIMESTAMP DEFAULT sysdate NOT NULL,
   UPDATEDTIME                  TIMESTAMP DEFAULT sysdate NOT NULL,
+  -- 운영 DB 에 있다고 가정한 열(이전 어드민 2025 추가). 엔티티에 매핑하지 않고 PasswordAgeStore 가 JDBC 로만 쓴다.
+  LAST_PW_CHANGE_DATE          TIMESTAMP,
   CONSTRAINT CCFA_MANAGER_PK PRIMARY KEY (IDX)
 );
 

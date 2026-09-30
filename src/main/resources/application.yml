@@ -41,3 +41,6 @@ server:
 fido-admin:
   page-size: 20
   password-fail-limit: 5
+  # 비밀번호 만료. auto: 처음 필요할 때 CCFA_MANAGER.LAST_PW_CHANGE_DATE 열이 있는지 보고 있으면 켠다. false: 끈다.
+  password-expiry:
+    enabled: auto

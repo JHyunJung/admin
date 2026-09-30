@@ -352,6 +352,7 @@
   14. ALRAM_LEVEL                  VARCHAR2(20)         NOT NULL DEFAULT '0'              
   15. CREATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
   16. UPDATEDTIME                  TIMESTAMP            NOT NULL DEFAULT sysdate          
+   ※ LAST_PW_CHANGE_DATE TIMESTAMP — 운영 DB 에 있다고 가정한 선택 열. 전사본 밖이며 엔티티에 매핑하지 않는다(PasswordAgeStore, JDBC 전용). 없으면 비밀번호 만료가 스스로 꺼진다.
 
 ## CCFA_MANAGER_PW_POLICY — 운영자 비밀번호 정책/잠금 상태 (6)
    1. IDX                          NUMBER           PK  NOT NULL                          
