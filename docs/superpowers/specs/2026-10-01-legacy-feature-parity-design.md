@@ -17,7 +17,7 @@ FIDO 로그·감사 로그·계정 잠금·FIDO 서버 자가등록). 빠진 것
 | 2 | FDS 정책 IP 목록 형식 검사(`FDSPolicyValidator.checkIp`) | 길이만 검사 | 구현 (§3.1) |
 | 3 | 멤버코드 `MEMBER_CODE`+`MEMBER_ID` 중복 검사 | 없음 | 구현 (§3.2) |
 | 4 | 비밀번호 대문자·소문자·숫자·특수문자 모두 필수 | 영문·숫자·특수문자 | 구현 (§3.3) |
-| 5 | 비밀번호 90일 만료(`LAST_PW_CHANGE_DATE`) | 없음 | **제외** — 운영 DB 에 열이 없고 스키마 변경 불가 |
+| 5 | 비밀번호 90일 만료(`LAST_PW_CHANGE_DATE`) | 없음 | 구현하되 열이 없으면 스스로 꺼진다 (§3.6) |
 | 7 | 고객사 생성 시 AAID 전체 차단(`disableCompanyAllAAID`) + FDS 정책 기본행(`fds.insert`), 삭제 시 정리 | 설정 복사·삭제만 | 구현 (§3.4) |
 | 8 | 외부 라이선스 조회 `/external/license/{filename}` (FIDO 서버가 사용) | 없음 | 구현 (§3.5) |
 
@@ -162,6 +162,43 @@ ResponseUtil.responseText(res, (String) map.get(0).get("LICENSE"));
 - 요청 로그(`RequestLogFilter`)는 그대로 남는다. 조회 기록은 로그인 사용자가 없어 감사 로그에 남기지 않는다.
 - `{filename}` 에 점이 있어도 경로 변수 전체가 잡히는지(`abc.lic`) 테스트로 고정한다.
 
+### 3.6 비밀번호 만료
+
+이전 어드민은 비밀번호 변경 시 `CCFA_MANAGER.LAST_PW_CHANGE_DATE` 를 기록하고(`ChangePasswordController`,
+`ManagerValidator` 의 "2507 패스워드 기간관련"), 90일이 지나면 로그인 후 `/change-password` 로 보냈다.
+ERD 전사본에는 이 열이 없다. 운영 DB 에 열이 **있다고 보고 구현하되, 없어도 코드 수정 없이 동작**해야 한다.
+
+**열을 JPA 엔티티에 매핑하지 않는다.** 매핑했는데 열이 없으면 `CCFA_MANAGER` 를 읽는 모든 쿼리가 ORA-00904 로
+실패해 로그인부터 막힌다. `erd-columns.txt` 와 `CcfaManager` 는 그대로 두므로 `ErdConformanceTest` 도 바뀌지 않는다.
+
+구성 (패키지 `auth`)
+- `PasswordAgeStore` — `JdbcTemplate` 으로만 이 열을 다룬다.
+  `Optional<LocalDateTime> lastChanged(String userId)`, `void touch(String userId)`(`= SYSTIMESTAMP`).
+- `PasswordExpiryPolicy`
+  - 설정 `fido-admin.password-expiry.enabled`: `auto`(기본) | `false`.
+  - `auto` 면 기동 시 `SELECT LAST_PW_CHANGE_DATE FROM CCFA_MANAGER WHERE 1=0` 를 한 번 실행한다.
+    `BadSqlGrammarException` 이면 기능을 끄고 WARN 한 줄(`LAST_PW_CHANGE_DATE 열이 없어 비밀번호 만료를 끕니다`).
+    `ALL_TAB_COLUMNS` 대신 이 방식을 쓰는 이유: 앱 계정이 시노님으로 다른 스키마의 테이블을 볼 때도 맞다.
+  - `false` 면 탐지 쿼리도 돌리지 않고 끈다.
+  - 꺼져 있으면 `touch` 와 판정은 아무것도 하지 않는다(열에 접근하지 않는다).
+  - 기간: `CCFA_SYSTEM_PROP`(회사 0) `PW_EXPIRY_DAYS`, 없거나 양의 정수가 아니면 90. `PW_FAIL_LIMIT` 과 같은 방식으로 읽는다.
+  - 판정 `isExpired(userId)`: 값이 있고 `값 + 기간 <= 지금` 이면 만료.
+    **NULL 이면 만료가 아니고, 그 자리에서 `touch` 한다** — 열 추가 전 계정은 배포 뒤 첫 로그인부터 기간을 센다.
+
+기록 지점(`touch`): 비밀번호 변경(`PasswordChangeService`), 운영자 등록, 운영자 수정 중 비밀번호를 바꾼 경우,
+가입 승인. 같은 트랜잭션 안에서 부른다.
+
+강제 변경
+- `LoginSuccessHandler` 가 판정해 만료면 세션 속성 `PASSWORD_EXPIRED` 를 두고 `/me/password` 로 보낸다.
+- `PasswordExpiredInterceptor` — 속성이 있는 동안 `/me/password`, `/logout`, 정적 자원(`/webjars/**`, `/css/**`, `/js/**`,
+  `/fonts/**`, 파비콘) 밖의 요청을 `/me/password` 로 되돌린다. 테넌트 선택 인터셉터보다 먼저 돈다.
+- 비밀번호 변경이 성공하면 속성을 지운다.
+- `/me/password` 화면은 속성이 있을 때 `비밀번호를 변경한 지 {기간}일이 지났습니다. 새 비밀번호로 변경하세요.` 를 보여 준다.
+- Spring Security 의 `isCredentialsNonExpired=false` 는 쓰지 않는다. 로그인 자체가 실패해 바꿀 방법이 없어진다.
+
+스키마: 로컬 `docker/init/01-schema.sql` 의 `CCFA_MANAGER` 에 `LAST_PW_CHANGE_DATE TIMESTAMP` 를 더해 로컬·Testcontainers 에서
+켜진 경로를 검증한다. `docs/erd/kbfido-columns.txt` 에는 "운영 DB 에 있다고 가정한 선택 열, JDBC 로만 접근" 주석을 단다.
+
 ## 4. 오류 처리
 
 - reload 자동 전송: 어떤 예외도 호출자에게 올라가지 않는다(커밋은 이미 끝났다). 리스너 안에서 잡아 WARN.
@@ -174,6 +211,7 @@ ResponseUtil.responseText(res, (String) map.get(0).get("LICENSE"));
 - `system/reload/FidoReloadClient.java`, `ReloadResult.java`, `FidoConfigChanged.java`, `FidoReloadListener.java`, `FidoReloadConfig.java`(실행기·HTTP 클라이언트 빈)
 - `common/IpRuleList.java`, `common/IpRuleListValidator.java`
 - `company/web/ExternalLicenseController.java`
+- `auth/PasswordAgeStore.java`, `auth/PasswordExpiryPolicy.java`, `auth/PasswordExpiredInterceptor.java`
 - `docs/legacy/admin-java-features.md`
 
 수정
@@ -185,6 +223,9 @@ ResponseUtil.responseText(res, (String) map.get(0).get("LICENSE"));
 - `company/repository/CcfaLicenseRepository.java`, `CcfaFdsPolicyRepository.java`(필요 시 조회 메서드)
 - `common/PasswordPolicy.java`, `auth/PasswordChangeForm.java` 와 비밀번호 안내 문구가 있는 템플릿
 - `config/SecurityConfig.java`, `config/WebMvcConfig.java`
+- `auth/LoginSuccessHandler.java`, `auth/PasswordChangeService.java`, 비밀번호 변경 템플릿, 운영자 등록·수정과 가입 승인 서비스
+- `application.yml`(`fido-admin.password-expiry.enabled: auto`)
+- `docker/init/01-schema.sql`(`LAST_PW_CHANGE_DATE`), `docs/erd/kbfido-columns.txt`(주석)
 - `docker/init/02-seed.sql` — 필요 시 테스트용 `HASHVALUE` 가 있는 라이선스 행
 
 ## 6. 테스트
@@ -201,6 +242,11 @@ ResponseUtil.responseText(res, (String) map.get(0).get("LICENSE"));
 - `CompanyService` 테스트 — 생성 시 AAID 차단·FDS 기본행·감사 로그, 기존 FDS 행이 있으면 건너뜀, 삭제 시 정리, `beforeDelete` 에 막히면 정리 안 함.
   Oracle 통합 테스트(`OracleContainerSupport`)로 실제 insert 를 한 번 확인.
 - `ExternalLicenseController` `@WebMvcTest` — 로그인 없이 GET·POST 200, 일치 행 본문, 없는 해시 빈 본문, 점 포함 파일명.
+- `PasswordExpiryPolicyTest` — 탐지 쿼리 성공 → 켜짐, `BadSqlGrammarException` → 꺼짐, 설정 `false` → 쿼리 없이 꺼짐,
+  꺼진 상태에서 `touch`·판정이 저장소를 부르지 않음, 89/90/91일 경계, NULL → 만료 아님 + `touch`, `PW_EXPIRY_DAYS` 적용.
+- `PasswordExpiredInterceptor` 테스트 — 속성 있을 때 일반 경로 되돌림, 예외 경로 통과, 속성 없으면 통과.
+- 로그인 성공 핸들러·비밀번호 변경 테스트 — 만료 시 `/me/password` 이동, 변경 후 속성 해제, 각 기록 지점에서 `touch`.
+- Oracle 통합 테스트 — 로컬 스키마(열 있음)에서 `touch` 가 실제로 기록되고 탐지가 켜짐.
 
 ## 7. 옮기지 않는 것
 
@@ -211,7 +257,6 @@ ResponseUtil.responseText(res, (String) map.get(0).get("LICENSE"));
 - **이전 배치가 계속 돈다는 전제**: 통계 집계(`FIDOLogScheduler`), 만료 정리, 오류 알림 메일(`actionPerMin`),
   `.cfl` 아카이브.
 - **자체 라이브러리 필요**: `JUSToolkit` 무결성 해시·SEED 복호화, `EncDataSource`.
-- **스키마 변경 필요**: 비밀번호 90일 만료.
 - **보안상 유지**: 로그인 실패 시 남은 시도 횟수 안내(이전 어드민에 있었음). 계정 존재·상태가 드러나므로 지금처럼 사유를 숨긴다.
 - **이번 범위 밖(편의)**: 조회 기간 빠른 선택(오늘/7일/주/월/년).
 
