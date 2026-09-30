@@ -107,6 +107,26 @@ class AppserverControllerWebTest {
             .andExpect(content().string(containsString("바이트를 넘을 수 없습니다")));
     }
 
+    @Test void createRejectsDuplicateMemberCodeAndId() throws Exception {
+        when(service.existsDuplicate("M01", "ID01", null)).thenReturn(true);
+        mvc.perform(post("/appservers").with(user(companyUser)).with(csrf())
+                .param("memberCode", "M01").param("memberId", "ID01").param("type", "use"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/appserver/form"))
+            .andExpect(content().string(containsString("이미 등록된 코드와 ID값 입니다.")));
+        org.mockito.Mockito.verify(service, org.mockito.Mockito.never()).create(any());
+    }
+
+    @Test void updateExcludesSelfFromDuplicateCheck() throws Exception {
+        when(service.existsDuplicate("M01", "ID01", 5L)).thenReturn(false);
+        when(service.get(5L)).thenReturn(server(5L));
+        when(service.idOf(any())).thenReturn("5");
+        mvc.perform(post("/appservers/5").with(user(companyUser)).with(csrf())
+                .param("memberCode", "M01").param("memberId", "ID01").param("type", "use"))
+            .andExpect(status().is3xxRedirection());
+        org.mockito.Mockito.verify(service).existsDuplicate("M01", "ID01", 5L);
+    }
+
     @Test void createRedirectsToDetail() throws Exception {
         when(service.create(any())).thenReturn(server(9L));
         when(service.idOf(any())).thenReturn("9");

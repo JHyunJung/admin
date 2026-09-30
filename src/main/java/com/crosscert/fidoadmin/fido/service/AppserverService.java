@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** APPSERVER. COMPANY_IDX 로 테넌트 격리. ERD 기본값 TYPE='use'. */
 @Service
@@ -18,6 +19,20 @@ public class AppserverService extends CrudService<Appserver, Long, AppserverSear
 
     public AppserverService(AppserverRepository repository, AuditLogger audit, TenantContext tenant) {
         super(repository, audit, tenant);
+    }
+
+    /**
+     * 현재 고객사에 같은 MEMBER_CODE + MEMBER_ID 행이 있는가. 수정이면 자기 행({@code excludeIdx})은 뺀다.
+     * 이전 어드민 FidoController 의 membercode 중복 검사를 잇는다. DB 유니크 제약은 없다.
+     */
+    @Transactional(readOnly = true)
+    public boolean existsDuplicate(String memberCode, String memberId, Long excludeIdx) {
+        if (memberCode == null || memberCode.isBlank() || memberId == null || memberId.isBlank()) return false;
+        AppserverRepository r = (AppserverRepository) repository;
+        Long company = tenant.companyIdx();
+        return excludeIdx == null
+            ? r.existsByCompanyIdxAndMemberCodeAndMemberId(company, memberCode, memberId)
+            : r.existsByCompanyIdxAndMemberCodeAndMemberIdAndIdxNot(company, memberCode, memberId, excludeIdx);
     }
 
     @Override protected Specification<Appserver> toSpecification(AppserverSearchForm f) {

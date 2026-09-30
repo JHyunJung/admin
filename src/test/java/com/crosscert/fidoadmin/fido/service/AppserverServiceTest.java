@@ -74,6 +74,23 @@ class AppserverServiceTest {
         assertThat(service.create(in).getCompanyIdx()).isEqualTo(1L);
     }
 
+    @Test void duplicateCheckIsScopedToTenantAndExcludesSelf() {
+        login(1L);
+        when(repo.existsByCompanyIdxAndMemberCodeAndMemberIdAndIdxNot(1L, "M01", "ID01", 5L)).thenReturn(true);
+        assertThat(service.existsDuplicate("M01", "ID01", 5L)).isTrue();
+    }
+
+    @Test void duplicateCheckOnCreateUsesExistsWithoutExclusion() {
+        login(1L);
+        when(repo.existsByCompanyIdxAndMemberCodeAndMemberId(1L, "M01", "ID01")).thenReturn(true);
+        assertThat(service.existsDuplicate("M01", "ID01", null)).isTrue();
+    }
+
+    @Test void blankValuesAreNeverDuplicates() {
+        assertThat(service.existsDuplicate(null, "ID01", null)).isFalse();
+        assertThat(service.existsDuplicate("M01", " ", null)).isFalse();
+    }
+
     @Test void sortablePropertiesCoverListColumns() {
         assertThat(service.sortableProperties()).containsExactlyInAnyOrder("idx", "memberCode", "memberId", "createdtime");
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));

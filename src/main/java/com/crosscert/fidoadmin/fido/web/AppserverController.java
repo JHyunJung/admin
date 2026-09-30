@@ -8,6 +8,7 @@ import com.crosscert.fidoadmin.fido.service.AppserverService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -26,6 +27,12 @@ public class AppserverController extends CrudController<Appserver, Long, Appserv
     @Override protected AppserverForm toForm(Appserver e) { return AppserverForm.from(e); }
     @Override protected Appserver toEntity(AppserverForm f) { Appserver a = new Appserver(); f.applyTo(a); return a; }
     @Override protected void applyForm(AppserverForm f, Appserver e) { f.applyTo(e); }
+
+    @Override protected void validate(AppserverForm form, Long id, BindingResult binding) {
+        if (service.existsDuplicate(form.getMemberCode(), form.getMemberId(), id)) {
+            binding.rejectValue("memberId", "duplicate", "이미 등록된 코드와 ID값 입니다.");
+        }
+    }
 
     @Override protected void populateDetailModel(Appserver e, Model model) {
         model.addAttribute("companyName", companies.name(e.getCompanyIdx()));
