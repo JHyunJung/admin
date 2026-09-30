@@ -100,6 +100,21 @@ class PasswordChangeControllerWebTest {
         assertThat(session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
     }
 
+    /**
+     * 배선 확인: 만료 인터셉터가 WebMvcConfig 에 등록돼 있고 테넌트 선택 인터셉터보다 먼저 돈다.
+     * 테넌트 미선택 SUPER 가 테넌트 화면(/)을 열면 /select-tenant 가 아니라 /me/password 로 간다.
+     */
+    @Test void expiredSessionIsRedirectedToPasswordPageBeforeTenantSelection() throws Exception {
+        ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        mvc.perform(get("/").session(session).with(user(superUser)))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/me/password"));
+        mvc.perform(get("/me/password").session(session).with(user(superUser)))
+            .andExpect(status().isOk());
+    }
+
     @Test void acceptsPasswordMeetingPolicy() throws Exception {
         mvc.perform(change("NewPass5678!", "NewPass5678!"))
             .andExpect(status().is3xxRedirection())

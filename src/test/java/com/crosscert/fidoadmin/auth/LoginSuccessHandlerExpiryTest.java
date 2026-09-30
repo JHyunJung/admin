@@ -35,4 +35,24 @@ class LoginSuccessHandlerExpiryTest {
         assertThat(res.getRedirectedUrl()).isEqualTo("/");
         assertThat(req.getSession().getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
     }
+
+    @Test void staleFlagIsClearedOnNonExpiredLogin() throws Exception {
+        when(expiry.isExpiredOnLogin("kbadmin")).thenReturn(false);
+        MockHttpServletRequest req = new MockHttpServletRequest("POST", "/login");
+        req.getSession().setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        handler.onAuthenticationSuccess(req, res, new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+        assertThat(res.getRedirectedUrl()).isEqualTo("/");
+        assertThat(req.getSession().getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
+    }
+
+    @Test void dbFailureDuringExpiryCheckDoesNotBreakLogin() throws Exception {
+        when(expiry.isExpiredOnLogin("kbadmin"))
+            .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("down"));
+        MockHttpServletRequest req = new MockHttpServletRequest("POST", "/login");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        handler.onAuthenticationSuccess(req, res, new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+        assertThat(res.getRedirectedUrl()).isEqualTo("/");
+        assertThat(req.getSession().getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
+    }
 }
