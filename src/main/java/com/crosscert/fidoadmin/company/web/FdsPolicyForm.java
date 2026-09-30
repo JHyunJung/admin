@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.company.web;
 
 import com.crosscert.fidoadmin.common.ByteSize;
+import com.crosscert.fidoadmin.common.IpRuleList;
 import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -11,11 +12,11 @@ import lombok.Setter;
 public class FdsPolicyForm {
     /** 할당형 PK. SUPER 만 고른다. COMPANY 는 기반 create() 가 자기 값으로 덮어쓴다. */
     private Long companyIdx;
-    @ByteSize(max = 4000) private String andIp;
+    @IpRuleList @ByteSize(max = 4000) private String andIp;
     @ByteSize(max = 32) private String andTerm;
     @ByteSize(max = 16) private String andDevice;
     @NotBlank(message = "AND 국가는 필수입니다.") @ByteSize(max = 16) private String andCountry;
-    @ByteSize(max = 4000) private String orIp;
+    @IpRuleList @ByteSize(max = 4000) private String orIp;
     @ByteSize(max = 32) private String orTerm;
     @NotBlank(message = "OR 국가는 필수입니다.") @ByteSize(max = 16) private String orCountry;
 

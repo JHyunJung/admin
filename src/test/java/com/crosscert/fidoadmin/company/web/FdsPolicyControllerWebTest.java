@@ -112,6 +112,14 @@ class FdsPolicyControllerWebTest {
             .andExpect(content().string(containsString("AND 국가는 필수입니다.")));
     }
 
+    @Test void invalidIpShowsFormWithMessage() throws Exception {
+        mvc.perform(post("/fds-policies").with(user(companyUser)).with(csrf())
+                .param("andCountry", "KR").param("orCountry", "KR").param("andIp", "10.0.0.256"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("company/fds-policy/form"))
+            .andExpect(content().string(containsString("올바른 IP 형식이 아닙니다: 10.0.0.256")));
+    }
+
     /**
      * Task 11: 고객사 select 가 사라진 뒤로는 SUPER 도 폼 값 없이 유효 테넌트(세션이 고른 9)로
      * 등록한다. 예전에는 폼 companyIdx 가 비어 있으면 "고객사를 선택하세요." 로 거부했지만,
