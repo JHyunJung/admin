@@ -9,6 +9,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -54,20 +58,36 @@ public class FidoReloadClient {
         long start = System.nanoTime();
         String raw = c.getServerurl();
         String base = raw == null ? "" : raw.trim().replaceAll("/+$", "");
-        if (!(base.startsWith("http://") || base.startsWith("https://"))) {
+        URI uri;
+        try {
+            uri = base.isEmpty() ? null : URI.create(base);
+        } catch (IllegalArgumentException e) {
+            uri = null;
+        }
+        String scheme = uri == null ? null : uri.getScheme();
+        if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
+            || uri.getHost() == null || uri.getRawQuery() != null
+            || uri.getRawFragment() != null || uri.getRawUserInfo() != null) {
             return new ReloadResult(c.getServercode(), raw, false, oneLine("지원하지 않는 URL: " + (raw == null ? "" : raw.trim())), 0);
         }
+        CompletableFuture<HttpResponse<Void>> f = null;
         try {
             HttpRequest req = HttpRequest.newBuilder(URI.create(base + "/api/command/reload"))
                 .timeout(responseTimeout).GET().build();
-            HttpResponse<Void> res = http.send(req, HttpResponse.BodyHandlers.discarding());
-            int code = res.statusCode();
+            f = http.sendAsync(req, HttpResponse.BodyHandlers.discarding());
+            // HttpRequest.timeout 은 헤더까지만 본다. 본문을 천천히 흘려 스레드를 붙잡지 못하게 전체를 자른다.
+            int code = f.get(responseTimeout.toMillis(), TimeUnit.MILLISECONDS).statusCode();
             return new ReloadResult(c.getServercode(), raw, code >= 200 && code < 300, "HTTP " + code, millisSince(start));
+        } catch (TimeoutException e) {
+            f.cancel(true);
+            return new ReloadResult(c.getServercode(), raw, false, "request timed out", millisSince(start));
         } catch (InterruptedException e) {
+            if (f != null) f.cancel(true);
             Thread.currentThread().interrupt();
             return new ReloadResult(c.getServercode(), raw, false, "중단됨", millisSince(start));
         } catch (Exception e) {
-            String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getClass().getSimpleName() + ": " + e.getMessage();
+            Throwable t = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
+            String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getClass().getSimpleName() + ": " + t.getMessage();
             return new ReloadResult(c.getServercode(), raw, false, oneLine(msg), millisSince(start));
         }
     }
@@ -75,6 +95,7 @@ public class FidoReloadClient {
     private static long millisSince(long startNanos) { return (System.nanoTime() - startNanos) / 1_000_000; }
 
     static String oneLine(String s) {
+        if (s == null) return "";
         String flat = s.replaceAll("[\\r\\n]+", " ");
         return flat.length() > 200 ? flat.substring(0, 200) : flat;
     }

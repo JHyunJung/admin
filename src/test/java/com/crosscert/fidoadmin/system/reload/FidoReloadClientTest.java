@@ -34,6 +34,12 @@ class FidoReloadClientTest {
             ex.sendResponseHeaders(200, -1); ex.close(); });
         server.createContext("/redirect/api/command/reload", ex -> {
             ex.getResponseHeaders().add("Location", base + "/ok/api/command/reload"); ex.sendResponseHeaders(302, -1); ex.close(); });
+        server.createContext("/trickle/api/command/reload", ex -> {
+            try {
+                ex.sendResponseHeaders(200, 0);
+                for (int i = 0; i < 15; i++) { ex.getResponseBody().write('x'); ex.getResponseBody().flush(); Thread.sleep(200); }
+            } catch (Exception ignored) {}
+            ex.close(); });
         server.start();
         base = "http://127.0.0.1:" + server.getAddress().getPort();
         HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2))
@@ -94,6 +100,27 @@ class FidoReloadClientTest {
         assertThat(r.get(0).detail()).isEqualTo("지원하지 않는 URL: ftp://x/");
     }
 
+    @Test void trickledBodyIsBoundedByResponseTimeout() {
+        when(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(List.of(c("A", base + "/trickle")));
+        long t0 = System.nanoTime();
+        ReloadResult r = client.reloadAll().get(0);
+        assertThat((System.nanoTime() - t0) / 1_000_000).isLessThan(2000);
+        assertThat(r.ok()).isFalse();
+        assertThat(r.detail()).containsIgnoringCase("timed out");
+    }
+
+    @Test void queryFragmentUserInfoAndHostlessUrlsAreRejected() {
+        when(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(List.of(
+            c("A", "http://h/x?y"), c("B", "http://h/x#f"), c("C", "http://u:p@h/"), c("D", "http:///x")));
+        assertThat(client.reloadAll()).extracting(ReloadResult::ok).containsExactly(false, false, false, false);
+        assertThat(hits).isEmpty();
+    }
+
+    @Test void uppercaseSchemeIsAccepted() {
+        when(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(List.of(c("A", "HTTP://" + base.substring(7) + "/ok")));
+        assertThat(client.reloadAll().get(0).ok()).isTrue();
+    }
+
     @Test void noOnServersMeansNoResults() {
         when(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(List.of());
         assertThat(client.reloadAll()).isEmpty();
@@ -102,5 +129,6 @@ class FidoReloadClientTest {
     @Test void detailIsSingleLineAndCapped() {
         assertThat(FidoReloadClient.oneLine("a\nb\r\nc")).isEqualTo("a b c");
         assertThat(FidoReloadClient.oneLine("x".repeat(300))).hasSize(200);
+        assertThat(FidoReloadClient.oneLine(null)).isEmpty();
     }
 }

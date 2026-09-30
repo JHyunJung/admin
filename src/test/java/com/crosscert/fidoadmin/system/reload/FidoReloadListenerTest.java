@@ -83,4 +83,23 @@ class FidoReloadListenerTest {
         assertThatCode(() -> l.on(new FidoConfigChanged("x"))).doesNotThrowAnyException();
         verify(client, never()).reloadAll();
     }
+
+    @Test void pendingReloadsAreCoalesced() {
+        java.util.List<Runnable> tasks = new java.util.ArrayList<>();
+        FidoReloadListener l = new FidoReloadListener(client, tasks::add);
+        l.on(new FidoConfigChanged("1")); l.on(new FidoConfigChanged("2")); l.on(new FidoConfigChanged("3"));
+        org.assertj.core.api.Assertions.assertThat(tasks).hasSize(1);
+        tasks.get(0).run();
+        verify(client, times(1)).reloadAll();
+        l.on(new FidoConfigChanged("4"));
+        org.assertj.core.api.Assertions.assertThat(tasks).hasSize(2);
+    }
+
+    @Test void rejectionResetsPendingSoNextEventIsSubmitted() {
+        java.util.concurrent.atomic.AtomicInteger calls = new java.util.concurrent.atomic.AtomicInteger();
+        Executor rejecting = r -> { calls.incrementAndGet(); throw new TaskRejectedException("full"); };
+        FidoReloadListener l = new FidoReloadListener(client, rejecting);
+        l.on(new FidoConfigChanged("a")); l.on(new FidoConfigChanged("b"));
+        org.assertj.core.api.Assertions.assertThat(calls.get()).isEqualTo(2);
+    }
 }
