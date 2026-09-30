@@ -14,4 +14,6 @@ public interface CcfaFidoclientRepository extends AdminRepository<CcfaFidoclient
      * 있을 수 있으므로 단건이 아니라 First 로 받는다 — 여러 건이어도 예외 없이 가장 먼저 찾은 행을 갱신한다.
      */
     Optional<CcfaFidoclient> findFirstByServernameOrderByCreatedtimeAsc(String servername);
+
+    java.util.List<CcfaFidoclient> findByStatusOrderByServercodeAsc(String status);
 }
