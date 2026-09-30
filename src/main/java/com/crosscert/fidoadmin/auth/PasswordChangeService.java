@@ -26,6 +26,9 @@ public class PasswordChangeService {
         if (!encoder.matches(current, m.getUserPw())) {
             throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
         }
+        if (encoder.matches(next, m.getUserPw())) {
+            throw new SamePasswordException("현재 비밀번호와 다른 비밀번호를 입력하세요.");
+        }
         m.setUserPw(encoder.encode(next));
         m.setUpdatedtime(LocalDateTime.now());
         managers.save(m);

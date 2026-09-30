@@ -36,6 +36,15 @@ class PasswordChangeServiceTest {
         verify(expiry).touch("kbadmin");
     }
 
+    @Test void rejectsSameAsCurrent() {
+        CcfaManager m = manager();
+        assertThatThrownBy(() -> service.change("kbadmin", "Company1234!", "Company1234!"))
+            .isInstanceOf(SamePasswordException.class).hasMessageContaining("다른 비밀번호");
+        verify(managers, never()).save(any());
+        verify(expiry, never()).touch(any());
+        assertThat(m.getUserPw()).isEqualTo("c9d4b06722e867564a14b87c43c62c620f10023d4adeabcea4728d915196c461");
+    }
+
     @Test void rejectsWrongCurrent() {
         manager();
         assertThatThrownBy(() -> service.change("kbadmin", "wrong", "NewPass5678!"))

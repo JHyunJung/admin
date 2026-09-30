@@ -46,6 +46,16 @@ class LoginSuccessHandlerExpiryTest {
         assertThat(req.getSession().getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
     }
 
+    @Test void dbFailureReadingExpiryDaysDoesNotBreakLogin() throws Exception {
+        when(expiry.isExpiredOnLogin("kbadmin")).thenReturn(true);
+        when(expiry.expiryDays()).thenThrow(new org.springframework.dao.DataAccessResourceFailureException("down"));
+        MockHttpServletRequest req = new MockHttpServletRequest("POST", "/login");
+        MockHttpServletResponse res = new MockHttpServletResponse();
+        handler.onAuthenticationSuccess(req, res, new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
+        assertThat(res.getRedirectedUrl()).isEqualTo("/");
+        assertThat(req.getSession().getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
+    }
+
     @Test void dbFailureDuringExpiryCheckDoesNotBreakLogin() throws Exception {
         when(expiry.isExpiredOnLogin("kbadmin"))
             .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("down"));

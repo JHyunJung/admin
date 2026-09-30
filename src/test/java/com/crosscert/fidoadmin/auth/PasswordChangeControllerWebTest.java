@@ -181,6 +181,19 @@ class PasswordChangeControllerWebTest {
             .andExpect(status().is3xxRedirection());
     }
 
+    @Test void samePasswordErrorLandsOnNewPasswordAndKeepsExpiredFlag() throws Exception {
+        org.mockito.Mockito.doThrow(new SamePasswordException("현재 비밀번호와 다른 비밀번호를 입력하세요."))
+            .when(service).change(any(), any(), any());
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        mvc.perform(change("Company1234!", "Company1234!").session(session))
+            .andExpect(status().isOk())
+            .andExpect(view().name("auth/password"))
+            .andExpect(model().attributeHasFieldErrors("form", "newPassword"))
+            .andExpect(content().string(containsString("90일이 지났습니다")));
+        assertThat(session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isEqualTo(90);
+    }
+
     @Test void rejectsConfirmMismatch() throws Exception {
         mvc.perform(change("NewPass5678!", "Other5678!"))
             .andExpect(status().isOk())

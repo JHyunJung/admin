@@ -172,7 +172,7 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
     public int disableAllFor(Long companyIdx) {
         return jdbc.update("""
             INSERT INTO CCFA_COMPANY_AAID (COMPANY_IDX, AAID)
-            SELECT :companyIdx, c.AAID
+            SELECT DISTINCT :companyIdx, c.AAID
               FROM CRITERIA c
              WHERE c.AAID IS NOT NULL
                AND NOT EXISTS (

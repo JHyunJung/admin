@@ -31,14 +31,16 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
         log.info("로그인 성공: userId={} company={} ip={}", user.getUserId(), user.getCompanyIdx(), request.getRemoteAddr());
         audit.log(user, AuditType.LOGIN, "로그인 성공", request.getRemoteAddr(), request.getHeader("User-Agent"));
         boolean expired;
+        Integer expiryDays = null;
         try {
             expired = expiry.isExpiredOnLogin(user.getUserId());
+            if (expired) expiryDays = expiry.expiryDays();
         } catch (DataAccessException e) {
             log.warn("비밀번호 만료 판정 실패 — 이번 로그인은 만료가 아닌 것으로 봅니다: userId={}", user.getUserId(), e);
             expired = false;
         }
         if (expired) {
-            request.getSession().setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, expiry.expiryDays());
+            request.getSession().setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, expiryDays);
             log.info("비밀번호 만료: userId={} → 변경 화면", user.getUserId());
             clearAuthenticationAttributes(request);
             getRedirectStrategy().sendRedirect(request, response, "/me/password");

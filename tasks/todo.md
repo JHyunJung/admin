@@ -199,6 +199,6 @@ LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWeb
 - [x] Task 11: 고객사 딸린 데이터·비밀번호 변경일·외부 라이선스 Oracle 통합 테스트
 - [x] Task 12: 이전 어드민 Java 소스 기능 기록 (`docs/legacy/admin-java-features.md`)과 이 작업 기록
 - [x] `docker/init/01-schema.sql` 의 세미콜론 뒤 줄 끝 주석이 Testcontainers 초기화 SQL 에서 다음 구문을 깨던 것(ORA-03405, 앞서 exit 77 로 보이던 실제 원인)을 주석을 윗줄로 옮겨 수정 (1e069d9)
-- [ ] 운영·QA DB 에서 `SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='CCFA_MANAGER' AND COLUMN_NAME='LAST_PW_CHANGE_DATE'` 확인 — 없으면 기동 로그에 "LAST_PW_CHANGE_DATE 열이 없어 비밀번호 만료를 끕니다." 가 찍히는지 본다.
-- [ ] FIDO 서버의 `/api/command/reload` 가 GET 을 받는지 운영 서버 한 대로 확인(수동 reload 버튼).
+- [ ] 운영·QA DB 에서 `SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='CCFA_MANAGER' AND COLUMN_NAME='LAST_PW_CHANGE_DATE'` 확인 — 없으면 "LAST_PW_CHANGE_DATE 열이 없어 비밀번호 만료를 끕니다." 경고가 찍히는지 본다(탐지가 지연 실행이라 기동 로그가 아니라 기동 후 첫 로그인 또는 첫 비밀번호 변경 때 나온다).
+- [ ] FIDO 서버의 `/api/command/reload` 가 GET 을 받는지 운영 서버 한 대로 확인(수동 reload 버튼). SERVERURL 호스트명에 밑줄(_)이 있으면 JDK URI 가 호스트로 인식하지 못해 '지원하지 않는 URL' 로 실패한다 — 운영 SERVERURL 형식도 함께 확인.
 - [ ] Testcontainers 1.21.2 가 Docker Engine 29.x 의 API 버전을 거부해 Oracle 통합 테스트가 모두 skip 된다 — 이 PC 는 ~/.docker-java.properties(api.version=1.44)로 우회. Testcontainers 올리기 검토

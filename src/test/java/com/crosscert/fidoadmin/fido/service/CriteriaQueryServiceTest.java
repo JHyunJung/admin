@@ -244,7 +244,7 @@ class CriteriaQueryServiceTest {
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbc).update(sql.capture(), params.capture());
-        assertThat(sql.getValue()).contains("INSERT INTO CCFA_COMPANY_AAID");
+        assertThat(sql.getValue()).contains("INSERT INTO CCFA_COMPANY_AAID").contains("SELECT DISTINCT").contains("NOT EXISTS");
         assertThat(params.getValue().getValue("companyIdx")).isEqualTo(9L);
         verify(audit, never()).log(any(), anyString());
         verify(events, never()).publishEvent(any());

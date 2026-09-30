@@ -38,6 +38,9 @@ public class PasswordChangeController {
         if (binding.hasErrors()) return "auth/password";
         try {
             service.change(tenant.require().getUserId(), form.getCurrentPassword(), form.getNewPassword());
+        } catch (SamePasswordException e) {
+            binding.rejectValue("newPassword", "same", e.getMessage());
+            return "auth/password";
         } catch (IllegalArgumentException e) {
             binding.rejectValue("currentPassword", "invalid", e.getMessage());
             return "auth/password";
