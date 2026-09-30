@@ -10,6 +10,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -21,6 +22,7 @@ import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient;
+import com.crosscert.fidoadmin.system.reload.ReloadResult;
 import com.crosscert.fidoadmin.system.service.FidoClientService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,7 @@ class FidoClientControllerWebTest {
 
     @Autowired MockMvc mvc;
     @MockitoBean FidoClientService service;
+    @MockitoBean com.crosscert.fidoadmin.system.reload.FidoReloadService reload;
     @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginSuccessHandler success;
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
@@ -110,5 +113,48 @@ class FidoClientControllerWebTest {
             .andExpect(view().name("system/fido-clients/form"))
             .andExpect(content().string(containsString("로 쓸 수 없는 값입니다: new")));
         verify(service, never()).create(any());
+    }
+
+    @Test void manualReloadAllOk() throws Exception {
+        when(reload.reloadNow()).thenReturn(List.of(new ReloadResult("FIDO01", "https://a", true, "HTTP 200", 5),
+            new ReloadResult("FIDO02", "https://b", true, "HTTP 200", 5)));
+        mvc.perform(post("/system/fido-clients/reload").with(user(superUser)).with(csrf()))
+            .andExpect(redirectedUrl("/system/fido-clients"))
+            .andExpect(flash().attribute("flashSuccess", "FIDO 서버 2대에 reload 를 보냈습니다."));
+    }
+
+    @Test void manualReloadPartialFailureListsFailures() throws Exception {
+        when(reload.reloadNow()).thenReturn(List.of(new ReloadResult("FIDO01", "https://a", true, "HTTP 200", 5),
+            new ReloadResult("FIDO02", "https://b", false, "HTTP 500", 5)));
+        mvc.perform(post("/system/fido-clients/reload").with(user(superUser)).with(csrf()))
+            .andExpect(redirectedUrl("/system/fido-clients"))
+            .andExpect(flash().attribute("flashError", "FIDO 서버 2대 중 1대 reload 실패 — FIDO02: HTTP 500"));
+    }
+
+    @Test void manualReloadWithNoOnServers() throws Exception {
+        when(reload.reloadNow()).thenReturn(List.of());
+        mvc.perform(post("/system/fido-clients/reload").with(user(superUser)).with(csrf()))
+            .andExpect(flash().attribute("flashError", "reload 를 보낼 FIDO 서버(STATUS=ON)가 없습니다."));
+    }
+
+    @Test void manualReloadForbiddenForCompanyUser() throws Exception {
+        mvc.perform(post("/system/fido-clients/reload").with(user(companyUser)).with(csrf()))
+            .andExpect(status().isForbidden());
+        verify(reload, never()).reloadNow();
+    }
+
+    @Test void listShowsReloadButton() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("servercode"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
+        mvc.perform(get("/system/fido-clients").with(user(superUser)))
+            .andExpect(content().string(containsString("/system/fido-clients/reload")))
+            .andExpect(content().string(containsString("지금 reload 보내기")));
+    }
+
+    @Test void reloadIsReservedServerCode() throws Exception {
+        mvc.perform(post("/system/fido-clients").with(user(superUser)).with(csrf())
+                .param("servercode", "reload").param("servername", "x").param("serverurl", "https://x").param("status", "ON"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: reload")));
     }
 }
