@@ -86,7 +86,15 @@ class PasswordChangeControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(model().attributeHasFieldErrors("form", "newPassword"))
             .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
-                .content().string(org.hamcrest.Matchers.containsString("영문, 숫자, 특수문자를 모두 포함해야 합니다.")));
+                .content().string(org.hamcrest.Matchers.containsString(com.crosscert.fidoadmin.common.PasswordPolicy.MESSAGE)));
+        verify(service, never()).change(any(), any(), any());
+    }
+
+    @Test void rejectsNewPasswordWithoutUppercase() throws Exception {
+        mvc.perform(change("newpass5678!", "newpass5678!"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("auth/password"))
+            .andExpect(model().attributeHasFieldErrors("form", "newPassword"));
         verify(service, never()).change(any(), any(), any());
     }
 

@@ -23,7 +23,7 @@ import lombok.Setter;
 public class PasswordChangeForm {
     @NotBlank private String currentPassword;
     @NotBlank @Size(min = PasswordPolicy.MIN_LENGTH, max = PasswordPolicy.MAX_LENGTH)
-    @Pattern(regexp = PasswordPolicy.PATTERN, message = "영문, 숫자, 특수문자를 모두 포함해야 합니다.")
+    @Pattern(regexp = PasswordPolicy.PATTERN, message = PasswordPolicy.MESSAGE)
     private String newPassword;
     @NotBlank private String confirmPassword;
 }

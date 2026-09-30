@@ -19,8 +19,11 @@ public final class PasswordPolicy {
 
     private PasswordPolicy() {}
 
-    /** 영문·숫자·특수문자를 각각 하나 이상 포함해야 한다. */
-    public static final String PATTERN = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$";
+    /** 영문 대문자·소문자·숫자·특수문자를 각각 하나 이상 포함해야 한다(이전 어드민 ManagerValidator 와 같다). */
+    public static final String PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$";
+
+    /** 형식 위반 문구. 어노테이션 속성에서도 참조하므로 컴파일 상수다. */
+    public static final String MESSAGE = "영문 대문자, 소문자, 숫자, 특수문자를 모두 포함해야 합니다.";
 
     /** 허용 길이(경계 포함). */
     public static final int MIN_LENGTH = 8;
@@ -43,7 +46,7 @@ public final class PasswordPolicy {
         if (pw.length() < MIN_LENGTH || pw.length() > MAX_LENGTH) {
             binding.rejectValue(pwField, "size", "비밀번호는 8자 이상 64자 이하여야 합니다.");
         } else if (!COMPILED.matcher(pw).matches()) {
-            binding.rejectValue(pwField, "policy", "영문, 숫자, 특수문자를 모두 포함해야 합니다.");
+            binding.rejectValue(pwField, "policy", MESSAGE);
         }
         if (!pw.equals(confirm)) {
             binding.rejectValue(confirmField, "mismatch", "비밀번호 확인이 일치하지 않습니다.");

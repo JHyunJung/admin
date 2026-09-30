@@ -20,6 +20,20 @@ class PasswordPolicyTest {
         assertThat(bind("Company1234!", "Company1234!").hasErrors()).isFalse();
     }
 
+    @Test void rejectsMissingUppercase() {
+        BindingResult b = bind("company1234!", "company1234!");
+        assertThat(b.getFieldError("password").getDefaultMessage()).isEqualTo(PasswordPolicy.MESSAGE);
+    }
+
+    @Test void rejectsMissingLowercase() {
+        BindingResult b = bind("COMPANY1234!", "COMPANY1234!");
+        assertThat(b.getFieldError("password").getDefaultMessage()).isEqualTo(PasswordPolicy.MESSAGE);
+    }
+
+    @Test void messageNamesAllFourKinds() {
+        assertThat(PasswordPolicy.MESSAGE).isEqualTo("영문 대문자, 소문자, 숫자, 특수문자를 모두 포함해야 합니다.");
+    }
+
     @Test void rejectsTooShort() {
         BindingResult b = bind("Ab1!", "Ab1!");
         assertThat(b.getFieldError("password").getDefaultMessage()).contains("8자 이상");

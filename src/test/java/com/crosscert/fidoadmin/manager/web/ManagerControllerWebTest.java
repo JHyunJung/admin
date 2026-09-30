@@ -164,7 +164,7 @@ class ManagerControllerWebTest {
                 .param("password", "abcdefgh1").param("passwordConfirm", "abcdefgh1"))
             .andExpect(status().isOk())
             .andExpect(view().name("manager/manager/form"))
-            .andExpect(content().string(containsString("영문, 숫자, 특수문자를 모두 포함해야 합니다.")));
+            .andExpect(content().string(containsString(com.crosscert.fidoadmin.common.PasswordPolicy.MESSAGE)));
         verify(service, org.mockito.Mockito.never()).create(any());
     }
 
