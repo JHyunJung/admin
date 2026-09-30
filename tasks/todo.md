@@ -183,3 +183,22 @@ LoginAttemptServiceTest 5, ManagerUserDetailsServiceTest 2, CompanyControllerWeb
 - [x] GROUPBY 비교를 UPPER 로(쿼리), 요청값은 목록 표기로 맞춤(DashboardController.resolveGroupby) — ?groupby=DAY 도 day 데이터 표시
 - [x] 안내 문구 구분: 통계 없는 고객사 / 선택 기간에 데이터 없음 + 마지막 집계일 / 조건(서비스)에 데이터 없음 / 데이터 있으나 마지막 집계일 이후 비어 있음(배치 확인)
 - [x] StatisticsQueryService.rangeOf(기간 보정 로직 분리)·lastStatDate(MAX(CREATEDTIME), 테넌트 스코프). 테스트: DashboardControllerWebTest 7, StatisticsTenantScopeTest 6 통과, 로컬 DB 로 4가지 경우 확인
+
+## 2026-10-01 이전 어드민 기능 보강 (브랜치 feat/legacy-feature-parity)
+설계: docs/superpowers/specs/2026-10-01-legacy-feature-parity-design.md. 이전 어드민 Java 소스 기록: docs/legacy/admin-java-features.md
+- [x] Task 1: 운영자 비밀번호에 대문자·소문자를 모두 요구 (`PasswordPolicy`, 안내 문구)
+- [x] Task 2: FDS 정책 IP 목록을 단일·CIDR·범위 형식으로만 받음 (`@IpRuleList`)
+- [x] Task 3: 같은 고객사에서 멤버코드+멤버ID 중복 금지 (등록·수정 모두)
+- [x] Task 4: 외부 라이선스 조회 `/external/license/{filename}` (GET·POST, 인증 없음)
+- [x] Task 5: FIDO 서버 reload 클라이언트와 커밋 후 이벤트 (`FidoReloadClient`, `FidoConfigChanged`)
+- [x] Task 6: FIDO 서버 목록 수동 reload 버튼 (`/system/fido-clients`)
+- [x] Task 7: AppID·멤버코드·AAID·FIDO2·서버 설정 변경 시 reload 이벤트 발행
+- [x] Task 8: 고객사 생성 시 AAID 전체 차단·FDS 기본행, 삭제 시 정리
+- [x] Task 9: 비밀번호 변경일을 JDBC 로만 다루고 열이 없으면 만료를 스스로 끔 (`PasswordAgeStore`, `PasswordExpiryPolicy`)
+- [x] Task 10: 비밀번호 만료 시 변경 화면으로 가둠 (`PasswordExpiredInterceptor`)
+- [x] Task 11: 고객사 딸린 데이터·비밀번호 변경일·외부 라이선스 Oracle 통합 테스트
+- [x] Task 12: 이전 어드민 Java 소스 기능 기록 (`docs/legacy/admin-java-features.md`)과 이 작업 기록
+- [x] `docker/init/01-schema.sql` 의 세미콜론 뒤 줄 끝 주석이 Testcontainers 초기화 SQL 에서 다음 구문을 깨던 것(ORA-03405, 앞서 exit 77 로 보이던 실제 원인)을 주석을 윗줄로 옮겨 수정 (1e069d9)
+- [ ] 운영·QA DB 에서 `SELECT COLUMN_NAME FROM ALL_TAB_COLUMNS WHERE TABLE_NAME='CCFA_MANAGER' AND COLUMN_NAME='LAST_PW_CHANGE_DATE'` 확인 — 없으면 기동 로그에 "LAST_PW_CHANGE_DATE 열이 없어 비밀번호 만료를 끕니다." 가 찍히는지 본다.
+- [ ] FIDO 서버의 `/api/command/reload` 가 GET 을 받는지 운영 서버 한 대로 확인(수동 reload 버튼).
+- [ ] Testcontainers 1.21.2 가 Docker Engine 29.x 의 API 버전을 거부해 Oracle 통합 테스트가 모두 skip 된다 — 이 PC 는 ~/.docker-java.properties(api.version=1.44)로 우회. Testcontainers 올리기 검토
