@@ -28,13 +28,14 @@ public class SecurityConfig {
         http
             // /api/svc/** 는 FIDO 서버가 기동하면서 자기 URL 을 알려오는 자가등록 경로다.
             // 호출자는 브라우저가 아니라 서버이고 로그인 세션도 토큰도 없으므로 CSRF 검사에서 뺀다.
-            .csrf(c -> c.ignoringRequestMatchers("/api/svc/**"))
+            .csrf(c -> c.ignoringRequestMatchers("/api/svc/**", "/external/**"))
             .authorizeHttpRequests(auth -> auth
                 // favicon 은 로그인 화면에서도 필요하고, 콘텐츠 해시가 붙으면 이름이 favicon-<md5>.ico 가 된다.
                 // /signup 은 가입 신청 화면이다. 로그인 전에 열려야 하므로 permitAll 이다.
                 // /api/svc/** 는 기존 어드민과 동일하게 인증 없이 열어 둔다(FidoClientRegistrationController 참고).
-                .requestMatchers("/login", "/signup", "/api/svc/**", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
+                .requestMatchers("/login", "/signup", "/api/svc/**", "/external/**", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
+                // /external/** 는 FIDO 서버가 라이선스를 받아 가는 경로다(ExternalLicenseController).
                 // /signups(복수)는 가입 승인 화면이다. 위 permitAll 의 /signup(단수, 신청)과 다르다.
                 //
                 // /criteria 는 여기 없다. AAID(정책)는 기준 데이터 자체는 전역이지만 화면의 용도가
