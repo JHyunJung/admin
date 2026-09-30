@@ -153,16 +153,7 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
                  WHERE COMPANY_IDX = :companyIdx
                 """, params);
         } else {
-            changed = jdbc.update("""
-                INSERT INTO CCFA_COMPANY_AAID (COMPANY_IDX, AAID)
-                SELECT :companyIdx, c.AAID
-                  FROM CRITERIA c
-                 WHERE c.AAID IS NOT NULL
-                   AND NOT EXISTS (
-                       SELECT 1 FROM CCFA_COMPANY_AAID b
-                        WHERE b.COMPANY_IDX = :companyIdx AND b.AAID = c.AAID
-                   )
-                """, params);
+            changed = disableAllFor(companyIdx);
         }
         if (changed > 0) {
             audit.log(AuditType.STATUS,
@@ -171,6 +162,33 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
             events.publishEvent(new FidoConfigChanged("AAID 전체 " + (enabled ? "활성" : "비활성") + " " + changed + "건"));
         }
         return changed;
+    }
+
+    /**
+     * 주어진 고객사에서 모든 AAID 를 차단한다. 잠금·감사 로그·이벤트는 호출자 몫이다.
+     * 고객사 생성({@code CompanyService.create})과 전체 비활성({@link #changeStatusAll})이 같이 쓴다.
+     */
+    @Transactional
+    public int disableAllFor(Long companyIdx) {
+        return jdbc.update("""
+            INSERT INTO CCFA_COMPANY_AAID (COMPANY_IDX, AAID)
+            SELECT :companyIdx, c.AAID
+              FROM CRITERIA c
+             WHERE c.AAID IS NOT NULL
+               AND NOT EXISTS (
+                   SELECT 1 FROM CCFA_COMPANY_AAID b
+                    WHERE b.COMPANY_IDX = :companyIdx AND b.AAID = c.AAID
+               )
+            """, new MapSqlParameterSource("companyIdx", companyIdx));
+    }
+
+    /** 주어진 고객사의 차단 행을 모두 지운다. 고객사 삭제 때 쓴다. */
+    @Transactional
+    public int deleteAllFor(Long companyIdx) {
+        return jdbc.update("""
+            DELETE FROM CCFA_COMPANY_AAID
+             WHERE COMPANY_IDX = :companyIdx
+            """, new MapSqlParameterSource("companyIdx", companyIdx));
     }
 
     @Override protected Specification<Criteria> toSpecification(CriteriaSearchForm f) {

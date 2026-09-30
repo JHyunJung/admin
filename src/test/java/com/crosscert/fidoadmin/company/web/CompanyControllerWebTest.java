@@ -12,6 +12,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -157,5 +158,15 @@ class CompanyControllerWebTest {
             .andExpect(redirectedUrl("/companies/9"));
 
         verify(service).update(eq(9L), any());
+    }
+
+    @Test void createMessageWarnsAllAaidsDisabled() throws Exception {
+        CcfaCompany saved = new CcfaCompany(); saved.setIdx(77L);
+        when(service.create(any())).thenReturn(saved);
+        when(service.idOf(any())).thenReturn("77");
+        mvc.perform(post("/companies").with(user(superUser)).with(csrf()).param("companyName", "신규").param("enableType", "Y")
+                .param("maxAppid", "0").param("maxAppserver", "0").param("maxUser", "0"))
+            .andExpect(flash().attribute("flashSuccess",
+                "등록되었습니다. 모든 AAID 가 비활성 상태로 시작합니다. AAID(정책) 화면에서 허용할 인증기를 켜세요."));
     }
 }

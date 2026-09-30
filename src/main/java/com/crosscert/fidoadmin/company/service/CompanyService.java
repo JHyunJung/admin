@@ -6,7 +6,12 @@ import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.company.entity.CcfaCompany;
+import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
+import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
+import com.crosscert.fidoadmin.fido.service.CriteriaQueryService;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import com.crosscert.fidoadmin.company.web.CompanySearchForm;
 import com.crosscert.fidoadmin.fido.repository.AppidRepository;
 import com.crosscert.fidoadmin.fido.repository.UserinfoRepository;
@@ -34,15 +39,23 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
     private final UserinfoRepository users;
     private final CcfaManagerRepository managers;
     private final CcfaSystemPropRepository props;
+    private final CcfaFdsPolicyRepository fdsPolicies;
+    private final CriteriaQueryService criteria;
+    private final ApplicationEventPublisher events;
 
     public CompanyService(CcfaCompanyRepository repository, AuditLogger audit, AppidRepository appids,
                           UserinfoRepository users, CcfaManagerRepository managers,
-                          CcfaSystemPropRepository props, TenantContext tenant) {
+                          CcfaSystemPropRepository props, TenantContext tenant,
+                          CcfaFdsPolicyRepository fdsPolicies, CriteriaQueryService criteria,
+                          ApplicationEventPublisher events) {
         super(repository, audit, tenant);
         this.appids = appids;
         this.users = users;
         this.managers = managers;
         this.props = props;
+        this.fdsPolicies = fdsPolicies;
+        this.criteria = criteria;
+        this.events = events;
     }
 
     @Override protected Specification<CcfaCompany> toSpecification(CompanySearchForm f) {
@@ -89,6 +102,24 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
             audit.log(AuditType.CREATE,
                 "CCFA_SYSTEM_PROP COPY 고객사 " + saved.getIdx() + " ← 회사 0 (" + copied + "건)");
         }
+        // 이전 어드민 disableCompanyAllAAID: 새 고객사는 인증기를 하나씩 허용하기 전까지 FIDO 등록이 되지 않는다.
+        int disabled = criteria.disableAllFor(saved.getIdx());
+        if (disabled > 0) {
+            audit.log(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 " + saved.getIdx() + " (" + disabled + "건)");
+        }
+        // 이전 어드민 fds.insert: 국가 조건 'NO' 인 빈 정책을 둔다.
+        if (!fdsPolicies.existsById(saved.getIdx())) {
+            LocalDateTime now = LocalDateTime.now();
+            CcfaFdsPolicy policy = new CcfaFdsPolicy();
+            policy.setCompanyIdx(saved.getIdx());
+            policy.setAndCountry("NO");
+            policy.setOrCountry("NO");
+            policy.setCreatedtime(now);
+            policy.setUpdatedtime(now);
+            fdsPolicies.save(policy);
+            audit.log(AuditType.CREATE, "CCFA_FDS_POLICY 기본값 고객사 " + saved.getIdx());
+        }
+        events.publishEvent(new FidoConfigChanged("고객사 생성 " + saved.getIdx()));
         return saved;
     }
 
@@ -106,6 +137,14 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
         if (!rows.isEmpty()) {
             props.deleteAll(rows);
             audit.log(AuditType.DELETE, "CCFA_SYSTEM_PROP DELETE 고객사 " + id + " (" + rows.size() + "건)");
+        }
+        int aaidRows = criteria.deleteAllFor(id);
+        if (aaidRows > 0) {
+            audit.log(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 " + id + " (" + aaidRows + "건)");
+        }
+        if (fdsPolicies.existsById(id)) {
+            fdsPolicies.deleteById(id);
+            audit.log(AuditType.DELETE, "CCFA_FDS_POLICY DELETE 고객사 " + id);
         }
     }
 

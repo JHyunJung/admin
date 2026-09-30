@@ -237,4 +237,24 @@ class CriteriaQueryServiceTest {
         assertThat(service.changeStatusAll(true)).isZero();
         verify(events, never()).publishEvent(any());
     }
+
+    @Test void disableAllForInsertsForGivenCompanyWithoutAuditOrEvent() {
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(4);
+        assertThat(service.disableAllFor(9L)).isEqualTo(4);
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).update(sql.capture(), params.capture());
+        assertThat(sql.getValue()).contains("INSERT INTO CCFA_COMPANY_AAID");
+        assertThat(params.getValue().getValue("companyIdx")).isEqualTo(9L);
+        verify(audit, never()).log(any(), anyString());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test void deleteAllForDeletesGivenCompanyRows() {
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(2);
+        assertThat(service.deleteAllFor(9L)).isEqualTo(2);
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        verify(jdbc).update(sql.capture(), any(MapSqlParameterSource.class));
+        assertThat(sql.getValue()).contains("DELETE FROM CCFA_COMPANY_AAID");
+    }
 }

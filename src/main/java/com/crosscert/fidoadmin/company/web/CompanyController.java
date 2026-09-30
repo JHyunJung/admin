@@ -25,6 +25,10 @@ public class CompanyController extends CrudController<CcfaCompany, Long, Company
     @Override protected CcfaCompany toEntity(CompanyForm f) { CcfaCompany c = new CcfaCompany(); f.applyTo(c); return c; }
     @Override protected void applyForm(CompanyForm f, CcfaCompany e) { f.applyTo(e); }
 
+    @Override protected String createdMessage(CcfaCompany saved) {
+        return "등록되었습니다. 모든 AAID 가 비활성 상태로 시작합니다. AAID(정책) 화면에서 허용할 인증기를 켜세요.";
+    }
+
     /**
      * VENDOR_CODE 중복 검사. DB 에 유니크 제약이 없어 여기서 막는다.
      * 수정 때는 자기 자신을 제외해야 하므로 id 를 받는 오버로드를 쓴다.

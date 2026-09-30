@@ -81,6 +81,9 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
         return viewDir() + "/form";
     }
 
+    /** 등록 성공 메시지. 등록이 딸린 효과를 알려야 하는 화면이 바꾼다. */
+    protected String createdMessage(E saved) { return "등록되었습니다."; }
+
     @PostMapping
     public String create(@Valid @ModelAttribute("form") F form, BindingResult binding, Model model,
                          RedirectAttributes redirect) {
@@ -88,7 +91,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
         if (binding.hasErrors()) return backToForm(model, true);
         try {
             E saved = service().create(toEntity(form));
-            redirect.addFlashAttribute("flashSuccess", "등록되었습니다.");
+            redirect.addFlashAttribute("flashSuccess", createdMessage(saved));
             return "redirect:" + basePath() + "/" + service().idOf(saved);
         } catch (DataIntegrityViolationException e) {
             binding.reject("duplicate", "이미 존재하는 값이거나 제약 조건에 어긋납니다.");
