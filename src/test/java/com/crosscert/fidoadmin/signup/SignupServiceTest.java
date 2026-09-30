@@ -31,8 +31,9 @@ class SignupServiceTest {
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
     AuditLogger audit = mock(AuditLogger.class);
+    com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry = mock(com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class);
     CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
-    SignupService service = new SignupService(managers, companies, em, audit);
+    SignupService service = new SignupService(managers, companies, em, audit, expiry);
 
     @BeforeEach void stubLock() {
         // 가입은 인증 없이 일어난다. 테스트도 로그인 사용자가 없는 상태로 돌린다.

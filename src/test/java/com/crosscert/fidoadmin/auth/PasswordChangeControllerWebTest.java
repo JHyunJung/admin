@@ -1,11 +1,15 @@
 package com.crosscert.fidoadmin.auth;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,6 +57,47 @@ class PasswordChangeControllerWebTest {
             .param("currentPassword", "Company1234!")
             .param("newPassword", next)
             .param("confirmPassword", confirm);
+    }
+
+    @Test void successClearsExpiredMarkAndShowsNoticeBefore() throws Exception {
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        mvc.perform(get("/me/password").session(session).with(user(me)))
+            .andExpect(content().string(containsString("비밀번호를 변경한 지 90일이 지났습니다. 새 비밀번호로 변경하세요.")));
+        mvc.perform(change("NewPass5678!", "NewPass5678!").session(session))
+            .andExpect(status().is3xxRedirection());
+        assertThat(session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
+    }
+
+    /** 만료 세션에서 잘못 입력해 폼이 다시 그려져도 안내 문구가 남는다. */
+    @Test void noticeStaysWhenFormRerendersWithErrors() throws Exception {
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        mvc.perform(change("Ab1!", "Ab1!").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("90일이 지났습니다")));
+        assertThat(session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isEqualTo(90);
+    }
+
+    /**
+     * 테넌트를 고르지 않은 SUPER 가 만료 표시를 단 채 변경 화면을 열고 저장할 수 있어야 한다.
+     * /me/password 는 PERSONAL 영역이라 TenantSelectionInterceptor 가 /select-tenant 로 돌려보내지 않는다.
+     * 돌려보내면 만료 인터셉터가 다시 /me/password 로 보내 무한 리다이렉트에 갇힌다.
+     */
+    @Test void unselectedSuperCanReachPasswordPageWhileExpired() throws Exception {
+        ManagerUserDetails superUser = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, 90);
+        mvc.perform(get("/me/password").session(session).with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("auth/password"));
+        mvc.perform(post("/me/password").session(session).with(user(superUser)).with(csrf())
+                .param("currentPassword", "Company1234!")
+                .param("newPassword", "NewPass5678!")
+                .param("confirmPassword", "NewPass5678!"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/"));
+        assertThat(session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR)).isNull();
     }
 
     @Test void acceptsPasswordMeetingPolicy() throws Exception {

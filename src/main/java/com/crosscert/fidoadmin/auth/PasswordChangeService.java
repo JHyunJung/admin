@@ -17,6 +17,7 @@ public class PasswordChangeService {
     private final CcfaManagerRepository managers;
     private final PasswordEncoder encoder;
     private final AuditLogger audit;
+    private final PasswordExpiryPolicy expiry;
 
     @Transactional
     public void change(String userId, String current, String next) {
@@ -28,6 +29,7 @@ public class PasswordChangeService {
         m.setUserPw(encoder.encode(next));
         m.setUpdatedtime(LocalDateTime.now());
         managers.save(m);
+        expiry.touch(userId);
         audit.log(AuditType.UPDATE, "CCFA_MANAGER PASSWORD " + userId);
     }
 }

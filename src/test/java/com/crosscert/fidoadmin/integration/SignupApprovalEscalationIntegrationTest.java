@@ -41,13 +41,15 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({SignupService.class, ManagerUserDetailsService.class, LoginAttemptService.class})
+@Import({SignupService.class, ManagerUserDetailsService.class, LoginAttemptService.class,
+    com.crosscert.fidoadmin.auth.PasswordAgeStore.class, com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class})
 class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
 
     @Autowired SignupService signups;
     @Autowired ManagerUserDetailsService uds;
     @Autowired CcfaManagerRepository managers;
     @Autowired EntityManager em;
+    @Autowired com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry;
     @MockitoBean AuditLogger audit;
 
     /**
@@ -63,7 +65,7 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository.class),
             org.mockito.Mockito.mock(com.crosscert.fidoadmin.auth.LoginAttemptService.class), em,
             new TenantContext(selected),
-            new com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard(managers, em));
+            new com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard(managers, em), expiry);
         // update() 는 테넌트 검사를 거친다. 이 화면은 SUPER 전용이므로 SUPER 로 로그인한 상태를 만든다.
         var su = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(

@@ -2,7 +2,10 @@ package com.crosscert.fidoadmin.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
@@ -14,7 +17,8 @@ import org.junit.jupiter.api.Test;
 class PasswordChangeServiceTest {
 
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
-    PasswordChangeService service = new PasswordChangeService(managers, new Sha256PasswordEncoder(), mock(AuditLogger.class));
+    PasswordExpiryPolicy expiry = mock(PasswordExpiryPolicy.class);
+    PasswordChangeService service = new PasswordChangeService(managers, new Sha256PasswordEncoder(), mock(AuditLogger.class), expiry);
 
     private CcfaManager manager() {
         CcfaManager m = new CcfaManager();
@@ -29,11 +33,13 @@ class PasswordChangeServiceTest {
         service.change("kbadmin", "Company1234!", "NewPass5678!");
         assertThat(m.getUserPw()).isEqualTo(Sha256PasswordEncoder.sha256Hex("NewPass5678!"));
         assertThat(m.getUpdatedtime()).isNotNull();
+        verify(expiry).touch("kbadmin");
     }
 
     @Test void rejectsWrongCurrent() {
         manager();
         assertThatThrownBy(() -> service.change("kbadmin", "wrong", "NewPass5678!"))
             .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("현재 비밀번호");
+        verify(expiry, never()).touch(any());
     }
 }

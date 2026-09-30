@@ -30,8 +30,9 @@ class SignupApprovalServiceTest {
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
     EntityManager em = mock(EntityManager.class);
     AuditLogger audit = mock(AuditLogger.class);
+    com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry = mock(com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class);
     CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
-    SignupService service = new SignupService(managers, companies, em, audit);
+    SignupService service = new SignupService(managers, companies, em, audit, expiry);
 
     private CcfaManager pending() {
         CcfaManager m = new CcfaManager();
@@ -66,6 +67,7 @@ class SignupApprovalServiceTest {
         assertThat(saved.getStatus()).isEqualTo(ManagerStatus.ACTIVE);
         assertThat(saved.getCompanyIdx()).isEqualTo(1L);
         assertThat(saved.getUpdatedtime()).isNotNull();
+        verify(expiry).touch("newbie");
     }
 
     /** 권한 상승 차단 2단계: 승인으로 SUPER 를 만들 수 없다. */

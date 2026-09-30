@@ -41,10 +41,11 @@ class ManagerServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
+    com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry = mock(com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class);
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
     ManagerUserIdGuard userIdGuard = new ManagerUserIdGuard(managers, em);
-    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard);
+    ManagerService service = new ManagerService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard, expiry);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
@@ -214,6 +215,28 @@ class ManagerServiceTest {
 
         assertThat(m.getStatus()).isEqualTo("비활성");
         verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_MANAGER UPDATE 2"));
+    }
+
+    @Test void createTouchesPasswordAge() {
+        when(managers.findByUserId("newbie")).thenReturn(Optional.empty());
+        when(managers.save(any())).thenAnswer(inv -> { CcfaManager m = inv.getArgument(0); m.setIdx(12L); return m; });
+
+        service.create(manager(null, "newbie"));
+
+        verify(em).flush();
+        verify(expiry).touch("newbie");
+    }
+
+    @Test void updateTouchesOnlyWhenPasswordChanged() {
+        CcfaManager m = manager(5L, "kbadmin");
+        when(managers.findById(5L)).thenReturn(Optional.of(m));
+        when(managers.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.update(5L, e -> e.setUserNm("새이름"));
+        verify(expiry, never()).touch(any());
+
+        service.update(5L, e -> e.setUserPw("new-hash"));
+        verify(expiry).touch("kbadmin");
     }
 
     @Test void lockStateReadsLatestPolicyRow() {

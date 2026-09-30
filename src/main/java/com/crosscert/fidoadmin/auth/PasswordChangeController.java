@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.auth;
 
 import com.crosscert.fidoadmin.common.TenantContext;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -21,14 +22,16 @@ public class PasswordChangeController {
     private final TenantContext tenant;
 
     @GetMapping
-    public String form(Model model) {
+    public String form(Model model, HttpSession session) {
+        model.addAttribute("expiredDays", session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR));
         model.addAttribute("form", new PasswordChangeForm());
         return "auth/password";
     }
 
     @PostMapping
     public String change(@Valid @ModelAttribute("form") PasswordChangeForm form, BindingResult binding,
-                         RedirectAttributes redirect) {
+                         RedirectAttributes redirect, Model model, HttpSession session) {
+        model.addAttribute("expiredDays", session.getAttribute(PasswordExpiredInterceptor.SESSION_ATTR));
         if (!binding.hasErrors() && !form.getNewPassword().equals(form.getConfirmPassword())) {
             binding.rejectValue("confirmPassword", "mismatch", "새 비밀번호가 일치하지 않습니다.");
         }
@@ -39,6 +42,7 @@ public class PasswordChangeController {
             binding.rejectValue("currentPassword", "invalid", e.getMessage());
             return "auth/password";
         }
+        session.removeAttribute(PasswordExpiredInterceptor.SESSION_ATTR);
         redirect.addFlashAttribute("flashSuccess", "비밀번호가 변경되었습니다.");
         return "redirect:/";
     }

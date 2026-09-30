@@ -46,10 +46,11 @@ class SuperManagerServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     EntityManager em = mock(EntityManager.class);
     Query lockQuery = mock(Query.class);
+    com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry = mock(com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class);
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
     ManagerUserIdGuard userIdGuard = new ManagerUserIdGuard(managers, em);
-    SuperManagerService service = new SuperManagerService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard);
+    SuperManagerService service = new SuperManagerService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard, expiry);
 
     private void loginSuperSelecting(long companyIdx) {
         var u = new ManagerUserDetails(9L, "superuser", null, "슈퍼", 0L, "전역", true, true);
@@ -188,6 +189,30 @@ class SuperManagerServiceTest {
         assertThat(saved.getCreatedtime()).isNotNull();
         assertThat(saved.getUpdatedtime()).isNotNull();
         verify(audit).log(AuditType.CREATE, "CCFA_MANAGER CREATE 10");
+    }
+
+    @Test void createTouchesPasswordAge() {
+        loginSuperSelecting(9L);
+        when(managers.findByUserId("newsuper")).thenReturn(Optional.empty());
+        when(managers.save(any())).thenAnswer(inv -> { CcfaManager m = inv.getArgument(0); m.setIdx(12L); return m; });
+
+        service.create(manager(null, 0L, "newsuper"));
+
+        verify(em).flush();
+        verify(expiry).touch("newsuper");
+    }
+
+    @Test void updateTouchesOnlyWhenPasswordChanged() {
+        loginSuperSelecting(9L);
+        CcfaManager m = manager(5L, 0L, "superadmin");
+        when(managers.findById(5L)).thenReturn(Optional.of(m));
+        when(managers.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.update(5L, e -> e.setUserNm("새이름"));
+        verify(expiry, never()).touch(any());
+
+        service.update(5L, e -> e.setUserPw("new-hash"));
+        verify(expiry).touch("superadmin");
     }
 
     @Test void unlockDelegatesAndAuditsStatus() {

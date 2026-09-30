@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.signup;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
+import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy;
 import com.crosscert.fidoadmin.common.ManagerStatus;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
@@ -40,6 +41,7 @@ public class SignupService {
     private final CcfaCompanyRepository companies;
     private final EntityManager em;
     private final AuditLogger audit;
+    private final PasswordExpiryPolicy expiry;
 
     @Transactional(readOnly = true)
     public boolean existsUserId(String userId) {
@@ -125,6 +127,7 @@ public class SignupService {
         CcfaManager saved = managers.save(m);
         audit.log(AuditType.STATUS, "CCFA_MANAGER SIGNUP APPROVE " + saved.getUserId()
             + " -> COMPANY_IDX " + companyIdx);
+        expiry.touch(saved.getUserId());
         return saved;
     }
 

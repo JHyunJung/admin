@@ -19,6 +19,7 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
 
     private final LoginAttemptService attempts;
     private final AuditLogger audit;
+    private final PasswordExpiryPolicy expiry;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -27,6 +28,13 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
         attempts.onSuccess(user.getUserId());
         log.info("로그인 성공: userId={} company={} ip={}", user.getUserId(), user.getCompanyIdx(), request.getRemoteAddr());
         audit.log(user, AuditType.LOGIN, "로그인 성공", request.getRemoteAddr(), request.getHeader("User-Agent"));
+        if (expiry.isExpiredOnLogin(user.getUserId())) {
+            request.getSession().setAttribute(PasswordExpiredInterceptor.SESSION_ATTR, expiry.expiryDays());
+            log.info("비밀번호 만료: userId={} → 변경 화면", user.getUserId());
+            clearAuthenticationAttributes(request);
+            getRedirectStrategy().sendRedirect(request, response, "/me/password");
+            return;
+        }
         setDefaultTargetUrl("/");
         super.onAuthenticationSuccess(request, response, authentication);
     }

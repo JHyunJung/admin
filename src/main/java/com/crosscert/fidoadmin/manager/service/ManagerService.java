@@ -3,6 +3,7 @@ package com.crosscert.fidoadmin.manager.service;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.LoginAttemptService;
+import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
@@ -31,15 +32,18 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     private final LoginAttemptService loginAttempts;
     private final EntityManager em;
     private final ManagerUserIdGuard userIdGuard;
+    private final PasswordExpiryPolicy expiry;
 
     public ManagerService(CcfaManagerRepository managers, AuditLogger audit,
                           CcfaManagerPwPolicyRepository policies, LoginAttemptService loginAttempts,
-                          EntityManager em, TenantContext tenant, ManagerUserIdGuard userIdGuard) {
+                          EntityManager em, TenantContext tenant, ManagerUserIdGuard userIdGuard,
+                          PasswordExpiryPolicy expiry) {
         super(managers, audit, tenant);
         this.policies = policies;
         this.loginAttempts = loginAttempts;
         this.em = em;
         this.userIdGuard = userIdGuard;
+        this.expiry = expiry;
     }
 
     @Override protected Specification<CcfaManager> toSpecification(ManagerSearchForm f) {
@@ -74,6 +78,16 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
         return userIdGuard.insert(e);
     }
 
+    /** 새 운영자의 비밀번호 변경일을 기록한다. JDBC 갱신이 행을 보도록 먼저 flush 한다. */
+    @Override
+    @Transactional
+    public CcfaManager create(CcfaManager entity) {
+        CcfaManager saved = super.create(entity);
+        em.flush();
+        expiry.touch(saved.getUserId());
+        return saved;
+    }
+
     /**
      * 가입 신청 상태(승인대기·거절)인 행의 STATUS 는 이 화면에서 바꿀 수 없다.
      *
@@ -94,7 +108,9 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
     @Override
     @Transactional
     public CcfaManager update(Long id, java.util.function.Consumer<CcfaManager> mutator) {
-        return super.update(id, e -> {
+        String[] pwBefore = new String[1];
+        CcfaManager saved = super.update(id, e -> {
+            pwBefore[0] = e.getUserPw();
             String before = e.getStatus();
             mutator.accept(e);
             if (SignupPolicy.isSignupStatus(before) && !before.equals(e.getStatus())) {
@@ -105,6 +121,11 @@ public class ManagerService extends CrudService<CcfaManager, Long, ManagerSearch
                     "가입 신청 상태(" + before + ")인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.");
             }
         });
+        if (!java.util.Objects.equals(pwBefore[0], saved.getUserPw())) {
+            em.flush();
+            expiry.touch(saved.getUserId());
+        }
+        return saved;
     }
 
     @Override protected void beforeDelete(CcfaManager e) {
