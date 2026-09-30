@@ -4,11 +4,13 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.fido.entity.Appserver;
 import com.crosscert.fidoadmin.fido.repository.AppserverRepository;
 import com.crosscert.fidoadmin.fido.web.AppserverSearchForm;
 import java.time.LocalDateTime;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +19,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AppserverService extends CrudService<Appserver, Long, AppserverSearchForm> {
 
-    public AppserverService(AppserverRepository repository, AuditLogger audit, TenantContext tenant) {
+    private final ApplicationEventPublisher events;
+
+    public AppserverService(AppserverRepository repository, AuditLogger audit, TenantContext tenant,
+                        ApplicationEventPublisher events) {
         super(repository, audit, tenant);
+        this.events = events;
+    }
+
+    /** FIDO 서버가 멤버코드 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    @Override protected void afterChange(String action, Appserver e) {
+        events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }
 
     /**

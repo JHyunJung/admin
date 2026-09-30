@@ -4,11 +4,13 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.fido2.entity.Fido2Metadata;
 import com.crosscert.fidoadmin.fido2.repository.Fido2MetadataRepository;
 import com.crosscert.fidoadmin.fido2.web.Fido2MetadataSearchForm;
 import java.time.LocalDateTime;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +18,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class Fido2MetadataService extends CrudService<Fido2Metadata, Long, Fido2MetadataSearchForm> {
 
-    public Fido2MetadataService(Fido2MetadataRepository repository, AuditLogger audit, TenantContext tenant) {
+    private final ApplicationEventPublisher events;
+
+    public Fido2MetadataService(Fido2MetadataRepository repository, AuditLogger audit, TenantContext tenant,
+                        ApplicationEventPublisher events) {
         super(repository, audit, tenant);
+        this.events = events;
+    }
+
+    /** FIDO 서버가 FIDO2 메타데이터 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    @Override protected void afterChange(String action, Fido2Metadata e) {
+        events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }
 
     @Override protected Specification<Fido2Metadata> toSpecification(Fido2MetadataSearchForm f) {

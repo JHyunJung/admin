@@ -1,5 +1,7 @@
 package com.crosscert.fidoadmin.fido.service;
 
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,8 +40,9 @@ class CriteriaQueryServiceTest {
     CriteriaRepository repo = mock(CriteriaRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
     NamedParameterJdbcTemplate jdbc = mock(NamedParameterJdbcTemplate.class);
+    ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     CriteriaQueryService service =
-        new CriteriaQueryService(repo, audit, new TenantContext(new SelectedTenant()), jdbc);
+        new CriteriaQueryService(repo, audit, new TenantContext(new SelectedTenant()), jdbc, events);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -199,5 +202,39 @@ class CriteriaQueryServiceTest {
         assertThat(service.changeStatusAll(true)).isZero();
 
         verify(audit, never()).log(any(AuditType.class), anyString());
+    }
+
+    @Test void toggleThatChangesPublishesReload() {
+        login(7L);
+        when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(7L);
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(1);
+        assertThat(service.changeStatus(1L, false)).isTrue();
+        verify(events).publishEvent(new FidoConfigChanged("AAID 상태 변경 0012#0001"));
+    }
+
+    @Test void toggleWithNoChangeDoesNotPublish() {
+        login(7L);
+        when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(7L);
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(0);
+        assertThat(service.changeStatus(1L, false)).isFalse();
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test void bulkToggleWithChangesPublishes() {
+        login(7L);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(7L);
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(4);
+        assertThat(service.changeStatusAll(false)).isEqualTo(4);
+        verify(events).publishEvent(new FidoConfigChanged("AAID 전체 비활성 4건"));
+    }
+
+    @Test void bulkToggleWithoutChangesDoesNotPublish() {
+        login(7L);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(7L);
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(0);
+        assertThat(service.changeStatusAll(true)).isZero();
+        verify(events, never()).publishEvent(any());
     }
 }

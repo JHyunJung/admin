@@ -4,11 +4,13 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.fido.entity.Appid;
 import com.crosscert.fidoadmin.fido.repository.AppidRepository;
 import com.crosscert.fidoadmin.fido.web.AppidSearchForm;
 import java.time.LocalDateTime;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +18,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class AppidService extends CrudService<Appid, Long, AppidSearchForm> {
 
-    public AppidService(AppidRepository repository, AuditLogger audit, TenantContext tenant) {
+    private final ApplicationEventPublisher events;
+
+    public AppidService(AppidRepository repository, AuditLogger audit, TenantContext tenant,
+                        ApplicationEventPublisher events) {
         super(repository, audit, tenant);
+        this.events = events;
+    }
+
+    /** FIDO 서버가 AppID 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    @Override protected void afterChange(String action, Appid e) {
+        events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }
 
     @Override protected Specification<Appid> toSpecification(AppidSearchForm f) {

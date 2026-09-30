@@ -1,5 +1,9 @@
 package com.crosscert.fidoadmin.fido2.service;
 
+import java.util.Optional;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
+import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class Fido2CredentialParamsServiceTest {
 
     Fido2CredentialParamsRepository repo = mock(Fido2CredentialParamsRepository.class);
-    Fido2CredentialParamsService service = new Fido2CredentialParamsService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
+    ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    Fido2CredentialParamsService service = new Fido2CredentialParamsService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()), events);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -58,5 +63,19 @@ class Fido2CredentialParamsServiceTest {
         login(1L);
         assertThatThrownBy(() -> service.search(new Fido2CredentialParamsSearchForm(), PageRequest.of(0, 20, Sort.by("idx"))))
             .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test void createUpdateDeletePublishReload() {
+        login(0L);
+        when(repo.save(any())).thenAnswer(inv -> { Fido2CredentialParams a = inv.getArgument(0); if (a.getIdx() == null) a.setIdx(12L); return a; });
+        Fido2CredentialParams created = service.create(new Fido2CredentialParams());
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_CREDENTIAL_PARAMS CREATE 12"));
+
+        when(repo.findById(12L)).thenReturn(Optional.of(created));
+        service.update(12L, a -> { });
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_CREDENTIAL_PARAMS UPDATE 12"));
+
+        service.delete(12L);
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_CREDENTIAL_PARAMS DELETE 12"));
     }
 }

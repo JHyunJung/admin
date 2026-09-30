@@ -1,5 +1,7 @@
 package com.crosscert.fidoadmin.system;
 
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -34,7 +36,8 @@ class FidoSettingServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
-    FidoSettingService service = new FidoSettingService(repo, audit, tenant);
+    ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    FidoSettingService service = new FidoSettingService(repo, audit, tenant, events);
 
     @BeforeEach void loginSuperSelecting() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
@@ -214,5 +217,22 @@ class FidoSettingServiceTest {
         assertThat(values.get("CERT")).isEqualTo("ENABLE");
         assertThat(values.get("CERT_P9")).isEqualTo("DISABLE");
         assertThat(values.get("FIDO_DETAIL_LOG_DB_SAVE")).isEqualTo("DISABLE");
+    }
+
+    @Test void saveWithChangesPublishesOnce() {
+        when(repo.findById(any(CcfaSystemPropId.class))).thenReturn(Optional.empty());
+        when(repo.save(any(CcfaSystemProp.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.save(new java.util.LinkedHashMap<>(Map.of("SMTP_IP", "10.0.0.1", "CHALLENGE_TERM", "300")));
+
+        verify(events, org.mockito.Mockito.times(1)).publishEvent(new FidoConfigChanged("FIDO 서버 설정 저장 2건"));
+    }
+
+    @Test void saveWithoutChangesDoesNotPublish() {
+        when(repo.findById(new CcfaSystemPropId("SMTP_IP", 9L))).thenReturn(Optional.of(prop("SMTP_IP", 9L, "10.0.0.1")));
+
+        service.save(Map.of("SMTP_IP", "10.0.0.1"));
+
+        verify(events, never()).publishEvent(any());
     }
 }

@@ -5,6 +5,7 @@ import com.crosscert.fidoadmin.audit.AuditChanges;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.system.SecretProps;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId;
 import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository;
@@ -13,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class FidoSettingService {
     private final CcfaSystemPropRepository repository;
     private final AuditLogger audit;
     private final TenantContext tenant;
+    private final ApplicationEventPublisher events;
 
     /**
      * 화면에 채울 값. 저장된 행이 없는 키는 {@link FidoSettingKey#defaultValue()} 를 쓴다.
@@ -64,6 +67,7 @@ public class FidoSettingService {
     @Transactional
     public void save(Map<String, String> submitted) {
         Long company = tenant.companyIdx();
+        int changed = 0;
         for (FidoSettingKey k : FidoSettingKey.values()) {
             String value = submitted.get(k.key());
             if (value == null) continue;
@@ -93,6 +97,8 @@ public class FidoSettingService {
 
             AuditChanges.record(audit, "CCFA_SYSTEM_PROP",
                 saved.getId().toPathValue(), before, saved);
+            changed++;
         }
+        if (changed > 0) events.publishEvent(new FidoConfigChanged("FIDO 서버 설정 저장 " + changed + "건"));
     }
 }

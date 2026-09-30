@@ -49,6 +49,12 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     protected void touchUpdated(E entity, LocalDateTime now) {}
     protected void beforeDelete(E entity) {}
 
+    /**
+     * 등록·수정·삭제가 끝난 뒤(같은 트랜잭션 안) 부른다. 기본은 아무것도 하지 않는다.
+     * FIDO 서버가 읽는 데이터를 다루는 서비스가 reload 이벤트를 발행하는 자리다.
+     */
+    protected void afterChange(String action, E entity) {}
+
     // ---- 공개 API ----
     /**
      * COMPANY_IDX 가 없는 테이블(메타·시스템 정보 등)은 SUPER 전용이다(설계 3.3).
@@ -100,6 +106,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         E saved = insert(entity);
         audit.log(AuditType.CREATE, tableName() + " CREATE " + idOf(saved));
         log.info("{} CREATE id={}", tableName(), idOf(saved));
+        afterChange("CREATE", saved);
         return saved;
     }
 
@@ -116,6 +123,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         E saved = repository.save(e);
         AuditChanges.record(audit, tableName(), idOf(saved), before, saved);
         log.info("{} UPDATE id={}", tableName(), idOf(saved));
+        afterChange("UPDATE", saved);
         return saved;
     }
 
@@ -126,6 +134,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
         repository.delete(e);
         audit.log(AuditType.DELETE, tableName() + " DELETE " + idOf(e));
         log.info("{} DELETE id={}", tableName(), idOf(e));
+        afterChange("DELETE", e);
     }
 
     protected void checkTenant(E e) {

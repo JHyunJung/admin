@@ -6,10 +6,12 @@ import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.fido.repository.CriteriaRepository;
 import com.crosscert.fidoadmin.fido.web.CriteriaSearchForm;
 import java.util.HashSet;
 import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -33,11 +35,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSearchForm> {
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final ApplicationEventPublisher events;
 
     public CriteriaQueryService(CriteriaRepository repository, AuditLogger audit,
-                                TenantContext tenant, NamedParameterJdbcTemplate jdbc) {
+                                TenantContext tenant, NamedParameterJdbcTemplate jdbc,
+                                ApplicationEventPublisher events) {
         super(repository, audit, tenant);
         this.jdbc = jdbc;
+        this.events = events;
     }
 
     /**
@@ -118,6 +123,7 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
             "AAID(정책) 상태 변경 | 고객사: " + companyIdx
                 + " | AAID: " + aaid
                 + " | " + (enabled ? "비활성 → 활성" : "활성 → 비활성"));
+        events.publishEvent(new FidoConfigChanged("AAID 상태 변경 " + aaid));
         return true;
     }
 
@@ -162,6 +168,7 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
             audit.log(AuditType.STATUS,
                 "AAID(정책) 전체 " + (enabled ? "활성" : "비활성")
                     + " | 고객사: " + companyIdx + " | " + changed + "건");
+            events.publishEvent(new FidoConfigChanged("AAID 전체 " + (enabled ? "활성" : "비활성") + " " + changed + "건"));
         }
         return changed;
     }

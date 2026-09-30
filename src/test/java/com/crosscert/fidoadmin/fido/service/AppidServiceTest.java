@@ -1,5 +1,8 @@
 package com.crosscert.fidoadmin.fido.service;
 
+import java.util.Optional;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -31,7 +34,8 @@ class AppidServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
-    AppidService service = new AppidService(repo, audit, tenant);
+    ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    AppidService service = new AppidService(repo, audit, tenant, events);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -87,5 +91,19 @@ class AppidServiceTest {
     @Test void sortablePropertiesCoverListColumns() {
         assertThat(service.sortableProperties()).containsExactlyInAnyOrder("idx", "appid", "servicename", "createdtime");
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));
+    }
+
+    @Test void createUpdateDeletePublishReload() {
+        login(1L);
+        when(repo.save(any())).thenAnswer(inv -> { Appid a = inv.getArgument(0); if (a.getIdx() == null) a.setIdx(12L); return a; });
+        Appid created = service.create(new Appid());
+        verify(events).publishEvent(new FidoConfigChanged("APPID CREATE 12"));
+
+        when(repo.findById(12L)).thenReturn(Optional.of(created));
+        service.update(12L, a -> a.setMemo("m"));
+        verify(events).publishEvent(new FidoConfigChanged("APPID UPDATE 12"));
+
+        service.delete(12L);
+        verify(events).publishEvent(new FidoConfigChanged("APPID DELETE 12"));
     }
 }

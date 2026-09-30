@@ -1,5 +1,9 @@
 package com.crosscert.fidoadmin.fido2.service;
 
+import java.util.Optional;
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
+import org.springframework.context.ApplicationEventPublisher;
+import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +28,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class Fido2MetadataServiceTest {
 
     Fido2MetadataRepository repo = mock(Fido2MetadataRepository.class);
-    Fido2MetadataService service = new Fido2MetadataService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()));
+    ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    Fido2MetadataService service = new Fido2MetadataService(repo, mock(AuditLogger.class), new TenantContext(new SelectedTenant()), events);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -52,5 +57,19 @@ class Fido2MetadataServiceTest {
     @Test void sortableIncludesListColumnsOnly() {
         assertThat(service.sortableProperties()).containsExactlyInAnyOrder("idx", "description", "aaguid", "protocolfamily", "createdtime");
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));
+    }
+
+    @Test void createUpdateDeletePublishReload() {
+        login(0L);
+        when(repo.save(any())).thenAnswer(inv -> { Fido2Metadata a = inv.getArgument(0); if (a.getIdx() == null) a.setIdx(12L); return a; });
+        Fido2Metadata created = service.create(new Fido2Metadata());
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_METADATA CREATE 12"));
+
+        when(repo.findById(12L)).thenReturn(Optional.of(created));
+        service.update(12L, a -> { });
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_METADATA UPDATE 12"));
+
+        service.delete(12L);
+        verify(events).publishEvent(new FidoConfigChanged("FIDO2_METADATA DELETE 12"));
     }
 }
