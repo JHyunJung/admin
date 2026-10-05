@@ -125,7 +125,7 @@ AAID 수정·삭제, 메타데이터 파일 업로드, MDS 자동 수집.
 - 등록 폼(`fido/appserver/form.html`, `isNew`): 멤버코드 입력란을 없애고 "저장 시 자동 생성됩니다" 안내를 둔다.
 - 수정 폼: 멤버코드를 읽기 전용 텍스트로 보여 준다.
 - `AppserverForm.memberCode` 의 `@NotBlank` 를 없애고, `applyTo` 가 멤버코드를 건드리지 않게 한다. 폼으로 들어온 값은 등록·수정 모두 무시된다.
-- `AppserverService.applyDefaults` 에서 `memberCode` 가 비어 있으면 `MemberCodeGenerator.generate()` 로 채운다. `applyDefaults` 는 `CrudService.create` 에서만 불리므로 수정 경로에는 영향이 없다.
+- `AppserverService.applyDefaults` 에서 `memberCode` 를 항상 `MemberCodeGenerator.generate()` 로 채운다(호출자가 넘긴 값은 덮어쓴다). `applyDefaults` 는 `CrudService.create` 에서만 불리므로 수정 경로에는 영향이 없다.
 
 ### 생성기 — `MemberCodeGenerator`
 
