@@ -124,6 +124,16 @@ class MenuRegistryTest {
         assertThat(r.listPathFor("/logs/mailing/1")).isEqualTo("/logs/mailing");
     }
 
+    /**
+     * TransactionHash 보기는 운영 요청으로 사이드바에서 감췄다(데이터는 그대로). 감춰도 TENANT 판정은 남아
+     * 주소로 들어와도 테넌트 선택 인터셉터를 거친다.
+     */
+    @Test void transactionHashMenuIsHiddenButStaysTenant() {
+        assertThat(registry.itemsFor(true)).extracting(MenuItem::href).doesNotContain("/transaction-hashes");
+        assertThat(registry.itemsFor(false)).extracting(MenuItem::href).doesNotContain("/transaction-hashes");
+        assertThat(registry.areaOf("/transaction-hashes/3")).isEqualTo(MenuArea.TENANT);
+    }
+
     @Test void 시스템_영역은_전부_superOnly_다() {
         assertThat(MenuRegistry.ALL.stream()
             .filter(m -> m.area() == MenuArea.SYSTEM))

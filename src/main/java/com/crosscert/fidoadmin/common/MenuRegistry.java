@@ -68,7 +68,9 @@ public class MenuRegistry {
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책) 보기",
                 "/criteria", false, "bi-fingerprint"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "FIDO 등록자 관리", "/users", false, "bi-people"),
-        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TransactionHash 보기", "/transaction-hashes", false, "bi-hash"),
+        // TransactionHash 보기는 운영 요청으로 사이드바에서 감췄다(데이터·화면은 그대로). 이전 어드민과 USERID
+        // 형식이 달라 혼란을 준다는 피드백이었다. TENANT 판정을 지키려고 지우지 않고 hidden 으로 둔다.
+        new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TransactionHash 보기", "/transaction-hashes", false, "bi-hash", true),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TC원문 보기", "/transaction-confirmations", false, "bi-check2-square"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명 보기", "/signs", false, "bi-pen"),
         // FIDO2 는 이전 어드민에 없던 그룹이다. FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
