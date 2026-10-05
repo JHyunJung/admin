@@ -54,35 +54,19 @@ class FidoLogControllerWebTest {
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     private FidoLogRow row(long idx) {
-        return row(idx, "Auth", "user001", "1200", null);
+        return row(idx, "Auth", "user001", 2L);
     }
 
-    private FidoLogRow row(long idx, String op, String userid, String result, String message) {
-        return new FidoLogRow(idx, 1L, "SN-0001", "kbstar", LocalDateTime.of(2026, 9, 16, 10, 0),
-            op, userid, result, message);
+    private FidoLogRow row(long idx, String op, String userid, Long bioType) {
+        return new FidoLogRow(idx, 1L, op, "com.kbstar.kbbank", userid, bioType, LocalDateTime.of(2026, 10, 2, 14, 42, 20));
     }
 
-    private FidoLogView detailOf(long idx, String json) {
-        return FidoLogView.of(idx, 1L, "SN-0001", "kbstar",
-            LocalDateTime.of(2026, 9, 16, 10, 0), json, "Auth", "user001", "1200", null);
+    private static FidoLogSearchResult result(List<FidoLogRow> rows, boolean truncated) {
+        return new FidoLogSearchResult(new PageImpl<>(rows), truncated);
     }
 
-    /** 목록은 JSON 을 열지 않고도 구분·사용자·결과를 보여 준다. 실패는 코드와 사전 메시지를 함께. */
-    @Test void listShowsOpUserAndResultFromJson() throws Exception {
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(
-            row(1L, "Reg", "user101", "1200", null),
-            row(2L, "Auth", "user102", "1491", "Request Invalid"),
-            row(3L, null, null, null, null))));
-        String html = mvc.perform(get("/logs/fido").with(user(companyUser)))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString();
-        org.assertj.core.api.Assertions.assertThat(html)
-            .contains(">등록<").contains(">인증<")
-            .contains("user101").contains("user102")
-            .contains(">성공<").contains(">실패<")
-            .contains("1491 Request Invalid")
-            .contains("name=\"op\"").contains("name=\"outcome\"").contains("name=\"userid\"")
-            .doesNotContain(">Reg<").doesNotContain(">Auth<");
+    private FidoLogView detailOf(long idx, String jsondata) {
+        return FidoLogView.of(idx, 1L, "SN-0001", "SERVICE", LocalDateTime.of(2026, 9, 16, 10, 0), jsondata);
     }
 
     /**
@@ -104,11 +88,11 @@ class FidoLogControllerWebTest {
     }
 
     @Test void companyListHidesCompanyFilterAndClob() throws Exception {
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(row(5L))));
+        when(service.search(any(), any())).thenReturn(result(List.of(row(5L)), false));
         mvc.perform(get("/logs/fido").param("servicename", "kbstar").with(user(companyUser)))
             .andExpect(status().isOk())
             .andExpect(view().name("log/fido/list"))
-            .andExpect(content().string(containsString("SN-0001")))
+            .andExpect(content().string(containsString("com.kbstar.kbbank")))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
         // CLOB 은 목록 DTO(FidoLogRow)에 자리 자체가 없다. 화면 문자열이 아니라
         // 구조로 막혀 있음을 확인한다 — 템플릿을 고쳐도 되살아나지 않는다.
@@ -127,7 +111,7 @@ class FidoLogControllerWebTest {
      * 검색폼 select 태그로 특정한다.
      */
     @Test void superListDoesNotShowCompanyFilter() throws Exception {
-        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
+        when(service.search(any(), any())).thenReturn(result(List.of(), false));
         mvc.perform(get("/logs/fido").session(session).with(user(superUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))))
@@ -157,5 +141,53 @@ class FidoLogControllerWebTest {
             .andExpect(view().name("log/fido/detail"))
             .andExpect(content().string(containsString("&quot;op&quot; : &quot;Auth&quot;")))
             .andExpect(content().string(containsString("KB국민은행")));
+    }
+
+    /** 이전 어드민과 같은 칸: 번호 | 구분 | 서비스명 | 사용자ID | 인증장치 | 로그시간. 구분은 원문 그대로. */
+    @Test void listShowsLegacyColumns() throws Exception {
+        String longUser = "f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHRxxxxxxxxxxxxxxxxxxxxxx";
+        when(service.search(any(), any())).thenReturn(result(List.of(
+            row(1L, "TC", longUser, 2L),
+            row(2L, "DeReg", "c95av28e", 512L),
+            row(3L, null, null, null)), false));
+        String html = mvc.perform(get("/logs/fido").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html)
+            .containsSubsequence("<th>번호</th>", "<th>구분</th>", "<th>서비스명</th>", "<th>사용자ID</th>",
+                "<th>인증장치</th>", "<th>로그시간</th>")
+            .contains(">TC<").contains(">DeReg<")
+            .contains("com.kbstar.kbbank")
+            .contains(">지문<").contains(">없음<").contains(">알수없음<")
+            .contains("title=\"" + longUser + "\"")
+            .contains(longUser.substring(0, 37) + "...")
+            .contains("2026-10-02 14:42:20")
+            .contains("name=\"op\"").contains("name=\"userid\"").contains("name=\"servicename\"")
+            .contains("value=\"TC\"").contains("value=\"DeReg\"")
+            .doesNotContain("name=\"outcome\"").doesNotContain("name=\"serialcode\"")
+            .doesNotContain("앞 50,000건");
+    }
+
+    @Test void truncatedScanShowsNotice() throws Exception {
+        when(service.search(any(), any())).thenReturn(result(List.of(row(1L)), true));
+        mvc.perform(get("/logs/fido").param("op", "Auth").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("앞 50,000건")));
+    }
+
+    /** 운영 로그는 base64url 이다. 상세는 디코드한 JSON 을 정리해 보여 주고 풀어낸 값을 위에 둔다. */
+    @Test void detailDecodesBase64Payload() throws Exception {
+        String json = "{\"transaction\":{\"serviceName\":\"com.kbstar.kbbank\",\"userName\":\"u1\",\"op\":\"TC\",\"bioType\":2,\"status\":\"Success\"}}";
+        String encoded = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        when(service.get(any(LocalDate.class), eq(6L))).thenReturn(detailOf(6L, encoded));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        mvc.perform(get("/logs/fido/2026-09-16/6").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("&quot;userName&quot; : &quot;u1&quot;")))
+            .andExpect(content().string(containsString("com.kbstar.kbbank")))
+            .andExpect(content().string(containsString(">지문<")))
+            .andExpect(content().string(containsString(">Success<")))
+            .andExpect(content().string(not(containsString(encoded))));
     }
 }

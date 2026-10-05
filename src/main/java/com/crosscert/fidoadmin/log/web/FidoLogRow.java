@@ -1,22 +1,26 @@
 package com.crosscert.fidoadmin.log.web;
 
-import com.crosscert.fidoadmin.log.service.FidoLogJson;
+import com.crosscert.fidoadmin.log.service.FidoLogPayload;
 import java.time.LocalDateTime;
 
 /**
  * FIDO 로그 목록 행. CLOB(JSONDATA) 은 싣지 않는다 — 자리 자체가 없어야 템플릿을 고쳐도 새지 않는다.
- * 구분·사용자·결과는 DB 에서 {@code JSON_VALUE} 로 꺼낸 값이다({@link FidoLogJson}).
- * 날짜별 분할 테이블에서 JDBC 로 읽으므로 엔티티 변환 팩토리는 없다.
+ * 구분·서비스명·사용자·인증장치는 JSONDATA 를 풀어 꺼낸 값이다({@link FidoLogPayload}).
+ * 칸 구성은 이전 어드민 목록(구분 · 서비스명 · 사용자ID · 인증장치 · 로그시간)을 따른다.
  *
- * @param op            등록/인증/해지 원문(Reg/Auth/Dereg). JSON 에 없으면 null
- * @param userid        사용자 ID. 없으면 null
- * @param result        결과 코드. 없으면 null
- * @param resultMessage CCFA_ERROR_TABLE 의 메시지. 코드가 사전에 없으면 null
+ * @param op          구분 원문(Reg/Auth/DeReg/TC). 풀지 못하면 null
+ * @param servicename JSON 의 서비스명. 없으면 SERVICENAME 컬럼 값
+ * @param userid      사용자 ID(userName). 없으면 null
+ * @param bioType     인증장치 코드. 없으면 null
  */
-public record FidoLogRow(Long idx, Long companyIdx, String serialcode, String servicename, LocalDateTime createdtime,
-                         String op, String userid, String result, String resultMessage) {
+public record FidoLogRow(Long idx, Long companyIdx, String op, String servicename, String userid, Long bioType,
+                         LocalDateTime createdtime) {
 
-    public String opLabel() { return FidoLogJson.opLabel(op); }
+    public static FidoLogRow of(Long idx, Long companyIdx, String columnServicename, LocalDateTime createdtime,
+                                FidoLogPayload payload) {
+        String servicename = payload.serviceName() != null ? payload.serviceName() : columnServicename;
+        return new FidoLogRow(idx, companyIdx, payload.op(), servicename, payload.userName(), payload.bioType(), createdtime);
+    }
 
-    public boolean success() { return FidoLogJson.isSuccess(result); }
+    public String bioTypeLabel() { return FidoLogPayload.bioTypeLabel(bioType); }
 }

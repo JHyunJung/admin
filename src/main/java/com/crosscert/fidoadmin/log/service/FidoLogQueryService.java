@@ -3,14 +3,16 @@ package com.crosscert.fidoadmin.log.service;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.log.web.FidoLogRow;
 import com.crosscert.fidoadmin.log.web.FidoLogSearchForm;
+import com.crosscert.fidoadmin.log.web.FidoLogSearchResult;
 import com.crosscert.fidoadmin.log.web.FidoLogView;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -40,81 +42,63 @@ public class FidoLogQueryService {
     private final TenantContext tenant;
     private final FidoLogTable tables;
 
-    // JSONDATA 에서 꺼내는 세 값. 경로는 FidoLogJson 의 고정 상수라 SQL 에 이어 붙여도 안전하다.
-    private static final String OP_EXPR = FidoLogJson.jsonValue("JSONDATA", FidoLogJson.OP_PATH);
-    private static final String USERID_EXPR = FidoLogJson.jsonValue("JSONDATA", FidoLogJson.USERID_PATH);
-    private static final String RESULT_EXPR = FidoLogJson.jsonValue("JSONDATA", FidoLogJson.RESULT_PATH);
     /**
-     * 결과 코드의 메시지. CCFA_ERROR_TABLE 에는 PK 가 없어 같은 코드가 두 번 있을 수 있으므로
-     * JOIN 대신 스칼라 서브쿼리로 한 값만 가져온다 — 행이 불어나 건수·페이징이 틀어지지 않는다.
+     * 조건 검색이 한 번에 풀어 보는 최대 행 수. 하루 로그가 이보다 많으면 최근 것부터 이만큼만 보고
+     * 화면에 알린다. 행마다 JSONDATA 를 풀지만 목록 행(작은 값 몇 개)만 남기므로 메모리는 행 수에 비례한다.
      */
-    private static final String RESULT_MESSAGE_EXPR =
-        "(SELECT MAX(e.ERROR_MESSAGE) FROM CCFA_ERROR_TABLE e WHERE e.ERROR_CODE = " + RESULT_EXPR + ")";
-    private static final String JSON_COLUMNS = ", " + OP_EXPR + " AS LOG_OP, " + USERID_EXPR + " AS LOG_USERID, "
-        + RESULT_EXPR + " AS LOG_RESULT, " + RESULT_MESSAGE_EXPR + " AS LOG_RESULT_MSG";
+    public static final int SCAN_LIMIT = 50_000;
 
+    private static final Set<String> OPS = Set.of("reg", "auth", "dereg", "tc");
 
-    /** 목록. 없는 날짜면 빈 페이지다(오류가 아니다 — 그날 로그가 없다는 뜻이다). */
+    /**
+     * 목록. 없는 날짜면 빈 페이지다(오류가 아니다 — 그날 로그가 없다는 뜻이다).
+     *
+     * <p>운영 JSONDATA 는 base64url 이라 DB 가 안을 볼 수 없다. 조건이 없으면 DB 가 한 페이지만 읽고
+     * 그 행만 푼다. 구분·서비스명·사용자 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
+     * {@link #SCAN_LIMIT} 건까지 풀어 Java 에서 거른 뒤 페이지를 나눈다.
+     */
     @Transactional(readOnly = true)
-    public Page<FidoLogRow> search(FidoLogSearchForm form, Pageable pageable) {
+    public FidoLogSearchResult search(FidoLogSearchForm form, Pageable pageable) {
         Long companyIdx = tenant.companyIdx();
         String table = tables.nameFor(form.getLogDate());
         if (!tables.exists(table)) {
-            return new PageImpl<>(List.of(), pageable, 0);
+            return new FidoLogSearchResult(new PageImpl<>(List.of(), pageable, 0), false);
         }
-
-        var params = new MapSqlParameterSource()
-            .addValue("companyIdx", companyIdx)
-            .addValue("servicename", like(form.getServicename()))
-            .addValue("serialcode", like(form.getSerialcode()))
-            .addValue("op", FidoLogJson.opOrNull(form.getOp()))
-            .addValue("userid", like(form.getUserid()))
-            .addValue("outcome", FidoLogJson.outcomeOrNull(form.getOutcome()))
-            .addValue("successCode", FidoLogJson.SUCCESS_CODE);
-
-        // 구분·사용자·결과는 JSON 안의 값이라 JSON_VALUE 로 거른다. 결과 "실패"는 성공 코드가
-        // 아닌 모든 것 — 코드가 없는(파싱 안 되는) 행도 실패로 본다.
+        var params = new MapSqlParameterSource("companyIdx", companyIdx);
         // 텍스트 블록을 쓰지 않는다 — 조각을 이어 붙이면 블록마다 들여쓰기가 따로 벗겨져
         // 앞뒤 공백이 사라진다(FROM 테이블명WHERE 처럼 붙어 ORA-03048 이 났다).
-        String where = " WHERE COMPANY_IDX = :companyIdx"
-            + " AND (:servicename IS NULL OR SERVICENAME LIKE :servicename)"
-            + " AND (:serialcode IS NULL OR SERIALCODE LIKE :serialcode)"
-            + " AND (:op IS NULL OR " + OP_EXPR + " = :op)"
-            + " AND (:userid IS NULL OR " + USERID_EXPR + " LIKE :userid)"
-            + " AND (:outcome IS NULL"
-            + "      OR (:outcome = 'success' AND " + RESULT_EXPR + " = :successCode)"
-            + "      OR (:outcome = 'fail' AND (" + RESULT_EXPR + " IS NULL OR " + RESULT_EXPR + " <> :successCode)))"
-            + " ";
+        String select = "SELECT IDX, COMPANY_IDX, SERVICENAME, CREATEDTIME, JSONDATA FROM " + table
+            + " WHERE COMPANY_IDX = :companyIdx ORDER BY CREATEDTIME DESC, IDX DESC";
 
-        Long total = jdbc.queryForObject(
-            "SELECT COUNT(*) FROM " + table + where, params, Long.class);
-        if (total == null || total == 0) {
-            return new PageImpl<>(List.of(), pageable, 0);
+        String op = opOrNull(form.getOp());
+        String servicename = termOrNull(form.getServicename());
+        String userid = termOrNull(form.getUserid());
+        if (op == null && servicename == null && userid == null) {
+            Long total = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM " + table + " WHERE COMPANY_IDX = :companyIdx", params, Long.class);
+            if (total == null || total == 0) {
+                return new FidoLogSearchResult(new PageImpl<>(List.of(), pageable, 0), false);
+            }
+            // Oracle 페이징. rownum 은 정렬 전에 매겨지므로 정렬을 끝낸 결과를 한 번 감싼다.
+            params.addValue("offset", pageable.getOffset()).addValue("limit", pageable.getPageSize());
+            String sql = "SELECT * FROM (SELECT b.*, rownum AS RN FROM (" + select + ") b"
+                + " WHERE rownum <= (:offset + :limit)) WHERE RN > :offset";
+            List<FidoLogRow> rows = jdbc.query(sql, params, (rs, i) -> toRow(rs));
+            return new FidoLogSearchResult(new PageImpl<>(rows, pageable, total), false);
         }
 
-        // Oracle 페이징. rownum 은 정렬 전에 매겨지므로 정렬을 끝낸 결과를 한 번 감싼다.
-        params.addValue("offset", pageable.getOffset())
-              .addValue("limit", pageable.getPageSize());
-        String sql = "SELECT * FROM ("
-            + "  SELECT b.*, rownum AS RN FROM ("
-            + "    SELECT IDX, COMPANY_IDX, SERIALCODE, SERVICENAME, CREATEDTIME" + JSON_COLUMNS
-            + "      FROM " + table + where
-            + "     ORDER BY CREATEDTIME DESC, IDX DESC"
-            + "  ) b WHERE rownum <= (:offset + :limit)"
-            + ") WHERE RN > :offset";
-
-        List<FidoLogRow> rows = jdbc.query(sql, params, (rs, i) -> new FidoLogRow(
-            rs.getLong("IDX"),
-            rs.getLong("COMPANY_IDX"),
-            rs.getString("SERIALCODE"),
-            rs.getString("SERVICENAME"),
-            createdtime(rs),
-            rs.getString("LOG_OP"),
-            rs.getString("LOG_USERID"),
-            rs.getString("LOG_RESULT"),
-            rs.getString("LOG_RESULT_MSG")));
-
-        return new PageImpl<>(rows, pageable, total);
+        params.addValue("cap", SCAN_LIMIT + 1);
+        List<FidoLogRow> scanned = jdbc.query(
+            "SELECT * FROM (" + select + ") WHERE rownum <= :cap", params, (rs, i) -> toRow(rs));
+        boolean truncated = scanned.size() > SCAN_LIMIT;
+        List<FidoLogRow> matched = (truncated ? scanned.subList(0, SCAN_LIMIT) : scanned).stream()
+            .filter(r -> op == null || op.equalsIgnoreCase(r.op()))
+            .filter(r -> servicename == null || containsIgnoreCase(r.servicename(), servicename))
+            .filter(r -> userid == null || containsIgnoreCase(r.userid(), userid))
+            .toList();
+        int from = (int) Math.min(pageable.getOffset(), matched.size());
+        int to = Math.min(from + pageable.getPageSize(), matched.size());
+        return new FidoLogSearchResult(new PageImpl<>(matched.subList(from, to), pageable, matched.size()), truncated);
     }
 
     /**
@@ -129,8 +113,7 @@ public class FidoLogQueryService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FIDO 로그 " + id);
         }
 
-        String sql = "SELECT IDX, COMPANY_IDX, SERIALCODE, "
-            + "SERVICENAME, CREATEDTIME, JSONDATA" + JSON_COLUMNS + " "
+        String sql = "SELECT IDX, COMPANY_IDX, SERIALCODE, SERVICENAME, CREATEDTIME, JSONDATA "
             + "FROM " + table + " "
             + "WHERE COMPANY_IDX = :companyIdx "
             + "AND IDX = :id";
@@ -145,11 +128,7 @@ public class FidoLogQueryService {
             rs.getString("SERIALCODE"),
             rs.getString("SERVICENAME"),
             createdtime(rs),
-            rs.getString("JSONDATA"),
-            rs.getString("LOG_OP"),
-            rs.getString("LOG_USERID"),
-            rs.getString("LOG_RESULT"),
-            rs.getString("LOG_RESULT_MSG")));
+            rs.getString("JSONDATA")));
 
         if (found.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FIDO 로그 " + id);
@@ -161,9 +140,21 @@ public class FidoLogQueryService {
         return rs.getTimestamp("CREATEDTIME") == null ? null : rs.getTimestamp("CREATEDTIME").toLocalDateTime();
     }
 
-    /** 부분 일치 검색어. 빈 값은 null 로 바꿔 조건을 건너뛰게 한다. */
-    private static String like(String value) {
-        if (value == null || value.isBlank()) return null;
-        return "%" + value.trim() + "%";
+    private static FidoLogRow toRow(ResultSet rs) throws SQLException {
+        return FidoLogRow.of(rs.getLong("IDX"), rs.getLong("COMPANY_IDX"), rs.getString("SERVICENAME"),
+            createdtime(rs), FidoLogPayload.parse(rs.getString("JSONDATA")));
+    }
+
+    /** 아는 구분만 조건이 된다. 그 밖(빈 값 포함)은 조건 없음. */
+    private static String opOrNull(String op) {
+        return op != null && OPS.contains(op.trim().toLowerCase(Locale.ROOT)) ? op.trim() : null;
+    }
+
+    private static String termOrNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static boolean containsIgnoreCase(String value, String term) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(term.toLowerCase(Locale.ROOT));
     }
 }

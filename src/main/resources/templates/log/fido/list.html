@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>FIDO 로그</title></head>
 <body>
 <main>
   <h1 class="h4 mb-3">FIDO 로그</h1>
-  <!--/* 구분·사용자·결과는 JSONDATA 안의 값이다(FidoLogJson). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
+  <!--/* 칸은 이전 어드민 목록과 같다. 값은 base64url JSONDATA 를 풀어 꺼낸다(FidoLogPayload). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
   <form method="get" th:action="@{/logs/fido}" class="row g-2 align-items-end mb-3">
     <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
     <div class="col-auto"><label class="form-label small mb-0">조회 날짜</label><input type="date" name="logDate" th:value="${search.logDate}" class="form-control form-control-sm" required></div>
@@ -13,53 +13,33 @@
       <label class="form-label small mb-0">구분</label>
       <select name="op" class="form-select form-select-sm">
         <option value="">전체</option>
-        <option value="Reg" th:selected="${search.op == 'Reg'}">등록</option>
-        <option value="Auth" th:selected="${search.op == 'Auth'}">인증</option>
-        <option value="Dereg" th:selected="${search.op == 'Dereg'}">해지</option>
-      </select>
-    </div>
-    <div class="col-auto"><label class="form-label small mb-0">사용자</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">결과</label>
-      <select name="outcome" class="form-select form-select-sm">
-        <option value="">전체</option>
-        <option value="success" th:selected="${search.outcome == 'success'}">성공</option>
-        <option value="fail" th:selected="${search.outcome == 'fail'}">실패</option>
+        <option th:each="o : ${ {'Reg', 'Auth', 'DeReg', 'TC'} }" th:value="${o}" th:text="${o}"
+                th:selected="${search.op != null and #strings.equalsIgnoreCase(search.op, o)}"></option>
       </select>
     </div>
     <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">시리얼</label><input name="serialcode" th:value="${search.serialcode}" class="form-control form-control-sm"></div>
+    <div class="col-auto"><label class="form-label small mb-0">사용자ID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
+  <!--/* 조건 검색은 그날 로그를 풀어 거른다. 상한(FidoLogQueryService.SCAN_LIMIT)에 걸리면 알린다. */-->
+  <div th:if="${truncated}" class="alert alert-warning py-2 small" role="status">
+    로그가 많아 최근 앞 50,000건 안에서만 찾았습니다. 조건을 좁히거나 다른 날짜를 골라 주세요.
+  </div>
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover align-middle fa-table mb-0">
-      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>사용자</th><th>결과</th><th>서비스명</th><th>시리얼</th><th>일시</th></tr></thead>
+      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>서비스명</th><th>사용자ID</th><th>인증장치</th><th>로그시간</th></tr></thead>
       <tbody>
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
                  th:text="${r.idx}">0</a></td>
-          <td>
-            <span th:if="${r.op == null}" class="text-secondary">-</span>
-            <span th:unless="${r.op == null}" class="badge"
-                  th:classappend="${r.op == 'Reg'} ? 'text-bg-primary' : (${r.op == 'Auth'} ? 'text-bg-secondary' : (${r.op == 'Dereg'} ? 'text-bg-warning' : 'text-bg-secondary'))"
-                  th:text="${r.opLabel()}"></span>
-          </td>
-          <td th:text="${r.userid ?: '-'}"></td>
-          <td>
-            <span th:if="${r.result == null}" class="text-secondary">-</span>
-            <th:block th:unless="${r.result == null}">
-              <span class="badge" th:classappend="${r.success()} ? 'text-bg-success' : 'text-bg-danger'"
-                    th:text="${r.success()} ? '성공' : '실패'"></span>
-              <!--/* 실패면 코드와 사전(CCFA_ERROR_TABLE) 메시지를 함께. 성공(1200)은 배지만으로 충분하다. */-->
-              <small th:unless="${r.success()}" class="text-secondary fa-mono ms-1"
-                     th:text="${r.resultMessage != null} ? |${r.result} ${r.resultMessage}| : ${r.result}"></small>
-            </th:block>
-          </td>
-          <td th:text="${r.servicename}"></td>
-          <td class="fa-mono" th:text="${r.serialcode}"></td>
-          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          <td th:text="${r.op ?: '-'}"></td>
+          <td th:text="${r.servicename ?: '-'}"></td>
+          <!--/* 긴 사용자 ID 는 말줄임하고 전체는 title 로. */-->
+          <td class="fa-mono" th:title="${r.userid}" th:text="${r.userid == null} ? '-' : ${#strings.abbreviate(r.userid, 40)}"></td>
+          <td th:text="${r.bioTypeLabel()}"></td>
+          <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>

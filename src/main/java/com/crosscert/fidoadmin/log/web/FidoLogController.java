@@ -35,8 +35,9 @@ public class FidoLogController {
     public String list(@ModelAttribute("search") FidoLogSearchForm search, Model model) {
         // 정렬은 CREATEDTIME DESC 고정이다(서비스의 SQL). 정렬 파라미터를 받지 않으므로
         // 사용자 입력이 ORDER BY 로 들어갈 경로가 없다.
-        var page = service.search(search, search.toPageable(Sort.unsorted()));
-        model.addAttribute("page", page);
+        var result = service.search(search, search.toPageable(Sort.unsorted()));
+        model.addAttribute("page", result.page());
+        model.addAttribute("truncated", result.truncated());
         model.addAttribute("searchQs", search.toQueryString());
         model.addAttribute("basePath", "/logs/fido");
         return "log/fido/list";
