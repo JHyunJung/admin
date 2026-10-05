@@ -4,6 +4,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -93,47 +97,67 @@ class AppserverControllerWebTest {
 
     @Test void blankMemberIdShowsFormAgain() throws Exception {
         mvc.perform(post("/appservers").with(user(companyUser)).with(csrf())
-                .param("memberCode", "KB01").param("memberId", "").param("type", "use"))
+                .param("memberId", "").param("type", "use"))
             .andExpect(status().isOk())
             .andExpect(view().name("fido/appserver/form"));
     }
 
-    /** MEMBER_CODE 는 VARCHAR2(32). 33바이트는 저장 전에 폼에서 거부되어야 한다. */
-    @Test void memberCodeOverByteLimitIsRejectedWithMessage() throws Exception {
-        mvc.perform(post("/appservers").with(user(companyUser)).with(csrf())
-                .param("memberCode", "a".repeat(33)).param("memberId", "id").param("type", "use"))
-            .andExpect(status().isOk())
-            .andExpect(view().name("fido/appserver/form"))
-            .andExpect(content().string(containsString("바이트를 넘을 수 없습니다")));
+
+
+    /** 수정 폼의 읽기 전용 멤버코드를 변조해도 DB 값이 그대로이고, 중복 검사도 DB 값으로 돈다. */
+    @Test void updateIgnoresPostedMemberCodeAndChecksWithStoredCode() throws Exception {
+        Appserver stored = server(5L); // memberCode "KB01"
+        when(service.get(5L)).thenReturn(stored);
+        when(service.existsDuplicate("KB01", "ID01", 5L)).thenReturn(false);
+        when(service.update(org.mockito.ArgumentMatchers.eq(5L), any())).thenAnswer(inv -> {
+            java.util.function.Consumer<Appserver> mutator = inv.getArgument(1);
+            mutator.accept(stored);
+            return stored;
+        });
+        mvc.perform(post("/appservers/5").with(user(companyUser)).with(csrf())
+                .param("memberCode", "HACK").param("memberId", "ID01").param("type", "use"))
+            .andExpect(status().is3xxRedirection());
+        verify(service).existsDuplicate("KB01", "ID01", 5L);
+        assertThat(stored.getMemberCode()).isEqualTo("KB01");
+        assertThat(stored.getMemberId()).isEqualTo("ID01");
     }
 
-    @Test void createRejectsDuplicateMemberCodeAndId() throws Exception {
-        when(service.existsDuplicate("M01", "ID01", null)).thenReturn(true);
-        mvc.perform(post("/appservers").with(user(companyUser)).with(csrf())
-                .param("memberCode", "M01").param("memberId", "ID01").param("type", "use"))
+    @Test void updateRejectsDuplicateWithStoredCode() throws Exception {
+        when(service.get(5L)).thenReturn(server(5L));
+        when(service.existsDuplicate("KB01", "ID01", 5L)).thenReturn(true);
+        mvc.perform(post("/appservers/5").with(user(companyUser)).with(csrf())
+                .param("memberId", "ID01").param("type", "use"))
             .andExpect(status().isOk())
             .andExpect(view().name("fido/appserver/form"))
             .andExpect(content().string(containsString("이미 등록된 코드와 ID값 입니다.")));
-        org.mockito.Mockito.verify(service, org.mockito.Mockito.never()).create(any());
     }
 
-    @Test void updateExcludesSelfFromDuplicateCheck() throws Exception {
-        when(service.existsDuplicate("M01", "ID01", 5L)).thenReturn(false);
-        when(service.get(5L)).thenReturn(server(5L));
-        when(service.idOf(any())).thenReturn("5");
-        mvc.perform(post("/appservers/5").with(user(companyUser)).with(csrf())
-                .param("memberCode", "M01").param("memberId", "ID01").param("type", "use"))
-            .andExpect(status().is3xxRedirection());
-        org.mockito.Mockito.verify(service).existsDuplicate("M01", "ID01", 5L);
-    }
-
-    @Test void createRedirectsToDetail() throws Exception {
+    @Test void createIgnoresPostedMemberCodeAndRedirects() throws Exception {
         when(service.create(any())).thenReturn(server(9L));
         when(service.idOf(any())).thenReturn("9");
         mvc.perform(post("/appservers").with(user(companyUser)).with(csrf())
-                .param("memberCode", "KB01").param("memberId", "kbsvr01").param("type", "use"))
+                .param("memberCode", "TYPED").param("memberId", "kbsvr01").param("type", "use"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/appservers/9"));
+        ArgumentCaptor<Appserver> captor = ArgumentCaptor.forClass(Appserver.class);
+        verify(service).create(captor.capture());
+        assertThat(captor.getValue().getMemberCode()).isNull();
+        verify(service, never()).existsDuplicate(any(), any(), org.mockito.ArgumentMatchers.isNull());
+    }
+
+    @Test void newFormHasNoMemberCodeInput() throws Exception {
+        mvc.perform(get("/appservers/new").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("name=\"memberCode\""))))
+            .andExpect(content().string(containsString("저장 시 자동 생성됩니다")));
+    }
+
+    @Test void editFormShowsMemberCodeReadOnly() throws Exception {
+        when(service.get(2L)).thenReturn(server(2L));
+        mvc.perform(get("/appservers/2/edit").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("KB01")))
+            .andExpect(content().string(containsString("readonly")));
     }
 
     @Test void detailRendersColumns() throws Exception {

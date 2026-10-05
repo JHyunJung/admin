@@ -6,10 +6,14 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-/** APPSERVER 입력 폼. MEMBER_CODE, MEMBER_ID, TYPE 은 ERD NOT NULL. */
+/**
+ * APPSERVER 입력 폼. MEMBER_ID, TYPE 은 ERD NOT NULL.
+ * MEMBER_CODE 는 서버가 만들고 바꾸지 않는다 — 수정 화면에 보여 주기만 하고 엔티티에 옮기지 않는다.
+ */
 @Getter @Setter
 public class AppserverForm {
-    @NotBlank @ByteSize(max = 32) private String memberCode;
+    /** 표시 전용. applyTo 가 무시한다. */
+    private String memberCode;
     @NotBlank @ByteSize(max = 32) private String memberId;
     @NotBlank @ByteSize(max = 10) private String type = "use";
     @ByteSize(max = 128) private String note;
@@ -24,7 +28,7 @@ public class AppserverForm {
     }
 
     public void applyTo(Appserver a) {
-        a.setMemberCode(memberCode); a.setMemberId(memberId); a.setType(type);
+        a.setMemberId(memberId); a.setType(type);
         a.setNote(note); a.setCompanyIdx(companyIdx);
     }
 }

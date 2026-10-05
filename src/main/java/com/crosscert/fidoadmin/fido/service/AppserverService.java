@@ -20,11 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppserverService extends CrudService<Appserver, Long, AppserverSearchForm> {
 
     private final ApplicationEventPublisher events;
+    private final MemberCodeGenerator memberCodes;
 
     public AppserverService(AppserverRepository repository, AuditLogger audit, TenantContext tenant,
-                        ApplicationEventPublisher events) {
+                        ApplicationEventPublisher events, MemberCodeGenerator memberCodes) {
         super(repository, audit, tenant);
         this.events = events;
+        this.memberCodes = memberCodes;
     }
 
     /** FIDO 서버가 멤버코드 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
@@ -59,8 +61,13 @@ public class AppserverService extends CrudService<Appserver, Long, AppserverSear
     @Override protected String tableName() { return "APPSERVER"; }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "memberCode", "memberId", "createdtime"); }
 
+    /**
+     * 등록 때만 불린다(CrudService.create). 멤버코드는 사람이 정하지 않는다 — 호출자가 무엇을
+     * 넘겼든 새로 만든다. 수정 경로는 이 훅을 거치지 않으므로 한 번 정한 코드는 바뀌지 않는다.
+     */
     @Override protected void applyDefaults(Appserver e) {
         if (e.getType() == null || e.getType().isBlank()) e.setType("use");
+        e.setMemberCode(memberCodes.generate());
     }
     @Override protected void touchCreated(Appserver e, LocalDateTime now) { e.setCreatedtime(now); e.setUpdatedtime(now); }
     @Override protected void touchUpdated(Appserver e, LocalDateTime now) { e.setUpdatedtime(now); }

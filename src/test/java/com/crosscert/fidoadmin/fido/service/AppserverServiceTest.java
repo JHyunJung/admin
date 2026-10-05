@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,8 @@ class AppserverServiceTest {
     SelectedTenant selected = new SelectedTenant();
     TenantContext tenant = new TenantContext(selected);
     ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
-    AppserverService service = new AppserverService(repo, audit, tenant, events);
+    MemberCodeGenerator memberCodes = mock(MemberCodeGenerator.class);
+    AppserverService service = new AppserverService(repo, audit, tenant, events, memberCodes);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -111,5 +113,35 @@ class AppserverServiceTest {
 
         service.delete(12L);
         verify(events).publishEvent(new FidoConfigChanged("APPSERVER DELETE 12"));
+    }
+
+    @Test void createFillsGeneratedMemberCode() {
+        login(1L);
+        when(memberCodes.generate()).thenReturn("K7Q2M9XA4D");
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Appserver in = new Appserver(); in.setMemberId("kbsvr");
+
+        assertThat(service.create(in).getMemberCode()).isEqualTo("K7Q2M9XA4D");
+    }
+
+    @Test void createOverwritesAnyMemberCodeFromCaller() {
+        login(1L);
+        when(memberCodes.generate()).thenReturn("K7Q2M9XA4D");
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Appserver in = new Appserver(); in.setMemberCode("TYPED"); in.setMemberId("kbsvr");
+
+        assertThat(service.create(in).getMemberCode()).isEqualTo("K7Q2M9XA4D");
+    }
+
+    @Test void updateNeverGeneratesMemberCode() {
+        login(1L);
+        Appserver existing = new Appserver(); existing.setIdx(3L); existing.setCompanyIdx(1L); existing.setMemberCode("OLD0000001");
+        when(repo.findById(3L)).thenReturn(Optional.of(existing));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.update(3L, a -> a.setNote("변경"));
+
+        assertThat(existing.getMemberCode()).isEqualTo("OLD0000001");
+        verify(memberCodes, never()).generate();
     }
 }

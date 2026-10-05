@@ -28,9 +28,24 @@ public class AppserverController extends CrudController<Appserver, Long, Appserv
     @Override protected Appserver toEntity(AppserverForm f) { Appserver a = new Appserver(); f.applyTo(a); return a; }
     @Override protected void applyForm(AppserverForm f, Appserver e) { f.applyTo(e); }
 
+    /**
+     * (멤버코드, 멤버키) 중복은 수정 때만 본다. 등록 때는 멤버코드가 아직 없고 생성기가 전체 유일성을 보장한다.
+     * 멤버코드는 폼 값이 아니라 저장된 값으로 본다 — 읽기 전용 칸은 변조될 수 있다.
+     */
     @Override protected void validate(AppserverForm form, Long id, BindingResult binding) {
-        if (service.existsDuplicate(form.getMemberCode(), form.getMemberId(), id)) {
+        if (id == null) return;
+        String storedCode = service.get(id).getMemberCode();
+        if (service.existsDuplicate(storedCode, form.getMemberId(), id)) {
             binding.rejectValue("memberId", "duplicate", "이미 등록된 코드와 ID값 입니다.");
+        }
+    }
+
+    /** 수정 폼이 오류로 다시 그려질 때 변조된 멤버코드가 아니라 저장된 값을 보여 준다. */
+    @Override protected void populateFormModel(Model model) {
+        Object id = model.getAttribute("id");
+        Object form = model.getAttribute("form");
+        if (id instanceof Long idx && form instanceof AppserverForm f) {
+            f.setMemberCode(service.get(idx).getMemberCode());
         }
     }
 

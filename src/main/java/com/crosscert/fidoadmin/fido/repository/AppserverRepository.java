@@ -6,4 +6,5 @@ import com.crosscert.fidoadmin.fido.entity.Appserver;
 public interface AppserverRepository extends AdminRepository<Appserver, Long> {
     boolean existsByCompanyIdxAndMemberCodeAndMemberId(Long companyIdx, String memberCode, String memberId);
     boolean existsByCompanyIdxAndMemberCodeAndMemberIdAndIdxNot(Long companyIdx, String memberCode, String memberId, Long idx);
+    boolean existsByMemberCode(String memberCode);
 }

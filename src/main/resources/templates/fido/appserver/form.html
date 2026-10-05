@@ -12,9 +12,9 @@
     </div>
     <div class="row g-3">
       <div class="col-md-6">
-        <label class="form-label">멤버코드 <span class="text-danger">*</span></label>
-        <input th:field="*{memberCode}" class="form-control" th:classappend="${#fields.hasErrors('memberCode')} ? 'is-invalid'">
-        <div class="invalid-feedback" th:errors="*{memberCode}"></div>
+        <label class="form-label">멤버코드</label>
+        <input th:if="${isNew}" type="text" class="form-control" value="저장 시 자동 생성됩니다" disabled>
+        <input th:unless="${isNew}" type="text" class="form-control fa-mono" th:value="*{memberCode}" readonly>
       </div>
       <div class="col-md-6">
         <label class="form-label">멤버키 <span class="text-danger">*</span></label>
