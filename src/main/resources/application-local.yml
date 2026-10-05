@@ -13,3 +13,6 @@ spring:
 logging:
   level:
     org.hibernate.orm.jdbc.bind: trace
+fido-admin:
+  # 로컬 도커 DB 는 평문이라 키가 없어도 된다. ENC(...) 로 바꿔 시험할 때만 DB_CONFIG_KEY 를 준다.
+  db-config-key: ${DB_CONFIG_KEY:}

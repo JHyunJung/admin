@@ -47,3 +47,11 @@ tasks.named('test') {
     useJUnitPlatform()
     testLogging { events 'failed'; exceptionFormat 'full' }
 }
+
+// DB 접속 정보 암호문 만들기: DB_CONFIG_KEY=<Base64 32바이트> DB_CONFIG_VALUE=<평문> ./gradlew -q encryptDbConfig
+tasks.register('encryptDbConfig', JavaExec) {
+    group = 'application'
+    description = 'DB_CONFIG_VALUE 를 DB_CONFIG_KEY 로 암호화해 ENC(...) 로 출력한다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.crosscert.fidoadmin.DbConfigEncryptMain'
+}

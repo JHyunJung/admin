@@ -4,6 +4,7 @@ spring:
   #   SPRING_DATASOURCE_URL      예) jdbc:oracle:thin:@qa-db.example.local:1521/KBFIDO
   #   SPRING_DATASOURCE_USERNAME
   #   SPRING_DATASOURCE_PASSWORD
+  # 값은 평문, ENC(...) 암호문, [plain]평문 중 하나. ENC(...) 는 DataSourceConfig 가 DB_CONFIG_KEY 로 복호화한다.
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -37,3 +38,7 @@ logging:
     com.crosscert.fidoadmin: debug
     org.springframework: info
     org.hibernate: info
+fido-admin:
+  # DB 접속 정보 복호화 키(AES-256, Base64 32바이트). SPRING_DATASOURCE_* 에 ENC(...) 를 쓸 때만 필요하다.
+  #   DB_CONFIG_KEY
+  db-config-key: ${DB_CONFIG_KEY:}

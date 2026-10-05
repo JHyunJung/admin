@@ -39,6 +39,8 @@ server:
     session:
       timeout: 30m
 fido-admin:
+  # DB 접속 정보 복호화 키(환경 변수 DB_CONFIG_KEY). 프로필 미지정 때의 기본값 — 각 프로필 yml 에도 같은 항목이 있다.
+  db-config-key: ${DB_CONFIG_KEY:}
   page-size: 20
   password-fail-limit: 5
   # 비밀번호 만료. auto: 처음 필요할 때 CCFA_MANAGER.LAST_PW_CHANGE_DATE 열이 있는지 보고 있으면 켠다. false: 끈다.

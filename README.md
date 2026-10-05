@@ -16,6 +16,15 @@ SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/SVC SPRING_DATASOURCE_USERNAME=�
   java -jar fido-admin.jar --spring.profiles.active=prod
 ```
 
+DB 접속 정보 세 값은 평문 대신 `ENC(...)` 암호문(AES-256-GCM)으로 줄 수 있다. 이때 복호화 키를 환경 변수 `DB_CONFIG_KEY`(Base64, 디코딩 후 32바이트)로 함께 준다.
+각 프로필 yml 의 `fido-admin.db-config-key` 가 이 변수를 받으며, 모두 평문이면 키는 없어도 된다. `ENC(` 로 시작하는 평문은 `[plain]` 을 앞에 붙인다.
+
+```
+export DB_CONFIG_KEY=$(openssl rand -base64 32)          # 키는 안전한 곳에 따로 보관
+DB_CONFIG_VALUE='비밀번호' ./gradlew -q encryptDbConfig  # → ENC(...) 출력
+SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles.active=prod
+```
+
 | 프로파일 | DB | SQL 출력 | 로그 레벨(앱/프레임워크) | 로그 출력 |
 |---|---|---|---|---|
 | `local` | 로컬 도커 고정 | 켬 | DEBUG / INFO | 콘솔 |
