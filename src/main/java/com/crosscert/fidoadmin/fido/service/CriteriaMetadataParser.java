@@ -2,8 +2,10 @@ package com.crosscert.fidoadmin.fido.service;
 
 import com.crosscert.fidoadmin.fido.entity.Criteria;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,13 +27,15 @@ public class CriteriaMetadataParser {
 
     public static final String INVALID = "유효하지 않은 metadata 형식입니다.";
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** 첫 JSON 값 뒤에 남은 글자가 있으면 실패시킨다. 끄면 두 문을 붙여 넣었을 때 첫 문만 읽고 원문 전체를 저장한다. */
+    private static final ObjectReader READER = new ObjectMapper().reader()
+        .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     public Criteria parse(String json) {
         if (json == null || json.isBlank()) throw new CriteriaMetadataException(INVALID);
         JsonNode root;
         try {
-            root = MAPPER.readTree(json);
+            root = READER.readTree(json);
         } catch (JsonProcessingException e) {
             throw new CriteriaMetadataException(INVALID);
         }

@@ -125,4 +125,17 @@ class CriteriaMetadataParserTest {
         assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(CriteriaMetadataException.class);
         assertThatThrownBy(() -> parser.parse("  ")).isInstanceOf(CriteriaMetadataException.class);
     }
+
+    /** 두 문을 한꺼번에 붙여 넣으면 첫 문만 등록되고 나머지는 조용히 버려졌다. 원문 전체가 JSON 하나여야 한다. */
+    @Test void twoConcatenatedStatementsAreFormatError() {
+        assertThatThrownBy(() -> parser.parse("{\"aaid\":\"0012#0001\"}, {\"aaid\":\"0012#0002\"}"))
+            .isInstanceOf(CriteriaMetadataException.class)
+            .hasMessage(CriteriaMetadataParser.INVALID);
+    }
+
+    @Test void trailingTextIsFormatError() {
+        assertThatThrownBy(() -> parser.parse("{\"aaid\":\"0012#0001\"} trailing"))
+            .isInstanceOf(CriteriaMetadataException.class)
+            .hasMessage(CriteriaMetadataParser.INVALID);
+    }
 }
