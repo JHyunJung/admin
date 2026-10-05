@@ -145,7 +145,11 @@ class FidoLogQueryServiceTest {
     }
 
     private static FidoLogRow row(long idx, String op, String servicename, String userid) {
-        return new FidoLogRow(idx, 1L, op, servicename, userid, 2L, LocalDateTime.of(2026, 9, 26, 10, 0));
+        return row(idx, op, servicename, userid, "Success");
+    }
+
+    private static FidoLogRow row(long idx, String op, String servicename, String userid, String status) {
+        return new FidoLogRow(idx, 1L, op, servicename, userid, 2L, status, LocalDateTime.of(2026, 9, 26, 10, 0));
     }
 
     private static String base64url(String json) {
@@ -173,13 +177,14 @@ class FidoLogQueryServiceTest {
         when(rs.getString("SERVICENAME")).thenReturn("SERVICE");
         when(rs.getTimestamp("CREATEDTIME")).thenReturn(Timestamp.valueOf(LocalDateTime.of(2026, 10, 2, 14, 42, 20)));
         when(rs.getString("JSONDATA")).thenReturn(base64url(
-            "{\"transaction\":{\"serviceName\":\"com.kbstar.kbbank\",\"userName\":\"u1\",\"op\":\"TC\",\"bioType\":2}}"));
+            "{\"transaction\":{\"serviceName\":\"com.kbstar.kbbank\",\"userName\":\"u1\",\"op\":\"TC\",\"bioType\":2,\"status\":\"Error\"}}"));
         FidoLogRow r = (FidoLogRow) mapper.getValue().mapRow(rs, 0);
 
         assertThat(r.op()).isEqualTo("TC");
         assertThat(r.servicename()).isEqualTo("com.kbstar.kbbank");
         assertThat(r.userid()).isEqualTo("u1");
         assertThat(r.bioTypeLabel()).isEqualTo("지문");
+        assertThat(r.status()).isEqualTo("Error");
     }
 
     /** JSON 에 서비스명이 없으면 SERVICENAME 컬럼 값을 쓴다. */
@@ -260,5 +265,21 @@ class FidoLogQueryServiceTest {
 
         assertThat(result.truncated()).isTrue();
         assertThat(result.page().getTotalElements()).isEqualTo(FidoLogQueryService.SCAN_LIMIT);
+    }
+
+    /** 고객이 정상 진행했는지 보려고 상태로 거른다. 대소문자는 가리지 않는다. */
+    @SuppressWarnings("unchecked")
+    @Test void statusFilterMatchesIgnoringCase() {
+        tableExists(true);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of(
+            row(3, "Auth", "s", "u", "Error"),
+            row(2, "Auth", "s", "u", "Success"),
+            row(1, "Auth", "s", "u", "error")));
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setStatus("Error");
+
+        var result = service.search(f, PageRequest.of(0, 20));
+
+        assertThat(result.page().getContent()).extracting(FidoLogRow::idx).containsExactly(3L, 1L);
     }
 }

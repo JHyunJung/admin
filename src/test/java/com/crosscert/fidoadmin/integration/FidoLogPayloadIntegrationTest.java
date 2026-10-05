@@ -65,6 +65,7 @@ class FidoLogPayloadIntegrationTest extends OracleContainerSupport {
         assertThat(tc.servicename()).isEqualTo("com.kbstar.kbbank");
         assertThat(tc.userid()).isEqualTo("f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR");
         assertThat(tc.bioTypeLabel()).isEqualTo("지문");
+        assertThat(tc.status()).isEqualTo("Success");
         FidoLogRow plain = page.getContent().get(1);
         assertThat(plain.servicename()).isEqualTo("kbpay"); // JSON 에 없으면 컬럼 값
         assertThat(plain.userid()).isEqualTo("user132");
@@ -74,6 +75,7 @@ class FidoLogPayloadIntegrationTest extends OracleContainerSupport {
         FidoLogSearchForm f = form();
         f.setOp("tc");
         f.setUserid("f5jyua2q");
+        f.setStatus("success");
 
         var result = logs.search(f, PageRequest.of(0, 20));
 

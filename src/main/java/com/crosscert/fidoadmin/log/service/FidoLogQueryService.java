@@ -54,7 +54,7 @@ public class FidoLogQueryService {
      * 목록. 없는 날짜면 빈 페이지다(오류가 아니다 — 그날 로그가 없다는 뜻이다).
      *
      * <p>운영 JSONDATA 는 base64url 이라 DB 가 안을 볼 수 없다. 조건이 없으면 DB 가 한 페이지만 읽고
-     * 그 행만 푼다. 구분·서비스명·사용자 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
+     * 그 행만 푼다. 구분·서비스명·사용자·상태 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
      * {@link #SCAN_LIMIT} 건까지 풀어 Java 에서 거른 뒤 페이지를 나눈다.
      */
     @Transactional(readOnly = true)
@@ -73,7 +73,8 @@ public class FidoLogQueryService {
         String op = opOrNull(form.getOp());
         String servicename = termOrNull(form.getServicename());
         String userid = termOrNull(form.getUserid());
-        if (op == null && servicename == null && userid == null) {
+        String status = termOrNull(form.getStatus());
+        if (op == null && servicename == null && userid == null && status == null) {
             Long total = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM " + table + " WHERE COMPANY_IDX = :companyIdx", params, Long.class);
             if (total == null || total == 0) {
@@ -95,6 +96,7 @@ public class FidoLogQueryService {
             .filter(r -> op == null || op.equalsIgnoreCase(r.op()))
             .filter(r -> servicename == null || containsIgnoreCase(r.servicename(), servicename))
             .filter(r -> userid == null || containsIgnoreCase(r.userid(), userid))
+            .filter(r -> status == null || status.equalsIgnoreCase(r.status()))
             .toList();
         int from = (int) Math.min(pageable.getOffset(), matched.size());
         int to = Math.min(from + pageable.getPageSize(), matched.size());

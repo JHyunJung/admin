@@ -19,6 +19,14 @@
     </div>
     <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
     <div class="col-auto"><label class="form-label small mb-0">사용자ID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">상태</label>
+      <select name="status" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="st : ${ {'Success', 'Error', 'Wait', 'RequestOK', 'ResponseOK'} }" th:value="${st}" th:text="${st}"
+                th:selected="${search.status != null and #strings.equalsIgnoreCase(search.status, st)}"></option>
+      </select>
+    </div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
   <!--/* 조건 검색은 그날 로그를 풀어 거른다. 상한(FidoLogQueryService.SCAN_LIMIT)에 걸리면 알린다. */-->
@@ -27,7 +35,7 @@
   </div>
   <div class="table-responsive bg-white border rounded">
     <table class="table table-sm table-hover align-middle fa-table mb-0">
-      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>서비스명</th><th>사용자ID</th><th>인증장치</th><th>로그시간</th></tr></thead>
+      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>서비스명</th><th>사용자ID</th><th>인증장치</th><th>상태</th><th>로그시간</th></tr></thead>
       <tbody>
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
@@ -37,9 +45,15 @@
           <!--/* 긴 사용자 ID 는 말줄임하고 전체는 title 로. */-->
           <td class="fa-mono" th:title="${r.userid}" th:text="${r.userid == null} ? '-' : ${#strings.abbreviate(r.userid, 40)}"></td>
           <td th:text="${r.bioTypeLabel()}"></td>
+          <td>
+            <span th:if="${r.status == null}" class="text-secondary">-</span>
+            <span th:unless="${r.status == null}" class="badge"
+                  th:classappend="${#strings.equalsIgnoreCase(r.status, 'Success')} ? 'text-bg-success' : (${#strings.equalsIgnoreCase(r.status, 'Error')} ? 'text-bg-danger' : 'text-bg-secondary')"
+                  th:text="${r.status}"></span>
+          </td>
           <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>
     </table>
   </div>

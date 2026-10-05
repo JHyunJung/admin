@@ -54,11 +54,11 @@ class FidoLogControllerWebTest {
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     private FidoLogRow row(long idx) {
-        return row(idx, "Auth", "user001", 2L);
+        return row(idx, "Auth", "user001", 2L, "Success");
     }
 
-    private FidoLogRow row(long idx, String op, String userid, Long bioType) {
-        return new FidoLogRow(idx, 1L, op, "com.kbstar.kbbank", userid, bioType, LocalDateTime.of(2026, 10, 2, 14, 42, 20));
+    private FidoLogRow row(long idx, String op, String userid, Long bioType, String status) {
+        return new FidoLogRow(idx, 1L, op, "com.kbstar.kbbank", userid, bioType, status, LocalDateTime.of(2026, 10, 2, 14, 42, 20));
     }
 
     private static FidoLogSearchResult result(List<FidoLogRow> rows, boolean truncated) {
@@ -147,21 +147,23 @@ class FidoLogControllerWebTest {
     @Test void listShowsLegacyColumns() throws Exception {
         String longUser = "f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHRxxxxxxxxxxxxxxxxxxxxxx";
         when(service.search(any(), any())).thenReturn(result(List.of(
-            row(1L, "TC", longUser, 2L),
-            row(2L, "DeReg", "c95av28e", 512L),
-            row(3L, null, null, null)), false));
+            row(1L, "TC", longUser, 2L, "Success"),
+            row(2L, "DeReg", "c95av28e", 512L, "Error"),
+            row(3L, null, null, null, null)), false));
         String html = mvc.perform(get("/logs/fido").with(user(companyUser)))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
         org.assertj.core.api.Assertions.assertThat(html)
             .containsSubsequence("<th>번호</th>", "<th>구분</th>", "<th>서비스명</th>", "<th>사용자ID</th>",
-                "<th>인증장치</th>", "<th>로그시간</th>")
+                "<th>인증장치</th>", "<th>상태</th>", "<th>로그시간</th>")
             .contains(">TC<").contains(">DeReg<")
             .contains("com.kbstar.kbbank")
             .contains(">지문<").contains(">없음<").contains(">알수없음<")
             .contains("title=\"" + longUser + "\"")
             .contains(longUser.substring(0, 37) + "...")
             .contains("2026-10-02 14:42:20")
+            .contains(">Success<").contains(">Error<").contains("text-bg-success").contains("text-bg-danger")
+            .contains("name=\"status\"").contains("value=\"Wait\"")
             .contains("name=\"op\"").contains("name=\"userid\"").contains("name=\"servicename\"")
             .contains("value=\"TC\"").contains("value=\"DeReg\"")
             .doesNotContain("name=\"outcome\"").doesNotContain("name=\"serialcode\"")
