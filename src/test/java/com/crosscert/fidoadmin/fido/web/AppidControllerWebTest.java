@@ -105,7 +105,7 @@ class AppidControllerWebTest {
         org.assertj.core.api.Assertions.assertThat(html)
             .contains("AppID 관리")
             .contains("추가하기")
-            .contains(">Android<")          // device=android
+            .contains(">AOS<")              // device=android
             .contains(">설정<")             // deviceDefault=T
             .contains(">활성<")             // status=use
             .contains("1건이 검색되었습니다.")
@@ -156,6 +156,46 @@ class AppidControllerWebTest {
             .andExpect(view().name("fido/appid/detail"))
             .andExpect(content().string(containsString("kbstar")))
             .andExpect(content().string(containsString("KB국민은행")));
+    }
+
+    /** 운영 문의: "기본기기" 가 무슨 뜻인지 모르겠다 — 이전 어드민처럼 appid/설명/장치/서비스명/기본값/상태 순서와 표시어로 받는다. */
+    @Test void newFormUsesLegacyFieldOrderAndLabels() throws Exception {
+        String html = mvc.perform(get("/appids/new").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html)
+            .doesNotContain("기본기기")
+            .contains("value=\"ios\"").contains(">iOS<")
+            .contains("value=\"android\"").contains(">AOS<")
+            .contains("value=\"T\"").contains(">설정<")
+            .contains("value=\"F\"").contains(">설정안함<")
+            .contains("value=\"use\"").contains(">활성<")
+            .contains("value=\"unuse\"").contains(">비활성<");
+        int[] pos = { html.indexOf(">APPID "), html.indexOf(">설명<"), html.indexOf(">장치<"),
+            html.indexOf(">서비스명<"), html.indexOf(">기본값 "), html.indexOf(">상태 ") };
+        for (int i = 0; i < pos.length; i++) org.assertj.core.api.Assertions.assertThat(pos[i]).as("field " + i).isGreaterThan(i == 0 ? -1 : pos[i - 1]);
+    }
+
+    /** 표에 없는 옛 장치 값으로 수정 화면을 열어도 그 값이 선택지에 남아 저장 때 지워지지 않는다. */
+    @Test void editFormKeepsUnknownDeviceValue() throws Exception {
+        Appid a = appid(4L); a.setDevice("windows");
+        when(service.get(4L)).thenReturn(a);
+        when(service.idOf(any())).thenReturn("4");
+        mvc.perform(get("/appids/4/edit").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("value=\"windows\" selected")));
+    }
+
+    @Test void detailUsesLegacyLabels() throws Exception {
+        when(service.get(3L)).thenReturn(appid(3L));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        String html = mvc.perform(get("/appids/3").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        org.assertj.core.api.Assertions.assertThat(html)
+            .doesNotContain("기본기기").doesNotContain(">use<")
+            .contains("<th>설명</th>").contains("<th>장치</th>").contains("<th>기본값</th>")
+            .contains(">AOS<").contains(">설정<").contains(">활성<");
     }
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {
