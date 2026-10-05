@@ -34,7 +34,7 @@
           <td th:text="${r.idx}">0</td>
           <td style="white-space: normal; overflow-wrap: anywhere;"><a th:href="@{/appids/{id}(id=${r.idx})}" th:text="${r.appid}">appid</a></td>
           <td th:text="${r.servicename}"></td>
-          <td th:text="${r.device == 'android' ? 'AOS' : (r.device == 'ios' ? 'iOS' : r.device)}"></td>
+          <td><span th:replace="~{fragments/device :: label(${r.device})}"></span></td>
           <td style="white-space: normal; overflow-wrap: anywhere;" th:text="${r.memo}"></td>
           <td th:text="${r.deviceDefault == 'T' ? '설정' : ''}"></td>
           <td>

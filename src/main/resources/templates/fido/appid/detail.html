@@ -20,7 +20,7 @@
         <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
         <tr><th>APPID</th><td class="fa-pre" th:text="${item.appid}"></td></tr>
         <tr><th>설명</th><td class="fa-pre" th:text="${item.memo}"></td></tr>
-        <tr><th>장치</th><td th:text="${item.device == 'android' ? 'AOS' : (item.device == 'ios' ? 'iOS' : item.device)}"></td></tr>
+        <tr><th>장치</th><td><span th:replace="~{fragments/device :: label(${item.device})}"></span></td></tr>
         <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
         <tr><th>기본값</th><td th:text="${item.deviceDefault == 'T' ? '설정' : (item.deviceDefault == 'F' ? '설정안함' : item.deviceDefault)}"></td></tr>
         <tr><th>상태</th><td th:text="${item.status == 'use' ? '활성' : (item.status == 'unuse' ? '비활성' : item.status)}"></td></tr>

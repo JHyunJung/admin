@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* APPID.DEVICE 표시. 저장 값 android·ios 를 AOS·iOS 로 보이고 앞에 로고를 붙인다. 그 밖의 값은 그대로 보인다. */-->
+<span th:fragment="label(device)" class="text-nowrap"><i th:if="${device == 'android'}" class="bi bi-android2 me-1" style="color: #3ddc84;" aria-hidden="true"></i><i th:if="${device == 'ios'}" class="bi bi-apple me-1" aria-hidden="true"></i><th:block th:text="${device == 'android' ? 'AOS' : (device == 'ios' ? 'iOS' : device)}"></th:block></span>
+</body>
+</html>

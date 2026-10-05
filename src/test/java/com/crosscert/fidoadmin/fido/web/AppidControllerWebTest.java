@@ -106,6 +106,7 @@ class AppidControllerWebTest {
             .contains("AppID 관리")
             .contains("추가하기")
             .contains(">AOS<")              // device=android
+            .contains("bi-android2")         // AOS 앞 안드로이드 로고
             .contains(">설정<")             // deviceDefault=T
             .contains(">활성<")             // status=use
             .contains("1건이 검색되었습니다.")
@@ -196,6 +197,16 @@ class AppidControllerWebTest {
             .doesNotContain("기본기기").doesNotContain(">use<")
             .contains("<th>설명</th>").contains("<th>장치</th>").contains("<th>기본값</th>")
             .contains(">AOS<").contains(">설정<").contains(">활성<");
+    }
+
+    @Test void detailShowsAppleLogoForIos() throws Exception {
+        Appid a = appid(6L); a.setDevice("ios");
+        when(service.get(6L)).thenReturn(a);
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        mvc.perform(get("/appids/6").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("bi-apple")))
+            .andExpect(content().string(not(containsString("bi-android2"))));
     }
 
     @Test void postWithoutCsrfIsForbidden() throws Exception {
