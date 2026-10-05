@@ -3,6 +3,8 @@ package com.crosscert.fidoadmin.company.service;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -11,8 +13,6 @@ import static org.mockito.Mockito.when;
 import org.springframework.data.jpa.domain.Specification;
 import org.mockito.ArgumentCaptor;
 import java.util.List;
-import com.crosscert.fidoadmin.company.entity.CcfaFdsPolicy;
-import com.crosscert.fidoadmin.company.repository.CcfaFdsPolicyRepository;
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService;
 import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.audit.AuditType;
@@ -44,11 +44,10 @@ class CompanyServiceTest {
     CcfaManagerRepository managers = mock(CcfaManagerRepository.class);
     CcfaSystemPropRepository props = mock(CcfaSystemPropRepository.class);
     AuditLogger audit = mock(AuditLogger.class);
-    CcfaFdsPolicyRepository fdsPolicies = mock(CcfaFdsPolicyRepository.class);
     CriteriaQueryService criteria = mock(CriteriaQueryService.class);
     ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     CompanyService service = new CompanyService(companies, audit, appids, users, managers, props,
-        new TenantContext(new SelectedTenant()), fdsPolicies, criteria, events);
+        new TenantContext(new SelectedTenant()), criteria, events);
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
@@ -139,34 +138,17 @@ class CompanyServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test void createDisablesAllAaidsAndAddsDefaultFdsPolicy() {
+    @Test void createDisablesAllAaids() {
         when(companies.save(any())).thenAnswer(inv -> { CcfaCompany c = inv.getArgument(0); c.setIdx(7L); return c; });
         when(props.findAll(any(Specification.class))).thenReturn(List.of());
         when(criteria.disableAllFor(7L)).thenReturn(3);
-        when(fdsPolicies.existsById(7L)).thenReturn(false);
 
         service.create(new CcfaCompany());
 
         verify(criteria).disableAllFor(7L);
-        ArgumentCaptor<CcfaFdsPolicy> saved = ArgumentCaptor.forClass(CcfaFdsPolicy.class);
-        verify(fdsPolicies).save(saved.capture());
-        assertThat(saved.getValue().getCompanyIdx()).isEqualTo(7L);
-        assertThat(saved.getValue().getAndCountry()).isEqualTo("NO");
-        assertThat(saved.getValue().getOrCountry()).isEqualTo("NO");
-        assertThat(saved.getValue().getCreatedtime()).isNotNull();
-        assertThat(saved.getValue().getUpdatedtime()).isNotNull();
         verify(audit).log(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 7 (3건)");
-        verify(audit).log(AuditType.CREATE, "CCFA_FDS_POLICY 기본값 고객사 7");
+        verify(audit, never()).log(eq(AuditType.CREATE), startsWith("CCFA_FDS_POLICY"));
         verify(events).publishEvent(new FidoConfigChanged("고객사 생성 7"));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test void createKeepsExistingFdsPolicy() {
-        when(companies.save(any())).thenAnswer(inv -> { CcfaCompany c = inv.getArgument(0); c.setIdx(7L); return c; });
-        when(props.findAll(any(Specification.class))).thenReturn(List.of());
-        when(fdsPolicies.existsById(7L)).thenReturn(true);
-        service.create(new CcfaCompany());
-        verify(fdsPolicies, never()).save(any());
     }
 
     @SuppressWarnings("unchecked")
@@ -179,30 +161,27 @@ class CompanyServiceTest {
     }
 
     @SuppressWarnings("unchecked")
-    @Test void deleteRemovesAaidRowsAndFdsPolicy() {
+    @Test void deleteRemovesAaidRows() {
         when(companies.findById(7L)).thenReturn(Optional.of(company(7L)));
         when(appids.countByCompanyIdx(7L)).thenReturn(0L);
         when(users.countByCompanyIdx(7L)).thenReturn(0L);
         when(managers.countByCompanyIdx(7L)).thenReturn(0L);
         when(props.findAll(any(Specification.class))).thenReturn(List.of());
         when(criteria.deleteAllFor(7L)).thenReturn(5);
-        when(fdsPolicies.existsById(7L)).thenReturn(true);
 
         service.delete(7L);
 
         verify(criteria).deleteAllFor(7L);
-        verify(fdsPolicies).deleteById(7L);
         verify(audit).log(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 7 (5건)");
-        verify(audit).log(AuditType.DELETE, "CCFA_FDS_POLICY DELETE 고객사 7");
+        verify(audit, never()).log(eq(AuditType.DELETE), startsWith("CCFA_FDS_POLICY"));
     }
 
-    @Test void blockedDeleteLeavesAaidAndFdsAlone() {
+    @Test void blockedDeleteLeavesAaidAlone() {
         when(companies.findById(1L)).thenReturn(Optional.of(company(1L)));
         when(appids.countByCompanyIdx(1L)).thenReturn(2L);
         when(users.countByCompanyIdx(1L)).thenReturn(0L);
         when(managers.countByCompanyIdx(1L)).thenReturn(0L);
         assertThatThrownBy(() -> service.delete(1L)).isInstanceOf(IllegalStateException.class);
         verify(criteria, never()).deleteAllFor(any());
-        verify(fdsPolicies, never()).deleteById(any());
     }
 }

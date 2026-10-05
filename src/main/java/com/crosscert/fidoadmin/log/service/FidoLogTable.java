@@ -17,7 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
  * 포맷 결과는 항상 숫자 8자리라 다른 것이 섞일 수 없지만, 연도가 범위를 벗어나면
  * 자릿수가 달라지므로 그것만 막는다.
  *
- * <p>FIDO 로그 화면과 FDS 모니터링이 같은 테이블을 읽으므로 한 곳에 둔다.
+ * <p>일자별 테이블 이름 규칙을 한 곳에 둔다.
  */
 @Component
 @RequiredArgsConstructor

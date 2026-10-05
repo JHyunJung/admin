@@ -39,7 +39,7 @@ class LegacyParityIntegrationTest extends OracleContainerSupport {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 
-    @Test void newCompanyStartsWithAllAaidsBlockedAndDefaultFdsPolicy() {
+    @Test void newCompanyStartsWithAllAaidsBlockedAndNoFdsPolicy() {
         loginSuper();
         CcfaCompany c = new CcfaCompany();
         c.setCompanyName("IT 신규 고객사");
@@ -55,12 +55,11 @@ class LegacyParityIntegrationTest extends OracleContainerSupport {
         Integer criteria = jdbc.queryForObject("SELECT COUNT(DISTINCT AAID) FROM CRITERIA WHERE AAID IS NOT NULL", Integer.class);
         Integer blocked = jdbc.queryForObject("SELECT COUNT(*) FROM CCFA_COMPANY_AAID WHERE COMPANY_IDX = ?", Integer.class, idx);
         assertThat(blocked).isEqualTo(criteria);
-        assertThat(jdbc.queryForObject("SELECT AND_COUNTRY || '/' || OR_COUNTRY FROM CCFA_FDS_POLICY WHERE COMPANY_IDX = ?",
-            String.class, idx)).isEqualTo("NO/NO");
+        // 이상 징후 탐지를 지웠으므로 기본 정책 행을 만들지 않는다.
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM CCFA_FDS_POLICY WHERE COMPANY_IDX = ?", Integer.class, idx)).isZero();
 
         companies.delete(idx);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM CCFA_COMPANY_AAID WHERE COMPANY_IDX = ?", Integer.class, idx)).isZero();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM CCFA_FDS_POLICY WHERE COMPANY_IDX = ?", Integer.class, idx)).isZero();
     }
 
     @Test void passwordExpiryIsEnabledOnLocalSchemaAndTouchWrites() {

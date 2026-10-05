@@ -19,11 +19,11 @@ class MenuRegistryTest {
         assertThat(registry.itemsFor(false)).noneMatch(MenuItem::superOnly);
         assertThat(registry.itemsFor(false)).extracting(MenuItem::href)
             // /criteria 는 고객사별 AAID 토글 화면이라 COMPANY 도 본다(SUPER 전용에서 풀었다).
-            .contains("/", "/appids", "/users", "/logs/fido", "/fds-policies", "/criteria")
+            .contains("/", "/appids", "/users", "/logs/fido", "/criteria")
             // /fido2/demo-access-codes 는 메뉴에서 뺐다. 여기 남겨두면 "SUPER 전용이라 안 보인다" 가
             // 아니라 "메뉴에 아예 없어서 안 보인다" 로 통과해, 아무것도 검증하지 않는 단언이 된다.
             // 그 화면이 되살아나는 것은 아래 전용 테스트가 막는다.
-            .doesNotContain("/companies", "/managers", "/system/props",
+            .doesNotContain("/fds-policies", "/fds-monitor", "/companies", "/managers", "/system/props",
                 "/fido2/metadata", "/fido2/credential-params",
                 "/signups");
     }
@@ -45,7 +45,7 @@ class MenuRegistryTest {
     @Test void companySeesNoFido2Group() {
         var groups = MenuRegistry.groups(registry.itemsFor(false));
         assertThat(groups.keySet())
-            .containsExactly("대시보드", "로그", "이상 징후 탐지", "FIDO 서버 관리", "내 정보");
+            .containsExactly("대시보드", "로그", "FIDO 서버 관리", "내 정보");
     }
 
     /** 사이드바 아이콘. 모든 메뉴가 Bootstrap Icons 클래스명을 가진다(빈 값 금지). */
@@ -60,18 +60,18 @@ class MenuRegistryTest {
     @Test void groupsPreserveOrder() {
         var groups = MenuRegistry.groups(registry.itemsFor(true));
         assertThat(groups.keySet()).containsExactly(
-            "대시보드", "로그", "이상 징후 탐지", "FIDO 서버 관리", "FIDO2", "시스템관리", "내 정보");
+            "대시보드", "로그", "FIDO 서버 관리", "FIDO2", "시스템관리", "내 정보");
     }
 
     /** 숫자만 맞추지 않도록, 영역 합이 전체와 같은지도 함께 본다. */
-    @Test void 테넌트_영역_화면은_19개다() {
+    @Test void 테넌트_영역_화면은_17개다() {
         long tenant = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.TENANT).count();
         long system = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.SYSTEM).count();
         long personal = MenuRegistry.ALL.stream().filter(m -> m.area() == MenuArea.PERSONAL).count();
         assertThat(tenant + system + personal).isEqualTo(MenuRegistry.ALL.size());
         // 감춘 항목(hidden)도 ALL 에는 남는다 — 경로의 영역 판정에 필요하다.
-        // 모니터링(/fds-monitor)이 더해져 18 → 19 다.
-        assertThat(tenant).isEqualTo(19);
+        // 이상 징후 탐지 두 화면(FDS 정책·모니터링)을 지워 19 → 17 이다.
+        assertThat(tenant).isEqualTo(17);
     }
 
     /** 감사 로그의 화면 이름. areaOf 와 같은 최장 접두사 규칙이라 /managers/super 가 운영자로 뭉개지지 않는다. */
@@ -80,7 +80,7 @@ class MenuRegistryTest {
         assertThat(registry.titleFor("/managers/super/1")).isEqualTo("슈퍼관리자 계정");
         assertThat(registry.titleFor("/managers/1")).isEqualTo("운영자");
         assertThat(registry.titleFor("/criteria")).isEqualTo("AAID(정책) 보기");
-        assertThat(registry.titleFor("/fds-monitor")).isEqualTo("모니터링");
+        assertThat(registry.titleFor("/fds-monitor")).isEqualTo("/fds-monitor");
         assertThat(registry.titleFor("/nowhere")).isEqualTo("/nowhere");
         assertThat(registry.titleFor(null)).isEqualTo("/");
     }
@@ -212,10 +212,10 @@ class MenuRegistryTest {
         assertThat(new MenuRegistry().listPathFor("/")).isEqualTo("/");
     }
 
-    /** 모니터링은 고객사 데이터를 보므로 TENANT 다. SYSTEM 이면 미선택 SUPER 가 테넌트 선택 없이 들어온다. */
-    @Test void fdsMonitorIsTenantAreaAndNotSuperOnly() {
-        assertThat(registry.areaOf("/fds-monitor")).isEqualTo(MenuArea.TENANT);
-        assertThat(registry.itemsFor(false)).extracting(MenuItem::href).contains("/fds-monitor");
+    /** 이상 징후 탐지는 2026-10-05 에 지웠다. 메뉴에 다시 나타나면 안 된다. */
+    @Test void fdsMenusAreGone() {
+        assertThat(MenuRegistry.ALL).extracting(MenuItem::href).doesNotContain("/fds-policies", "/fds-monitor");
+        assertThat(MenuRegistry.ALL).extracting(MenuItem::group).doesNotContain("이상 징후 탐지");
     }
 
     private MenuArea area(String href) {

@@ -9,7 +9,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_FDS_POLICY — COMPANY_IDX 가 PK(고객사당 1건). ERD 컬럼 10개. */
+/**
+ * CCFA_FDS_POLICY — COMPANY_IDX 가 PK(고객사당 1건). ERD 컬럼 10개.
+ *
+ * <p>어드민에서 쓰지 않는다. 이상 징후 탐지 화면은 2026-10-05 에 지웠지만 테이블은 운영 DB 에
+ * 남아 있어 ERD 대조({@code ErdConformanceTest})를 위해 엔티티만 둔다.
+ */
 @Entity
 @Table(name = "CCFA_FDS_POLICY")
 @Getter @Setter @NoArgsConstructor

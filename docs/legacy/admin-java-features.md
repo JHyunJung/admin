@@ -49,11 +49,11 @@
 | `BasicController` | `/myAvatars.jpg` | 고정 경로 이미지 중 하나를 무작위로 내려 줌 | 없음(장식 기능) |
 | `BasicController` | (메서드) `convert(type)` | 기간 프리셋 today/recently/tweekly/tmonthly/tyear | 없음(편의 기능, 설계서 §7 "이번 범위 밖") |
 | `ChangePasswordController` | `/change-password` GET/POST | 비밀번호 변경. 대문자·소문자·숫자·특수문자 8자 이상, `LAST_PW_CHANGE_DATE` 갱신 | `/me/password` (같은 규칙, 만료 시 강제 이동) |
-| `CompanyController` | `/system/company/list`, `/edit/{IDX}`, `/remove/{IDX}` | 고객사 CRUD. 신규 시 업체코드 5자리 자동 생성, 업체명·업체코드 중복 검사, 최상위(IDX 0) 삭제 금지, 변경을 감사 로그에 `[업체관리]` 로 | `/companies` (삭제 시 딸린 데이터 정리, 생성 시 AAID 전체 차단·FDS 기본행 — 설계서 §3.4) |
+| `CompanyController` | `/system/company/list`, `/edit/{IDX}`, `/remove/{IDX}` | 고객사 CRUD. 신규 시 업체코드 5자리 자동 생성, 업체명·업체코드 중복 검사, 최상위(IDX 0) 삭제 금지, 변경을 감사 로그에 `[업체관리]` 로 | `/companies` (삭제 시 딸린 데이터 정리, 생성 시 AAID 전체 차단 — 설계서 §3.4. FDS 기본행은 2026-10-05 FDS 삭제로 만들지 않음) |
 | `DashboardController` | `/dashboard/edit/{IDX}`, `/dashboard/delete/{IDX}` | 운영자별 대시보드 위젯(통계 항목) 구성. 같은 통계 중복 금지 | 없음(개인 위젯 구성은 범위 밖. 고정 대시보드 `/` 가 대신한다) |
 | `ExternalController` | `/external/license/{filename}` | `HASHVALUE` 가 일치하는 라이선스의 `LICENSE` 문자열을 본문으로. 인증 없음 | `/external/license/{filename}` (`ExternalLicenseController`, GET·POST, 인증 없음) |
-| `FDSController` | `/policy` POST | FDS 정책 저장(`FDSPolicyValidator`), 변경을 `[이상징후탐지정책]` 으로 기록 | `/fds-policies` |
-| `FDSController` | `/monitoring` | FDS 탐지 이력 목록(기간 `dterm`, `AND_IP`/`OR_IP` 조건, 페이징) | `/fds-monitor` (반복 주기 조건만 본다) |
+| `FDSController` | `/policy` POST | FDS 정책 저장(`FDSPolicyValidator`), 변경을 `[이상징후탐지정책]` 으로 기록 | 없음(2026-10-05 삭제) |
+| `FDSController` | `/monitoring` | FDS 탐지 이력 목록(기간 `dterm`, `AND_IP`/`OR_IP` 조건, 페이징) | 없음(2026-10-05 삭제) |
 | `FDSController` | `/ajax/realtime1`, `/ajax/realtime2` | 실시간 건수 차트. 2번도 1번 쿼리를 부르고, DAO 의 C2 는 미구현 | 없음(이전에도 반쪽이었다) |
 | `FidoController` | `/{moduleName}/list`, `/edit/{IDX}` 등 | 범용 CRUD. 모듈: `aaid`, `credparams`, `metadata`(2022-04 추가), `membercode`, `appid`, `fidouser`. 등록·수정·삭제를 `KEY(old -> new)` 로 감사 기록 | `/appids`, `/appservers`, `/criteria`, `/fido2/metadata`, `/fido2/credential-params`, `/users` |
 | `FidoController` | `/aaid/disabled/{AAID}`, `/aaid/enabled/{AAID}` POST | 회사별 AAID 차단/허용 토글 | `/criteria` (고객사 컨텍스트에서 토글) |
@@ -106,8 +106,8 @@ MyBatis 를 부른다(쿼리 본문은 `mybatis-mappers.md`).
 `ManagerDaoImpl` 에 있던 동작이다. 새 어드민으로는 고객사 쪽만 옮겼다.
 
 - 고객사 생성: 행 insert → 새 IDX 로 **AAID 전체 차단**(`disableCompanyAllAAID`) → 회사 기본 시스템 속성 insert →
-  **FDS 정책 기본행**(`fds.insert`) 도 같은 자리에서 생성. 새 어드민: `CompanyService.create` (설계서 §3.4).
-- 고객사 삭제: 행 삭제 → 그 고객사의 시스템 속성·AAID 행 정리. 새 어드민: `CompanyService.delete` 가 설정·AAID·FDS 정책을 지운다.
+  **FDS 정책 기본행**(`fds.insert`) 도 같은 자리에서 생성. 새 어드민: `CompanyService.create` (설계서 §3.4). FDS 정책 기본행은 2026-10-05 이후 만들지 않는다.
+- 고객사 삭제: 행 삭제 → 그 고객사의 시스템 속성·AAID 행 정리. 새 어드민: `CompanyService.delete` 가 설정·AAID 를 지운다(FDS 정책 행은 2026-10-05 이후 건드리지 않는다).
 - 운영자 생성: 행 insert 후 `OWNER_IDX` 로 `managerStatisticsInit1`~`4` 를 넣어 개인 통계·대시보드 기본값을 만든다.
   개인 위젯을 옮기지 않았으므로 **옮기지 않았다**.
 - 운영자 삭제: 행 삭제 + `deleteManagerData`(개인 데이터 정리). 같은 이유로 옮기지 않았다.
@@ -146,7 +146,7 @@ Quartz `QuartzJobBean` 기반이다. 주기 설정은 XML 이라 확인하지 �
 |---|---|---|
 | `CompanyValidator` | 회사명·상태 필수, 시작·종료일 `FULLTIME`, 최대 APPID·앱서버·사용자 수는 정수(비면 0) | 고객사 폼 검증 |
 | `ManagerValidator` | 비밀번호·재입력 일치, 대문자·소문자·숫자·특수문자 포함 8자 이상, 로그인 ID `[a-zA-Z0-9]{3,20}`, 변경 시 `LAST_PW_CHANGE_DATE` 기록("2507" 주석) | 같은 규칙(설계서 §3.3), 만료는 열이 있을 때만(§3.6) |
-| `FDSPolicyValidator` | AND·OR 국가 필수, IP 목록 각 항목이 단일·`a.b.c.d/nn`·`a~b` 중 하나(쉼표 구분, 공백 제거). 오류 "올바른 ip형식이 아닙니다." | `@IpRuleList`(설계서 §3.1). 범위의 시작 ≤ 끝 검사를 더했다 |
+| `FDSPolicyValidator` | AND·OR 국가 필수, IP 목록 각 항목이 단일·`a.b.c.d/nn`·`a~b` 중 하나(쉼표 구분, 공백 제거). 오류 "올바른 ip형식이 아닙니다." | 없음(2026-10-05 FDS 삭제와 함께 `@IpRuleList` 제거) |
 | `FidoValidator` | 모듈별 필수·정수 규칙. `appid`(APPID·STATUS), `metadata`(인증기 메타데이터 필드), `credparams`(CRED_ALG), `membercode`(MEMBER_CODE·MEMBER_ID·TYPE), `fidouser`(USERID). 메타데이터는 JSON 원문을 `Criteria` 로 파싱하고 해시를 저장, 실패 시 "유효하지 않은 metadata 형식입니다." | 화면별 폼 검증. `fidouser` 블록 뒤는 읽지 못했다 |
 | `StatisticsValidator` | 통계 빌더 입력(대상·함수·그룹·필터·정렬·상위 N). 그룹 2 만 있으면 거부, 그룹이 있으면 정렬 항목은 그룹 필드 중 하나 | 없음(통계 빌더를 옮기지 않음) |
 | `DashboardValidator` | 통계 항목·순서·컬럼 클래스·크기 필수 | 없음(개인 위젯을 옮기지 않음) |

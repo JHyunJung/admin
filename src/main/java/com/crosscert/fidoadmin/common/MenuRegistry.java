@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 public class MenuRegistry {
 
     /**
-     * 그룹 이름과 순서는 이전 어드민의 업무 도메인 구분을 따른다(로그·이상 징후 탐지·
-     * FIDO 서버 관리·시스템관리). 기존 사용자가 찾던 자리에서 찾게 하려는 것이므로,
+     * 그룹 이름과 순서는 이전 어드민의 업무 도메인 구분을 따른다(로그·
+     * FIDO 서버 관리·시스템관리. 이상 징후 탐지는 2026-10-05 에 지웠다). 기존 사용자가 찾던 자리에서 찾게 하려는 것이므로,
      * 테이블 성격이 아니라 <b>업무 성격</b>으로 묶는다.
      *
      * <p>이전 어드민에 있던 "통계 → 통계관리"는 넣지 않았다. 대시보드가 같은 일을 한다.
@@ -56,10 +56,6 @@ public class MenuRegistry {
         // 메일/SMS 큐는 사이드바에서 감췄다(hidden). 항목을 지우지 않는 이유는 MenuItem 주석에 있다 —
         // TENANT 경로를 목록에서 빼면 areaOf 가 SYSTEM 으로 판정해 인터셉터가 막지 못한다.
         new MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope", true),
-        // 이전 어드민의 "이상 징후 탐지 → 정책관리 / 모니터링". 모니터링은 현재 컬럼으로 성립하는
-        // 반복 주기 조건만 본다(docs/superpowers/specs/2026-09-27-fds-monitor-design.md).
-        new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "FDS 정책", "/fds-policies", false, "bi-shield-check"),
-        new MenuItem(MenuArea.TENANT, "이상 징후 탐지", "모니터링", "/fds-monitor", false, "bi-activity"),
         // 이전 어드민의 "FIDO 서버 관리" 이름·순서를 그대로 쓴다(AppID 관리 … TC원문 보기).
         // 서명(SIGN)은 이전 어드민에 없던 화면이라 같은 관례("… 보기")로 맨 끝에 둔다.
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AppID 관리", "/appids", false, "bi-app-indicator"),
