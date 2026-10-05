@@ -31,6 +31,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,8 +42,9 @@ class CriteriaQueryServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     NamedParameterJdbcTemplate jdbc = mock(NamedParameterJdbcTemplate.class);
     ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    CriteriaMetadataParser parser = new CriteriaMetadataParser();
     CriteriaQueryService service =
-        new CriteriaQueryService(repo, audit, new TenantContext(new SelectedTenant()), jdbc, events);
+        new CriteriaQueryService(repo, audit, new TenantContext(new SelectedTenant()), jdbc, events, parser);
 
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -256,5 +258,55 @@ class CriteriaQueryServiceTest {
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).update(sql.capture(), any(MapSqlParameterSource.class));
         assertThat(sql.getValue()).contains("DELETE FROM CCFA_COMPANY_AAID");
+    }
+
+    @Test void superCreatesCriteriaBlocksEveryCompanyAndPublishes() {
+        login(0L);
+        when(repo.existsByAaid("0012#0009")).thenReturn(false);
+        when(repo.save(any())).thenAnswer(inv -> { Criteria c = inv.getArgument(0); c.setIdx(30L); return c; });
+        when(jdbc.update(anyString(), any(MapSqlParameterSource.class))).thenReturn(4);
+
+        Criteria saved = service.create("{\"aaid\":\"0012#0009\",\"keyProtection\":2}");
+
+        assertThat(saved.getIdx()).isEqualTo(30L);
+        assertThat(saved.getKeyprotection()).isEqualTo(2L);
+        assertThat(saved.getCreatetime()).isNotNull();
+        assertThat(saved.getUpdatedtime()).isEqualTo(saved.getCreatetime());
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).update(sql.capture(), params.capture());
+        assertThat(sql.getValue()).contains("INSERT INTO CCFA_COMPANY_AAID").contains("FROM CCFA_COMPANY").contains("NOT EXISTS");
+        assertThat(params.getValue().getValue("aaid")).isEqualTo("0012#0009");
+        verify(audit).log(AuditType.CREATE, "AAID(정책) 등록 | AAID: 0012#0009 | 차단 고객사 4곳");
+        verify(events).publishEvent(new FidoConfigChanged("AAID 등록 0012#0009"));
+    }
+
+    /** 중복 검사는 trim 된 AAID 로 한다. 앞뒤 공백으로 같은 AAID 가 두 번 들어가면 안 된다. */
+    @Test void duplicateAaidIsRejected() {
+        login(0L);
+        when(repo.existsByAaid("0012#0001")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.create("{\"aaid\":\" 0012#0001 \"}"))
+            .isInstanceOf(CriteriaMetadataException.class)
+            .hasMessage("이미 등록된 AAID 입니다.");
+
+        verify(repo, never()).save(any());
+        verify(jdbc, never()).update(anyString(), any(MapSqlParameterSource.class));
+    }
+
+    @Test void companyRoleCannotCreate() {
+        login(7L);
+        assertThatThrownBy(() -> service.create("{\"aaid\":\"0012#0009\"}"))
+            .isInstanceOf(AccessDeniedException.class);
+        verify(repo, never()).save(any());
+    }
+
+    @Test void invalidMetadataSavesNothing() {
+        login(0L);
+        assertThatThrownBy(() -> service.create("not json"))
+            .isInstanceOf(CriteriaMetadataException.class)
+            .hasMessage(CriteriaMetadataParser.INVALID);
+        verify(repo, never()).save(any());
+        verify(events, never()).publishEvent(any());
     }
 }

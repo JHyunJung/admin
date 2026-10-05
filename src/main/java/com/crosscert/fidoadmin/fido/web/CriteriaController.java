@@ -1,12 +1,19 @@
 package com.crosscert.fidoadmin.fido.web;
 
+import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.common.CrudService;
 import com.crosscert.fidoadmin.common.ReadOnlyController;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
+import com.crosscert.fidoadmin.fido.service.CriteriaMetadataException;
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +26,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  *
  * <p>기준 데이터(CRITERIA) 자체는 전역이지만 토글 상태는 고객사별이라
  * COMPANY 역할도 쓴다. 고객사 경계는 서비스가 유효 테넌트로 건다.
+ *
+ * <p>등록(/new, POST)은 SUPER 전용이다. 수정·삭제 경로가 열리지 않도록 기반을
+ * CrudController 로 바꾸지 않고 두 핸들러만 둔다.
  */
 @Controller
 @RequestMapping("/criteria")
@@ -37,6 +47,36 @@ public class CriteriaController extends ReadOnlyController<Criteria, Long, Crite
     @Override
     protected void populateListModel(Model model) {
         model.addAttribute("disabledAaids", service.disabledAaids());
+    }
+
+    @GetMapping("/new")
+    public String createForm(@AuthenticationPrincipal ManagerUserDetails me, Model model) {
+        requireSuper(me);
+        model.addAttribute("form", new CriteriaMetadataForm());
+        return viewDir() + "/form";
+    }
+
+    @PostMapping
+    public String create(@AuthenticationPrincipal ManagerUserDetails me,
+                         @Valid @ModelAttribute("form") CriteriaMetadataForm form, BindingResult binding,
+                         RedirectAttributes redirect) {
+        requireSuper(me);
+        if (binding.hasErrors()) return viewDir() + "/form";
+        try {
+            Criteria saved = service.create(form.getJsondata());
+            redirect.addFlashAttribute("flashSuccess", "등록되었습니다. 모든 고객사에서 비활성 상태로 시작합니다.");
+            return "redirect:" + basePath() + "/" + saved.getIdx();
+        } catch (CriteriaMetadataException e) {
+            binding.rejectValue("jsondata", "invalid", e.getMessage());
+            return viewDir() + "/form";
+        }
+    }
+
+    /** 서비스도 막지만, 폼 화면(GET)은 서비스를 거치지 않으므로 여기서도 막는다. */
+    private static void requireSuper(ManagerUserDetails me) {
+        if (me == null || !me.isSuper()) {
+            throw new AccessDeniedException("AAID 정책 등록은 최고 관리자 전용입니다");
+        }
     }
 
     /**

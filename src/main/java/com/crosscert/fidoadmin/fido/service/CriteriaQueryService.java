@@ -9,6 +9,7 @@ import com.crosscert.fidoadmin.fido.entity.Criteria;
 import com.crosscert.fidoadmin.system.reload.FidoConfigChanged;
 import com.crosscert.fidoadmin.fido.repository.CriteriaRepository;
 import com.crosscert.fidoadmin.fido.web.CriteriaSearchForm;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,12 +18,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * CRITERIA(AAID 정책) 조회와 고객사별 활성/비활성 토글.
+ * CRITERIA(AAID 정책) 조회·등록과 고객사별 활성/비활성 토글.
  *
  * <p>CRITERIA 자체는 COMPANY_IDX 가 없는 전역 기준 데이터라 companyIdxAttribute() 는
  * null 이다. 그래도 SUPER 전용이 아니다 — 이 화면의 실제 용도가 고객사별 토글이고,
@@ -36,13 +38,15 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
 
     private final NamedParameterJdbcTemplate jdbc;
     private final ApplicationEventPublisher events;
+    private final CriteriaMetadataParser parser;
 
     public CriteriaQueryService(CriteriaRepository repository, AuditLogger audit,
                                 TenantContext tenant, NamedParameterJdbcTemplate jdbc,
-                                ApplicationEventPublisher events) {
+                                ApplicationEventPublisher events, CriteriaMetadataParser parser) {
         super(repository, audit, tenant);
         this.jdbc = jdbc;
         this.events = events;
+        this.parser = parser;
     }
 
     /**
@@ -73,6 +77,48 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
             """;
         var params = new MapSqlParameterSource("companyIdx", companyIdx);
         return new HashSet<>(jdbc.queryForList(sql, params, String.class));
+    }
+
+    /**
+     * 메타데이터 JSON 으로 새 AAID 정책을 등록한다. SUPER 전용.
+     *
+     * <p>CRITERIA 는 전역 기준 데이터라 고객사 운영자가 늘릴 수 없다. 이 서비스는
+     * {@link #requireSuperForGlobalTable()} 을 로그인 확인으로 풀어 두었으므로 여기서 직접 막는다.
+     *
+     * <p>새 AAID 는 모든 고객사에서 꺼진 채로 시작한다 — 고객사 생성 때 AAID 를 전부 막는 것과 같은
+     * 규약이다. 각 고객사가 목록에서 켜야 FIDO 등록에 쓰인다.
+     *
+     * <p>CRITERIA 에 유니크 제약이 없어 동시 등록 경쟁은 막지 못한다. SUPER 전용·저빈도 화면이라
+     * 애플리케이션 중복 검사로 둔다.
+     */
+    @Transactional
+    public Criteria create(String json) {
+        if (!tenant.require().isSuper()) {
+            throw new AccessDeniedException("AAID 정책 등록은 최고 관리자 전용입니다");
+        }
+        Criteria criteria = parser.parse(json);
+        CriteriaRepository criteriaRepository = (CriteriaRepository) repository;
+        if (criteriaRepository.existsByAaid(criteria.getAaid())) {
+            throw new CriteriaMetadataException("이미 등록된 AAID 입니다.");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        criteria.setCreatetime(now);
+        criteria.setUpdatedtime(now);
+        Criteria saved = repository.save(criteria);
+
+        int blocked = jdbc.update("""
+            INSERT INTO CCFA_COMPANY_AAID (COMPANY_IDX, AAID)
+            SELECT c.IDX, :aaid FROM CCFA_COMPANY c
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM CCFA_COMPANY_AAID b
+                  WHERE b.COMPANY_IDX = c.IDX AND b.AAID = :aaid
+             )
+            """, new MapSqlParameterSource("aaid", saved.getAaid()));
+
+        audit.log(AuditType.CREATE,
+            "AAID(정책) 등록 | AAID: " + saved.getAaid() + " | 차단 고객사 " + blocked + "곳");
+        events.publishEvent(new FidoConfigChanged("AAID 등록 " + saved.getAaid()));
+        return saved;
     }
 
     /**

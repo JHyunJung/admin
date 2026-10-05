@@ -4,4 +4,5 @@ import com.crosscert.fidoadmin.common.AdminRepository;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
 
 public interface CriteriaRepository extends AdminRepository<Criteria, Long> {
+    boolean existsByAaid(String aaid);
 }

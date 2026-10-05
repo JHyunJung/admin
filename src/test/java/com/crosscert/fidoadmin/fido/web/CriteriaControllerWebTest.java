@@ -8,6 +8,8 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -22,6 +24,8 @@ import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
+import com.crosscert.fidoadmin.fido.service.CriteriaMetadataException;
+import com.crosscert.fidoadmin.fido.service.CriteriaMetadataParser;
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -111,7 +115,7 @@ class CriteriaControllerWebTest {
             .andExpect(content().string(containsString("hash-0001")))
             .andExpect(content().string(not(containsString("Sample fingerprint"))))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))))
-            .andExpect(content().string(not(containsString("/criteria/new"))))
+            .andExpect(content().string(containsString("/criteria/new")))
             .andExpect(content().string(not(containsString("data-confirm-form"))));
         ArgumentCaptor<CriteriaSearchForm> captor = ArgumentCaptor.forClass(CriteriaSearchForm.class);
         verify(service).search(captor.capture(), any());
@@ -140,5 +144,62 @@ class CriteriaControllerWebTest {
             .andExpect(flash().attribute("statusMessage", "전체 비활성: 4건을 변경했습니다."));
 
         verify(service).changeStatusAll(false);
+    }
+
+    @Test void companyDoesNotSeeCreateButton() throws Exception {
+        when(service.disabledAaids()).thenReturn(java.util.Set.of());
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(criteria())));
+        mvc.perform(get("/criteria").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("/criteria/new"))));
+    }
+
+    @Test void superOpensCreateForm() throws Exception {
+        mvc.perform(get("/criteria/new").session(session).with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/criteria/form"))
+            .andExpect(content().string(containsString("name=\"jsondata\"")));
+    }
+
+    @Test void companyCannotOpenCreateForm() throws Exception {
+        mvc.perform(get("/criteria/new").with(user(companyUser)))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test void companyCannotPostCreate() throws Exception {
+        mvc.perform(post("/criteria").with(user(companyUser)).with(csrf())
+                .param("jsondata", "{\"aaid\":\"0012#0009\"}"))
+            .andExpect(status().isForbidden());
+        verify(service, never()).create(anyString());
+    }
+
+    @Test void superCreateRedirectsToDetail() throws Exception {
+        Criteria saved = criteria();
+        saved.setIdx(30L);
+        when(service.create("{\"aaid\":\"0012#0009\"}")).thenReturn(saved);
+        mvc.perform(post("/criteria").session(session).with(user(superUser)).with(csrf())
+                .param("jsondata", "{\"aaid\":\"0012#0009\"}"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/criteria/30"))
+            .andExpect(flash().attribute("flashSuccess", "등록되었습니다. 모든 고객사에서 비활성 상태로 시작합니다."));
+    }
+
+    @Test void parseErrorShowsFormWithMessageAndKeepsInput() throws Exception {
+        when(service.create("{bad")).thenThrow(new CriteriaMetadataException(CriteriaMetadataParser.INVALID));
+        mvc.perform(post("/criteria").session(session).with(user(superUser)).with(csrf())
+                .param("jsondata", "{bad"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/criteria/form"))
+            .andExpect(content().string(containsString(CriteriaMetadataParser.INVALID)))
+            .andExpect(content().string(containsString("{bad")));
+    }
+
+    @Test void blankJsonShowsFormAgain() throws Exception {
+        mvc.perform(post("/criteria").session(session).with(user(superUser)).with(csrf())
+                .param("jsondata", "   "))
+            .andExpect(status().isOk())
+            .andExpect(view().name("fido/criteria/form"));
+        verify(service, never()).create(anyString());
     }
 }

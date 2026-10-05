@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>AAID(정책) 등록</title></head>
+<body>
+<main>
+  <h1 class="h4 mb-3">AAID(정책) 등록</h1>
+  <form th:action="@{/criteria}" th:object="${form}" method="post"
+        class="bg-white border rounded p-3" style="max-width: 760px;">
+    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
+      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+    </div>
+    <p class="text-secondary small mb-2">
+      FIDO UAF 메타데이터 문(JSON)을 붙여 넣으세요. AAID·인증 방식 등은 JSON 에서 읽어 채웁니다.
+      등록한 AAID 는 모든 고객사에서 <strong>비활성</strong>으로 시작합니다.
+    </p>
+    <label class="form-label" for="jsondata">메타데이터 JSON <span class="text-danger">*</span></label>
+    <textarea th:field="*{jsondata}" id="jsondata" rows="16" class="form-control fa-mono"
+              th:classappend="${#fields.hasErrors('jsondata')} ? 'is-invalid'"></textarea>
+    <div class="invalid-feedback" th:errors="*{jsondata}"></div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary">등록</button>
+      <a th:href="@{/criteria}" class="btn btn-outline-secondary">취소</a>
+    </div>
+  </form>
+</main>
+</body>
+</html>
