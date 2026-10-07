@@ -14,17 +14,17 @@
       <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
       <tr><th>시리얼</th><td class="fa-mono" th:text="${item.serialcode}"></td></tr>
       <!--/* 아래는 JSONDATA 를 풀어 꺼낸 값(FidoLogPayload). 풀어낸 원문은 맨 아래 JSONDATA 에 있다. */-->
-      <tr><th>구분</th><td th:text="${item.op ?: '-'}"></td></tr>
+      <tr><th>구분</th><td><span th:replace="~{fragments/fido-log :: op(${item.op})}"></span></td></tr>
       <tr><th>사용자</th><td class="fa-mono" th:text="${item.user ?: '-'}"></td></tr>
       <tr><th>서비스명</th><td th:text="${item.servicename ?: '-'}"></td></tr>
       <tr><th>FIDO종류</th><td th:text="${item.fidoKind ?: '-'}"></td></tr>
       <tr><th>타입</th><td th:text="${item.type ?: '-'}"></td></tr>
       <tr><th>사용자ID</th><td class="fa-mono" th:text="${item.userid ?: '-'}"></td></tr>
       <tr><th>요청IP</th><td class="fa-mono" th:text="${item.accessIp ?: '-'}"></td></tr>
-      <tr><th>인증장치</th><td th:text="${item.bioTypeLabel()}"></td></tr>
+      <tr><th>인증장치</th><td><span th:replace="~{fragments/fido-log :: bio(${item.bioType})}"></span></td></tr>
       <tr><th>로깅시간</th><td th:text="${item.logtime ?: '-'}"></td></tr>
       <tr><th>UserAgent</th><td class="small" th:text="${item.userAgent ?: '-'}"></td></tr>
-      <tr><th>상태</th><td th:text="${item.status ?: '-'}"></td></tr>
+      <tr><th>상태</th><td><span th:replace="~{fragments/fido-log :: status(${item.status})}"></span></td></tr>
       <tr><th>JSONDATA</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.jsondataPretty}"></pre></td></tr>
       <tr><th>일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
     </tbody></table>

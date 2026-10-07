@@ -89,6 +89,54 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
     public String bioTypeLabel() { return bioTypeLabel(bioType); }
 
     /**
+     * 인증장치 배지 색(CSS 클래스). 사람이 고르는 인증 수단(지문·얼굴인식·PIN·패턴·홍채·음성·손바닥)은 값마다
+     * 다른 색이고, PRESENCE·지역기반·없음·ALL·알수없음은 회색이다.
+     */
+    public static String bioBadge(Long bioType) {
+        if (bioType == null) return "text-bg-secondary";
+        return switch (bioType.intValue()) {
+            case 2 -> "fa-bio-finger";
+            case 4 -> "fa-bio-pin";
+            case 8 -> "fa-bio-voice";
+            case 16 -> "fa-bio-face";
+            case 64 -> "fa-bio-iris";
+            case 128 -> "fa-bio-pattern";
+            case 256 -> "fa-bio-palm";
+            default -> "text-bg-secondary";
+        };
+    }
+
+    /**
+     * 구분 배지 색(CSS 클래스). 등록·인증·해지·TC 를 한눈에 가르도록 값마다 다른 색이다.
+     * 모르는 값은 회색. 대소문자는 가리지 않는다.
+     */
+    public static String opBadge(String op) {
+        if (op == null) return "text-bg-secondary";
+        return switch (op.trim().toLowerCase(java.util.Locale.ROOT)) {
+            case "reg" -> "fa-badge-reg";
+            case "auth" -> "fa-badge-auth";
+            case "dereg" -> "fa-badge-dereg";
+            case "tc" -> "fa-badge-tc";
+            default -> "text-bg-secondary";
+        };
+    }
+
+    /**
+     * 상태 배지 색(CSS 클래스). 완료(Success) 초록, 실패(Error) 빨강, 대기(Wait) 노랑,
+     * 진행 중(RequestOK·ResponseOK) 파랑. 모르는 값은 회색. 대소문자는 가리지 않는다.
+     */
+    public static String statusBadge(String status) {
+        if (status == null) return "text-bg-secondary";
+        return switch (status.trim().toLowerCase(java.util.Locale.ROOT)) {
+            case "success" -> "text-bg-success";
+            case "error" -> "text-bg-danger";
+            case "wait" -> "text-bg-warning";
+            case "requestok", "responseok" -> "fa-badge-progress";
+            default -> "text-bg-secondary";
+        };
+    }
+
+    /**
      * 사용자 이름에서 첫 {@code _*} 뒤 서비스 꼬리를 뗀 앞부분. 꼬리가 없으면 이름 그대로.
      * 예: {@code 113057331000001_0_*com.kbstar.kbbiz_*KF} → {@code 113057331000001_0}.
      */

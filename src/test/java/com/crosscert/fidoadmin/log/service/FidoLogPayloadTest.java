@@ -101,6 +101,34 @@ class FidoLogPayloadTest {
         }
     }
 
+    /** 구분·상태는 값이 정해져 있어 값마다 배지 색이 다르다. 대소문자는 가리지 않고, 모르는 값은 회색. */
+    @Test void badgeClassesPerOpAndStatus() {
+        assertThat(FidoLogPayload.opBadge("Reg")).isEqualTo("fa-badge-reg");
+        assertThat(FidoLogPayload.opBadge("auth")).isEqualTo("fa-badge-auth");
+        assertThat(FidoLogPayload.opBadge("DeReg")).isEqualTo("fa-badge-dereg");
+        assertThat(FidoLogPayload.opBadge("TC")).isEqualTo("fa-badge-tc");
+        assertThat(FidoLogPayload.opBadge("Other")).isEqualTo("text-bg-secondary");
+        assertThat(FidoLogPayload.opBadge(null)).isEqualTo("text-bg-secondary");
+
+        assertThat(FidoLogPayload.statusBadge("Success")).isEqualTo("text-bg-success");
+        assertThat(FidoLogPayload.statusBadge("ERROR")).isEqualTo("text-bg-danger");
+        assertThat(FidoLogPayload.statusBadge("Wait")).isEqualTo("text-bg-warning");
+        assertThat(FidoLogPayload.statusBadge("RequestOK")).isEqualTo("fa-badge-progress");
+        assertThat(FidoLogPayload.statusBadge("ResponseOK")).isEqualTo("fa-badge-progress");
+        assertThat(FidoLogPayload.statusBadge("Other")).isEqualTo("text-bg-secondary");
+        assertThat(FidoLogPayload.statusBadge(null)).isEqualTo("text-bg-secondary");
+
+        assertThat(FidoLogPayload.bioBadge(2L)).isEqualTo("fa-bio-finger");
+        assertThat(FidoLogPayload.bioBadge(16L)).isEqualTo("fa-bio-face");
+        assertThat(FidoLogPayload.bioBadge(4L)).isEqualTo("fa-bio-pin");
+        assertThat(FidoLogPayload.bioBadge(128L)).isEqualTo("fa-bio-pattern");
+        assertThat(FidoLogPayload.bioBadge(64L)).isEqualTo("fa-bio-iris");
+        assertThat(FidoLogPayload.bioBadge(8L)).isEqualTo("fa-bio-voice");
+        assertThat(FidoLogPayload.bioBadge(256L)).isEqualTo("fa-bio-palm");
+        assertThat(FidoLogPayload.bioBadge(512L)).isEqualTo("text-bg-secondary");
+        assertThat(FidoLogPayload.bioBadge(null)).isEqualTo("text-bg-secondary");
+    }
+
     @Test void bioTypeLabelsMatchLegacyBioType() {
         assertThat(FidoLogPayload.bioTypeLabel(1L)).isEqualTo("PRESENCE");
         assertThat(FidoLogPayload.bioTypeLabel(2L)).isEqualTo("지문");

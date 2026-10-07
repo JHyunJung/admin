@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* FIDO 로그 구분·상태·인증장치 배지. 값은 정해져 있어 값마다 색을 준다(색 규칙은 FidoLogPayload.opBadge·statusBadge·bioBadge). 구분·상태가 없으면 '-'. */-->
+<span th:fragment="op(value)"><span th:if="${value == null}" class="text-secondary">-</span><span th:unless="${value == null}" class="badge text-nowrap"
+      th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).opBadge(value)}" th:text="${value}"></span></span>
+<span th:fragment="status(value)"><span th:if="${value == null}" class="text-secondary">-</span><span th:unless="${value == null}" class="badge text-nowrap"
+      th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).statusBadge(value)}" th:text="${value}"></span></span>
+<span th:fragment="bio(code)" class="badge text-nowrap"
+      th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioBadge(code)}"
+      th:text="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioTypeLabel(code)}"></span>
+</body>
+</html>

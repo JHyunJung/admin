@@ -27,6 +27,16 @@
                 th:selected="${search.status != null and #strings.equalsIgnoreCase(search.status, st)}"></option>
       </select>
     </div>
+    <div class="col-auto">
+      <label class="form-label small mb-0">인증장치</label>
+      <select name="bioType" class="form-select form-select-sm">
+        <option value="">전체</option>
+        <option th:each="b : ${ {2, 16, 4, 128, 64, 8, 256, 1, 32, 512, 1024} }" th:value="${b}"
+                th:text="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioTypeLabel(b.longValue())}"
+                th:selected="${search.bioType != null and search.bioType == b}"></option>
+      </select>
+    </div>
+    <div class="col-auto"><label class="form-label small mb-0">번호</label><input type="number" name="idx" min="1" th:value="${search.idx}" class="form-control form-control-sm" style="width: 9rem;"></div>
     <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
   <!--/* 조건 검색은 그날 로그를 풀어 거른다. 상한(FidoLogQueryService.SCAN_LIMIT)에 걸리면 알린다. */-->
@@ -40,18 +50,13 @@
         <tr th:each="r : ${page.content}">
           <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
                  th:text="${r.idx}">0</a></td>
-          <td th:text="${r.op ?: '-'}"></td>
+          <td><span th:replace="~{fragments/fido-log :: op(${r.op})}"></span></td>
           <td th:text="${r.servicename ?: '-'}"></td>
           <!--/* 사용자ID 는 원문 그대로(_*서비스 꼬리 포함). 길면 이전 어드민처럼 말줄임하고(FidoLogRow.shorten) 전체는 title 로. */-->
           <td class="fa-mono" th:title="${r.userid}" th:text="${T(com.crosscert.fidoadmin.log.web.FidoLogRow).shorten(r.userid)}"></td>
-          <td th:text="${r.bioTypeLabel()}"></td>
+          <td><span th:replace="~{fragments/fido-log :: bio(${r.bioType})}"></span></td>
           <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-          <td>
-            <span th:if="${r.status == null}" class="text-secondary">-</span>
-            <span th:unless="${r.status == null}" class="badge"
-                  th:classappend="${#strings.equalsIgnoreCase(r.status, 'Success')} ? 'text-bg-success' : (${#strings.equalsIgnoreCase(r.status, 'Error')} ? 'text-bg-danger' : 'text-bg-secondary')"
-                  th:text="${r.status}"></span>
-          </td>
+          <td><span th:replace="~{fragments/fido-log :: status(${r.status})}"></span></td>
         </tr>
         <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
       </tbody>

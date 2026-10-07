@@ -53,8 +53,8 @@ public class FidoLogQueryService {
     /**
      * 목록. 없는 날짜면 빈 페이지다(오류가 아니다 — 그날 로그가 없다는 뜻이다).
      *
-     * <p>운영 JSONDATA 는 base64url 이라 DB 가 안을 볼 수 없다. 조건이 없으면 DB 가 한 페이지만 읽고
-     * 그 행만 푼다. 구분·서비스명·사용자·상태 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
+     * <p>운영 JSONDATA 는 base64url 이라 DB 가 안을 볼 수 없다. 번호(IDX)는 컬럼이라 언제나 SQL 로 건다.
+     * JSONDATA 조건이 없으면 DB 가 한 페이지만 읽고 그 행만 푼다. 구분·서비스명·사용자·인증장치·상태 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
      * {@link #SCAN_LIMIT} 건까지 풀어 Java 에서 거른 뒤 페이지를 나눈다.
      */
     @Transactional(readOnly = true)
@@ -65,18 +65,23 @@ public class FidoLogQueryService {
             return new FidoLogSearchResult(new PageImpl<>(List.of(), pageable, 0), false);
         }
         var params = new MapSqlParameterSource("companyIdx", companyIdx);
+        String where = " WHERE COMPANY_IDX = :companyIdx";
+        if (form.getIdx() != null) {
+            where += " AND IDX = :idx";
+            params.addValue("idx", form.getIdx());
+        }
         // 텍스트 블록을 쓰지 않는다 — 조각을 이어 붙이면 블록마다 들여쓰기가 따로 벗겨져
         // 앞뒤 공백이 사라진다(FROM 테이블명WHERE 처럼 붙어 ORA-03048 이 났다).
         String select = "SELECT IDX, COMPANY_IDX, SERVICENAME, CREATEDTIME, JSONDATA FROM " + table
-            + " WHERE COMPANY_IDX = :companyIdx ORDER BY CREATEDTIME DESC, IDX DESC";
+            + where + " ORDER BY CREATEDTIME DESC, IDX DESC";
 
         String op = opOrNull(form.getOp());
         String servicename = termOrNull(form.getServicename());
         String userid = termOrNull(form.getUserid());
         String status = termOrNull(form.getStatus());
-        if (op == null && servicename == null && userid == null && status == null) {
-            Long total = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM " + table + " WHERE COMPANY_IDX = :companyIdx", params, Long.class);
+        Long bioType = form.getBioType();
+        if (op == null && servicename == null && userid == null && status == null && bioType == null) {
+            Long total = jdbc.queryForObject("SELECT COUNT(*) FROM " + table + where, params, Long.class);
             if (total == null || total == 0) {
                 return new FidoLogSearchResult(new PageImpl<>(List.of(), pageable, 0), false);
             }
@@ -97,6 +102,7 @@ public class FidoLogQueryService {
             .filter(r -> servicename == null || containsIgnoreCase(r.servicename(), servicename))
             .filter(r -> userid == null || containsIgnoreCase(r.userid(), userid))
             .filter(r -> status == null || status.equalsIgnoreCase(r.status()))
+            .filter(r -> bioType == null || bioType.equals(r.bioType()))
             .toList();
         int from = (int) Math.min(pageable.getOffset(), matched.size());
         int to = Math.min(from + pageable.getPageSize(), matched.size());

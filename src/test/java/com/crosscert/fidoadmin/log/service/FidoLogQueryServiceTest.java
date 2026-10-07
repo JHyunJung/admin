@@ -149,7 +149,11 @@ class FidoLogQueryServiceTest {
     }
 
     private static FidoLogRow row(long idx, String op, String servicename, String userid, String status) {
-        return new FidoLogRow(idx, 1L, op, servicename, userid, 2L, status, LocalDateTime.of(2026, 9, 26, 10, 0));
+        return row(idx, op, servicename, userid, status, 2L);
+    }
+
+    private static FidoLogRow row(long idx, String op, String servicename, String userid, String status, Long bioType) {
+        return new FidoLogRow(idx, 1L, op, servicename, userid, bioType, status, LocalDateTime.of(2026, 9, 26, 10, 0));
     }
 
     private static String base64url(String json) {
@@ -281,5 +285,41 @@ class FidoLogQueryServiceTest {
         var result = service.search(f, PageRequest.of(0, 20));
 
         assertThat(result.page().getContent()).extracting(FidoLogRow::idx).containsExactly(3L, 1L);
+    }
+
+    /** 인증장치는 JSONDATA 안의 값이라 그날 로그를 풀어 코드로 거른다. */
+    @SuppressWarnings("unchecked")
+    @Test void bioTypeFilterMatchesCode() {
+        tableExists(true);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of(
+            row(3, "Auth", "s", "u", "Success", 16L),
+            row(2, "TC", "s", "u", "Success", 2L),
+            row(1, "Auth", "s", "u", "RequestOK", null)));
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setBioType(16L);
+
+        var result = service.search(f, PageRequest.of(0, 20));
+
+        assertThat(result.page().getContent()).extracting(FidoLogRow::idx).containsExactly(3L);
+    }
+
+    /** 번호는 컬럼이라 JSONDATA 를 풀지 않고 SQL 로 건다(목록·건수 모두). 값은 바인드 변수로만 간다. */
+    @Test void idxFilterIsAppliedInSql() {
+        tableExists(true);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(1L);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of());
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setIdx(914018809L);
+
+        service.search(f, PageRequest.of(0, 20));
+
+        ArgumentCaptor<String> countSql = ArgumentCaptor.forClass(String.class);
+        verify(jdbc).queryForObject(countSql.capture(), any(MapSqlParameterSource.class), eq(Long.class));
+        assertThat(countSql.getValue()).contains("AND IDX = :idx");
+        ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
+        verify(jdbc).query(sql.capture(), params.capture(), any(RowMapper.class));
+        assertThat(sql.getValue()).contains("COMPANY_IDX = :companyIdx AND IDX = :idx").doesNotContain("914018809");
+        assertThat(params.getValue().getValue("idx")).isEqualTo(914018809L);
     }
 }

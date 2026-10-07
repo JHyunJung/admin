@@ -164,6 +164,7 @@ class FidoLogControllerWebTest {
             .contains(longUser.substring(0, 38) + " ...")
             .contains("2026-10-02 14:42:20")
             .contains(">Success<").contains(">Error<").contains("text-bg-success").contains("text-bg-danger")
+            .contains("fa-badge-tc").contains("fa-badge-dereg").contains("fa-bio-finger")
             .contains("name=\"status\"").contains("value=\"Wait\"")
             .contains("name=\"op\"").contains("name=\"userid\"").contains("name=\"servicename\"")
             .contains("value=\"TC\"").contains("value=\"DeReg\"")

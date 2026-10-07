@@ -172,6 +172,20 @@ h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111
 .badge.text-bg-danger { background: #fee2e2 !important; color: #991b1b !important; }
 .badge.text-bg-warning { background: #fef3c7 !important; color: #92400e !important; }
 .badge.text-bg-primary { background: var(--fa-accent-soft) !important; color: var(--fa-accent-dark) !important; }
+/* FIDO 로그 구분(Reg·Auth·DeReg·TC)과 진행 중 상태(RequestOK·ResponseOK). 상태의 초록·빨강·노랑과 겹치지 않는 색을 쓴다. */
+.badge.fa-badge-reg { background: #dbeafe; color: #1e40af; }
+.badge.fa-badge-auth { background: #ccfbf1; color: #115e59; }
+.badge.fa-badge-dereg { background: #ffedd5; color: #9a3412; }
+.badge.fa-badge-tc { background: #ede9fe; color: #5b21b6; }
+.badge.fa-badge-progress { background: #e0f2fe; color: #075985; }
+/* FIDO 로그 인증장치. 사람이 고르는 인증 수단마다 다른 색, 그 밖(PRESENCE·없음·알수없음 등)은 회색. */
+.badge.fa-bio-finger { background: #e0e7ff; color: #3730a3; }
+.badge.fa-bio-face { background: #fce7f3; color: #9d174d; }
+.badge.fa-bio-pin { background: #ecfccb; color: #3f6212; }
+.badge.fa-bio-pattern { background: #cffafe; color: #155e75; }
+.badge.fa-bio-iris { background: #fae8ff; color: #86198f; }
+.badge.fa-bio-voice { background: #ffe4e6; color: #9f1239; }
+.badge.fa-bio-palm { background: #fef9c3; color: #854d0e; }
 
 /* ---------- 알림·페이지네이션 ---------- */
 .alert { border-radius: var(--bs-border-radius); }
