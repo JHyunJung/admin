@@ -118,15 +118,29 @@ class FidoLogPayloadTest {
         assertThat(FidoLogPayload.statusBadge("Other")).isEqualTo("text-bg-secondary");
         assertThat(FidoLogPayload.statusBadge(null)).isEqualTo("text-bg-secondary");
 
-        assertThat(FidoLogPayload.bioBadge(2L)).isEqualTo("fa-bio-finger");
-        assertThat(FidoLogPayload.bioBadge(16L)).isEqualTo("fa-bio-face");
-        assertThat(FidoLogPayload.bioBadge(4L)).isEqualTo("fa-bio-pin");
-        assertThat(FidoLogPayload.bioBadge(128L)).isEqualTo("fa-bio-pattern");
-        assertThat(FidoLogPayload.bioBadge(64L)).isEqualTo("fa-bio-iris");
-        assertThat(FidoLogPayload.bioBadge(8L)).isEqualTo("fa-bio-voice");
-        assertThat(FidoLogPayload.bioBadge(256L)).isEqualTo("fa-bio-palm");
-        assertThat(FidoLogPayload.bioBadge(512L)).isEqualTo("text-bg-secondary");
-        assertThat(FidoLogPayload.bioBadge(null)).isEqualTo("text-bg-secondary");
+    }
+
+    /** 인증장치는 아이콘 + 글자다. 코드마다 아이콘이 있고, 사람이 고르는 수단만 색이 있다. */
+    @Test void bioIconAndColorPerCode() {
+        assertThat(FidoLogPayload.bioIcon(2L)).isEqualTo("bi-fingerprint");
+        assertThat(FidoLogPayload.bioIcon(16L)).isEqualTo("bi-person-bounding-box");
+        assertThat(FidoLogPayload.bioIcon(4L)).isEqualTo("bi-123");
+        assertThat(FidoLogPayload.bioIcon(128L)).isEqualTo("bi-grid-3x3-gap");
+        assertThat(FidoLogPayload.bioIcon(64L)).isEqualTo("bi-eye");
+        assertThat(FidoLogPayload.bioIcon(8L)).isEqualTo("bi-mic");
+        assertThat(FidoLogPayload.bioIcon(256L)).isEqualTo("bi-hand-index");
+        assertThat(FidoLogPayload.bioIcon(1L)).isEqualTo("bi-hand-index-thumb");
+        assertThat(FidoLogPayload.bioIcon(32L)).isEqualTo("bi-geo-alt");
+        assertThat(FidoLogPayload.bioIcon(512L)).isEqualTo("bi-dash-circle");
+        assertThat(FidoLogPayload.bioIcon(1024L)).isEqualTo("bi-collection");
+        assertThat(FidoLogPayload.bioIcon(3L)).isEqualTo("bi-question-circle");
+        assertThat(FidoLogPayload.bioIcon(null)).isEqualTo("bi-question-circle");
+
+        assertThat(FidoLogPayload.bioColor(2L)).isEqualTo("fa-bio-finger");
+        assertThat(FidoLogPayload.bioColor(16L)).isEqualTo("fa-bio-face");
+        assertThat(FidoLogPayload.bioColor(256L)).isEqualTo("fa-bio-palm");
+        assertThat(FidoLogPayload.bioColor(1L)).isEqualTo("text-secondary");
+        assertThat(FidoLogPayload.bioColor(null)).isEqualTo("text-secondary");
     }
 
     @Test void bioTypeLabelsMatchLegacyBioType() {

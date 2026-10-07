@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* FIDO 로그 구분·상태·인증장치 배지. 값은 정해져 있어 값마다 색을 준다(색 규칙은 FidoLogPayload.opBadge·statusBadge·bioBadge). 구분·상태가 없으면 '-'. */-->
+<!--/* FIDO 로그 구분·상태 배지와 인증장치 표시. 값은 정해져 있어 값마다 색을 준다(규칙은 FidoLogPayload.opBadge·statusBadge·bioIcon·bioColor). 구분·상태가 없으면 '-'. */-->
 <span th:fragment="op(value)"><span th:if="${value == null}" class="text-secondary">-</span><span th:unless="${value == null}" class="badge text-nowrap"
       th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).opBadge(value)}" th:text="${value}"></span></span>
 <span th:fragment="status(value)"><span th:if="${value == null}" class="text-secondary">-</span><span th:unless="${value == null}" class="badge text-nowrap"
       th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).statusBadge(value)}" th:text="${value}"></span></span>
-<span th:fragment="bio(code)" class="badge text-nowrap"
-      th:classappend="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioBadge(code)}"
-      th:text="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioTypeLabel(code)}"></span>
+<!--/* 인증장치는 AppID 장치 칸(fragments/device)처럼 배지가 아니라 아이콘 + 글자다. 색은 아이콘에만 준다. */-->
+<span th:fragment="bio(code)" class="text-nowrap" th:with="P=${T(com.crosscert.fidoadmin.log.service.FidoLogPayload)}"><i class="bi me-1"
+      th:classappend="|${P.bioIcon(code)} ${P.bioColor(code)}|" aria-hidden="true"></i><th:block th:text="${P.bioTypeLabel(code)}"></th:block></span>
 </body>
 </html>

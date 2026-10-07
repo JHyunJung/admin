@@ -89,11 +89,33 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
     public String bioTypeLabel() { return bioTypeLabel(bioType); }
 
     /**
-     * 인증장치 배지 색(CSS 클래스). 사람이 고르는 인증 수단(지문·얼굴인식·PIN·패턴·홍채·음성·손바닥)은 값마다
+     * 인증장치 아이콘(Bootstrap Icons). AppID 장치 칸의 AOS·iOS 로고처럼 글자 앞에 붙인다.
+     * 손바닥은 맞는 아이콘이 없어 손 모양(hand-index)을 쓴다.
+     */
+    public static String bioIcon(Long bioType) {
+        if (bioType == null) return "bi-question-circle";
+        return switch (bioType.intValue()) {
+            case 1 -> "bi-hand-index-thumb";
+            case 2 -> "bi-fingerprint";
+            case 4 -> "bi-123";
+            case 8 -> "bi-mic";
+            case 16 -> "bi-person-bounding-box";
+            case 32 -> "bi-geo-alt";
+            case 64 -> "bi-eye";
+            case 128 -> "bi-grid-3x3-gap";
+            case 256 -> "bi-hand-index";
+            case 512 -> "bi-dash-circle";
+            case 1024 -> "bi-collection";
+            default -> "bi-question-circle";
+        };
+    }
+
+    /**
+     * 인증장치 아이콘 색(CSS 클래스). 사람이 고르는 인증 수단(지문·얼굴인식·PIN·패턴·홍채·음성·손바닥)은 값마다
      * 다른 색이고, PRESENCE·지역기반·없음·ALL·알수없음은 회색이다.
      */
-    public static String bioBadge(Long bioType) {
-        if (bioType == null) return "text-bg-secondary";
+    public static String bioColor(Long bioType) {
+        if (bioType == null) return "text-secondary";
         return switch (bioType.intValue()) {
             case 2 -> "fa-bio-finger";
             case 4 -> "fa-bio-pin";
@@ -102,7 +124,7 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
             case 64 -> "fa-bio-iris";
             case 128 -> "fa-bio-pattern";
             case 256 -> "fa-bio-palm";
-            default -> "text-bg-secondary";
+            default -> "text-secondary";
         };
     }
 
