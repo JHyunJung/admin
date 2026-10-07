@@ -149,8 +149,7 @@ class FidoLogQueryServiceTest {
     }
 
     private static FidoLogRow row(long idx, String op, String servicename, String userid, String status) {
-        return new FidoLogRow(idx, 1L, op, userid, servicename, "FIDO", op, userid, null, 2L, null, null, status,
-            LocalDateTime.of(2026, 9, 26, 10, 0));
+        return new FidoLogRow(idx, 1L, op, servicename, userid, 2L, status, LocalDateTime.of(2026, 9, 26, 10, 0));
     }
 
     private static String base64url(String json) {
