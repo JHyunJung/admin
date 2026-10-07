@@ -13,3 +13,6 @@ out/
 
 # git worktree 격리 작업 공간. 소스가 아니다.
 .worktrees/
+
+# 로컬 실행 로그(bootRun 출력 포함). 소스가 아니다.
+logs/
