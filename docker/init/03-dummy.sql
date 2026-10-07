@@ -16,6 +16,14 @@ BEGIN
 END;
 /
 
+-- 컨테이너 초기화(docker-entrypoint)는 SYS 로 CDB 에 붙어 이 파일을 돌린다. 01·02 처럼 PDB·스키마를 잡아야
+-- SYS.APPID 를 찾다 ORA-00942 로 멈추지 않는다. 수동 적용(kbfido 로 FREEPDB1 접속)에서는 컨테이너 전환 권한이
+-- 없어 첫 줄이 실패하므로 그 한 줄만 오류를 무시한다.
+WHENEVER SQLERROR CONTINUE
+ALTER SESSION SET CONTAINER = FREEPDB1;
+WHENEVER SQLERROR EXIT SQL.SQLCODE ROLLBACK
+ALTER SESSION SET CURRENT_SCHEMA = KBFIDO;
+
 -- 1. 앱 ID (APPID) — 고객사 1
 INSERT INTO APPID (IDX, COMPANY_IDX, APPID, MEMO, STATUS, DEVICE, DEVICE_DEFAULT, SERVICENAME) VALUES (101, 1, 'https://kbstar.com/app/v2/facets.json', '스타뱅킹 v2', 'use', 'android', 'F', 'kbstar');
 INSERT INTO APPID (IDX, COMPANY_IDX, APPID, MEMO, STATUS, DEVICE, DEVICE_DEFAULT, SERVICENAME) VALUES (102, 1, 'https://kbstar.com/app/v2/ios/facets.json', '스타뱅킹 v2 iOS', 'use', 'ios', 'F', 'kbstar');
