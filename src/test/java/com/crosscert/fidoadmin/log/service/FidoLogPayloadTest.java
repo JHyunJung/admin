@@ -45,6 +45,48 @@ class FidoLogPayloadTest {
         assertThat(p.bioType()).isNull();
     }
 
+    /** 요청 IP·UserAgent·로깅시간은 transaction 바깥(FIDOLog 최상위)에 있다. */
+    @Test void readsAccessIpUserAgentAndLogtime() {
+        FidoLogPayload p = FidoLogPayload.parse(base64url("""
+            {"transaction":{"userName":"u1","op":"Auth"},"logtime":"2026-10-02 14:42:20",\
+            "accessIp":"10.0.0.7","userAgent":"Mozilla/5.0 (Linux; Android 14)"}"""));
+
+        assertThat(p.accessIp()).isEqualTo("10.0.0.7");
+        assertThat(p.userAgent()).isEqualTo("Mozilla/5.0 (Linux; Android 14)");
+        assertThat(p.logtime()).isEqualTo("2026-10-02 14:42:20");
+    }
+
+    /** 이전 어드민: 사용자 이름의 첫 _* 뒤는 서비스 꼬리이고, _*KF 로 끝나면 KFIDO 다. 값은 운영 화면에서 본 형식. */
+    @Test void splitsUserNameIntoHeadAndFidoKind() {
+        FidoLogPayload kf = FidoLogPayload.parse(
+            "{\"transaction\":{\"userName\":\"113057331000001_0_*com.kbstar.kbbiz_*KF\"}}");
+        assertThat(kf.userName()).isEqualTo("113057331000001_0_*com.kbstar.kbbiz_*KF");
+        assertThat(kf.userHead()).isEqualTo("113057331000001_0");
+        assertThat(kf.fidoKind()).isEqualTo("KFIDO");
+
+        FidoLogPayload tail = FidoLogPayload.parse("{\"transaction\":{\"userName\":\"4536345_aju.ac.kr/AJU_*AJU\"}}");
+        assertThat(tail.userHead()).isEqualTo("4536345_aju.ac.kr/AJU");
+        assertThat(tail.fidoKind()).isEqualTo("FIDO");
+
+        FidoLogPayload plain = FidoLogPayload.parse("{\"transaction\":{\"userName\":\"f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR\"}}");
+        assertThat(plain.userHead()).isEqualTo("f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR");
+        assertThat(plain.fidoKind()).isEqualTo("FIDO");
+
+        FidoLogPayload none = FidoLogPayload.parse("{\"transaction\":{\"op\":\"Reg\"}}");
+        assertThat(none.userHead()).isNull();
+        assertThat(none.fidoKind()).isNull();
+    }
+
+    /** 이전 어드민: Auth 인데 요청에 transaction 이 있으면 TC 로 센다. 그 밖에는 구분 그대로다. */
+    @Test void typeIsTcWhenAuthRequestCarriesTransaction() {
+        assertThat(FidoLogPayload.parse(
+            "{\"transaction\":{\"op\":\"Auth\",\"request\":{\"transaction\":[{\"content\":\"x\"}]}}}").type())
+            .isEqualTo("TC");
+        assertThat(FidoLogPayload.parse("{\"transaction\":{\"op\":\"Auth\",\"request\":{}}}").type()).isEqualTo("Auth");
+        assertThat(FidoLogPayload.parse("{\"transaction\":{\"op\":\"Reg\"}}").type()).isEqualTo("Reg");
+        assertThat(FidoLogPayload.parse("{\"op\":\"TC\"}").type()).isEqualTo("TC");
+    }
+
     @Test void numericStringBioTypeIsAccepted() {
         assertThat(FidoLogPayload.parse("{\"transaction\":{\"bioType\":\"16\"}}").bioType()).isEqualTo(16L);
     }

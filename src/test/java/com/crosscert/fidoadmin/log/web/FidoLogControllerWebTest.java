@@ -58,7 +58,8 @@ class FidoLogControllerWebTest {
     }
 
     private FidoLogRow row(long idx, String op, String userid, Long bioType, String status) {
-        return new FidoLogRow(idx, 1L, op, "com.kbstar.kbbank", userid, bioType, status, LocalDateTime.of(2026, 10, 2, 14, 42, 20));
+        return new FidoLogRow(idx, 1L, op, userid, "com.kbstar.kbbank", "FIDO", op, userid, "10.0.0.7", bioType,
+            "2026-10-02 14:42:20", "Mozilla/5.0", status, LocalDateTime.of(2026, 10, 2, 14, 42, 20));
     }
 
     private static FidoLogSearchResult result(List<FidoLogRow> rows, boolean truncated) {
@@ -93,6 +94,11 @@ class FidoLogControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(view().name("log/fido/list"))
             .andExpect(content().string(containsString("com.kbstar.kbbank")))
+            // 이전 어드민 목록과 같은 칸: FIDO종류·요청IP·로깅시간·UserAgent 까지 나온다.
+            .andExpect(content().string(containsString("<th>FIDO종류</th>")))
+            .andExpect(content().string(containsString("<th>UserAgent</th>")))
+            .andExpect(content().string(containsString("10.0.0.7")))
+            .andExpect(content().string(containsString("2026-10-02 14:42:20")))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
         // CLOB 은 목록 DTO(FidoLogRow)에 자리 자체가 없다. 화면 문자열이 아니라
         // 구조로 막혀 있음을 확인한다 — 템플릿을 고쳐도 되살아나지 않는다.
@@ -143,7 +149,7 @@ class FidoLogControllerWebTest {
             .andExpect(content().string(containsString("KB국민은행")));
     }
 
-    /** 이전 어드민과 같은 칸: 번호 | 구분 | 서비스명 | 사용자ID | 인증장치 | 로그시간. 구분은 원문 그대로. */
+    /** 이전 어드민과 같은 12칸. 구분은 원문 그대로, 40자를 넘는 사용자 값은 앞 38자 + " ..." 로 줄인다. */
     @Test void listShowsLegacyColumns() throws Exception {
         String longUser = "f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHRxxxxxxxxxxxxxxxxxxxxxx";
         when(service.search(any(), any())).thenReturn(result(List.of(
@@ -154,13 +160,14 @@ class FidoLogControllerWebTest {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
         org.assertj.core.api.Assertions.assertThat(html)
-            .containsSubsequence("<th>번호</th>", "<th>구분</th>", "<th>서비스명</th>", "<th>사용자ID</th>",
-                "<th>인증장치</th>", "<th>상태</th>", "<th>로그시간</th>")
+            .containsSubsequence("<th>번호</th>", "<th>구분</th>", "<th>사용자</th>", "<th>서비스명</th>",
+                "<th>FIDO종류</th>", "<th>타입</th>", "<th>사용자ID</th>", "<th>요청IP</th>", "<th>인증장치</th>",
+                "<th>로깅시간</th>", "<th>UserAgent</th>", "<th>상태</th>")
             .contains(">TC<").contains(">DeReg<")
             .contains("com.kbstar.kbbank")
             .contains(">지문<").contains(">없음<").contains(">알수없음<")
             .contains("title=\"" + longUser + "\"")
-            .contains(longUser.substring(0, 37) + "...")
+            .contains(longUser.substring(0, 38) + " ...")
             .contains("2026-10-02 14:42:20")
             .contains(">Success<").contains(">Error<").contains("text-bg-success").contains("text-bg-danger")
             .contains("name=\"status\"").contains("value=\"Wait\"")
