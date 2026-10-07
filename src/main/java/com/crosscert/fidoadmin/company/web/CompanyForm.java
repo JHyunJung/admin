@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
-/** CCFA_COMPANY 입력 폼. 길이 제한은 ERD 값. */
+/** CCFA_COMPANY 입력 폼. 길이 제한은 DB 컬럼 길이. */
 @Getter @Setter
 public class CompanyForm {
     @NotBlank @ByteSize(max = 256) private String companyName;

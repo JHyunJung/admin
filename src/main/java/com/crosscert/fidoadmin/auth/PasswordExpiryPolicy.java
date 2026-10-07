@@ -12,7 +12,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 /**
- * 비밀번호 만료. 이전 어드민은 LAST_PW_CHANGE_DATE 로부터 90일이 지나면 로그인 뒤 변경 화면으로 보냈다.
+ * 비밀번호 만료. LAST_PW_CHANGE_DATE 로부터 90일이 지나면 로그인 뒤 변경 화면으로 보낸다.
  *
  * <p>열이 없는 DB 에서는 스스로 꺼진다({@code fido-admin.password-expiry.enabled=auto}, 기본). 끄면 이 열에
  * 전혀 접근하지 않는다. {@code false} 로 두면 탐지 쿼리도 돌리지 않는다.

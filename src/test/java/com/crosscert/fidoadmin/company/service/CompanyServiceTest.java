@@ -91,7 +91,7 @@ class CompanyServiceTest {
         return p;
     }
 
-    /** 이전 어드민의 insertSystemProp: 회사 0 의 고객사별 설정이 새 고객사의 기본값이 된다. 있는 키는 덮지 않는다. */
+    /** 회사 0 의 고객사별 설정이 새 고객사의 기본값이 된다. 있는 키는 덮지 않는다. */
     @SuppressWarnings("unchecked")
     @Test void createCopiesPerCompanyPropsFromGlobalWithoutOverwriting() {
         when(companies.save(any())).thenAnswer(inv -> { CcfaCompany c = inv.getArgument(0); c.setIdx(7L); return c; });

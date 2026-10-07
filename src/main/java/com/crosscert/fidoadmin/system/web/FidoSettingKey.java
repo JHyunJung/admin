@@ -19,7 +19,7 @@ import java.util.List;
  * 저장되어 있어 통일하지 않는다 — 서버가 읽는 표기를 화면이 따라간다.
  *
  * <p>화면에 넣지 않은 키: {@code LICENSE}·{@code *_ROOT}(경로)·{@code OCSP_*}.
- * 이전 어드민의 시스템 관리 화면에도 없던 항목이라 범위 밖이다.
+ * 시스템 관리 화면에서 다루지 않는 항목이라 범위 밖이다.
  */
 public enum FidoSettingKey {
 

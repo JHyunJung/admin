@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** TRANSACTIONHASH — 거래내용 해시. ERD 컬럼 6개. */
+/** TRANSACTIONHASH — 거래내용 해시. 컬럼 6개. */
 @Entity
 @Table(name = "TRANSACTIONHASH")
 @Getter @Setter @NoArgsConstructor

@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  * KBFIDO 스키마의 VARCHAR2 는 BYTE 의미(NLS_LENGTH_SEMANTICS=BYTE, 문자셋 AL32UTF8)라
  * 한글 1자가 3바이트를 차지한다. {@code @Size} 는 문자 수를 세므로
  * 예를 들어 한글 86자(258바이트)는 통과하지만 VARCHAR2(256) 저장 시 ORA-12899 가 난다.
- * ERD 의 컬럼 길이는 바이트 값이므로 폼 검증도 바이트로 맞춘다.
+ * DB 컬럼 길이는 바이트 값이므로 폼 검증도 바이트로 맞춘다.
  */
 @Documented
 @Constraint(validatedBy = ByteSizeValidator.class)

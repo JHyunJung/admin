@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-/** CCFA_MANAGER — 운영자 계정. ERD 컬럼 16개. USER_PW 는 SHA-256 hex, 화면 DTO 에 절대 싣지 않는다. */
+/** CCFA_MANAGER — 운영자 계정. 컬럼 16개. USER_PW 는 SHA-256 hex, 화면 DTO 에 절대 싣지 않는다. */
 @Entity
 @Table(name = "CCFA_MANAGER")
 @Getter @Setter @NoArgsConstructor

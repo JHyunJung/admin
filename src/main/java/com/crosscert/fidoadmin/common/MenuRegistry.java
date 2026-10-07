@@ -15,21 +15,19 @@ import org.springframework.stereotype.Component;
 public class MenuRegistry {
 
     /**
-     * 그룹 이름과 순서는 이전 어드민의 업무 도메인 구분을 따른다(로그·
-     * FIDO 서버 관리·시스템관리. 이상 징후 탐지는 2026-10-05 에 지웠다). 기존 사용자가 찾던 자리에서 찾게 하려는 것이므로,
+     * 그룹 이름과 순서는 업무 도메인 구분을 따른다(로그·
+     * FIDO 서버 관리·시스템관리. 이상 징후 탐지는 2026-10-05 에 지웠다). 운영자가 업무 흐름대로 찾게 하려는 것이므로,
      * 테이블 성격이 아니라 <b>업무 성격</b>으로 묶는다.
      *
-     * <p>이전 어드민에 있던 "통계 → 통계관리"는 넣지 않았다. 대시보드가 같은 일을 한다.
+     * <p>"통계 → 통계관리"는 두지 않는다. 대시보드가 같은 일을 한다.
      * 화면 없는 메뉴는 404 나 빈 페이지로 이어지므로, 화면이 생길 때 함께 추가한다.
      *
-     * <p>"필드 정의"(/system/fields)와 "데모 접근코드"(/fido2/demo-access-codes)는 메뉴에서 뺐다
-     * (설계서 1의 "프로토타입 확인 후 불필요한 화면은 제외한다"). 화면과 컨트롤러는 남아 있어
+     * <p>"필드 정의"(/system/fields)와 "데모 접근코드"(/fido2/demo-access-codes)는 메뉴에서 뺐다. 화면과 컨트롤러는 남아 있어
      * URL 로는 열리지만, 운영자의 동선에서는 치운다.
      *
      * <p>필드 정의를 뺀 이유는 메뉴 정의 화면을 제거한 이유와 같다. CCFA_FIELDS 는 화면 필드를
-     * 데이터로 정의하려던 구조인데 새 어드민은 Thymeleaf 템플릿에 직접 쓴다. 즉 이 화면에서
-     * 값을 바꿔도 화면은 바뀌지 않는다 — 반영된 줄 아는 상태가 해롭다는 같은 판단이다
-     * (docs/erd/2026-09-18-테이블-존치-검토.md 가 CCFA_MENU 와 한 문단에서 함께 지목했다).
+     * 데이터로 정의하려던 구조인데 이 어드민은 Thymeleaf 템플릿에 직접 쓴다. 즉 이 화면에서
+     * 값을 바꿔도 화면은 바뀌지 않는다 — 반영된 줄 아는 상태가 해롭다는 같은 판단이다.
      * 데모 접근코드는 이름 그대로 데모용이라 운영 동선에 들어오지 않는다.
      *
      * <p>"메일/SMS 큐"(/logs/mailing)도 운영에서 쓰지 않아 뺐다. 어드민은 CCFA_MAILING 을
@@ -49,15 +47,13 @@ public class MenuRegistry {
      */
     static final List<MenuItem> ALL = List.of(
         new MenuItem(MenuArea.TENANT, "대시보드", "통계", "/", false, "bi-speedometer2"),
-        // 이전 어드민의 "로그 → 인증로그 / 시스템(감사)로그" 를 잇는다.
         new MenuItem(MenuArea.TENANT, "로그", "FIDO 로그", "/logs/fido", false, "bi-journal-text"),
         new MenuItem(MenuArea.TENANT, "로그", "감사 로그", "/logs/audit", false, "bi-clipboard-check"),
         new MenuItem(MenuArea.TENANT, "로그", "예외 로그", "/logs/exceptions", false, "bi-exclamation-triangle"),
         // 메일/SMS 큐는 사이드바에서 감췄다(hidden). 항목을 지우지 않는 이유는 MenuItem 주석에 있다 —
         // TENANT 경로를 목록에서 빼면 areaOf 가 SYSTEM 으로 판정해 인터셉터가 막지 못한다.
         new MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope", true),
-        // 이전 어드민의 "FIDO 서버 관리" 이름·순서를 그대로 쓴다(AppID 관리 … TC원문 보기).
-        // 서명(SIGN)은 이전 어드민에 없던 화면이라 같은 관례("… 보기")로 맨 끝에 둔다.
+        // 서명(SIGN)은 같은 관례("… 보기")로 맨 끝에 둔다.
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AppID 관리", "/appids", false, "bi-app-indicator"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "멤버코드 관리",
                 "/appservers", false, "bi-hdd-network"),
@@ -68,15 +64,14 @@ public class MenuRegistry {
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책) 보기",
                 "/criteria", false, "bi-fingerprint"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "FIDO 등록자 관리", "/users", false, "bi-people"),
-        // TransactionHash 보기는 운영 요청으로 사이드바에서 감췄다(데이터·화면은 그대로). 이전 어드민과 USERID
-        // 형식이 달라 혼란을 준다는 피드백이었다. TENANT 판정을 지키려고 지우지 않고 hidden 으로 둔다.
+        // TransactionHash 보기는 운영 요청으로 사이드바에서 감췄다(데이터·화면은 그대로). USERID
+        // 형식이 다른 화면과 달라 혼란을 준다는 피드백이었다. TENANT 판정을 지키려고 지우지 않고 hidden 으로 둔다.
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TransactionHash 보기", "/transaction-hashes", false, "bi-hash", true),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TC원문 보기", "/transaction-confirmations", false, "bi-check2-square"),
         new MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명 보기", "/signs", false, "bi-pen"),
-        // FIDO2 는 이전 어드민에 없던 그룹이다. FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
+        // FIDO2 는 FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "메타데이터", "/fido2/metadata", true, "bi-card-list"),
         new MenuItem(MenuArea.SYSTEM, "FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true, "bi-shield-lock"),
-        // 이전 어드민의 "시스템관리 → 업체 관리 / 관리자 설정 / 라이선스관리 / 시스템 설정".
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "고객사", "/companies", true, "bi-building"),
         new MenuItem(MenuArea.TENANT, "시스템관리", "운영자", "/managers", true, "bi-person-badge"),
         new MenuItem(MenuArea.SYSTEM, "시스템관리", "슈퍼관리자 계정", "/managers/super", true, "bi-person-gear"),

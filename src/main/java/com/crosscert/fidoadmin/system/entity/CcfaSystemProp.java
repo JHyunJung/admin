@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_SYSTEM_PROP — 고객사별 key-value. PK 없음. ERD 컬럼 5개. */
+/** CCFA_SYSTEM_PROP — 고객사별 key-value. PK 없음. 컬럼 5개. */
 @Entity
 @Table(name = "CCFA_SYSTEM_PROP")
 @Getter @Setter @NoArgsConstructor

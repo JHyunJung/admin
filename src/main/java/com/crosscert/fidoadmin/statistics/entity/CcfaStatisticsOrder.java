@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_STATISTICS_ORDER — 통계 정렬 정의. PK 없음. ERD 컬럼 3개. */
+/** CCFA_STATISTICS_ORDER — 통계 정렬 정의. PK 없음. 컬럼 3개. */
 @Entity
 @Table(name = "CCFA_STATISTICS_ORDER")
 @Getter @Setter @NoArgsConstructor

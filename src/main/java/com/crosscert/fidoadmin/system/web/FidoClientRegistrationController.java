@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * FIDO 서버 자가등록 수신부. FIDO 서버가 기동하면서 스스로 자기 URL 을 알려오면 CCFA_FIDOCLIENT 에 반영한다.
  *
- * <p>기존 어드민의 {@code /api/svc/reg|deReg/{serverName}} 와 같은 경로·같은 파라미터({@code fsurl})를 쓴다.
+ * <p>FIDO 서버가 부르는 {@code /api/svc/reg|deReg/{serverName}} 경로와 파라미터({@code fsurl})를 받는다.
  * FIDO 서버 쪽 코드를 고치지 않고 {@code License.adminServerUrl} 만 이 어드민으로 바꾸면 동작한다.
  *
  * <p><b>인증이 없는 경로다.</b> FIDO 서버는 로그인 세션 없이 호출하므로 {@code SecurityConfig} 에서
@@ -39,7 +39,7 @@ public class FidoClientRegistrationController {
         log.info("[ClientAccess] FS URL : {}", fsurl);
         log.info("[ClientAccess] Access IP : {}", request.getRemoteAddr());
 
-        // 기존 어드민도 둘 중 하나가 비면 조용히 무시했다(응답 본문 없이 반환).
+        // 둘 중 하나가 비면 조용히 무시한다(응답 본문 없이 반환).
         if (serverName.isBlank() || fsurl == null || fsurl.isBlank()) {
             return ResponseEntity.badRequest().build();
         }

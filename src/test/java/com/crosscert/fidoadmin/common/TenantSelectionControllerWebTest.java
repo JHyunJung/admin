@@ -65,7 +65,7 @@ class TenantSelectionControllerWebTest {
      *
      * <p>선택하려면 IDX 가 폼으로는 가야 하므로 hidden 필드에는 남는다. 그래서 "본문에
      * 9 가 없다" 로는 확인할 수 없고, 사람이 읽는 자리에 노출되지 않는지를 본다 —
-     * 이전 화면은 "IDX 9" 라는 문구를 카드에 직접 찍었다.
+     * 카드에 "IDX 9" 같은 내부 번호를 찍지 않는다.
      */
     @Test void 화면에_IDX_를_드러내지_않는다() throws Exception {
         CcfaCompany c = new CcfaCompany();

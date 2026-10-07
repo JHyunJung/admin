@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** BAK_FIDO_LOGS_BAK — 로그 백업본(복호화 컬럼 포함, append-only). ERD 컬럼 7개. */
+/** BAK_FIDO_LOGS_BAK — 로그 백업본(복호화 컬럼 포함, append-only). 컬럼 7개. */
 @Entity
 @Table(name = "BAK_FIDO_LOGS_BAK")
 @Getter @Setter @NoArgsConstructor

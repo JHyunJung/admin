@@ -32,7 +32,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // favicon 은 로그인 화면에서도 필요하고, 콘텐츠 해시가 붙으면 이름이 favicon-<md5>.ico 가 된다.
                 // /signup 은 가입 신청 화면이다. 로그인 전에 열려야 하므로 permitAll 이다.
-                // /api/svc/** 는 기존 어드민과 동일하게 인증 없이 열어 둔다(FidoClientRegistrationController 참고).
+                // /api/svc/** 는 FIDO 서버가 부르는 경로라 인증 없이 열어 둔다(FidoClientRegistrationController 참고).
                 .requestMatchers("/login", "/signup", "/api/svc/**", "/external/**", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
                 // /external/** 는 FIDO 서버가 라이선스를 받아 가는 경로다(ExternalLicenseController).

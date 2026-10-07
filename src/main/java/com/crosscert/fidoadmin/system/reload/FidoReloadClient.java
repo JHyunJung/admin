@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * 등록된 FIDO 서버(STATUS='ON')마다 {@code GET {SERVERURL}/api/command/reload} 를 보낸다.
- * 이전 어드민 CCFIDOClientInfo.sendSignal("reload") 를 잇는다.
  *
  * <p>서버 목록은 인증 없는 자가등록(/api/svc/reg)으로 채워지므로 http/https 만 보내고 리다이렉트는 따라가지 않는다.
  * 한 서버의 실패가 다음 서버를 막지 않는다. 어떤 경우에도 예외를 던지지 않고 결과로 돌려준다.

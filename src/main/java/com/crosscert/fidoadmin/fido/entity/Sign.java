@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** SIGN — 전자서명 원본/서명값. ERD 컬럼 11개. */
+/** SIGN — 전자서명 원본/서명값. 컬럼 11개. */
 @Entity
 @Table(name = "SIGN")
 @Getter @Setter @NoArgsConstructor

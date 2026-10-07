@@ -40,7 +40,7 @@ public class Fido2DemoAccessCodeService
     @Override public Sort defaultSort() { return Sort.by(Sort.Direction.ASC, "accesscode"); }
     @Override public Set<String> sortableProperties() { return Set.of("accesscode", "vendorname", "status"); }
 
-    /** ERD 기본값: STATUS 'E'(활성). */
+    /** DB 기본값: STATUS 'E'(활성). */
     @Override protected void applyDefaults(Fido2DemoAccessCode e) {
         if (e.getStatus() == null || e.getStatus().isBlank()) e.setStatus("E");
     }

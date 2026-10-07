@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 class FidoLogPayloadTest {
 
-    static final String LEGACY = """
+    static final String SAMPLE = """
         {"transaction":{"serviceName":"com.kbstar.kbbank","userName":"f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR",\
         "op":"TC","bioType":2,"status":"Success"},"hash":"abc","logtime":"2026-10-02 14:42:20"}""";
 
@@ -16,20 +16,20 @@ class FidoLogPayloadTest {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** 운영 FIDO 서버는 JSONDATA 를 base64url 로 넣는다(이전 어드민 parseLog). */
-    @Test void decodesBase64UrlLegacyLog() {
-        FidoLogPayload p = FidoLogPayload.parse(base64url(LEGACY));
+    /** 운영 FIDO 서버는 JSONDATA 를 base64url 로 넣는다. */
+    @Test void decodesBase64UrlLog() {
+        FidoLogPayload p = FidoLogPayload.parse(base64url(SAMPLE));
 
         assertThat(p.op()).isEqualTo("TC");
         assertThat(p.serviceName()).isEqualTo("com.kbstar.kbbank");
         assertThat(p.userName()).isEqualTo("f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR");
         assertThat(p.bioType()).isEqualTo(2L);
         assertThat(p.status()).isEqualTo("Success");
-        assertThat(p.json()).isEqualTo(LEGACY);
+        assertThat(p.json()).isEqualTo(SAMPLE);
     }
 
     @Test void acceptsPaddedAndStandardAlphabetBase64() {
-        String standard = Base64.getEncoder().encodeToString(LEGACY.getBytes(StandardCharsets.UTF_8));
+        String standard = Base64.getEncoder().encodeToString(SAMPLE.getBytes(StandardCharsets.UTF_8));
         assertThat(FidoLogPayload.parse(standard).op()).isEqualTo("TC");
         assertThat(FidoLogPayload.parse(standard + "\n").op()).isEqualTo("TC");
     }
@@ -45,7 +45,7 @@ class FidoLogPayloadTest {
         assertThat(p.bioType()).isNull();
     }
 
-    /** 요청 IP·UserAgent·로깅시간은 transaction 바깥(FIDOLog 최상위)에 있다. */
+    /** 요청 IP·UserAgent·로깅시간은 transaction 바깥(로그 최상위)에 있다. */
     @Test void readsAccessIpUserAgentAndLogtime() {
         FidoLogPayload p = FidoLogPayload.parse(base64url("""
             {"transaction":{"userName":"u1","op":"Auth"},"logtime":"2026-10-02 14:42:20",\
@@ -56,7 +56,7 @@ class FidoLogPayloadTest {
         assertThat(p.logtime()).isEqualTo("2026-10-02 14:42:20");
     }
 
-    /** 이전 어드민: 사용자 이름의 첫 _* 뒤는 서비스 꼬리이고, _*KF 로 끝나면 KFIDO 다. 값은 운영 화면에서 본 형식. */
+    /** 사용자 이름의 첫 _* 뒤는 서비스 꼬리이고, _*KF 로 끝나면 KFIDO 다. 값은 운영 화면에서 본 형식. */
     @Test void splitsUserNameIntoHeadAndFidoKind() {
         FidoLogPayload kf = FidoLogPayload.parse(
             "{\"transaction\":{\"userName\":\"113057331000001_0_*com.kbstar.kbbiz_*KF\"}}");
@@ -77,7 +77,7 @@ class FidoLogPayloadTest {
         assertThat(none.fidoKind()).isNull();
     }
 
-    /** 이전 어드민: Auth 인데 요청에 transaction 이 있으면 TC 로 센다. 그 밖에는 구분 그대로다. */
+    /** Auth 인데 요청에 transaction 이 있으면 TC 로 센다. 그 밖에는 구분 그대로다. */
     @Test void typeIsTcWhenAuthRequestCarriesTransaction() {
         assertThat(FidoLogPayload.parse(
             "{\"transaction\":{\"op\":\"Auth\",\"request\":{\"transaction\":[{\"content\":\"x\"}]}}}").type())
@@ -143,7 +143,7 @@ class FidoLogPayloadTest {
         assertThat(FidoLogPayload.bioColor(null)).isEqualTo("text-secondary");
     }
 
-    @Test void bioTypeLabelsMatchLegacyBioType() {
+    @Test void bioTypeLabelsCoverAllCodes() {
         assertThat(FidoLogPayload.bioTypeLabel(1L)).isEqualTo("PRESENCE");
         assertThat(FidoLogPayload.bioTypeLabel(2L)).isEqualTo("지문");
         assertThat(FidoLogPayload.bioTypeLabel(4L)).isEqualTo("PIN");

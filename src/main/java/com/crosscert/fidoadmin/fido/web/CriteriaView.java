@@ -4,7 +4,7 @@ import com.crosscert.fidoadmin.common.JsonPretty;
 import com.crosscert.fidoadmin.fido.entity.Criteria;
 import java.time.LocalDateTime;
 
-/** CRITERIA 상세. ERD 17개 컬럼을 모두 담되 JSONDATA 는 정리된 문자열(jsondataPretty)로 준다. */
+/** CRITERIA 상세. 17개 컬럼을 모두 담되 JSONDATA 는 정리된 문자열(jsondataPretty)로 준다. */
 public record CriteriaView(Long idx, String aaid, String vendorids, Long userverification, Long keyprotection,
                            Long matcherprotection, Long attachmenthnumber, Long tcdisplay, String tcdisplaycontenttype,
                            String authenticationalgorithms, String assertionschemes, String attestationtypes,

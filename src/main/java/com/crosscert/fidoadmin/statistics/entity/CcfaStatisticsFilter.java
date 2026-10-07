@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_STATISTICS_FILTER — PK 없음. 논리 식별자 4개 컬럼을 복합키로 매핑. ERD 컬럼 5개. */
+/** CCFA_STATISTICS_FILTER — PK 없음. 논리 식별자 4개 컬럼을 복합키로 매핑. 컬럼 5개. */
 @Entity
 @Table(name = "CCFA_STATISTICS_FILTER")
 @Getter @Setter @NoArgsConstructor

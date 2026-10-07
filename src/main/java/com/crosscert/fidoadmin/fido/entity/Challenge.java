@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CHALLENGE — 인증 챌린지(일회성). ERD 컬럼 8개. */
+/** CHALLENGE — 인증 챌린지(일회성). 컬럼 8개. */
 @Entity
 @Table(name = "CHALLENGE")
 @Getter @Setter @NoArgsConstructor

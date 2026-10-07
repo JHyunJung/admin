@@ -5,7 +5,7 @@
 <body>
 <main>
   <h1 class="h4 mb-3">FIDO 로그</h1>
-  <!--/* 칸은 이전 어드민 목록과 같다. 값은 base64url JSONDATA 를 풀어 꺼낸다(FidoLogPayload). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
+  <!--/* 값은 base64url JSONDATA 를 풀어 꺼낸다(FidoLogPayload). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
   <form method="get" th:action="@{/logs/fido}" class="row g-2 align-items-end mb-3">
     <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
     <div class="col-auto"><label class="form-label small mb-0">조회 날짜</label><input type="date" name="logDate" th:value="${search.logDate}" class="form-control form-control-sm" required></div>
@@ -52,7 +52,7 @@
                  th:text="${r.idx}">0</a></td>
           <td><span th:replace="~{fragments/fido-log :: op(${r.op})}"></span></td>
           <td th:text="${r.servicename ?: '-'}"></td>
-          <!--/* 사용자ID 는 원문 그대로(_*서비스 꼬리 포함). 길면 이전 어드민처럼 말줄임하고(FidoLogRow.shorten) 전체는 title 로. */-->
+          <!--/* 사용자ID 는 원문 그대로(_*서비스 꼬리 포함). 길면 말줄임하고(FidoLogRow.shorten) 전체는 title 로. */-->
           <td class="fa-mono" th:title="${r.userid}" th:text="${T(com.crosscert.fidoadmin.log.web.FidoLogRow).shorten(r.userid)}"></td>
           <td><span th:replace="~{fragments/fido-log :: bio(${r.bioType})}"></span></td>
           <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>

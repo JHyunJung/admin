@@ -26,7 +26,7 @@ public class Fido2CredentialParamsService extends CrudService<Fido2CredentialPar
         this.events = events;
     }
 
-    /** FIDO 서버가 크리덴셜 파라미터 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    /** FIDO 서버가 크리덴셜 파라미터 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다. */
     @Override protected void afterChange(String action, Fido2CredentialParams e) {
         events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }
@@ -43,7 +43,7 @@ public class Fido2CredentialParamsService extends CrudService<Fido2CredentialPar
     @Override protected String tableName() { return "FIDO2_CREDENTIAL_PARAMS"; }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "credType", "credAlg", "createdtime"); }
 
-    /** ERD 기본값: CRED_TYPE 'public-key', STATUS 'T'. */
+    /** DB 기본값: CRED_TYPE 'public-key', STATUS 'T'. */
     @Override protected void applyDefaults(Fido2CredentialParams e) {
         if (e.getCredType() == null || e.getCredType().isBlank()) e.setCredType("public-key");
         if (e.getStatus() == null || e.getStatus().isBlank()) e.setStatus("T");

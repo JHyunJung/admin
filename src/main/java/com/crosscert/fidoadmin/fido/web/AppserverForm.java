@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * APPSERVER 입력 폼. MEMBER_ID, TYPE 은 ERD NOT NULL.
+ * APPSERVER 입력 폼. MEMBER_ID, TYPE 은 DB NOT NULL.
  * MEMBER_CODE 는 서버가 만들고 바꾸지 않는다 — 수정 화면에 보여 주기만 하고 엔티티에 옮기지 않는다.
  */
 @Getter @Setter

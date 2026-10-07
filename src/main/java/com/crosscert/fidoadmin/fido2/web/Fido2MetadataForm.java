@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-/** FIDO2_METADATA 입력 폼. 길이는 ERD 값(바이트). CLOB 두 개는 길이 제한 없음. */
+/** FIDO2_METADATA 입력 폼. 길이는 DB 컬럼 길이(바이트). CLOB 두 개는 길이 제한 없음. */
 @Getter @Setter
 public class Fido2MetadataForm {
     @NotBlank @ByteSize(max = 256) private String description;

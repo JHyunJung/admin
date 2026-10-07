@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_AUDIT_LOG — 어드민 감사로그(append-only). ERD 컬럼 11개. INTERGRITY_HASH 는 원본 컬럼명 오타 그대로. */
+/** CCFA_AUDIT_LOG — 어드민 감사로그(append-only). 컬럼 11개. INTERGRITY_HASH 는 원본 컬럼명 오타 그대로. */
 @Entity
 @Table(name = "CCFA_AUDIT_LOG")
 @Getter @Setter @NoArgsConstructor

@@ -17,10 +17,10 @@ import org.springframework.stereotype.Component;
 /**
  * FIDO UAF 메타데이터 문(Metadata Statement) JSON → CRITERIA 행.
  *
- * <p>이전 어드민 FidoValidator 의 aaid 모듈이 하던 일을 잇는다. 숫자 자리에 다른 형이 오면
+ * <p>메타데이터 JSON 을 검증해 CRITERIA 컬럼 값으로 푼다. 숫자 자리에 다른 형이 오면
  * (FIDO2/MDS3 메타데이터처럼 keyProtection 이 문자열 배열인 경우) 저장하지 않고 형식 오류로 돌려보낸다.
  * METAHASH 는 원문 UTF-8 바이트의 SHA-256 을 base64url(패딩 없음)로 둔다 — MDS 관례다.
- * 이전 어드민의 해시 방식은 소스에서 확인하지 못했다.
+ * 해시 방식은 FIDO 서버와 맞춰 확인하지 못했다.
  */
 @Component
 public class CriteriaMetadataParser {

@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_FIELDS — 화면 필드 메타 정의. ERD 컬럼 9개. */
+/** CCFA_FIELDS — 화면 필드 메타 정의. 컬럼 9개. */
 @Entity
 @Table(name = "CCFA_FIELDS")
 @Getter @Setter @NoArgsConstructor

@@ -84,7 +84,7 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
     /**
      * 고객사를 만들고, 회사 0 의 고객사별 설정(SHARE_TYPE='NO')을 새 고객사로 복사한다.
      *
-     * <p>이전 어드민의 {@code manager.insertSystemProp} 을 잇는다. 복사하지 않아도 화면은
+     * <p>복사하지 않아도 화면은
      * {@code FidoSettingKey} 기본값으로 동작하지만, 설정 행이 없는 고객사와 있는 고객사가
      * 섞이면 "왜 이 고객사만 값이 없나"를 매번 설명해야 한다. 생성 시점에 맞춰 둔다.
      */
@@ -97,7 +97,7 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
             audit.log(AuditType.CREATE,
                 "CCFA_SYSTEM_PROP COPY 고객사 " + saved.getIdx() + " ← 회사 0 (" + copied + "건)");
         }
-        // 이전 어드민 disableCompanyAllAAID: 새 고객사는 인증기를 하나씩 허용하기 전까지 FIDO 등록이 되지 않는다.
+        // 새 고객사는 인증기를 하나씩 허용하기 전까지 FIDO 등록이 되지 않는다.
         int disabled = criteria.disableAllFor(saved.getIdx());
         if (disabled > 0) {
             audit.log(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 " + saved.getIdx() + " (" + disabled + "건)");

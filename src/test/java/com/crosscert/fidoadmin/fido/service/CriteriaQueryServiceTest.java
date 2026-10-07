@@ -108,7 +108,7 @@ class CriteriaQueryServiceTest {
         assertThat(params.getValue().getValue("companyIdx")).isEqualTo(7L);
     }
 
-    /** 비활성화는 차단 목록에 행을 넣는다(레거시 disableCompanyAAID 와 같은 규약). */
+    /** 비활성화는 차단 목록에 행을 넣는다. */
     @Test void disablingInsertsBlockRowAndLogs() {
         login(7L);
         when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
@@ -123,7 +123,7 @@ class CriteriaQueryServiceTest {
         verify(audit).log(eq(AuditType.STATUS), anyString());
     }
 
-    /** 활성화는 차단 목록에서 행을 지운다(레거시 enableCompanyAAID). */
+    /** 활성화는 차단 목록에서 행을 지운다. */
     @Test void enablingDeletesBlockRow() {
         login(7L);
         when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
@@ -168,7 +168,7 @@ class CriteriaQueryServiceTest {
         assertThat(service.sortableProperties()).containsExactlyInAnyOrder("idx", "aaid", "updatedtime");
     }
 
-    /** 전체 비활성은 아직 없는 AAID 만 넣는다(이전 어드민은 무조건 insert 라 중복이 쌓였다). */
+    /** 전체 비활성은 아직 없는 AAID 만 넣는다(중복 행이 쌓이지 않는다). */
     @Test void disableAllInsertsOnlyMissingRowsAndLogs() {
         login(7L);
         when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(7L);

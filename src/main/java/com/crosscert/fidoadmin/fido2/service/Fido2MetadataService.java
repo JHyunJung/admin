@@ -26,7 +26,7 @@ public class Fido2MetadataService extends CrudService<Fido2Metadata, Long, Fido2
         this.events = events;
     }
 
-    /** FIDO 서버가 FIDO2 메타데이터 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    /** FIDO 서버가 FIDO2 메타데이터 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다. */
     @Override protected void afterChange(String action, Fido2Metadata e) {
         events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }

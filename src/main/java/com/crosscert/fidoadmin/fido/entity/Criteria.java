@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CRITERIA — 인증기기 정책 기준(UAF). ERD 컬럼 17개. */
+/** CRITERIA — 인증기기 정책 기준(UAF). 컬럼 17개. */
 @Entity
 @Table(name = "CRITERIA")
 @Getter @Setter @NoArgsConstructor

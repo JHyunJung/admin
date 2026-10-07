@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * FIDO 서버 설정 화면의 위젯 범위·선택지. 이전 어드민 화면(슬라이더, 저장 기간 드롭다운)을
- * 따르되, <b>저장된 값이 범위·목록 밖이어도 깎지 않는다</b> — 화면을 열고 다른 항목만
+ * FIDO 서버 설정 화면의 위젯 범위·선택지(슬라이더, 저장 기간 드롭다운). 다만 <b>저장된 값이 범위·목록 밖이어도 깎지 않는다</b> — 화면을 열고 다른 항목만
  * 바꿔 저장했는데 이 값이 조용히 바뀌면 FIDO 서버 동작이 달라진다.
  */
 public final class FidoSettingOptions {
@@ -14,7 +13,7 @@ public final class FidoSettingOptions {
     public static final int CHALLENGE_MAX = 180;
     public static final int CHALLENGE_STEP = 10;
 
-    /** TC원문 저장 기간(일). 9999 는 이전 어드민의 "영구저장". */
+    /** TC원문 저장 기간(일). 9999 는 "영구저장". */
     public static final String TC_FOREVER = "9999";
 
     public record Option(String value, String label) {}

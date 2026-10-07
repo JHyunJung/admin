@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** APPSERVER — 앱 서버(연동 주체) 정보. ERD 컬럼 8개. */
+/** APPSERVER — 앱 서버(연동 주체) 정보. 컬럼 8개. */
 @Entity
 @Table(name = "APPSERVER")
 @Getter @Setter @NoArgsConstructor

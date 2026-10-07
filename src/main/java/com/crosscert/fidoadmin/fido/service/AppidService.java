@@ -14,7 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-/** APPID. COMPANY_IDX 로 테넌트 격리. ERD 기본값 STATUS='use', DEVICE_DEFAULT='F'. */
+/** APPID. COMPANY_IDX 로 테넌트 격리. DB 기본값 STATUS='use', DEVICE_DEFAULT='F'. */
 @Service
 public class AppidService extends CrudService<Appid, Long, AppidSearchForm> {
 
@@ -26,7 +26,7 @@ public class AppidService extends CrudService<Appid, Long, AppidSearchForm> {
         this.events = events;
     }
 
-    /** FIDO 서버가 AppID 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    /** FIDO 서버가 AppID 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다. */
     @Override protected void afterChange(String action, Appid e) {
         events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }

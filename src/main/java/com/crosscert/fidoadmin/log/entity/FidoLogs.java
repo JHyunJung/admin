@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO_LOGS — FIDO 처리 로그(append-only). ERD 컬럼 6개. */
+/** FIDO_LOGS — FIDO 처리 로그(append-only). 컬럼 6개. */
 @Entity
 @Table(name = "FIDO_LOGS")
 @Getter @Setter @NoArgsConstructor

@@ -50,8 +50,7 @@ public class FidoClientService extends AssignedIdCrudService<CcfaFidoclient, Str
     /**
      * FIDO 서버 자가등록. 기동한 FIDO 서버가 스스로 호출한다(로그인 없는 경로).
      *
-     * <p>같은 SERVERNAME 이 이미 있으면 그 행을 갱신한다. 기존 어드민은 update 후 insert 를
-     * 무조건 실행해 재기동할 때마다 OFF 행과 새 ON 행이 함께 쌓였는데, 그 찌꺼기까지 따라하지는 않는다.
+     * <p>같은 SERVERNAME 이 이미 있으면 그 행을 갱신한다. 재기동할 때마다 행이 새로 쌓이지 않는다.
      *
      * <p>테넌트 경계를 타지 않는다 — CCFA_FIDOCLIENT 는 COMPANY_IDX 가 없는 전역 테이블이고,
      * 세션이 없는 이 경로에서 {@code TenantContext.companyIdx()} 를 부르면 예외가 난다.
@@ -81,7 +80,7 @@ public class FidoClientService extends AssignedIdCrudService<CcfaFidoclient, Str
     }
 
     /**
-     * FIDO 서버 등록 해제. 행을 지우지 않고 STATUS 만 'OFF' 로 내린다(기존 어드민의 updateItem 과 같다).
+     * FIDO 서버 등록 해제. 행을 지우지 않고 STATUS 만 'OFF' 로 내린다.
      * 등록된 적 없는 서버면 아무것도 하지 않는다.
      */
     @Transactional

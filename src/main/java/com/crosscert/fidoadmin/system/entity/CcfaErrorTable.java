@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_ERROR_TABLE — 에러코드 사전. PK 없음(논리 식별자 ERROR_CODE). ERD 컬럼 4개. */
+/** CCFA_ERROR_TABLE — 에러코드 사전. PK 없음(논리 식별자 ERROR_CODE). 컬럼 4개. */
 @Entity
 @Table(name = "CCFA_ERROR_TABLE")
 @Getter @Setter @NoArgsConstructor

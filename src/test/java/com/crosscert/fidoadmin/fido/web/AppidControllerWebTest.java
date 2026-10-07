@@ -94,8 +94,8 @@ class AppidControllerWebTest {
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
     }
 
-    /** 이전 어드민 "AppID 관리" 목록 규격 — 장치/기본값/상태를 코드가 아니라 표시어로 보여 준다. */
-    @Test void listRendersLegacyColumnsAndLabels() throws Exception {
+    /** "AppID 관리" 목록 규격 — 장치/기본값/상태를 코드가 아니라 표시어로 보여 준다. */
+    @Test void listRendersColumnsAndLabels() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(appid(1L))));
         when(companies.names()).thenReturn(Map.of(1L, "KB국민은행"));
@@ -159,8 +159,8 @@ class AppidControllerWebTest {
             .andExpect(content().string(containsString("KB국민은행")));
     }
 
-    /** 운영 문의: "기본기기" 가 무슨 뜻인지 모르겠다 — 이전 어드민처럼 appid/설명/장치/서비스명/기본값/상태 순서와 표시어로 받는다. */
-    @Test void newFormUsesLegacyFieldOrderAndLabels() throws Exception {
+    /** 운영 문의: "기본기기" 가 무슨 뜻인지 모르겠다 — appid/설명/장치/서비스명/기본값/상태 순서와 표시어로 받는다. */
+    @Test void newFormUsesFieldOrderAndLabels() throws Exception {
         String html = mvc.perform(get("/appids/new").with(user(companyUser)))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
@@ -187,7 +187,7 @@ class AppidControllerWebTest {
             .andExpect(content().string(containsString("value=\"windows\" selected")));
     }
 
-    @Test void detailUsesLegacyLabels() throws Exception {
+    @Test void detailUsesDisplayLabels() throws Exception {
         when(service.get(3L)).thenReturn(appid(3L));
         when(companies.name(1L)).thenReturn("KB국민은행");
         String html = mvc.perform(get("/appids/3").with(user(companyUser)))

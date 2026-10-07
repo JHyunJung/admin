@@ -8,14 +8,13 @@ import java.util.Base64;
 /**
  * FIDO 로그 JSONDATA 를 화면이 쓰는 값으로 푼 것.
  *
- * <p>운영 FIDO 서버는 JSONDATA 에 <b>base64url 로 인코딩한</b> {@code FIDOLog} JSON 을 넣는다
- * (이전 어드민 parseLog: base64url 디코드 → Gson). 값은 {@code transaction} 객체 안에 있다 —
+ * <p>운영 FIDO 서버는 JSONDATA 에 <b>base64url 로 인코딩한</b> 로그 JSON 을 넣는다.
+ * 값은 {@code transaction} 객체 안에 있다 —
  * {@code serviceName}, {@code userName}, {@code op}(Reg/Auth/DeReg/TC), {@code bioType}, {@code status}.
- * 요청 IP·UserAgent·로깅시간은 바깥 {@code FIDOLog} 의 {@code accessIp}·{@code userAgent}·{@code logtime} 이다.
+ * 요청 IP·UserAgent·로깅시간은 바깥 객체의 {@code accessIp}·{@code userAgent}·{@code logtime} 이다.
  * 로컬 시드·더미는 평문 JSON 에 키가 최상위라 둘 다 받는다.
  *
- * <p>실제 운영 샘플 없이 이전 소스 기록(docs/legacy/admin-java-features.md "로그 파이프라인")만 보고 정한
- * 키다. <b>운영 키가 다르면 아래 키 목록만 고치면 된다</b> — SQL 과 화면은 이 클래스의 결과만 본다.
+ * <p>운영 샘플로 확인하지 못한 키도 있다. <b>운영 키가 다르면 아래 키 목록만 고치면 된다</b> — SQL 과 화면은 이 클래스의 결과만 본다.
  * 어떤 값이 와도 예외를 던지지 않는다. 풀지 못하면 모든 값이 null 이다.
  *
  * @param json 디코드한 JSON 원문. 풀지 못했으면 null(상세 화면은 그때 원문을 그대로 보여 준다)
@@ -35,7 +34,7 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
     private static final String[] UA_KEYS = {"userAgent"};
     private static final String[] LOGTIME_KEYS = {"logtime", "logTime"};
 
-    /** 이전 어드민 규칙: 사용자 이름의 {@code _*} 뒤는 서비스 구분이고, {@code _*KF} 로 끝나면 KFIDO 다. */
+    /** 사용자 이름의 {@code _*} 뒤는 서비스 구분이고, {@code _*KF} 로 끝나면 KFIDO 다. */
     private static final String USER_SEPARATOR = "_*";
     private static final String KFIDO_SUFFIX = "_*KF";
 
@@ -61,13 +60,13 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
             text(tx, root, IP_KEYS),
             text(tx, root, UA_KEYS),
             text(tx, root, LOGTIME_KEYS),
-            // 이전 어드민: Auth 인데 요청에 transaction 이 들어 있으면 TC(전자서명 확인)로 센다.
+            // Auth 인데 요청에 transaction 이 들어 있으면 TC(전자서명 확인)로 센다.
             // 요청 키 이름을 확인하지 못해 transaction 객체 안 어디든 transaction 필드가 있으면 그렇게 본다.
             tx != null && tx.findValue("transaction") != null,
             json);
     }
 
-    /** 이전 어드민 BioType 과 같은 표. 모르는 코드와 없는 값은 "알수없음". */
+    /** 인증장치 코드표. 모르는 코드와 없는 값은 "알수없음". */
     public static String bioTypeLabel(Long bioType) {
         if (bioType == null) return "알수없음";
         return switch (bioType.intValue()) {

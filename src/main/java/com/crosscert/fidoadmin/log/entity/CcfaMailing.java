@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_MAILING — 메일/SMS 발송 큐. ERD 컬럼 10개. TO 는 예약어라 따옴표 필수. */
+/** CCFA_MAILING — 메일/SMS 발송 큐. 컬럼 10개. TO 는 예약어라 따옴표 필수. */
 @Entity
 @Table(name = "CCFA_MAILING")
 @Getter @Setter @NoArgsConstructor
@@ -25,6 +25,6 @@ public class CcfaMailing {
     @Column(name = "SMS_TO", length = 4000) private String smsTo;
     @Column(name = "SMS_CONTENT", length = 300) private String smsContent;
     @Column(name = "SMS_STATUS", length = 512) private String smsStatus;
-    /** ERD 상 VARCHAR2(64). 문자열 그대로 둔다. */
+    /** DB 상 VARCHAR2(64). 문자열 그대로 둔다. */
     @Column(name = "SENDTIME", length = 64) private String sendtime;
 }

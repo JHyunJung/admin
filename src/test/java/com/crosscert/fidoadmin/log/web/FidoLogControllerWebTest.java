@@ -143,8 +143,8 @@ class FidoLogControllerWebTest {
             .andExpect(content().string(containsString("KB국민은행")));
     }
 
-    /** 운영 중인 이전 어드민과 같은 7칸. 구분은 원문 그대로, 40자를 넘는 사용자ID 는 앞 38자 + " ..." 로 줄인다. */
-    @Test void listShowsLegacyColumns() throws Exception {
+    /** 목록은 7칸. 구분은 원문 그대로, 40자를 넘는 사용자ID 는 앞 38자 + " ..." 로 줄인다. */
+    @Test void listShowsSevenColumns() throws Exception {
         String longUser = "f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHRxxxxxxxxxxxxxxxxxxxxxx";
         when(service.search(any(), any())).thenReturn(result(List.of(
             row(1L, "TC", longUser, 2L, "Success"),

@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO2_CREDENTIAL_PARAMS — FIDO2 지원 알고리즘 목록. ERD 컬럼 5개. */
+/** FIDO2_CREDENTIAL_PARAMS — FIDO2 지원 알고리즘 목록. 컬럼 5개. */
 @Entity
 @Table(name = "FIDO2_CREDENTIAL_PARAMS")
 @Getter @Setter @NoArgsConstructor

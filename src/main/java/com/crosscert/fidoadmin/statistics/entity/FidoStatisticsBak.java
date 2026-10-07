@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO_STATISTICS_BAK — 통계 백업본. PK 없음. ERD 컬럼 12개. FidoStatisticsId 를 재사용한다. */
+/** FIDO_STATISTICS_BAK — 통계 백업본. PK 없음. 컬럼 12개. FidoStatisticsId 를 재사용한다. */
 @Entity
 @Table(name = "FIDO_STATISTICS_BAK")
 @Getter @Setter @NoArgsConstructor

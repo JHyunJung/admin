@@ -1,5 +1,5 @@
 <!--/*
-  목록 표 아래 공통 하단. 이전 어드민 규격 — 오른쪽에 "N건이 검색되었습니다." 파란 배지,
+  목록 표 아래 공통 하단 — 오른쪽에 "N건이 검색되었습니다." 파란 배지,
   그 아래 가운데에 « 1 » 페이지네이션. 사용: th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"
 */-->
 <div xmlns:th="http://www.thymeleaf.org" th:fragment="footer(page, baseUrl)" class="fa-list-footer">
@@ -8,7 +8,7 @@
   </div>
   <div class="d-flex justify-content-center mt-3">
     <div th:replace="~{fragments/pagination :: pagination(${page}, ${baseUrl})}"></div>
-    <!--/* 한 페이지뿐이어도 이전 어드민처럼 « 1 » 을 보여 준다(pagination 조각은 2쪽 이상일 때만 그린다). */-->
+    <!--/* 한 페이지뿐이어도 « 1 » 을 보여 준다(pagination 조각은 2쪽 이상일 때만 그린다). */-->
     <nav th:if="${page.totalPages <= 1}" aria-label="페이지">
       <ul class="pagination pagination-sm mb-0">
         <li class="page-item disabled"><span class="page-link">&laquo;</span></li>

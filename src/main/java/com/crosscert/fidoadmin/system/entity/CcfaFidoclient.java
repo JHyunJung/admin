@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_FIDOCLIENT — FIDO 서버 연동 정보. PK 없음(논리 식별자 SERVERCODE). ERD 컬럼 6개. */
+/** CCFA_FIDOCLIENT — FIDO 서버 연동 정보. PK 없음(논리 식별자 SERVERCODE). 컬럼 6개. */
 @Entity
 @Table(name = "CCFA_FIDOCLIENT")
 @Getter @Setter @NoArgsConstructor

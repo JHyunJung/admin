@@ -63,8 +63,7 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
      * 현재 고객사에서 <b>꺼 둔</b> AAID 집합.
      *
      * <p>CCFA_COMPANY_AAID 는 차단 목록이다 — 행이 있으면 비활성이다.
-     * 레거시 매퍼의 disableCompanyAAID 가 insert, enableCompanyAAID 가 delete 인
-     * 것과 같은 규약이다(docs/legacy/mybatis-mappers.md 참고).
+     * 비활성화가 insert, 활성화가 delete 다.
      */
     @Transactional(readOnly = true)
     public Set<String> disabledAaids() {
@@ -176,9 +175,8 @@ public class CriteriaQueryService extends CrudService<Criteria, Long, CriteriaSe
     /**
      * 현재 고객사의 모든 AAID 를 한 번에 켜거나 끈다. 실제로 바뀐 건수를 돌려준다.
      *
-     * <p>이전 어드민의 {@code disableCompanyAllAAID} 를 잇는다. 그쪽은 CRITERIA 전체를
-     * 무조건 insert 해서 이미 꺼 둔 AAID 가 두 번 들어갔다 — 여기서는 NOT EXISTS 로 거른다.
-     * "전체 활성"은 이전 어드민에 없었지만 짝이 없으면 되돌릴 방법이 화면에 없어 함께 둔다.
+     * <p>끌 때는 이미 꺼 둔 AAID 가 두 번 들어가지 않도록 NOT EXISTS 로 거른다.
+     * "전체 활성"은 짝이 없으면 되돌릴 방법이 화면에 없어 함께 둔다.
      */
     @Transactional
     public int changeStatusAll(boolean enabled) {

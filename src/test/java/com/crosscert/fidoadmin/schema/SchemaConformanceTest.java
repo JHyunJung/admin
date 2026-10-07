@@ -1,6 +1,7 @@
-package com.crosscert.fidoadmin.erd;
+package com.crosscert.fidoadmin.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -18,20 +19,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
-/** 엔티티 39개의 @Table/@Column 이름 집합이 ERD 추출본과 정확히 같은지 검사한다. */
-class ErdConformanceTest {
+/**
+ * 엔티티 39개의 @Table/@Column 이름 집합이 스키마 컬럼표와 정확히 같은지 검사한다.
+ * 컬럼표는 저장소에 올리지 않으므로, 없는 환경에서는 건너뛴다.
+ */
+class SchemaConformanceTest {
 
     private static final String BASE = "com.crosscert.fidoadmin";
 
     @Test
-    void everyErdTableHasExactlyMatchingEntity() throws Exception {
-        Map<String, Set<String>> erd = ErdColumns.load();
-        assertThat(erd).hasSize(39);
-        assertThat(erd.values().stream().mapToInt(Set::size).sum()).isEqualTo(354);
+    void everySchemaTableHasExactlyMatchingEntity() throws Exception {
+        assumeTrue(SchemaColumns.available(), "schema-columns.txt 가 없어 건너뛴다");
+        Map<String, Set<String>> schema = SchemaColumns.load();
+        assertThat(schema).hasSize(39);
+        assertThat(schema.values().stream().mapToInt(Set::size).sum()).isEqualTo(354);
 
         Map<String, Set<String>> entities = scanEntities();
-        assertThat(entities.keySet()).containsExactlyInAnyOrderElementsOf(erd.keySet());
-        erd.forEach((table, cols) ->
+        assertThat(entities.keySet()).containsExactlyInAnyOrderElementsOf(schema.keySet());
+        schema.forEach((table, cols) ->
             assertThat(entities.get(table)).as("columns of %s", table).containsExactlyInAnyOrderElementsOf(cols));
     }
 

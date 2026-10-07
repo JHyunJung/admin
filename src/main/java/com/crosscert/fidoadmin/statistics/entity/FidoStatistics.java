@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO_STATISTICS — PK 없음. ERD 컬럼 12개. */
+/** FIDO_STATISTICS — PK 없음. 컬럼 12개. */
 @Entity
 @Table(name = "FIDO_STATISTICS")
 @Getter @Setter @NoArgsConstructor

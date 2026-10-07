@@ -1,6 +1,6 @@
 -- ============================================================
 -- 로컬 검증 전용 스키마. 운영 DB에 절대 적용하지 말 것.
--- 근거: docs/erd/kbfido-columns.txt (KBFIDO 39 테이블 / 354 컬럼)
+-- KBFIDO 39 테이블 / 354 컬럼.
 -- 시퀀스 이름 <TABLE>_SEQ 는 임시. 실제 이름 확인 후 교체.
 -- ============================================================
 -- 안전장치: 오류 발생 시 즉시 중단(운영 DB 오적용 시 뒤 구문이 실행되지 않도록).
@@ -414,7 +414,7 @@ CREATE TABLE CCFA_MANAGER (
   ALRAM_LEVEL                  VARCHAR2(20) DEFAULT '0' NOT NULL,
   CREATEDTIME                  TIMESTAMP DEFAULT sysdate NOT NULL,
   UPDATEDTIME                  TIMESTAMP DEFAULT sysdate NOT NULL,
-  -- 운영 DB 에 있다고 가정한 열(이전 어드민 2025 추가). 엔티티에 매핑하지 않고 PasswordAgeStore 가 JDBC 로만 쓴다.
+  -- 운영 DB 에 있다고 가정한 열. 엔티티에 매핑하지 않고 PasswordAgeStore 가 JDBC 로만 쓴다.
   LAST_PW_CHANGE_DATE          TIMESTAMP,
   CONSTRAINT CCFA_MANAGER_PK PRIMARY KEY (IDX)
 );
@@ -526,7 +526,7 @@ CREATE TABLE AWS_INFO (
   CONSTRAINT AWS_INFO_PK PRIMARY KEY (IDX)
 );
 
--- ---------- 고유 제약 / 보조 인덱스 (ERD 인덱스 목록) ----------
+-- ---------- 고유 제약 / 보조 인덱스 ----------
 ALTER TABLE CCFA_MANAGER ADD CONSTRAINT CCFA_MANAGER_USER_ID_UK UNIQUE (USER_ID);
 CREATE INDEX CRITERIA_AAID ON CRITERIA (AAID);
 CREATE INDEX CCFA_CRITERIA_AAID ON CCFA_CRITERIA (AAID);
@@ -534,7 +534,7 @@ CREATE INDEX FIDO2_CREDENTIAL_PARAMS_ALG ON FIDO2_CREDENTIAL_PARAMS (CRED_ALG);
 
 -- ---------- 시퀀스 + IDX 컬럼 기본값 (IDX 보유 29개 테이블) ----------
 -- 시드 데이터가 1~999 를 쓰므로 1000 부터 시작한다.
--- 고객사별 AAID 차단 목록(레거시 CCFA_COMPANY_AAID). 행이 있으면 그 고객사에서 해당 AAID 비활성.
+-- 고객사별 AAID 차단 목록(CCFA_COMPANY_AAID). 행이 있으면 그 고객사에서 해당 AAID 비활성.
 -- 운영 DB 에 이미 있는 테이블이라 로컬 검증용으로만 같은 모양을 만든다.
 CREATE TABLE CCFA_COMPANY_AAID (
     COMPANY_IDX NUMBER(19) NOT NULL,

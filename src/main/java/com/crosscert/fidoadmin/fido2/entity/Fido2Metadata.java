@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO2_METADATA — FIDO2 인증기기 메타데이터(MDS3). ERD 컬럼 23개.
+/** FIDO2_METADATA — FIDO2 인증기기 메타데이터(MDS3). 컬럼 23개.
  *  ASSERTIONSCHME 는 원본 컬럼명 오타(ASSERTIONSCHEME 아님) 그대로 유지한다. */
 @Entity
 @Table(name = "FIDO2_METADATA")

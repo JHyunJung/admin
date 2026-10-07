@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-/** USERINFO — FIDO 등록 사용자 인증정보(크리덴셜). ERD 컬럼 15개. PUBKEY/CERTIFICATE 는 민감정보. */
+/** USERINFO — FIDO 등록 사용자 인증정보(크리덴셜). 컬럼 15개. PUBKEY/CERTIFICATE 는 민감정보. */
 @Entity
 @Table(name = "USERINFO")
 @Getter @Setter @NoArgsConstructor

@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_MANAGER_PW_POLICY — 운영자 비밀번호 정책/잠금 상태. ERD 컬럼 6개. */
+/** CCFA_MANAGER_PW_POLICY — 운영자 비밀번호 정책/잠금 상태. 컬럼 6개. */
 @Entity
 @Table(name = "CCFA_MANAGER_PW_POLICY")
 @Getter @Setter @NoArgsConstructor

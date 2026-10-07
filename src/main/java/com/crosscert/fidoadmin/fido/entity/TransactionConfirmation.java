@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** TRANSACTION_CONFIRMATION — 거래확인(TC) 내용. ERD 컬럼 7개. */
+/** TRANSACTION_CONFIRMATION — 거래확인(TC) 내용. 컬럼 7개. */
 @Entity
 @Table(name = "TRANSACTION_CONFIRMATION")
 @Getter @Setter @NoArgsConstructor

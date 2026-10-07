@@ -98,13 +98,13 @@ class FidoSettingControllerWebTest {
         assertThat(html).contains("name=\"CERT_P1\" value=\"DISABLE\"");
         assertThat(html).contains("name=\"CERT_P1\" value=\"ENABLE\"");
         assertThat(html).contains("name=\"FIDO_ATTESTCERT_AAID_CHECK\" value=\"N\"");
-        // CERT_VERIFY 는 이전 화면처럼 드롭다운이다. 저장값(no)이 선택된 채로 그려진다.
+        // CERT_VERIFY 는 드롭다운이다. 저장값(no)이 선택된 채로 그려진다.
         assertThat(html).containsPattern("<option value=\"no\"\\s+selected=\"selected\">검증안함</option>");
         assertThat(html).contains("<option value=\"yes\">검증함</option>");
     }
 
-    /** 섹션 순서: 알림메일 → 부가기능 → 인증서. 위젯은 이전 어드민 규격. */
-    @Test void 섹션_순서와_위젯이_이전_규격을_따른다() throws Exception {
+    /** 섹션 순서: 알림메일 → 부가기능 → 인증서. 위젯은 슬라이더·드롭다운. */
+    @Test void 섹션_순서와_위젯_규격() throws Exception {
         String html = mvc.perform(get("/system/settings").session(session).with(user(superUser)))
             .andReturn().getResponse().getContentAsString();
         assertThat(html.indexOf(">알림메일 설정<")).isLessThan(html.indexOf(">FIDO 부가기능 설정<"));

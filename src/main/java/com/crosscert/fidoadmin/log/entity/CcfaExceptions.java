@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_EXCEPTIONS — 예외 로그(append-only). ERD 컬럼 8개.
+/** CCFA_EXCEPTIONS — 예외 로그(append-only). 컬럼 8개.
  *  CREATEDTIME 은 다른 테이블과 달리 VARCHAR2(64) 라 String 으로 둔다. */
 @Entity
 @Table(name = "CCFA_EXCEPTIONS")

@@ -19,7 +19,7 @@ public final class PasswordPolicy {
 
     private PasswordPolicy() {}
 
-    /** 영문 대문자·소문자·숫자·특수문자를 각각 하나 이상 포함해야 한다(이전 어드민 ManagerValidator 와 같다). */
+    /** 영문 대문자·소문자·숫자·특수문자를 각각 하나 이상 포함해야 한다. */
     public static final String PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$";
 
     /** 형식 위반 문구. 어노테이션 속성에서도 참조하므로 컴파일 상수다. */

@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** FIDO_LOGS_20210102 — 일자별 로그 아카이브(append-only). ERD 컬럼 6개. */
+/** FIDO_LOGS_20210102 — 일자별 로그 아카이브(append-only). 컬럼 6개. */
 @Entity
 @Table(name = "FIDO_LOGS_20210102")
 @Getter @Setter @NoArgsConstructor

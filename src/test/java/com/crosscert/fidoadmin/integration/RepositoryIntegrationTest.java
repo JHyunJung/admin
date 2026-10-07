@@ -60,7 +60,7 @@ class RepositoryIntegrationTest extends OracleContainerSupport {
         // "LIMIT" 은 어떤 테스트도 건드리지 않아, 매핑이 깨져도 통과했다.
         CcfaStatistics st = new CcfaStatistics();
         st.setOwnerIdx(1L); st.setTitle("통합"); st.setLimit(42L);
-        st.setOpenType("close"); st.setRealtime("custom");   // ERD NOT NULL
+        st.setOpenType("close"); st.setRealtime("custom");   // DB NOT NULL
         st.setCreatedtime(LocalDateTime.now()); st.setUpdatedtime(LocalDateTime.now());
         em.persist(st); em.flush(); em.clear();
         assertThat(em.find(CcfaStatistics.class, st.getIdx()).getLimit()).isEqualTo(42L);

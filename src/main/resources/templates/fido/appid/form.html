@@ -10,7 +10,7 @@
     <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
       <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
     </div>
-    <!--/* 이전 어드민 순서·표시어: APPID / 설명 / 장치 / 서비스명 / 기본값 / 상태. 저장 값은 그대로다
+    <!--/* 순서·표시어: APPID / 설명 / 장치 / 서비스명 / 기본값 / 상태. 저장 값은 그대로다
          (DEVICE ios·android, DEVICE_DEFAULT T·F, STATUS use·unuse). */-->
     <div class="row g-3">
       <div class="col-12">

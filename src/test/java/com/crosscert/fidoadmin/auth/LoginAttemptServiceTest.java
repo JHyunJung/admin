@@ -128,7 +128,7 @@ class LoginAttemptServiceTest {
         return p;
     }
 
-    /** 이전 어드민의 30분 자동 해제(updateManagerPwPolicyUnlock)를 로그인 시도 시점 판정으로 잇는다. */
+    /** 30분 자동 해제를 로그인 시도 시점에 판정한다. */
     @Test void lockExpiresAfterLockMinutes() {
         LocalDateTime now = LocalDateTime.of(2026, 9, 27, 12, 0);
         assertThat(service.isLocked(lockedPolicy(now.minusMinutes(31)), now)).isFalse();

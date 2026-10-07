@@ -34,9 +34,9 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 로그 파일은 `LOG_PATH`(기본 `./logs`, `logging.file.path` 로도 지정) 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)이며 일자별로 롤링해 30일 보관한다.
 모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙고, 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나간다 — 오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
 
-설계 5.2 의 화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
+화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
 
-여기에 더해 운영자 가입 흐름 화면 2개가 있다(설계: `docs/superpowers/specs/2026-09-17-fido-admin-signup-design.md`).
+여기에 더해 운영자 가입 흐름 화면 2개가 있다.
 
 - **가입 신청 `/signup`** — 로그인 없이 열리는 공개 폼. 로그인 화면의 "가입 신청" 링크로 들어간다.
   소속 고객사 선택란이 없고, 저장은 항상 `STATUS = 승인대기`, `COMPANY_IDX = -1`(미배정) 로 고정된다.
@@ -49,7 +49,7 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 
 슈퍼관리자는 한 번에 하나의 고객사만 본다. 로그인하면 `/select-tenant` 에서
 고객사를 고르고, 이후 상단 선택기로 언제든 바꿀 수 있다. 선택한 고객사가 조회·상세·등록·수정·삭제
-전부의 경계다(설계: `docs/superpowers/specs/2026-09-18-tenant-scoped-ui-design.md`).
+전부의 경계다.
 
 화면은 세 영역으로 나뉜다.
 
@@ -93,8 +93,9 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 
 - `docker/init/*.sql` 은 **로컬 검증 전용. 운영 DB 에 적용하지 않는다.**
   스크립트 앞에 `DB_NAME` 이 `FREE` 가 아니면 중단하는 가드가 있지만, 가드를 믿고 실행하지 않는다.
-- 엔티티 컬럼은 `docs/erd/kbfido-columns.txt` 와 1:1 (39 테이블 / 354 컬럼).
-  `ErdConformanceTest` 가 검증하며, 컬럼을 빼거나 더하면 실패한다.
+- 엔티티 컬럼은 KBFIDO 스키마와 1:1 (39 테이블 / 354 컬럼).
+  `SchemaConformanceTest` 가 검증하며, 컬럼을 빼거나 더하면 실패한다. 대조용 컬럼표(`src/test/resources/schema-columns.txt`)는
+  저장소에 올리지 않으므로, 그 파일이 없는 환경에서는 이 테스트를 건너뛴다.
 - 외부 CSS/JS/폰트 호출 없음. 정적 자원은 WebJars 와 `src/main/resources/static`.
 - JS `alert/confirm/prompt` 금지. 삭제 확인은 Bootstrap 모달.
 
@@ -115,25 +116,17 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 - 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `CrudService` 대신 **`AssignedIdCrudService`** 를 상속하고
   `assignedId()` 를 구현한다. 등록은 존재 검사 + `persist` 로만 수행되어, 이미 있는 키를 입력해도 기존 행이 덮어써지지 않고
   "이미 존재하는 값" 오류로 돌아온다(`save()` 는 식별자가 있으면 MERGE 로 동작한다).
-- `COMPANY_IDX` 가 없는 CRITERIA·FIDO2 화면은 시스템 메뉴와 같이 **SUPER 전용**이다(설계 3.3).
+- `COMPANY_IDX` 가 없는 CRITERIA·FIDO2 화면은 시스템 메뉴와 같이 **SUPER 전용**이다.
   `MenuRegistry` 의 `superOnly` 와 `SecurityConfig` 의 SUPER 매처를 함께 맞춘다.
 - 참고 구현: CRUD 는 `company/`, 조회 전용은 `log/audit`.
 
 ## 알려진 제약
 
-- `CCFA_AUDIT_LOG.IP` 가 `VARCHAR2(15)` 라 IPv6 주소는 앞 15자만 저장된다(설계 3.5 명시, 스키마 무변경 제약).
-- 비밀번호는 기존 시스템 호환을 위해 salt 없는 SHA-256 hex 로 저장한다(설계 3.4 / 12, 범위 밖).
-- 고객사 삭제 전 하위 데이터 검사는 검사와 삭제 사이의 동시 삽입을 막지 못한다(ERD 에 FK 없음).
+- `CCFA_AUDIT_LOG.IP` 가 `VARCHAR2(15)` 라 IPv6 주소는 앞 15자만 저장된다(스키마 무변경 제약).
+- 비밀번호는 운영 DB 에 저장된 값과 맞추려고 salt 없는 SHA-256 hex 로 저장한다(범위 밖).
+- 고객사 삭제 전 하위 데이터 검사는 검사와 삭제 사이의 동시 삽입을 막지 못한다(스키마에 FK 없음).
 - SUPER 가 고객사를 재배정하는 것과 COMPANY 의 수정이 동시에 일어나면 경쟁이 발생할 수 있다.
 - 가입 신청(`/signup`)에 횟수 제한이 없다. 사내망 전용이 현재의 유일한 완화책이다. 아이디 중복 응답으로 계정 존재를 추측할 수 있고, 승인대기 행을 대량으로 쌓을 수 있다.
 - 가입 신청은 감사 로그가 남지 않는다. `AuditLogger` 가 인증된 주체 없이는 아무것도 기록하지 않기 때문이다(승인·거절은 기록된다).
 - `CCFA_SYSTEM_PROP` 화면은 복합키를 경로 한 조각 `{PROP_KEY}@{COMPANY_IDX}` 로 다루므로 `PROP_KEY` 에 `/` 가 들어간 키는 화면에서 지원하지 않는다(등록 폼에서 거부).
 
-## 문서
-
-- 설계: `docs/superpowers/specs/2026-09-16-fido-admin-design.md`
-- 구현 계획 1부(기반): `docs/superpowers/plans/2026-09-16-fido-admin-part1-foundation.md`
-- 구현 계획 2부(업무 화면): `docs/superpowers/plans/2026-09-17-fido-admin-part2-screens.md`
-- 구현 계획 3부(시스템 화면·최종 검증): `docs/superpowers/plans/2026-09-17-fido-admin-part3-system.md`
-- 운영자 가입 신청·승인 설계: `docs/superpowers/specs/2026-09-17-fido-admin-signup-design.md`
-- 운영자 가입 신청·승인 계획: `docs/superpowers/plans/2026-09-17-fido-admin-signup.md`

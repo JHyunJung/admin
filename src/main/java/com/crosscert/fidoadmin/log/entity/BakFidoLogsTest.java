@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** BAK_FIDO_LOGS_TEST — 로그 테스트 테이블(append-only). ERD 컬럼 6개. */
+/** BAK_FIDO_LOGS_TEST — 로그 테스트 테이블(append-only). 컬럼 6개. */
 @Entity
 @Table(name = "BAK_FIDO_LOGS_TEST")
 @Getter @Setter @NoArgsConstructor

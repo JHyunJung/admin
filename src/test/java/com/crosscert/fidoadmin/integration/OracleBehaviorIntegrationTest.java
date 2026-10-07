@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class LegacyParityIntegrationTest extends OracleContainerSupport {
+class OracleBehaviorIntegrationTest extends OracleContainerSupport {
 
     @Autowired CompanyService companies;
     @Autowired JdbcTemplate jdbc;

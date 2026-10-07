@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_MENU — 어드민 메뉴 트리. ERD 컬럼 13개. */
+/** CCFA_MENU — 어드민 메뉴 트리. 컬럼 13개. */
 @Entity
 @Table(name = "CCFA_MENU")
 @Getter @Setter @NoArgsConstructor

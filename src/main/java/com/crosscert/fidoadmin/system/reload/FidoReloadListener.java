@@ -10,8 +10,8 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * 설정 변경이 커밋된 뒤 FIDO 서버들에 reload 를 보낸다. 이전 어드민은 insert 전에 보내 FIDO 서버가
- * 바뀌기 전 값을 다시 읽을 수 있었다. 여기서는 커밋 뒤에만, 저장을 기다리게 하지 않도록 전용 실행기에서 보낸다.
+ * 설정 변경이 커밋된 뒤 FIDO 서버들에 reload 를 보낸다. 커밋 전에 보내면 FIDO 서버가 바뀌기 전 값을
+ * 다시 읽을 수 있어서 커밋 뒤에만, 저장을 기다리게 하지 않도록 전용 실행기에서 보낸다.
  *
  * <p>대기 중인 전송이 이미 있으면 새 이벤트는 합쳐진다(reload 는 멱등이고 항상 모든 서버에 가므로
  * 마지막 커밋 뒤 한 번이면 충분하다). 실행이 시작되면 곧바로 대기 표시를 내려, 실행 중 커밋된 변경은 한 번 더 돈다.

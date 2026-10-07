@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_CRITERIA — 어드민 인증기기 정책. ERD 컬럼 6개. */
+/** CCFA_CRITERIA — 어드민 인증기기 정책. 컬럼 6개. */
 @Entity
 @Table(name = "CCFA_CRITERIA")
 @Getter @Setter @NoArgsConstructor

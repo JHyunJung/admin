@@ -4,7 +4,7 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>멤버코드 관리</title></head>
 <body>
-<main class="fa-list-legacy">
+<main class="fa-list-classic">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h4 mb-0">멤버코드 관리</h1>
     <a th:href="@{/appservers/new}" class="btn btn-outline-secondary btn-sm bg-white">
@@ -12,7 +12,7 @@
     </a>
   </div>
 
-  <!--/* 검색 조건은 필드별 입력칸을 유지하고, 배치·버튼만 이전 어드민 규격(오른쪽 정렬, 노란 검색 버튼)에 맞췄다. */-->
+  <!--/* 검색 조건은 필드별 입력칸을 유지하고, 배치·버튼은 오른쪽 정렬, 노란 검색 버튼이다. */-->
   <form method="get" th:action="@{/appservers}"
         class="fa-search-panel row g-2 align-items-center justify-content-end">
     <div class="col-auto">

@@ -1,4 +1,4 @@
-package com.crosscert.fidoadmin.erd;
+package com.crosscert.fidoadmin.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

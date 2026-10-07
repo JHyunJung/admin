@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** APPID — RP 앱 등록 정보. ERD 컬럼 10개. */
+/** APPID — RP 앱 등록 정보. 컬럼 10개. */
 @Entity
 @Table(name = "APPID")
 @Getter @Setter @NoArgsConstructor

@@ -112,7 +112,7 @@ class SignupServiceTest {
     }
 
     /**
-     * USER_ID 에 DB 유니크 제약이 없어(ERD, 스키마 변경 불가) 동시 신청이 둘 다
+     * USER_ID 에 DB 유니크 제약이 없어(스키마 변경 불가) 동시 신청이 둘 다
      * findByUserId() 에서 빈 결과를 볼 수 있다. 존재 검사 전에 테이블을 배타 잠금해
      * 직렬화해야 한다(ManagerService.insert() 와 같은 방식).
      */

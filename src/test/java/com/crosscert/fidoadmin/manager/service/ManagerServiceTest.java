@@ -60,7 +60,7 @@ class ManagerServiceTest {
         return m;
     }
 
-    /** USER_ID 에 유니크 제약이 없어(ERD) 코드에서 중복을 막는다. 로그인이 USER_ID 로 조회하기 때문. */
+    /** USER_ID 에 유니크 제약이 없어 코드에서 중복을 막는다. 로그인이 USER_ID 로 조회하기 때문. */
     @Test void duplicateUserIdIsRejectedBeforeSave() {
         when(managers.findByUserId("kbadmin")).thenReturn(Optional.of(manager(2L, "kbadmin")));
         assertThatThrownBy(() -> service.create(manager(null, "kbadmin")))
@@ -89,7 +89,7 @@ class ManagerServiceTest {
     }
 
     /**
-     * USER_ID 에 DB 유니크 제약이 없어(ERD, 스키마 변경 불가) 동시 등록 요청이 둘 다
+     * USER_ID 에 DB 유니크 제약이 없어(스키마 변경 불가) 동시 등록 요청이 둘 다
      * findByUserId() 에서 빈 결과를 볼 수 있다. 존재 검사 전에 테이블을 배타 잠금해
      * 이후 생성 요청을 직렬화해야 한다.
      */

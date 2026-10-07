@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_COMPANY — 고객사(테넌트). ERD 컬럼 19개. IDX 0 은 전역(시스템) 레코드. */
+/** CCFA_COMPANY — 고객사(테넌트). 컬럼 19개. IDX 0 은 전역(시스템) 레코드. */
 @Entity
 @Table(name = "CCFA_COMPANY")
 @Getter @Setter @NoArgsConstructor

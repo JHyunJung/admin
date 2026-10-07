@@ -4,7 +4,7 @@
 <head><title>FIDO 서버 설정</title></head>
 <body>
 <!--/*
-  이전 어드민의 "FIDO 부가기능 설정 / 인증서 설정" 화면 규격을 따른다. 이전 화면에 없던
+  "FIDO 부가기능 설정 / 인증서 설정" 화면 규격을 따른다. 그 밖의
   "알림메일 설정" 도 같은 형식으로 그린다. 섹션 순서는 알림메일 → 부가기능 → 인증서,
   섹션 안의 항목은 3열로 흐른다(admin.css .fa-set-body).
 
@@ -21,7 +21,7 @@
 
   <form method="post" th:action="@{/system/settings}" id="fidoSettingForm" class="fa-settings">
 
-    <!-- ===== 알림메일 설정 (이전 화면에 없던 섹션 — 같은 형식으로) ===== -->
+    <!-- ===== 알림메일 설정 (같은 형식으로) ===== -->
     <section class="fa-set-card">
       <div class="fa-set-head d-flex justify-content-between align-items-center">
         <span>알림메일 설정</span>
@@ -94,7 +94,7 @@
         <span th:replace="~{this :: headSwitch(${K.CERT})}"></span>
       </div>
       <div class="fa-set-body">
-        <!--/* CERT_VERIFY 는 yes/no 를 저장한다. 이전 화면처럼 드롭다운으로 고른다(체크박스+hidden 이 아니다). */-->
+        <!--/* CERT_VERIFY 는 yes/no 를 저장한다. 드롭다운으로 고른다(체크박스+hidden 이 아니다). */-->
         <div class="fa-set-row">
           <label class="fa-set-label" for="CERT_VERIFY">등록시 인증서 검증하기</label>
           <div class="fa-set-field">

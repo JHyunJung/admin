@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_OPTIONS — 코드 상세(CCFA_OPTION 의 하위 항목). ERD 컬럼 5개. */
+/** CCFA_OPTIONS — 코드 상세(CCFA_OPTION 의 하위 항목). 컬럼 5개. */
 @Entity
 @Table(name = "CCFA_OPTIONS")
 @Getter @Setter @NoArgsConstructor

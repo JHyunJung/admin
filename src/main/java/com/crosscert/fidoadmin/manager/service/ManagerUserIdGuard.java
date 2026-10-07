@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * CCFA_MANAGER.USER_ID 전역 유일성을 지키는 유일한 자리.
  *
- * <p>ERD 에 USER_ID 유니크 제약이 없고 스키마를 바꿀 수 없어, 존재 검사를 코드에서
+ * <p>스키마에 USER_ID 유니크 제약이 없고 스키마를 바꿀 수 없어, 존재 검사를 코드에서
  * 직렬화해야 한다. 그러지 않으면 동시 등록 요청 둘이 모두 findByUserId() 에서
  * 빈 결과를 보고 둘 다 INSERT 해 중복 USER_ID 가 생길 수 있다(로그인이 USER_ID 로만
  * 조회하므로 위험하다).

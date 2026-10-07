@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-/** APPID 입력 폼. 길이 제한은 ERD 값(바이트). 식별자(IDX)는 폼에 두지 않는다. */
+/** APPID 입력 폼. 길이 제한은 DB 컬럼 길이(바이트). 식별자(IDX)는 폼에 두지 않는다. */
 @Getter @Setter
 public class AppidForm {
     @NotBlank @ByteSize(max = 128) private String appid;

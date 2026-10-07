@@ -83,9 +83,9 @@ class PasswordExpiryPolicyTest {
 
     @Test void nullDateIsNotExpiredAndGetsTouched() {
         when(store.columnExists()).thenReturn(true);
-        when(store.lastChanged("legacy")).thenReturn(Optional.empty());
-        assertThat(policy("auto").isExpiredOnLogin("legacy")).isFalse();
-        verify(store).touch("legacy");
+        when(store.lastChanged("norecord")).thenReturn(Optional.empty());
+        assertThat(policy("auto").isExpiredOnLogin("norecord")).isFalse();
+        verify(store).touch("norecord");
     }
 
     @Test void expiryDaysFromSystemProp() {

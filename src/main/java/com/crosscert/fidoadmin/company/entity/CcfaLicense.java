@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_LICENSE — 라이선스. ERD 컬럼 13개. */
+/** CCFA_LICENSE — 라이선스. 컬럼 13개. */
 @Entity
 @Table(name = "CCFA_LICENSE")
 @Getter @Setter @NoArgsConstructor

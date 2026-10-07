@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-/** AWS_INFO — AWS 마켓플레이스 연동 정보. ERD 컬럼 10개.
+/** AWS_INFO — AWS 마켓플레이스 연동 정보. 컬럼 10개.
  *  EXPIRATIONDATE 는 다른 테이블과 달리 VARCHAR2(100) 라 String 으로 둔다. */
 @Entity
 @Table(name = "AWS_INFO")

@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_STATISTICS — 어드민 통계 위젯 정의. ERD 컬럼 16개. LIMIT 은 예약어라 따옴표 필수. */
+/** CCFA_STATISTICS — 어드민 통계 위젯 정의. 컬럼 16개. LIMIT 은 예약어라 따옴표 필수. */
 @Entity
 @Table(name = "CCFA_STATISTICS")
 @Getter @Setter @NoArgsConstructor

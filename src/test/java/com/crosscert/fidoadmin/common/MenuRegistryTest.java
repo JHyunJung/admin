@@ -56,7 +56,7 @@ class MenuRegistryTest {
         });
     }
 
-    /** 그룹 순서는 이전 어드민의 업무 도메인 순서를 따른다(MenuRegistry.ALL 주석 참고). */
+    /** 그룹 순서는 업무 도메인 순서를 따른다(MenuRegistry.ALL 주석 참고). */
     @Test void groupsPreserveOrder() {
         var groups = MenuRegistry.groups(registry.itemsFor(true));
         assertThat(groups.keySet()).containsExactly(

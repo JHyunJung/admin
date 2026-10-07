@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** CCFA_SYSTEM_INFO — key-value. ERD 컬럼 3개. */
+/** CCFA_SYSTEM_INFO — key-value. 컬럼 3개. */
 @Entity
 @Table(name = "CCFA_SYSTEM_INFO")
 @Getter @Setter @NoArgsConstructor

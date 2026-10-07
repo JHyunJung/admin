@@ -133,7 +133,7 @@ class SuperManagerServiceTest {
     }
 
     /**
-     * USER_ID 에 유니크 제약이 없어(ERD) 코드에서 중복을 막는다. 이 화면으로 이미 존재하는
+     * USER_ID 에 유니크 제약이 없어 코드에서 중복을 막는다. 이 화면으로 이미 존재하는
      * USER_ID(슈퍼관리자 계정의 것)를 다시 등록하려 하면 거부된다.
      */
     @Test void duplicateUserIdIsRejectedBeforeSave() {

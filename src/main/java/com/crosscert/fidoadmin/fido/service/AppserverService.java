@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** APPSERVER. COMPANY_IDX 로 테넌트 격리. ERD 기본값 TYPE='use'. */
+/** APPSERVER. COMPANY_IDX 로 테넌트 격리. DB 기본값 TYPE='use'. */
 @Service
 public class AppserverService extends CrudService<Appserver, Long, AppserverSearchForm> {
 
@@ -29,14 +29,14 @@ public class AppserverService extends CrudService<Appserver, Long, AppserverSear
         this.memberCodes = memberCodes;
     }
 
-    /** FIDO 서버가 멤버코드 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다(이전 어드민 sendAllSignal). */
+    /** FIDO 서버가 멤버코드 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다. */
     @Override protected void afterChange(String action, Appserver e) {
         events.publishEvent(new FidoConfigChanged(tableName() + " " + action + " " + idOf(e)));
     }
 
     /**
      * 현재 고객사에 같은 MEMBER_CODE + MEMBER_ID 행이 있는가. 수정이면 자기 행({@code excludeIdx})은 뺀다.
-     * 이전 어드민 FidoController 의 membercode 중복 검사를 잇는다. DB 유니크 제약은 없다.
+     * membercode 는 중복될 수 없다. DB 유니크 제약은 없다.
      */
     @Transactional(readOnly = true)
     public boolean existsDuplicate(String memberCode, String memberId, Long excludeIdx) {
