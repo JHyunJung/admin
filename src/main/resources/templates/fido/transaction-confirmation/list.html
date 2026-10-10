@@ -3,33 +3,38 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>거래 확인</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3">거래 확인</h1>
-  <form method="get" th:action="@{/transaction-confirmations}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">USERID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">AAID</label><input name="aaid" th:value="${search.aaid}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">시작일</label><input type="date" name="fromDate" th:value="${search.fromDate}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">종료일</label><input type="date" name="toDate" th:value="${search.toDate}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/transaction-confirmations}" class="btn btn-link btn-sm">초기화</a></div>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header('거래 확인', null)}"></div>
+  <form method="get" th:action="@{/transaction-confirmations}" class="fa-filter">
+    <div><label class="form-label" for="f-userid">USERID</label><input id="f-userid" name="userid" th:value="${search.userid}" class="form-control"></div>
+    <div><label class="form-label" for="f-aaid">AAID</label><input id="f-aaid" name="aaid" th:value="${search.aaid}" class="form-control"></div>
+    <div><label class="form-label" for="f-fromDate">시작일</label><input id="f-fromDate" type="date" name="fromDate" th:value="${search.fromDate}" class="form-control"></div>
+    <div><label class="form-label" for="f-toDate">종료일</label><input id="f-toDate" type="date" name="toDate" th:value="${search.toDate}" class="form-control"></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/transaction-confirmations}" class="btn btn-link">초기화</a>
+    </div>
   </form>
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>USERID</th><th>AAID</th><th>CONTENTTYPE</th><th>생성일</th></tr></thead>
-      <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/transaction-confirmations/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${r.userid}"></td>
-          <td th:text="${r.aaid}"></td>
-          <td th:text="${r.contenttype}"></td>
-          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="5" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light"><tr><th class="text-end">IDX</th><th>USERID</th><th>AAID</th><th>CONTENTTYPE</th><th>생성일</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="text-end fa-mono"><a th:href="@{/transaction-confirmations/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+            <td class="fa-mono" th:text="${r.userid}"></td>
+            <td class="fa-mono" th:text="${r.aaid}"></td>
+            <td th:text="${r.contenttype}"></td>
+            <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(5, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>
