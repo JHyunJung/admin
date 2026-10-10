@@ -2,10 +2,14 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>AAID(정책) 상세</title></head>
 <body>
-<main>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0" th:text="|AAID(정책) #${item.idx}|"></h1>
-    <a th:href="@{/criteria}" class="btn btn-link btn-sm">목록</a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div>
+      <a class="fa-back" th:href="@{/criteria}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
+      <div class="fa-title-row">
+        <h1 class="h4" th:text="|AAID(정책) #${item.idx}|"></h1>
+      </div>
+    </div>
   </div>
   <div th:replace="~{fragments/detail-section :: section('식별 정보', ~{this :: idRows})}"></div>
   <div th:replace="~{fragments/detail-section :: section('인증 정책', ~{this :: policyRows})}"></div>
@@ -14,8 +18,8 @@
 
 <!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
 <tbody th:fragment="idRows">
-  <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-  <tr><th>AAID</th><td th:text="${item.aaid}"></td></tr>
+  <tr><th>IDX</th><td class="fa-mono" th:text="${item.idx}"></td></tr>
+  <tr><th>AAID</th><td class="fa-mono" th:text="${item.aaid}"></td></tr>
   <tr><th>VENDORIDS</th><td th:text="${item.vendorids}"></td></tr>
   <tr><th>AUTHENTICATORVERSION</th><td th:text="${item.authenticatorversion}"></td></tr>
 </tbody>
@@ -35,8 +39,8 @@
 <tbody th:fragment="dataRows">
   <tr><th>METAHASH</th><td class="fa-mono" th:text="${item.metahash}"></td></tr>
   <tr><th>JSONDATA</th><td class="fa-pre fa-mono" th:text="${item.jsondataPretty}"></td></tr>
-  <tr><th>생성일시</th><td th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-  <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+  <tr><th>생성일시</th><td class="fa-mono" th:text="${#temporals.format(item.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+  <tr><th>수정일시</th><td class="fa-mono" th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
 </tbody>
 </body>
 </html>

@@ -3,35 +3,40 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>챌린지</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3">챌린지</h1>
-  <form method="get" th:action="@{/challenges}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">USERID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">시작일</label><input type="date" name="fromDate" th:value="${search.fromDate}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">종료일</label><input type="date" name="toDate" th:value="${search.toDate}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/challenges}" class="btn btn-link btn-sm">초기화</a></div>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header('챌린지', null)}"></div>
+  <form method="get" th:action="@{/challenges}" class="fa-filter">
+    <div><label class="form-label" for="f-userid">USERID</label><input id="f-userid" name="userid" th:value="${search.userid}" class="form-control"></div>
+    <div><label class="form-label" for="f-servicename">서비스명</label><input id="f-servicename" name="servicename" th:value="${search.servicename}" class="form-control"></div>
+    <div><label class="form-label" for="f-fromDate">시작일</label><input id="f-fromDate" type="date" name="fromDate" th:value="${search.fromDate}" class="form-control"></div>
+    <div><label class="form-label" for="f-toDate">종료일</label><input id="f-toDate" type="date" name="toDate" th:value="${search.toDate}" class="form-control"></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/challenges}" class="btn btn-link">초기화</a>
+    </div>
   </form>
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>USERID</th><th>서비스명</th><th>챌린지코드</th><th>UV</th><th>LOGIDX</th><th>생성일</th></tr></thead>
-      <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/challenges/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${r.userid}"></td>
-          <td th:text="${r.servicename}"></td>
-          <td class="fa-mono" th:text="${#strings.abbreviate(r.challengecode, 24)}"></td>
-          <td th:text="${r.uv}"></td>
-          <td th:text="${r.logidx}"></td>
-          <td th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        </tr>
-        <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
-      </tbody>
-    </table>
-  </div>
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light"><tr><th class="text-end">IDX</th><th>USERID</th><th>서비스명</th><th>챌린지코드</th><th class="text-end">UV</th><th class="text-end">LOGIDX</th><th>생성일</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="text-end fa-mono"><a th:href="@{/challenges/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+            <td class="fa-mono" th:text="${r.userid}"></td>
+            <td th:text="${r.servicename}"></td>
+            <td class="fa-mono" th:text="${#strings.abbreviate(r.challengecode, 24)}"></td>
+            <td class="text-end fa-mono" th:text="${r.uv}"></td>
+            <td class="text-end fa-mono" th:text="${r.logidx}"></td>
+            <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>

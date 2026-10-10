@@ -5,40 +5,37 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>AAID(정책) 보기</title></head>
 <body>
-<main class="fa-list-classic">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h4 mb-0">AAID(정책) 보기</h1>
-    <a th:href="@{/criteria/new}" class="btn btn-primary btn-sm" sec:authorize="hasRole('SUPER')">
-      <i class="bi bi-plus-lg me-1"></i>AAID 추가
-    </a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div><h1 class="h4">AAID(정책) 보기</h1></div>
+    <div class="fa-page-actions">
+      <a th:href="@{/criteria/new}" class="btn btn-primary" sec:authorize="hasRole('SUPER')"><i class="bi bi-plus-lg" aria-hidden="true"></i>AAID 추가</a>
+    </div>
   </div>
 
   <div th:if="${statusMessage != null}"
-       class="alert alert-success py-2"
-       role="status"
-       th:text="${statusMessage}">
+       class="alert alert-success"
+       role="status"><i class="bi bi-check-circle" aria-hidden="true"></i>
+    <div th:text="${statusMessage}"></div>
   </div>
 
-  <form method="get" th:action="@{/criteria}"
-        class="fa-search-panel row g-2 align-items-center justify-content-end">
-    <div class="col-auto">
-      <input name="aaid"
-             th:value="${search.aaid}"
-             class="form-control" placeholder="AAID" aria-label="AAID">
+  <form method="get" th:action="@{/criteria}" class="fa-filter">
+    <div><label class="form-label" for="f-aaid">AAID</label><input id="f-aaid" name="aaid" th:value="${search.aaid}" class="form-control" placeholder="AAID" aria-label="AAID"></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/criteria}" class="btn btn-link">초기화</a>
     </div>
-    <div class="col-auto"><button class="btn btn-search"><i class="bi bi-search me-1"></i>검색</button></div>
-    <div class="col-auto"><a th:href="@{/criteria}" class="btn btn-link btn-sm">초기화</a></div>
   </form>
 
   <!-- 전체 토글. 검색·페이지 상태를 hidden 으로 실어 돌아올 자리를 지킨다. -->
-  <div class="d-flex justify-content-end gap-2 mb-3">
+  <div class="fa-page-actions">
     <form th:action="@{/criteria/status}" method="post" class="m-0"
           onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 활성화하시겠습니까?');">
       <input type="hidden" name="enabled" value="true">
       <input type="hidden" name="aaid" th:value="${search.aaid}">
       <input type="hidden" name="page" th:value="${page.number}">
       <input type="hidden" name="size" th:value="${page.size}">
-      <button type="submit" class="btn btn-outline-success btn-sm text-nowrap">전체 활성화</button>
+      <button type="submit" class="btn btn-outline-success text-nowrap">전체 활성화</button>
     </form>
     <form th:action="@{/criteria/status}" method="post" class="m-0"
           onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 비활성화하시겠습니까? 이 고객사의 모든 인증기기가 거부됩니다.');">
@@ -46,77 +43,73 @@
       <input type="hidden" name="aaid" th:value="${search.aaid}">
       <input type="hidden" name="page" th:value="${page.number}">
       <input type="hidden" name="size" th:value="${page.size}">
-      <button type="submit" class="btn btn-outline-danger btn-sm text-nowrap">전체 비활성화</button>
+      <button type="submit" class="btn btn-outline-danger text-nowrap">전체 비활성화</button>
     </form>
   </div>
 
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover align-middle fa-table mb-0">
-      <thead class="table-light">
-      <tr>
-        <th class="text-nowrap">번호</th>
-        <th>AAID</th>
-        <th class="text-nowrap">Assertion Schemes</th>
-        <th class="text-nowrap">User Verification</th>
-        <th class="text-nowrap">메타데이터 해쉬 값</th>
-        <th class="text-nowrap">상태</th>
-        <th class="text-nowrap">생성일</th>
-        <th class="text-nowrap">수정일</th>
-      </tr>
-      </thead>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle fa-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="text-nowrap text-end">번호</th>
+            <th>AAID</th>
+            <th class="text-nowrap">Assertion Schemes</th>
+            <th class="text-nowrap">User Verification</th>
+            <th class="text-nowrap">메타데이터 해쉬 값</th>
+            <th class="text-nowrap">상태</th>
+            <th class="text-nowrap">생성일</th>
+            <th class="text-nowrap">수정일</th>
+          </tr>
+        </thead>
 
-      <tbody>
-      <tr th:each="r : ${page.content}">
-        <td>
-          <a th:href="@{/criteria/{id}(id=${r.idx})}"
-             th:text="${r.idx}"></a>
-        </td>
-        <td class="text-nowrap" th:text="${r.aaid}"></td>
-        <td th:text="${r.assertionschemes}"></td>
-        <td th:text="${r.userverification}"></td>
-        <td class="fa-mono"
-            style="white-space: normal; overflow-wrap: anywhere; min-width: 260px;"
-            th:text="${r.metahash}"></td>
-        <td th:with="disabled=${disabledAaids.contains(r.aaid)}">
-          <div class="d-flex align-items-center gap-2">
-            <span class="badge text-nowrap"
-                  th:classappend="${disabled} ? 'text-bg-danger' : 'text-bg-success'"
-                  th:text="${disabled} ? '비활성' : '활성'">
-            </span>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="text-end fa-mono">
+              <a th:href="@{/criteria/{id}(id=${r.idx})}"
+                 th:text="${r.idx}"></a>
+            </td>
+            <td class="text-nowrap fa-mono" th:text="${r.aaid}"></td>
+            <td th:text="${r.assertionschemes}"></td>
+            <td th:text="${r.userverification}"></td>
+            <td class="fa-mono"
+                style="white-space: normal; overflow-wrap: anywhere; min-width: 260px;"
+                th:text="${r.metahash}"></td>
+            <td th:with="disabled=${disabledAaids.contains(r.aaid)}">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge text-nowrap"
+                      th:classappend="${disabled} ? 'text-bg-danger' : 'text-bg-success'"
+                      th:text="${disabled} ? '비활성' : '활성'">
+                </span>
 
-            <form th:action="@{/criteria/{id}/status(id=${r.idx})}"
-                  method="post"
-                  class="m-0"
-                  onsubmit="return confirm('선택한 고객사의 AAID 정책 상태를 변경하시겠습니까?');">
-              <input type="hidden" name="enabled" th:value="${disabled}">
-              <input type="hidden" name="aaid" th:value="${search.aaid}">
-              <input type="hidden" name="page" th:value="${page.number}">
-              <input type="hidden" name="size" th:value="${page.size}">
-              <button type="submit"
-                      class="btn btn-sm text-nowrap"
-                      th:classappend="${disabled}
-                          ? 'btn-outline-success' : 'btn-outline-danger'"
-                      th:text="${disabled} ? '활성화' : '비활성화'">
-              </button>
-            </form>
-          </div>
-        </td>
-        <td class="text-nowrap"
-            th:text="${r.createtime == null ? '-' : #temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        <td class="text-nowrap"
-            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-      </tr>
-
-      <tr th:if="${page.totalElements == 0}">
-        <td colspan="8" class="text-center text-secondary py-4">
-          데이터가 없습니다.
-        </td>
-      </tr>
-      </tbody>
-    </table>
+                <form th:action="@{/criteria/{id}/status(id=${r.idx})}"
+                      method="post"
+                      class="m-0"
+                      onsubmit="return confirm('선택한 고객사의 AAID 정책 상태를 변경하시겠습니까?');">
+                  <input type="hidden" name="enabled" th:value="${disabled}">
+                  <input type="hidden" name="aaid" th:value="${search.aaid}">
+                  <input type="hidden" name="page" th:value="${page.number}">
+                  <input type="hidden" name="size" th:value="${page.size}">
+                  <button type="submit"
+                          class="btn btn-sm text-nowrap"
+                          th:classappend="${disabled}
+                              ? 'btn-outline-success' : 'btn-outline-danger'"
+                          th:text="${disabled} ? '활성화' : '비활성화'">
+                  </button>
+                </form>
+              </div>
+            </td>
+            <td class="text-nowrap fa-mono"
+                th:text="${r.createtime == null ? '-' : #temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td class="text-nowrap fa-mono"
+                th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(8, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
   </div>
-
-  <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
 </main>
 </body>
 </html>

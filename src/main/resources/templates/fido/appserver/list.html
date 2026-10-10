@@ -4,81 +4,63 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>멤버코드 관리</title></head>
 <body>
-<main class="fa-list-classic">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">멤버코드 관리</h1>
-    <a th:href="@{/appservers/new}" class="btn btn-outline-secondary btn-sm bg-white">
-      <i class="bi bi-plus-lg me-1"></i>추가하기
-    </a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div><h1 class="h4">멤버코드 관리</h1></div>
+    <div class="fa-page-actions">
+      <a th:href="@{/appservers/new}" class="btn btn-outline-secondary"><i class="bi bi-plus-lg" aria-hidden="true"></i>추가하기</a>
+    </div>
   </div>
 
-  <!--/* 검색 조건은 필드별 입력칸을 유지하고, 배치·버튼은 오른쪽 정렬, 노란 검색 버튼이다. */-->
-  <form method="get" th:action="@{/appservers}"
-        class="fa-search-panel row g-2 align-items-center justify-content-end">
-    <div class="col-auto">
-      <input name="memberCode" th:value="${search.memberCode}"
-             class="form-control" placeholder="멤버코드" aria-label="멤버코드">
-    </div>
-    <div class="col-auto">
-      <input name="memberId" th:value="${search.memberId}"
-             class="form-control" placeholder="멤버키" aria-label="멤버키">
-    </div>
-    <div class="col-auto">
-      <select name="type" class="form-select" aria-label="상태">
+  <form method="get" th:action="@{/appservers}" class="fa-filter">
+    <div><label class="form-label" for="f-memberCode">멤버코드</label><input id="f-memberCode" name="memberCode" th:value="${search.memberCode}" class="form-control" placeholder="멤버코드" aria-label="멤버코드"></div>
+    <div><label class="form-label" for="f-memberId">멤버키</label><input id="f-memberId" name="memberId" th:value="${search.memberId}" class="form-control" placeholder="멤버키" aria-label="멤버키"></div>
+    <div>
+      <label class="form-label" for="f-type">상태</label>
+      <select id="f-type" name="type" class="form-select" aria-label="상태">
         <option value="">상태 전체</option>
         <option value="use" th:selected="${search.type == 'use'}">활성</option>
         <option value="unuse" th:selected="${search.type == 'unuse'}">비활성</option>
       </select>
     </div>
-    <div class="col-auto"><button class="btn btn-search"><i class="bi bi-search me-1"></i>검색</button></div>
-    <div class="col-auto"><a th:href="@{/appservers}" class="btn btn-link btn-sm">초기화</a></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/appservers}" class="btn btn-link">초기화</a>
+    </div>
   </form>
 
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light">
-      <tr>
-        <th>번호</th>
-        <th>멤버코드</th>
-        <th>멤버키</th>
-        <th>설명</th>
-        <th>상태</th>
-        <th>생성일</th>
-        <th>수정일</th>
-      </tr>
-      </thead>
-
-      <tbody>
-      <tr th:each="r : ${page.content}">
-        <td th:text="${r.idx}"></td>
-        <td>
-          <a th:href="@{/appservers/{id}(id=${r.idx})}"
-             th:text="${r.memberCode}"></a>
-        </td>
-        <td th:text="${r.memberId}"></td>
-        <td th:text="${r.note}"
-            style="white-space: normal; overflow-wrap: anywhere;"></td>
-        <td>
-          <span class="badge text-nowrap"
-                th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
-                th:text="${r.type == 'use' ? '활성' : (r.type == 'unuse' ? '비활성' : '미확인')}"></span>
-        </td>
-        <td class="text-nowrap"
-            th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-        <td class="text-nowrap"
-            th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-      </tr>
-
-      <tr th:if="${page.totalElements == 0}">
-        <td colspan="7" class="text-center text-secondary py-4">
-          데이터가 없습니다.
-        </td>
-      </tr>
-      </tbody>
-    </table>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light">
+          <tr><th class="text-end">번호</th><th>멤버코드</th><th>멤버키</th><th>설명</th><th>상태</th><th>생성일</th><th>수정일</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="text-end fa-mono" th:text="${r.idx}"></td>
+            <td class="fa-mono">
+              <a th:href="@{/appservers/{id}(id=${r.idx})}"
+                 th:text="${r.memberCode}"></a>
+            </td>
+            <td class="fa-mono" th:text="${r.memberId}"></td>
+            <td th:text="${r.note}"
+                style="white-space: normal; overflow-wrap: anywhere;"></td>
+            <td>
+              <span class="badge text-nowrap"
+                    th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
+                    th:text="${r.type == 'use' ? '활성' : (r.type == 'unuse' ? '비활성' : '미확인')}"></span>
+            </td>
+            <td class="text-nowrap fa-mono"
+                th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td class="text-nowrap fa-mono"
+                th:text="${r.updatedtime == null ? '-' : #temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
   </div>
-
-  <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
 </main>
 </body>
 </html>

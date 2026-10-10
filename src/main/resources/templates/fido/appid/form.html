@@ -3,46 +3,47 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title th:text="${isNew} ? '앱 ID 등록' : '앱 ID 수정'">앱 ID</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3" th:text="${isNew} ? '앱 ID 등록' : '앱 ID 수정'">앱 ID</h1>
-  <form th:action="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" th:object="${form}" method="post"
-        class="bg-white border rounded p-3" style="max-width: 760px;">
-    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
-      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header(${isNew} ? '앱 ID 등록' : '앱 ID 수정', null)}"></div>
+  <form th:action="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" th:object="${form}" method="post" class="fa-form-card">
+    <div class="fa-form-body">
+      <div class="alert alert-danger" th:if="${#fields.hasAnyErrors()}"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        <div><div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div></div>
+      </div>
+      <!--/* 순서·표시어: APPID / 설명 / 장치 / 서비스명 / 기본값 / 상태. 저장 값은 그대로다
+           (DEVICE ios·android, DEVICE_DEFAULT T·F, STATUS use·unuse). */-->
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label" for="appid">APPID<span class="fa-req">*</span></label>
+          <input th:field="*{appid}" class="form-control" th:classappend="${#fields.hasErrors('appid')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:errors="*{appid}"></div>
+        </div>
+        <div class="col-12"><label class="form-label" for="memo">설명</label><textarea th:field="*{memo}" rows="3" class="form-control"></textarea></div>
+        <div class="col-md-6">
+          <label class="form-label" for="device">장치</label>
+          <select th:field="*{device}" class="form-select">
+            <option value="">선택 안 함</option>
+            <option value="ios">iOS</option>
+            <option value="android">AOS</option>
+            <!--/* 목록에 없는 옛 값은 선택지로 남겨 수정 저장 때 지워지지 않게 한다. */-->
+            <option th:if="${form.device != null and !form.device.isEmpty() and form.device != 'ios' and form.device != 'android'}"
+                    th:value="${form.device}" th:text="${form.device}"></option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label" for="servicename">서비스명</label><input th:field="*{servicename}" class="form-control"></div>
+        <div class="col-md-6">
+          <label class="form-label" for="deviceDefault">기본값<span class="fa-req">*</span></label>
+          <select th:field="*{deviceDefault}" class="form-select"><option value="T">설정</option><option value="F">설정안함</option></select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="status">상태<span class="fa-req">*</span></label>
+          <select th:field="*{status}" class="form-select"><option value="use">활성</option><option value="unuse">비활성</option></select>
+        </div>
+      </div>
     </div>
-    <!--/* 순서·표시어: APPID / 설명 / 장치 / 서비스명 / 기본값 / 상태. 저장 값은 그대로다
-         (DEVICE ios·android, DEVICE_DEFAULT T·F, STATUS use·unuse). */-->
-    <div class="row g-3">
-      <div class="col-12">
-        <label class="form-label">APPID <span class="text-danger">*</span></label>
-        <input th:field="*{appid}" class="form-control" th:classappend="${#fields.hasErrors('appid')} ? 'is-invalid'">
-        <div class="invalid-feedback" th:errors="*{appid}"></div>
-      </div>
-      <div class="col-12"><label class="form-label">설명</label><textarea th:field="*{memo}" rows="3" class="form-control"></textarea></div>
-      <div class="col-md-6">
-        <label class="form-label">장치</label>
-        <select th:field="*{device}" class="form-select">
-          <option value="">선택 안 함</option>
-          <option value="ios">iOS</option>
-          <option value="android">AOS</option>
-          <!--/* 목록에 없는 옛 값은 선택지로 남겨 수정 저장 때 지워지지 않게 한다. */-->
-          <option th:if="${form.device != null and !form.device.isEmpty() and form.device != 'ios' and form.device != 'android'}"
-                  th:value="${form.device}" th:text="${form.device}"></option>
-        </select>
-      </div>
-      <div class="col-md-6"><label class="form-label">서비스명</label><input th:field="*{servicename}" class="form-control"></div>
-      <div class="col-md-6">
-        <label class="form-label">기본값 <span class="text-danger">*</span></label>
-        <select th:field="*{deviceDefault}" class="form-select"><option value="T">설정</option><option value="F">설정안함</option></select>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">상태 <span class="text-danger">*</span></label>
-        <select th:field="*{status}" class="form-select"><option value="use">활성</option><option value="unuse">비활성</option></select>
-      </div>
-    </div>
-    <div class="mt-3 d-flex gap-2">
-      <button class="btn btn-primary">저장</button>
+    <div class="fa-form-actions">
       <a th:href="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+      <button class="btn btn-primary">저장</button>
     </div>
   </form>
 </main>
