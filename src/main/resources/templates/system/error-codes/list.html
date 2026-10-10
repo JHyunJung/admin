@@ -32,7 +32,10 @@
         </tbody>
       </table>
     </div>
-    <div th:replace="~{fragments/list-footer :: footer(${page}, ${basePath})}"></div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>
