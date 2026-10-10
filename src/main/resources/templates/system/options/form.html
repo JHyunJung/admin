@@ -2,25 +2,27 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title th:text="${isNew} ? '코드 그룹 등록' : '코드 그룹 수정'">코드 그룹</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3" th:text="${isNew} ? '코드 그룹 등록' : '코드 그룹 수정'">코드 그룹</h1>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header(${isNew} ? '코드 그룹 등록' : '코드 그룹 수정', null)}"></div>
   <form th:action="${isNew} ? @{/system/options} : @{/system/options/{id}(id=${id})}" th:object="${form}" method="post"
-        class="bg-white border rounded p-3" style="max-width: 640px;">
-    <div class="alert alert-danger py-2" th:if="${#fields.hasAnyErrors()}">
-      <div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div>
-    </div>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">그룹 이름 <span class="text-danger">*</span></label>
-        <input th:field="*{optionName}" class="form-control" th:classappend="${#fields.hasErrors('optionName')} ? 'is-invalid'">
-        <div class="invalid-feedback" th:errors="*{optionName}"></div>
+        class="fa-form-card">
+    <div class="fa-form-body">
+      <div class="alert alert-danger" th:if="${#fields.hasAnyErrors()}"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        <div><div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div></div>
       </div>
-      <div class="col-md-6"><label class="form-label">제목</label><input th:field="*{optionTitle}" class="form-control"></div>
-      <div class="col-12"><label class="form-label">비고</label><input th:field="*{optionNote}" class="form-control"></div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="optionName">그룹 이름 <span class="fa-req">*</span></label>
+          <input th:field="*{optionName}" class="form-control" th:classappend="${#fields.hasErrors('optionName')} ? 'is-invalid'">
+          <div class="invalid-feedback" th:errors="*{optionName}"></div>
+        </div>
+        <div class="col-md-6"><label class="form-label" for="optionTitle">제목</label><input th:field="*{optionTitle}" class="form-control"></div>
+        <div class="col-12"><label class="form-label" for="optionNote">비고</label><input th:field="*{optionNote}" class="form-control"></div>
+      </div>
     </div>
-    <div class="mt-3 d-flex gap-2">
-      <button class="btn btn-primary">저장</button>
+    <div class="fa-form-actions">
       <a th:href="${isNew} ? @{/system/options} : @{/system/options/{id}(id=${id})}" class="btn btn-outline-secondary">취소</a>
+      <button class="btn btn-primary">저장</button>
     </div>
   </form>
 </main>
