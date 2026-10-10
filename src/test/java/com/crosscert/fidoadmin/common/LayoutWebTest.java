@@ -258,7 +258,8 @@ class LayoutWebTest {
             .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         String crumbs = html.substring(html.indexOf("aria-label=\"현재 위치\""));
         crumbs = crumbs.substring(0, crumbs.indexOf("</nav>"));
-        assertThat(crumbs).contains("대시보드").contains("통계");
+        assertThat(crumbs).contains("대시보드").contains("통계")
+            .as("목록(메뉴) 경로 자체에는 셋째 칸이 없다").doesNotContain("상세").doesNotContain("등록").doesNotContain("수정");
     }
 
     /** 사이드바 위아래에 CI 로고가 있다(위: 로고 + "FIDO Admin", 아래: "Powered by"). 경로에는 콘텐츠 해시가 붙는다. */

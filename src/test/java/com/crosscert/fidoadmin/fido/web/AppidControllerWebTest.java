@@ -199,6 +199,27 @@ class AppidControllerWebTest {
             .contains(">AOS<").contains(">설정<").contains(">활성<");
     }
 
+    /** V2 브레드크럼 3단: 목록 아래 화면은 "그룹 / 메뉴 / 등록·수정·상세" 로 그린다(목록은 2단). */
+    @Test void breadcrumbHasThirdSegmentBelowList() throws Exception {
+        when(service.get(3L)).thenReturn(appid(3L));
+        when(service.get(4L)).thenReturn(appid(4L));
+        when(service.idOf(any())).thenReturn("4");
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        org.assertj.core.api.Assertions.assertThat(crumbsOf("/appids/new"))
+            .contains("FIDO 서버 관리").contains("AppID 관리").contains("등록").doesNotContain("상세").doesNotContain("수정");
+        org.assertj.core.api.Assertions.assertThat(crumbsOf("/appids/3"))
+            .contains("FIDO 서버 관리").contains("AppID 관리").contains("상세").doesNotContain("등록").doesNotContain("수정");
+        org.assertj.core.api.Assertions.assertThat(crumbsOf("/appids/4/edit"))
+            .contains("FIDO 서버 관리").contains("AppID 관리").contains("수정").doesNotContain("상세").doesNotContain("등록");
+    }
+
+    private String crumbsOf(String path) throws Exception {
+        String html = mvc.perform(get(path).with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String crumbs = html.substring(html.indexOf("aria-label=\"현재 위치\""));
+        return crumbs.substring(0, crumbs.indexOf("</nav>"));
+    }
+
     @Test void detailShowsAppleLogoForIos() throws Exception {
         Appid a = appid(6L); a.setDevice("ios");
         when(service.get(6L)).thenReturn(a);
