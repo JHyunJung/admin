@@ -343,4 +343,17 @@ class TenantSelectionControllerWebTest {
                 .param("companyIdx", "9").param("returnTo", "/users@evil.com"))
             .andExpect(redirectedUrl("/"));
     }
+
+    /** V2 카드로 바뀌어도 admin.js 가 찾는 배선은 그대로다. */
+    @Test void 선택_화면의_스크립트_배선이_유지된다() throws Exception {
+        CcfaCompany c = new CcfaCompany();
+        c.setIdx(9L);
+        c.setCompanyName("테스트고객사");
+        when(companies.all()).thenReturn(List.of(c));
+        String html = mvc.perform(get("/select-tenant").with(user(superUser())))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("id=\"tenantFilter\"", "id=\"tenantCount\"", "data-total=", "id=\"tenantNoMatch\"",
+            "data-tenant-card", "data-tenant-row", "data-tenant-form", "name=\"companyIdx\"", "name=\"returnTo\"",
+            "class=\"fa-pick-card\"", "/img/ill/tenant", ".webp");
+    }
 }
