@@ -3,44 +3,48 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>라이선스</title></head>
 <body>
-<main>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0">라이선스</h1>
-    <a th:href="@{/licenses/new}" class="btn btn-primary btn-sm">등록</a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div><h1 class="h4">라이선스</h1></div>
+    <div class="fa-page-actions">
+      <a th:href="@{/licenses/new}" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>등록</a>
+    </div>
   </div>
 
-  <form method="get" th:action="@{/licenses}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto">
-      <label class="form-label small mb-0">서비스명</label>
-      <input name="serviceName" th:value="${search.serviceName}" class="form-control form-control-sm">
+  <form method="get" th:action="@{/licenses}" class="fa-filter">
+    <div>
+      <label class="form-label" for="f-serviceName">서비스명</label>
+      <input id="f-serviceName" name="serviceName" th:value="${search.serviceName}" class="form-control">
     </div>
-    <div class="col-auto">
-      <button class="btn btn-outline-secondary btn-sm">검색</button>
-      <a th:href="@{/licenses}" class="btn btn-link btn-sm">초기화</a>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/licenses}" class="btn btn-link">초기화</a>
     </div>
   </form>
 
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light">
-        <tr><th>IDX</th><th>서비스명</th><th>담당자</th><th>전화</th><th>이메일</th><th>등록일</th></tr>
-      </thead>
-      <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/licenses/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${r.serviceName}"></td>
-          <td th:text="${r.contactName}"></td>
-          <td th:text="${r.contactPhone}"></td>
-          <td th:text="${r.contactEmail}"></td>
-          <td th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm')}"></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="6" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light">
+          <tr><th class="text-end">IDX</th><th>서비스명</th><th>담당자</th><th>전화</th><th>이메일</th><th>등록일</th></tr>
+        </thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="text-end fa-mono"><a th:href="@{/licenses/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+            <td th:text="${r.serviceName}"></td>
+            <td th:text="${r.contactName}"></td>
+            <td class="fa-mono" th:text="${r.contactPhone}"></td>
+            <td th:text="${r.contactEmail}"></td>
+            <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm')}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(6, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>
