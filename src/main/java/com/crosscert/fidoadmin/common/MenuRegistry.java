@@ -128,9 +128,7 @@ public class MenuRegistry {
      */
     public MenuArea areaOf(String path) {
         if (path == null) return MenuArea.SYSTEM;
-        return ALL.stream()
-            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
-            .max(java.util.Comparator.comparingInt(m -> m.href().length()))
+        return matchOf(path)
             .map(MenuItem::area)
             .orElse(MenuArea.SYSTEM);
     }
@@ -144,9 +142,7 @@ public class MenuRegistry {
      */
     public String listPathFor(String path) {
         if (path == null) return "/";
-        return ALL.stream()
-            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
-            .max(java.util.Comparator.comparingInt(m -> m.href().length()))
+        return matchOf(path)
             .map(MenuItem::href)
             .orElse("/");
     }
@@ -158,11 +154,35 @@ public class MenuRegistry {
      */
     public String titleFor(String path) {
         if (path == null) return "/";
-        return ALL.stream()
-            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
-            .max(java.util.Comparator.comparingInt(m -> m.href().length()))
+        return matchOf(path)
             .map(MenuItem::title)
             .orElse(path);
+    }
+
+    /**
+     * 경로가 속한 메뉴의 그룹 이름. "/users/123" → "FIDO 서버 관리".
+     * 상단바 브레드크럼이 쓴다. 메뉴에 없는 경로는 null 이다 — 브레드크럼은 그때 아무것도 그리지 않는다
+     * (titleFor 처럼 경로 문자열을 돌려주면 "/select-tenant" 같은 원시 경로가 화면에 보인다).
+     */
+    public String groupFor(String path) {
+        return matchOf(path).map(MenuItem::group).orElse(null);
+    }
+
+    /** 경로가 등록된 메뉴(또는 그 하위 경로)인가. */
+    public boolean isRegistered(String path) {
+        return matchOf(path).isPresent();
+    }
+
+    /**
+     * areaOf·listPathFor·titleFor·groupFor 가 함께 쓰는 매칭 — 가장 긴 접두사 메뉴.
+     * 한 곳에 두어야 네 메서드의 판정이 갈라지지 않는다. 루트 "/" 는 정확히 일치할 때만 맞는다
+     * (그렇지 않으면 모든 경로가 대시보드로 잡힌다). path 가 null 이면 빈 값이다.
+     */
+    private java.util.Optional<MenuItem> matchOf(String path) {
+        if (path == null) return java.util.Optional.empty();
+        return ALL.stream()
+            .filter(m -> path.equals(m.href()) || (!m.href().equals("/") && path.startsWith(withSlash(m.href()))))
+            .max(java.util.Comparator.comparingInt(m -> m.href().length()));
     }
 
     /**

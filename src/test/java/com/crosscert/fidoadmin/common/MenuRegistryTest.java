@@ -228,6 +228,26 @@ class MenuRegistryTest {
         assertThat(MenuRegistry.ALL).extracting(MenuItem::group).doesNotContain("이상 징후 탐지");
     }
 
+    @Test void groupFor_는_경로의_메뉴_그룹을_돌려준다() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.groupFor("/")).isEqualTo("대시보드");
+        assertThat(r.groupFor("/logs/fido")).isEqualTo("로그");
+        assertThat(r.groupFor("/users/123/credentials")).as("하위 경로는 소속 메뉴의 그룹").isEqualTo("FIDO 서버 관리");
+        assertThat(r.groupFor("/managers/super/3")).as("최장 접두사: /managers 가 아니라 /managers/super").isEqualTo("시스템관리");
+        assertThat(r.titleFor("/managers/super/3")).isEqualTo("슈퍼관리자 계정");
+        assertThat(r.groupFor("/fido2/metadata/new")).isEqualTo("FIDO2");
+    }
+
+    @Test void groupFor_는_메뉴에_없는_경로에_null() {
+        MenuRegistry r = new MenuRegistry();
+        assertThat(r.groupFor("/select-tenant")).isNull();
+        assertThat(r.groupFor("/error")).isNull();
+        assertThat(r.groupFor("/usersfoo")).as("접두사 오탐 금지").isNull();
+        assertThat(r.groupFor(null)).isNull();
+        assertThat(r.isRegistered("/logs/audit/5")).isTrue();
+        assertThat(r.isRegistered("/select-tenant")).isFalse();
+    }
+
     private MenuArea area(String href) {
         return MenuRegistry.ALL.stream().filter(m -> m.href().equals(href))
             .findFirst().orElseThrow().area();
