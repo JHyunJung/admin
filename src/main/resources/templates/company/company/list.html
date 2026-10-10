@@ -4,7 +4,7 @@
 <body>
 <main class="d-flex flex-column gap-4">
   <div class="fa-page-head">
-    <div><h1 class="h4">고객사</h1></div>
+    <div><h1 class="h4">고객사</h1><p class="fa-page-desc">서비스를 사용하는 고객사와 계약·한도를 관리합니다.</p></div>
     <div class="fa-page-actions">
       <a th:href="@{/companies/new}" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>등록</a>
     </div>
@@ -37,16 +37,16 @@
     <div class="table-responsive">
       <table class="table table-hover fa-table mb-0">
         <thead class="table-light">
-          <tr><th class="text-end">IDX</th><th>이름</th><th>유형</th><th>업체 코드</th><th>연락처</th><th>사용</th><th class="text-end">최대 사용자</th><th>등록일</th></tr>
+          <tr><th>IDX</th><th>이름</th><th>유형</th><th>업체 코드</th><th>연락처</th><th>사용</th><th class="text-end">최대 사용자</th><th>등록일</th></tr>
         </thead>
         <tbody>
           <tr th:each="c : ${page.content}">
-            <td class="text-end fa-mono" th:text="${c.idx}">0</td>
+            <td class="fa-mono" th:text="${c.idx}">0</td>
             <td><a th:href="@{/companies/{id}(id=${c.idx})}" th:text="${c.companyName}">이름</a></td>
             <td th:text="${c.companyType}"></td>
             <td class="fa-mono" th:text="${c.vendorCode}"></td>
             <td th:text="${c.contact}"></td>
-            <td th:text="${c.enableType}"></td>
+            <td><span class="badge" th:classappend="${c.enableType == 'Y'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${c.enableType}"></span></td>
             <td class="text-end fa-mono" th:text="${c.maxUser}"></td>
             <td class="text-nowrap fa-mono" th:text="${#temporals.format(c.createdtime, 'yyyy-MM-dd HH:mm')}"></td>
           </tr>

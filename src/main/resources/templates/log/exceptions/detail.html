@@ -8,7 +8,7 @@
       <a class="fa-back" th:href="@{/logs/exceptions}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
       <div class="fa-title-row">
         <h1 class="h4" th:text="|예외 로그 #${item.idx}|"></h1>
-        <span class="badge" th:classappend="${item.level == 'ERROR'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${item.level}"></span>
+        <span class="badge" th:classappend="${item.level == 'ERROR'} ? 'text-bg-danger' : (${item.level == 'WARN'} ? 'text-bg-warning' : 'text-bg-secondary')" th:text="${item.level}"></span>
       </div>
     </div>
   </div>

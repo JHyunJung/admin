@@ -4,29 +4,34 @@
 <head><title>대시보드</title></head>
 <body>
 <main class="d-flex flex-column gap-4">
-  <div th:replace="~{fragments/page-header :: header('대시보드', null)}"></div>
-  <!--
-    data-auto-submit: 입력이 바뀌면 조회 버튼 없이 바로 조회한다(admin.js).
-    조회 버튼은 남겨 둔다 — 스크립트가 로드되지 않아도 조회할 수 있어야 한다.
-  -->
-  <form method="get" th:action="@{/}" class="fa-filter" data-auto-submit>
+  <div class="fa-page-head">
     <div>
-      <label class="form-label" for="f-service">서비스</label>
-      <select id="f-service" name="serviceName" class="form-select">
-        <option value="">전체</option>
-        <option th:each="s : ${serviceNames}" th:value="${s}" th:text="${s}" th:selected="${search.serviceName == s}"></option>
-      </select>
+      <h1 class="h4">대시보드</h1>
+      <p class="fa-page-desc">입력이 바뀌면 바로 조회합니다.</p>
     </div>
-    <div>
-      <label class="form-label" for="f-groupby">집계 단위</label>
-      <select id="f-groupby" name="groupby" class="form-select">
-        <option th:each="g : ${groupbys}" th:value="${g}" th:text="${g}" th:selected="${search.groupby == g}"></option>
-      </select>
-    </div>
-    <div><label class="form-label" for="f-from">시작일</label><input id="f-from" type="date" name="fromDate" th:value="${search.fromDate}" class="form-control"></div>
-    <div><label class="form-label" for="f-to">종료일</label><input id="f-to" type="date" name="toDate" th:value="${search.toDate}" class="form-control"></div>
-    <div class="fa-filter-actions"><button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>조회</button></div>
-  </form>
+    <!--
+      data-auto-submit: 입력이 바뀌면 조회 버튼 없이 바로 조회한다(admin.js).
+      조회 버튼은 남겨 둔다 — 스크립트가 로드되지 않아도 조회할 수 있어야 한다.
+    -->
+    <form method="get" th:action="@{/}" class="fa-head-filter" data-auto-submit>
+      <div>
+        <label class="form-label" for="f-service">서비스</label>
+        <select id="f-service" name="serviceName" class="form-select">
+          <option value="">전체</option>
+          <option th:each="s : ${serviceNames}" th:value="${s}" th:text="${s}" th:selected="${search.serviceName == s}"></option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="f-groupby">집계 단위</label>
+        <select id="f-groupby" name="groupby" class="form-select">
+          <option th:each="g : ${groupbys}" th:value="${g}" th:text="${g}" th:selected="${search.groupby == g}"></option>
+        </select>
+      </div>
+      <div><label class="form-label" for="f-from">시작일</label><input id="f-from" type="date" name="fromDate" th:value="${search.fromDate}" class="form-control"></div>
+      <div><label class="form-label" for="f-to">종료일</label><input id="f-to" type="date" name="toDate" th:value="${search.toDate}" class="form-control"></div>
+      <div class="fa-filter-actions"><button class="btn btn-outline-secondary">조회</button></div>
+    </form>
+  </div>
 
   <div class="row g-3">
     <div class="col-6 col-lg-3">
@@ -84,27 +89,27 @@
     </div>
   </div>
 
-  <div class="fa-chart-card">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <h2 class="h6 mb-0">일별 인증·등록 추이</h2>
+  <section class="fa-chart-card" aria-labelledby="chart-title">
+    <div class="fa-chart-head">
+      <h2 id="chart-title" class="fa-section-title">일별 인증·등록 추이</h2>
       <div class="fa-legend">
-        <span><i style="background:#1F5EDB"></i>인증 성공</span>
-        <span><i style="background:#B42318"></i>인증 실패</span>
-        <span><i style="background:#0F1B2D"></i>등록 성공</span>
+        <span><i class="fa-legend-auth"></i>인증 성공</span>
+        <span><i class="fa-legend-fail"></i>인증 실패</span>
+        <span><i class="fa-legend-reg"></i>등록 성공</span>
       </div>
     </div>
-    <canvas id="dailyChart" height="90"></canvas>
-  </div>
-  <!--/* 그래프가 비거나 끝이 잘린 이유를 구분해 알린다. */-->
-  <th:block th:if="${noStatsAtAll}">
-    <div th:replace="~{fragments/empty-state :: block('이 고객사에는 통계 데이터가 없습니다. FIDO 서버의 통계 집계가 아직 한 번도 돌지 않았을 수 있습니다.', 'dashboard')}"></div>
-  </th:block>
-  <th:block th:if="${!noStatsAtAll and #lists.isEmpty(daily)}">
-    <div th:replace="~{fragments/empty-state :: block(|선택한 기간(${range.from()} ~ ${range.to()})에 데이터가 없습니다. | + (${lastStatDate != null} ? |마지막 집계일: ${lastStatDate}| : '이 조건(집계 단위·서비스)에는 집계된 데이터가 없습니다.'), 'dashboard')}"></div>
-  </th:block>
-  <th:block th:if="${staleAfterLast}">
-    <div th:replace="~{fragments/empty-state :: block(|마지막 집계일은 ${lastStatDate} 입니다. 이후 날짜는 아직 집계되지 않았습니다(통계 배치 확인 필요).|, 'dashboard')}"></div>
-  </th:block>
+    <div class="fa-chart-body"><canvas id="dailyChart" height="90"></canvas></div>
+    <!--/* 그래프가 비거나 끝이 잘린 이유를 구분해 알린다(차트 카드 아래 칸, 상황별로 하나). */-->
+    <th:block th:if="${noStatsAtAll}">
+      <div class="fa-chart-note"><img th:src="@{/img/ill/dashboard.webp}" alt="" width="160" height="120"><p>이 고객사에는 통계 데이터가 없습니다. FIDO 서버의 통계 집계가 아직 한 번도 돌지 않았을 수 있습니다.</p></div>
+    </th:block>
+    <th:block th:if="${!noStatsAtAll and #lists.isEmpty(daily)}">
+      <div class="fa-chart-note"><img th:src="@{/img/ill/dashboard.webp}" alt="" width="160" height="120"><p th:text="|선택한 기간(${range.from()} ~ ${range.to()})에 데이터가 없습니다. | + (${lastStatDate != null} ? |마지막 집계일: ${lastStatDate}| : '이 조건(집계 단위·서비스)에는 집계된 데이터가 없습니다.')"></p></div>
+    </th:block>
+    <th:block th:if="${staleAfterLast}">
+      <div class="fa-chart-note"><img th:src="@{/img/ill/dashboard.webp}" alt="" width="160" height="120"><p th:text="|마지막 집계일은 ${lastStatDate} 입니다. 이후 날짜는 아직 집계되지 않았습니다(통계 배치 확인 필요).|"></p></div>
+    </th:block>
+  </section>
 
   <script th:inline="javascript">
     /*<![CDATA[*/

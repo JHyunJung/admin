@@ -17,15 +17,21 @@
   (FidoSettingControllerWebTest.토글은_체크박스가_hidden_보다_앞에_온다).
 */-->
 <main class="d-flex flex-column gap-4" th:with="K=${T(com.crosscert.fidoadmin.system.web.FidoSettingKey)}">
-  <div th:replace="~{fragments/page-header :: header('FIDO 서버 설정', null)}"></div>
+  <div th:replace="~{fragments/page-header :: header('FIDO 서버 설정', '선택한 고객사의 FIDO 서버 동작을 설정합니다.')}"></div>
 
   <form method="post" th:action="@{/system/settings}" id="fidoSettingForm" class="fa-settings d-flex flex-column gap-4">
 
     <!-- ===== 알림메일 설정 (같은 형식으로) ===== -->
     <section class="fa-set-card">
-      <div class="fa-set-head d-flex justify-content-between align-items-center">
-        <span>알림메일 설정</span>
-        <span th:replace="~{this :: headSwitch(${K.SMTP})}"></span>
+      <div class="fa-set-head">
+        <div>
+          <h2 class="fa-set-title">알림메일 설정</h2>
+          <p class="fa-set-desc">알림메일을 보낼 메일서버와 발송주기를 정합니다.</p>
+        </div>
+        <div class="fa-set-head-switch">
+          <span class="fa-set-muted">알림메일 사용</span>
+          <span th:replace="~{this :: headSwitch(${K.SMTP})}"></span>
+        </div>
       </div>
       <div class="fa-set-body">
         <div th:replace="~{this :: inputRow(${K.SMTP_IP}, 'text')}"></div>
@@ -35,15 +41,18 @@
 
         <!--/* 저장된 값은 내려보내지 않는다(서비스가 마스크로 바꾼다). 그대로 두면 기존 값이 유지된다. */-->
         <div class="fa-set-row">
-          <label class="fa-set-label" for="SMTP_PASSWORD">사용자 PW</label>
+          <div class="fa-set-text">
+            <label class="fa-set-label" for="SMTP_PASSWORD">사용자 PW</label>
+            <p class="fa-set-key">SMTP_PASSWORD</p>
+            <div class="form-text">
+              <span class="badge text-bg-success" th:if="${!#strings.isEmpty(values.get('SMTP_PASSWORD'))}">설정되어 있습니다.</span>
+              <span class="badge text-bg-secondary" th:if="${#strings.isEmpty(values.get('SMTP_PASSWORD'))}">설정되어 있지 않습니다.</span>
+              <span class="d-block mt-1">바꿀 때만 입력하세요. 그대로 두면 기존 값이 유지됩니다.</span>
+            </div>
+          </div>
           <div class="fa-set-field">
             <input type="password" class="form-control fa-set-input" id="SMTP_PASSWORD" name="SMTP_PASSWORD"
                    th:value="${values.get('SMTP_PASSWORD')}" autocomplete="new-password">
-            <div class="form-text">
-              <span th:if="${!#strings.isEmpty(values.get('SMTP_PASSWORD'))}">설정되어 있습니다. </span>
-              <span th:if="${#strings.isEmpty(values.get('SMTP_PASSWORD'))}">설정되어 있지 않습니다. </span>
-              바꿀 때만 입력하세요. 그대로 두면 기존 값이 유지됩니다.
-            </div>
           </div>
         </div>
 
@@ -53,7 +62,12 @@
 
     <!-- ===== FIDO 부가기능 설정 ===== -->
     <section class="fa-set-card">
-      <div class="fa-set-head">FIDO 부가기능 설정</div>
+      <div class="fa-set-head">
+        <div>
+          <h2 class="fa-set-title">FIDO 부가기능 설정</h2>
+          <p class="fa-set-desc">FIDO 서버의 부가기능 사용 여부와 유효기간을 정합니다.</p>
+        </div>
+      </div>
       <div class="fa-set-body">
         <div th:replace="~{this :: toggleRow(${K.USERNAME_ENC}, '사용안함', '사용함')}"></div>
         <div th:replace="~{this :: toggleRow(${K.FIDO_DETAIL_LOG_DB_SAVE}, '사용안함', '사용함')}"></div>
@@ -63,7 +77,10 @@
         <div th:replace="~{this :: toggleRow(${K.FIDO_REREG_ENABLE}, '사용안함', '사용함')}"></div>
 
         <div class="fa-set-row">
-          <label class="fa-set-label" for="CHALLENGE_TERM">Challenge 유효기간</label>
+          <div class="fa-set-text">
+            <label class="fa-set-label" for="CHALLENGE_TERM">Challenge 유효기간</label>
+            <p class="fa-set-key">CHALLENGE_TERM</p>
+          </div>
           <div class="fa-set-field d-flex align-items-center gap-3">
             <input type="range" class="form-range fa-set-range" id="CHALLENGE_TERM" name="CHALLENGE_TERM"
                    th:min="${T(com.crosscert.fidoadmin.system.web.FidoSettingOptions).CHALLENGE_MIN}"
@@ -76,7 +93,10 @@
         </div>
 
         <div class="fa-set-row">
-          <label class="fa-set-label" for="TC_ORIGIN_TERM">TC원문 저장 기간</label>
+          <div class="fa-set-text">
+            <label class="fa-set-label" for="TC_ORIGIN_TERM">TC원문 저장 기간</label>
+            <p class="fa-set-key">TC_ORIGIN_TERM</p>
+          </div>
           <div class="fa-set-field">
             <select class="form-select fa-set-select" id="TC_ORIGIN_TERM" name="TC_ORIGIN_TERM">
               <option th:each="o : ${tcOptions}" th:value="${o.value()}" th:text="${o.label()}"
@@ -89,16 +109,25 @@
 
     <!-- ===== 인증서 설정 ===== -->
     <section class="fa-set-card">
-      <div class="fa-set-head d-flex justify-content-between align-items-center">
-        <span>인증서 설정</span>
-        <span th:replace="~{this :: headSwitch(${K.CERT})}"></span>
+      <div class="fa-set-head">
+        <div>
+          <h2 class="fa-set-title">인증서 설정</h2>
+          <p class="fa-set-desc">등록·인증 시 인증서 검증 방식과 응답 옵션을 정합니다.</p>
+        </div>
+        <div class="fa-set-head-switch">
+          <span class="fa-set-muted">인증서 설정 사용</span>
+          <span th:replace="~{this :: headSwitch(${K.CERT})}"></span>
+        </div>
       </div>
       <div class="fa-set-body">
         <!--/* CERT_VERIFY 는 yes/no 를 저장한다. 드롭다운으로 고른다(체크박스+hidden 이 아니다). */-->
         <div class="fa-set-row">
-          <label class="fa-set-label" for="CERT_VERIFY">등록시 인증서 검증하기</label>
+          <div class="fa-set-text">
+            <label class="fa-set-label" for="CERT_VERIFY">등록시 인증서 검증하기</label>
+            <p class="fa-set-key">CERT_VERIFY</p>
+          </div>
           <div class="fa-set-field">
-            <select class="form-select" id="CERT_VERIFY" name="CERT_VERIFY"
+            <select class="form-select fa-set-select" id="CERT_VERIFY" name="CERT_VERIFY"
                     th:with="on=${K.CERT_VERIFY.isOn(values.get('CERT_VERIFY'))}">
               <option th:value="${K.CERT_VERIFY.style().off()}" th:selected="${!on}">검증안함</option>
               <option th:value="${K.CERT_VERIFY.style().on()}" th:selected="${on}">검증함</option>
@@ -108,9 +137,12 @@
 
         <div th:replace="~{this :: toggleRow(${K.CERT_SIGN_VERIFY}, '검증안함', '검증함')}"></div>
 
-        <div class="fa-set-row">
-          <span class="fa-set-label">인증 응답시 추가 옵션</span>
-          <div class="fa-set-field d-flex flex-wrap gap-4">
+        <div class="fa-set-row fa-set-stack">
+          <div class="fa-set-text">
+            <span class="fa-set-label" id="cert-opts">인증 응답시 추가 옵션</span>
+            <p class="fa-set-key">CERT_P1 · CERT_P7 · CERT_P9 · CERT_PUBKEY · CERT_PUBKEY_ALG · AUTH_ALG</p>
+          </div>
+          <div class="fa-set-options" role="group" aria-labelledby="cert-opts">
             <label th:replace="~{this :: checkItem(${K.CERT_P1})}"></label>
             <label th:replace="~{this :: checkItem(${K.CERT_P7})}"></label>
             <label th:replace="~{this :: checkItem(${K.CERT_P9})}"></label>
@@ -122,7 +154,8 @@
       </div>
     </section>
 
-    <div class="fa-form-actions fa-card">
+    <div class="fa-save-bar fa-card">
+      <span>세 구획의 설정을 한 번에 저장합니다.</span>
       <button type="submit" class="btn btn-primary"><i class="bi bi-save" aria-hidden="true"></i>저장</button>
     </div>
   </form>
@@ -132,8 +165,11 @@
 
 <!--/* 한 줄 토글: "사용안함 [스위치] 사용함" */-->
 <div th:fragment="toggleRow(k, offLabel, onLabel)" class="fa-set-row">
-  <label class="fa-set-label" th:for="${k.key()}" th:text="${k.label()}">항목</label>
-  <div class="fa-set-field d-flex align-items-center gap-2">
+  <div class="fa-set-text">
+    <label class="fa-set-label" th:for="${k.key()}" th:text="${k.label()}">항목</label>
+    <p class="fa-set-key" th:text="${k.key()}">KEY</p>
+  </div>
+  <div class="fa-set-field fa-set-toggle">
     <span class="fa-set-muted" th:text="${offLabel}">사용안함</span>
     <div class="form-check form-switch m-0 fa-set-switch">
       <input class="form-check-input" type="checkbox" role="switch"
@@ -141,7 +177,7 @@
              th:checked="${k.isOn(values.get(k.key()))}">
       <input type="hidden" th:name="${k.key()}" th:value="${k.style().off()}">
     </div>
-    <span class="fa-set-muted" th:text="${onLabel}">사용함</span>
+    <span class="fa-set-muted fa-set-on" th:text="${onLabel}">사용함</span>
   </div>
 </div>
 
@@ -154,7 +190,7 @@
 </span>
 
 <!--/* 체크박스 한 칸(인증 응답시 추가 옵션) */-->
-<label th:fragment="checkItem(k)" class="form-check m-0 d-flex align-items-center gap-2 fa-set-check">
+<label th:fragment="checkItem(k)" class="form-check m-0 fa-set-check">
   <input class="form-check-input m-0" type="checkbox"
          th:id="${k.key()}" th:name="${k.key()}" th:value="${k.style().on()}"
          th:checked="${k.isOn(values.get(k.key()))}">
@@ -164,7 +200,10 @@
 
 <!--/* 텍스트/숫자 입력 한 줄 */-->
 <div th:fragment="inputRow(k, inputType)" class="fa-set-row">
-  <label class="fa-set-label" th:for="${k.key()}" th:text="${k.label()}">항목</label>
+  <div class="fa-set-text">
+    <label class="fa-set-label" th:for="${k.key()}" th:text="${k.label()}">항목</label>
+    <p class="fa-set-key" th:text="${k.key()}">KEY</p>
+  </div>
   <div class="fa-set-field">
     <input class="form-control fa-set-input" th:type="${inputType}" th:id="${k.key()}" th:name="${k.key()}"
            th:value="${values.get(k.key())}" th:attr="min=${inputType == 'number'} ? 0 : null">

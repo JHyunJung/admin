@@ -4,7 +4,7 @@
 <body>
 <main class="d-flex flex-column gap-4">
   <div class="fa-page-head">
-    <div><h1 class="h4">운영자</h1></div>
+    <div><h1 class="h4">운영자</h1><p class="fa-page-desc">선택한 고객사의 운영자 계정을 관리합니다.</p></div>
     <div class="fa-page-actions">
       <a th:href="@{/managers/new}" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>등록</a>
     </div>
@@ -31,11 +31,11 @@
     <div class="table-responsive">
       <table class="table table-hover fa-table mb-0">
         <thead class="table-light">
-          <tr><th class="text-end">IDX</th><th>ID</th><th>이름</th><th>이메일</th><th>상태</th><th>로그인</th><th>최근 접속</th></tr>
+          <tr><th>IDX</th><th>ID</th><th>이름</th><th>이메일</th><th>상태</th><th>로그인</th><th>최근 접속</th></tr>
         </thead>
         <tbody>
           <tr th:each="r : ${page.content}">
-            <td class="text-end fa-mono" th:text="${r.idx}">0</td>
+            <td class="fa-mono" th:text="${r.idx}">0</td>
             <td class="fa-mono"><a th:href="@{/managers/{id}(id=${r.idx})}" th:text="${r.userId}">id</a></td>
             <td th:text="${r.userNm}"></td>
             <td th:text="${r.userEmail}"></td>

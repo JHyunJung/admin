@@ -7,6 +7,7 @@
   <div th:replace="~{fragments/page-header :: header(${isNew} ? '앱 ID 등록' : '앱 ID 수정', null)}"></div>
   <form th:action="${isNew} ? @{/appids} : @{/appids/{id}(id=${id})}" th:object="${form}" method="post" class="fa-form-card">
     <div class="fa-form-body">
+      <h2 class="fa-form-section">앱 ID 정보</h2>
       <div class="alert alert-danger" th:if="${#fields.hasAnyErrors()}"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>
         <div><div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div></div>
       </div>

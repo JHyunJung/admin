@@ -21,13 +21,19 @@
       <nav class="fa-crumbs" aria-label="현재 위치" th:if="${@menuRegistry.isRegistered(currentPath)}">
         <span th:text="${@menuRegistry.groupFor(currentPath)}">그룹</span>
         <span aria-hidden="true">/</span>
-        <span class="fa-crumb-current" th:text="${@menuRegistry.titleFor(currentPath)}">메뉴</span>
+        <th:block th:with="sub=${currentPath.endsWith('/new')} ? '등록' : (${currentPath.endsWith('/edit')} ? '수정' : (${currentPath != @menuRegistry.listPathFor(currentPath)} ? '상세' : null))">
+          <span th:class="${sub == null} ? 'fa-crumb-current'" th:text="${@menuRegistry.titleFor(currentPath)}">메뉴</span>
+          <th:block th:if="${sub != null}">
+            <span aria-hidden="true">/</span>
+            <span class="fa-crumb-current" th:text="${sub}">상세</span>
+          </th:block>
+        </th:block>
       </nav>
       <span th:unless="${@menuRegistry.isRegistered(currentPath)}"></span>
       <div class="fa-topbar-right">
         <!-- SUPER + 시스템 영역: 테넌트 맥락이 아님을 드러낸다 -->
         <span class="fa-sys-badge" sec:authorize="hasRole('SUPER')" th:if="${currentArea?.name() == 'SYSTEM'}">
-          <i class="bi bi-gear" aria-hidden="true"></i> 시스템 관리
+          시스템 관리
         </span>
         <!-- 본인 계정 메뉴. 항목은 MenuArea.PERSONAL 에서 읽는다. -->
         <div class="dropdown" id="account-menu"

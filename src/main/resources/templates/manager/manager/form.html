@@ -3,15 +3,16 @@
 <head><title th:text="${isNew} ? '운영자 등록' : '운영자 수정'">운영자</title></head>
 <body>
 <main class="d-flex flex-column gap-4">
-  <div th:replace="~{fragments/page-header :: header(${isNew} ? '운영자 등록' : '운영자 수정', null)}"></div>
+  <div th:replace="~{fragments/page-header :: header(${isNew} ? '운영자 등록' : '운영자 수정', '운영자 계정 정보와 상태·알림 설정을 입력합니다.')}"></div>
   <form th:action="${isNew} ? @{/managers} : @{/managers/{id}(id=${id})}" th:object="${form}" method="post"
         class="fa-form-card" autocomplete="off">
     <div class="fa-form-body">
       <div class="alert alert-danger" th:if="${#fields.hasAnyErrors()}"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>
         <div><div th:each="e : ${#fields.allErrors()}" th:text="${e}"></div></div>
       </div>
+      <h2 class="fa-form-section">계정</h2>
       <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-12">
           <label class="form-label" for="userId">ID<span class="fa-req">*</span></label>
           <input th:field="*{userId}" class="form-control" th:readonly="${!isNew}" th:classappend="${#fields.hasErrors('userId')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{userId}"></div>
@@ -28,10 +29,20 @@
                  th:classappend="${#fields.hasErrors('passwordConfirm')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{passwordConfirm}"></div>
         </div>
-        <div class="col-md-4"><label class="form-label" for="userNm">이름</label><input th:field="*{userNm}" class="form-control"></div>
-        <div class="col-md-4"><label class="form-label" for="userEmail">이메일</label><input th:field="*{userEmail}" class="form-control"></div>
-        <div class="col-md-4"><label class="form-label" for="userPhone">전화</label><input th:field="*{userPhone}" class="form-control"></div>
-        <div class="col-md-4">
+      </div>
+    </div>
+    <div class="fa-form-body">
+      <h2 class="fa-form-section">기본 정보</h2>
+      <div class="row g-3">
+        <div class="col-12"><label class="form-label" for="userNm">이름</label><input th:field="*{userNm}" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label" for="userEmail">이메일</label><input th:field="*{userEmail}" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label" for="userPhone">전화</label><input th:field="*{userPhone}" class="form-control"></div>
+      </div>
+    </div>
+    <div class="fa-form-body">
+      <h2 class="fa-form-section">상태 · 알림</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
           <label class="form-label" for="status">상태<span class="fa-req">*</span></label>
           <!-- 가입 신청 상태(승인대기·거절)는 여기서 바꿀 수 없다. 승인 절차를 건너뛰면 감사 로그가 남지 않는다. -->
           <div th:if="${form.signupStatus}">
@@ -41,8 +52,14 @@
           </div>
           <select th:unless="${form.signupStatus}" th:field="*{status}" class="form-select"><option value="활성">활성</option><option value="비활성">비활성</option></select>
         </div>
-        <div class="col-md-4"><label class="form-label" for="alramType">알림 유형</label><input th:field="*{alramType}" class="form-control"></div>
-        <div class="col-md-4"><label class="form-label" for="alramLevel">알림 레벨</label><input th:field="*{alramLevel}" class="form-control"></div>
+        <div class="w-100 m-0 p-0"></div>
+        <div class="col-md-6"><label class="form-label" for="alramType">알림 유형</label><input th:field="*{alramType}" class="form-control"></div>
+        <div class="col-md-6"><label class="form-label" for="alramLevel">알림 레벨</label><input th:field="*{alramLevel}" class="form-control"></div>
+      </div>
+    </div>
+    <div class="fa-form-body">
+      <h2 class="fa-form-section">비고</h2>
+      <div class="row g-3">
         <div class="col-12"><label class="form-label" for="etc">비고</label><textarea th:field="*{etc}" rows="3" class="form-control"></textarea></div>
       </div>
     </div>

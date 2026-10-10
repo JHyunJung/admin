@@ -19,21 +19,21 @@
     <div><label class="form-label" for="f-toDate">종료일</label><input id="f-toDate" type="date" name="toDate" th:value="${search.toDate}" class="form-control"></div>
     <div class="fa-filter-actions">
       <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
-      <a th:href="@{/signs}" class="btn btn-link">초기화</a>
+      <a th:href="@{/signs}" class="btn btn-link"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i>초기화</a>
     </div>
   </form>
   <div class="fa-table-card">
     <div class="table-responsive">
       <table class="table table-hover fa-table mb-0">
-        <thead class="table-light"><tr><th class="text-end">IDX</th><th>USERID</th><th>DN</th><th>ASSERTION</th><th>메모</th><th>DEL</th><th>생성일</th></tr></thead>
+        <thead class="table-light"><tr><th>IDX</th><th>USERID</th><th>DN</th><th>ASSERTION</th><th>메모</th><th>DEL</th><th>생성일</th></tr></thead>
         <tbody>
           <tr th:each="r : ${page.content}">
-            <td class="text-end fa-mono"><a th:href="@{/signs/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+            <td class="fa-mono"><a th:href="@{/signs/{id}(id=${r.idx})}" th:text="${r.idx}">0</a><i class="bi bi-chevron-right fa-row-chevron" aria-hidden="true"></i></td>
             <td class="fa-mono" th:text="${r.userid}"></td>
             <td th:text="${r.dn}"></td>
             <td class="fa-mono" th:text="${r.assertionHead}"></td>
             <td th:text="${r.memo}"></td>
-            <td th:text="${r.del}"></td>
+            <td><span class="badge" th:classappend="${r.del == 'Y'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${r.del}"></span></td>
             <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
           </tr>
           <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>

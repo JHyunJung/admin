@@ -19,32 +19,35 @@
     <div th:text="${statusMessage}"></div>
   </div>
 
-  <form method="get" th:action="@{/criteria}" class="fa-filter">
-    <div><label class="form-label" for="f-aaid">AAID</label><input id="f-aaid" name="aaid" th:value="${search.aaid}" class="form-control" placeholder="AAID" aria-label="AAID"></div>
-    <div class="fa-filter-actions">
-      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
-      <a th:href="@{/criteria}" class="btn btn-link">초기화</a>
-    </div>
-  </form>
+  <div class="fa-filter fa-filter-split">
+    <form method="get" th:action="@{/criteria}" class="fa-filter-form">
+      <div><label class="form-label" for="f-aaid">AAID</label><input id="f-aaid" name="aaid" th:value="${search.aaid}" class="form-control" placeholder="AAID" aria-label="AAID"></div>
+      <div class="fa-filter-actions">
+        <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+        <a th:href="@{/criteria}" class="btn btn-link">초기화</a>
+      </div>
+    </form>
 
-  <!-- 전체 토글. 검색·페이지 상태를 hidden 으로 실어 돌아올 자리를 지킨다. -->
-  <div class="fa-page-actions">
-    <form th:action="@{/criteria/status}" method="post" class="m-0"
-          onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 활성화하시겠습니까?');">
-      <input type="hidden" name="enabled" value="true">
-      <input type="hidden" name="aaid" th:value="${search.aaid}">
-      <input type="hidden" name="page" th:value="${page.number}">
-      <input type="hidden" name="size" th:value="${page.size}">
-      <button type="submit" class="btn btn-outline-success text-nowrap">전체 활성화</button>
-    </form>
-    <form th:action="@{/criteria/status}" method="post" class="m-0"
-          onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 비활성화하시겠습니까? 이 고객사의 모든 인증기기가 거부됩니다.');">
-      <input type="hidden" name="enabled" value="false">
-      <input type="hidden" name="aaid" th:value="${search.aaid}">
-      <input type="hidden" name="page" th:value="${page.number}">
-      <input type="hidden" name="size" th:value="${page.size}">
-      <button type="submit" class="btn btn-outline-danger text-nowrap">전체 비활성화</button>
-    </form>
+    <!-- 전체 토글. 검색·페이지 상태를 hidden 으로 실어 돌아올 자리를 지킨다. -->
+    <div class="fa-filter-bulk">
+      <span class="fa-filter-bulk-label">선택한 고객사 전체</span>
+      <form th:action="@{/criteria/status}" method="post" class="m-0"
+            onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 활성화하시겠습니까?');">
+        <input type="hidden" name="enabled" value="true">
+        <input type="hidden" name="aaid" th:value="${search.aaid}">
+        <input type="hidden" name="page" th:value="${page.number}">
+        <input type="hidden" name="size" th:value="${page.size}">
+        <button type="submit" class="btn btn-outline-success text-nowrap">전체 활성화</button>
+      </form>
+      <form th:action="@{/criteria/status}" method="post" class="m-0"
+            onsubmit="return confirm('선택한 고객사의 AAID 정책을 모두 비활성화하시겠습니까? 이 고객사의 모든 인증기기가 거부됩니다.');">
+        <input type="hidden" name="enabled" value="false">
+        <input type="hidden" name="aaid" th:value="${search.aaid}">
+        <input type="hidden" name="page" th:value="${page.number}">
+        <input type="hidden" name="size" th:value="${page.size}">
+        <button type="submit" class="btn btn-outline-danger text-nowrap">전체 비활성화</button>
+      </form>
+    </div>
   </div>
 
   <div class="fa-table-card">
@@ -52,7 +55,7 @@
       <table class="table table-hover align-middle fa-table mb-0">
         <thead class="table-light">
           <tr>
-            <th class="text-nowrap text-end">번호</th>
+            <th class="text-nowrap">번호</th>
             <th>AAID</th>
             <th class="text-nowrap">Assertion Schemes</th>
             <th class="text-nowrap">User Verification</th>
@@ -65,7 +68,7 @@
 
         <tbody>
           <tr th:each="r : ${page.content}">
-            <td class="text-end fa-mono">
+            <td class="fa-mono">
               <a th:href="@{/criteria/{id}(id=${r.idx})}"
                  th:text="${r.idx}"></a>
             </td>

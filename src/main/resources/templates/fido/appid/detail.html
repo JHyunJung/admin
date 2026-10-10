@@ -8,12 +8,15 @@
       <a class="fa-back" th:href="@{/appids}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
       <div class="fa-title-row">
         <h1 class="h4" th:text="|앱 ID #${item.idx}|">앱 ID</h1>
+        <span class="badge"
+              th:classappend="${item.status == 'use' ? 'text-bg-success' : (item.status == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
+              th:text="${item.status == 'use' ? '활성' : (item.status == 'unuse' ? '비활성' : '미확인')}"></span>
       </div>
     </div>
     <div class="fa-page-actions">
-      <a th:href="@{/appids/{id}/edit(id=${item.idx})}" class="btn btn-outline-secondary">수정</a>
+      <a th:href="@{/appids/{id}/edit(id=${item.idx})}" class="btn btn-outline-secondary"><i class="bi bi-pencil-square" aria-hidden="true"></i>수정</a>
       <form th:action="@{/appids/{id}/delete(id=${item.idx})}" method="post" id="deleteForm" class="m-0">
-        <button type="button" class="btn btn-outline-danger" data-confirm-form="deleteForm">삭제</button>
+        <button type="button" class="btn btn-outline-danger" data-confirm-form="deleteForm"><i class="bi bi-trash" aria-hidden="true"></i>삭제</button>
       </form>
     </div>
   </div>
@@ -29,7 +32,7 @@
   <tr><th>장치</th><td><span th:replace="~{fragments/device :: label(${item.device})}"></span></td></tr>
   <tr><th>서비스명</th><td th:text="${item.servicename}"></td></tr>
   <tr><th>기본값</th><td th:text="${item.deviceDefault == 'T' ? '설정' : (item.deviceDefault == 'F' ? '설정안함' : item.deviceDefault)}"></td></tr>
-  <tr><th>상태</th><td th:text="${item.status == 'use' ? '활성' : (item.status == 'unuse' ? '비활성' : item.status)}"></td></tr>
+  <tr><th>상태</th><td><span class="badge" th:classappend="${item.status == 'use' ? 'text-bg-success' : (item.status == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}" th:text="${item.status == 'use' ? '활성' : (item.status == 'unuse' ? '비활성' : item.status)}"></span></td></tr>
   <tr><th>등록일시</th><td class="fa-mono" th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
   <tr><th>수정일시</th><td class="fa-mono" th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
 </tbody>

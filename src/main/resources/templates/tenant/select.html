@@ -12,7 +12,10 @@
         <p class="fa-page-desc">작업할 고객사의 행을 클릭하세요. 선택한 고객사의 데이터만 조회·수정합니다.</p>
       </div>
       <div class="d-flex align-items-center gap-3 w-100">
-        <input type="text" id="tenantFilter" class="form-control" placeholder="고객사 이름 검색" autocomplete="off" aria-label="고객사 이름 검색">
+        <div class="fa-input-icon flex-grow-1">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input type="text" id="tenantFilter" class="form-control" placeholder="고객사 이름 검색" autocomplete="off" aria-label="고객사 이름 검색">
+        </div>
         <!--/* 고객사가 수십·수백 개가 되면 지금 몇 건을 보고 있는지가 필요하다. 검색 중에는
                admin.js 가 "N / 전체 M건" 으로 바꿔 준다(다른 목록 화면의 "총 N건" 과 같은 자리다). */-->
         <span id="tenantCount" class="small text-secondary text-nowrap"
@@ -70,14 +73,16 @@
     </div>
   </div>
 
-  <h2 class="fa-form-section">시스템 관리</h2>
-  <p class="small text-secondary">고객사 선택과 무관한 전역 화면입니다.</p>
-  <div class="d-flex flex-wrap gap-2">
-    <a th:each="m : ${systemMenus}" th:href="@{${m.href}}" class="btn btn-sm btn-outline-secondary">
-      <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
-      <span th:text="${m.title}">메뉴</span>
-    </a>
-  </div>
+  <section class="fa-pick-card fa-pick-sys">
+    <h2 class="fa-form-section">시스템 관리</h2>
+    <p class="small text-secondary">고객사 선택과 무관한 전역 화면입니다.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <a th:each="m : ${systemMenus}" th:href="@{${m.href}}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
+        <span th:text="${m.title}">메뉴</span>
+      </a>
+    </div>
+  </section>
 </main>
 </body>
 </html>

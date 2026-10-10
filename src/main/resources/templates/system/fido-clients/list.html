@@ -4,7 +4,7 @@
 <body>
 <main class="d-flex flex-column gap-4">
   <div class="fa-page-head">
-    <div><h1 class="h4">FIDO 서버</h1></div>
+    <div><h1 class="h4">FIDO 서버</h1><p class="fa-page-desc">어드민이 reload 를 보낼 FIDO 서버 목록입니다.</p></div>
     <div class="fa-page-actions">
       <form method="post" th:action="@{/system/fido-clients/reload}" class="m-0"
             onsubmit="return confirm('STATUS=ON 인 모든 FIDO 서버에 reload 를 보냅니다.');">
@@ -42,7 +42,7 @@
             <td class="fa-mono"><a th:href="@{/system/fido-clients/{id}(id=${r.servercode})}" th:text="${r.servercode}">코드</a></td>
             <td th:text="${r.servername}"></td>
             <td class="fa-mono" th:text="${#strings.abbreviate(r.serverurl, 60)}"></td>
-            <td><span class="badge" th:classappend="${r.status == 'ON'} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${r.status}"></span></td>
+            <td><span class="badge" th:classappend="${r.status == 'ON'} ? 'text-bg-success' : 'text-bg-danger'" th:text="${r.status}"></span></td>
             <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.updatedtime, 'yyyy-MM-dd HH:mm')}"></td>
           </tr>
           <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(5, '데이터가 없습니다.')}"></tr></th:block>

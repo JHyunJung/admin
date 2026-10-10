@@ -12,10 +12,10 @@
 <main class="fa-error">
   <div class="fa-error-box">
     <img th:src="@{/img/ill/500.webp}" alt="서버 랙과 렌치 일러스트" width="240" height="180">
-    <span class="fa-error-code">500</span>
+    <span class="fa-error-code fa-error-code-danger">500</span>
     <h1>서버 오류</h1>
     <p>처리 중 오류가 발생했습니다. 관리자에게 문의하세요.</p>
-    <a th:href="@{/}" class="btn btn-primary">대시보드로</a>
+    <div class="fa-error-actions"><a th:href="@{/}" class="btn btn-primary">대시보드로</a></div>
   </div>
 </main>
 </body>

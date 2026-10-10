@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" th:href="@{/favicon.png}" sizes="192x192">
   <link rel="apple-touch-icon" th:href="@{/favicon.png}">
   <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/font/bootstrap-icons.min.css}">
   <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
 <body>
@@ -20,13 +21,16 @@
     </div>
     <img class="fa-auth-ill" th:src="@{/img/ill/signup.webp}" alt="클립보드 양식과 신분증 일러스트" width="360" height="270">
     <div>
-      <p class="fa-auth-lead">가입 신청</p>
-      <p class="fa-auth-sub">신청 후 관리자 승인을 받아야 로그인할 수 있습니다.</p>
+      <p class="fa-auth-lead">관리자 계정 가입 신청</p>
+      <p class="fa-auth-sub">신청서를 보내면 관리자가 확인한 뒤 소속 고객사를 배정하고 승인합니다.</p>
     </div>
   </section>
   <div class="fa-auth-body">
-    <main class="fa-auth-form wide">
-      <h1>가입 신청</h1>
+    <main class="fa-auth-form">
+      <div>
+        <h1>가입 신청</h1>
+        <p class="fa-page-desc">신청 후 관리자 승인을 받아야 로그인할 수 있습니다.</p>
+      </div>
       <!-- 소속 고객사 선택란을 두지 않는다. 배정은 승인자의 몫이고,
            로그인 전 화면에 고객사 목록을 노출하지 않기 위해서다. -->
       <form th:action="@{/signup}" th:object="${form}" method="post" class="d-flex flex-column gap-3 m-0">
@@ -59,11 +63,19 @@
                  autocomplete="new-password" required>
           <div class="invalid-feedback" th:errors="*{passwordConfirm}"></div>
         </div>
-        <div>
-          <label for="userNm" class="form-label">이름 <span class="fa-req">*</span></label>
-          <input id="userNm" type="text" th:field="*{userNm}" class="form-control"
-                 th:classappend="${#fields.hasErrors('userNm')} ? 'is-invalid'" required>
-          <div class="invalid-feedback" th:errors="*{userNm}"></div>
+        <div class="fa-form-grid">
+          <div>
+            <label for="userNm" class="form-label">이름 <span class="fa-req">*</span></label>
+            <input id="userNm" type="text" th:field="*{userNm}" class="form-control"
+                   th:classappend="${#fields.hasErrors('userNm')} ? 'is-invalid'" required>
+            <div class="invalid-feedback" th:errors="*{userNm}"></div>
+          </div>
+          <div>
+            <label for="userPhone" class="form-label">전화</label>
+            <input id="userPhone" type="text" th:field="*{userPhone}" class="form-control"
+                   th:classappend="${#fields.hasErrors('userPhone')} ? 'is-invalid'">
+            <div class="invalid-feedback" th:errors="*{userPhone}"></div>
+          </div>
         </div>
         <div>
           <label for="userEmail" class="form-label">이메일 <span class="fa-req">*</span></label>
@@ -72,19 +84,13 @@
           <div class="invalid-feedback" th:errors="*{userEmail}"></div>
         </div>
         <div>
-          <label for="userPhone" class="form-label">전화</label>
-          <input id="userPhone" type="text" th:field="*{userPhone}" class="form-control"
-                 th:classappend="${#fields.hasErrors('userPhone')} ? 'is-invalid'">
-          <div class="invalid-feedback" th:errors="*{userPhone}"></div>
-        </div>
-        <div>
           <label for="reason" class="form-label">신청 사유</label>
           <textarea id="reason" th:field="*{reason}" class="form-control" rows="3"
                     th:classappend="${#fields.hasErrors('reason')} ? 'is-invalid'"
                     placeholder="소속과 담당 업무를 적어주시면 승인이 빨라집니다."></textarea>
           <div class="invalid-feedback" th:errors="*{reason}"></div>
         </div>
-        <button type="submit" class="btn btn-primary w-100" style="height: 44px;">가입 신청</button>
+        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">가입 신청</button>
       </form>
       <div class="fa-auth-links"><a th:href="@{/login}">로그인으로 돌아가기</a></div>
     </main>

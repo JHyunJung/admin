@@ -13,7 +13,15 @@
     </div>
   </div>
   <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
-  <div th:replace="~{fragments/detail-section :: section('JSONDATA 에서 꺼낸 값', ~{this :: logRows})}"></div>
+  <section class="fa-section">
+    <div class="fa-section-head">
+      <h2 class="fa-section-title">JSONDATA 에서 꺼낸 값</h2>
+      <span class="fa-section-note">풀어낸 원문은 아래 JSONDATA 에 있습니다.</span>
+    </div>
+    <table class="table fa-detail mb-0">
+      <tbody th:replace="~{this :: logRows}"></tbody>
+    </table>
+  </section>
   <div th:replace="~{fragments/detail-section :: section('원문', ~{this :: jsonRows})}"></div>
 </main>
 
