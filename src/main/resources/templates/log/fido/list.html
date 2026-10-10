@@ -3,68 +3,73 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>FIDO 로그</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3">FIDO 로그</h1>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header('FIDO 로그', null)}"></div>
   <!--/* 값은 base64url JSONDATA 를 풀어 꺼낸다(FidoLogPayload). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
-  <form method="get" th:action="@{/logs/fido}" class="row g-2 align-items-end mb-3">
+  <form method="get" th:action="@{/logs/fido}" class="fa-filter">
     <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
-    <div class="col-auto"><label class="form-label small mb-0">조회 날짜</label><input type="date" name="logDate" th:value="${search.logDate}" class="form-control form-control-sm" required></div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">구분</label>
-      <select name="op" class="form-select form-select-sm">
+    <div><label class="form-label" for="f-logDate">조회 날짜</label><input id="f-logDate" type="date" name="logDate" th:value="${search.logDate}" class="form-control" required></div>
+    <div>
+      <label class="form-label" for="f-op">구분</label>
+      <select id="f-op" name="op" class="form-select">
         <option value="">전체</option>
         <option th:each="o : ${ {'Reg', 'Auth', 'DeReg', 'TC'} }" th:value="${o}" th:text="${o}"
                 th:selected="${search.op != null and #strings.equalsIgnoreCase(search.op, o)}"></option>
       </select>
     </div>
-    <div class="col-auto"><label class="form-label small mb-0">서비스명</label><input name="servicename" th:value="${search.servicename}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">사용자ID</label><input name="userid" th:value="${search.userid}" class="form-control form-control-sm"></div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">상태</label>
-      <select name="status" class="form-select form-select-sm">
+    <div><label class="form-label" for="f-servicename">서비스명</label><input id="f-servicename" name="servicename" th:value="${search.servicename}" class="form-control"></div>
+    <div><label class="form-label" for="f-userid">사용자ID</label><input id="f-userid" name="userid" th:value="${search.userid}" class="form-control"></div>
+    <div>
+      <label class="form-label" for="f-status">상태</label>
+      <select id="f-status" name="status" class="form-select">
         <option value="">전체</option>
         <option th:each="st : ${ {'Success', 'Error', 'Wait', 'RequestOK', 'ResponseOK'} }" th:value="${st}" th:text="${st}"
                 th:selected="${search.status != null and #strings.equalsIgnoreCase(search.status, st)}"></option>
       </select>
     </div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">인증장치</label>
-      <select name="bioType" class="form-select form-select-sm">
+    <div>
+      <label class="form-label" for="f-bioType">인증장치</label>
+      <select id="f-bioType" name="bioType" class="form-select">
         <option value="">전체</option>
         <option th:each="b : ${ {2, 16, 4, 128, 64, 8, 256, 1, 32, 512, 1024} }" th:value="${b}"
                 th:text="${T(com.crosscert.fidoadmin.log.service.FidoLogPayload).bioTypeLabel(b.longValue())}"
                 th:selected="${search.bioType != null and search.bioType == b}"></option>
       </select>
     </div>
-    <div class="col-auto"><label class="form-label small mb-0">번호</label><input type="number" name="idx" min="1" th:value="${search.idx}" class="form-control form-control-sm" style="width: 9rem;"></div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/fido}" class="btn btn-link btn-sm">초기화</a></div>
+    <div><label class="form-label" for="f-idx">번호</label><input id="f-idx" type="number" name="idx" min="1" th:value="${search.idx}" class="form-control" style="width: 9rem;"></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/logs/fido}" class="btn btn-link">초기화</a>
+    </div>
   </form>
   <!--/* 조건 검색은 그날 로그를 풀어 거른다. 상한(FidoLogQueryService.SCAN_LIMIT)에 걸리면 알린다. */-->
-  <div th:if="${truncated}" class="alert alert-warning py-2 small" role="status">
-    로그가 많아 최근 앞 50,000건 안에서만 찾았습니다. 조건을 좁히거나 다른 날짜를 골라 주세요.
+  <div th:if="${truncated}" class="alert alert-warning" role="status"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+    <div>로그가 많아 최근 앞 50,000건 안에서만 찾았습니다. 조건을 좁히거나 다른 날짜를 골라 주세요.</div>
   </div>
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover align-middle fa-table mb-0">
-      <thead class="table-light"><tr><th>번호</th><th>구분</th><th>서비스명</th><th>사용자ID</th><th>인증장치</th><th>로깅시간</th><th>상태</th></tr></thead>
-      <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
-                 th:text="${r.idx}">0</a></td>
-          <td><span th:replace="~{fragments/fido-log :: op(${r.op})}"></span></td>
-          <td th:text="${r.servicename ?: '-'}"></td>
-          <!--/* 사용자ID 는 원문 그대로(_*서비스 꼬리 포함). 길면 말줄임하고(FidoLogRow.shorten) 전체는 title 로. */-->
-          <td class="fa-mono" th:title="${r.userid}" th:text="${T(com.crosscert.fidoadmin.log.web.FidoLogRow).shorten(r.userid)}"></td>
-          <td><span th:replace="~{fragments/fido-log :: bio(${r.bioType})}"></span></td>
-          <td class="text-nowrap" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
-          <td><span th:replace="~{fragments/fido-log :: status(${r.status})}"></span></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle fa-table mb-0">
+        <thead class="table-light"><tr><th>번호</th><th>구분</th><th>서비스명</th><th>사용자ID</th><th>인증장치</th><th>로깅시간</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="fa-mono"><a th:href="@{/logs/fido/{date}/{id}(date=${search.logDate},id=${r.idx})}"
+                   th:text="${r.idx}">0</a></td>
+            <td><span th:replace="~{fragments/fido-log :: op(${r.op})}"></span></td>
+            <td th:text="${r.servicename ?: '-'}"></td>
+            <!--/* 사용자ID 는 원문 그대로(_*서비스 꼬리 포함). 길면 말줄임하고(FidoLogRow.shorten) 전체는 title 로. */-->
+            <td class="fa-mono" th:title="${r.userid}" th:text="${T(com.crosscert.fidoadmin.log.web.FidoLogRow).shorten(r.userid)}"></td>
+            <td><span th:replace="~{fragments/fido-log :: bio(${r.bioType})}"></span></td>
+            <td class="text-nowrap fa-mono" th:text="${#temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+            <td><span th:replace="~{fragments/fido-log :: status(${r.status})}"></span></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>

@@ -3,42 +3,47 @@
       th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>예외 로그</title></head>
 <body>
-<main>
-  <h1 class="h4 mb-3">예외 로그</h1>
+<main class="d-flex flex-column gap-4">
+  <div th:replace="~{fragments/page-header :: header('예외 로그', null)}"></div>
   <!-- CREATEDTIME 이 문자열 컬럼이라 기간(date) 입력 대신 문자열 부분 일치 입력을 둔다. -->
-  <form method="get" th:action="@{/logs/exceptions}" class="row g-2 align-items-end mb-3">
-    <div class="col-auto"><label class="form-label small mb-0">유형</label><input name="eType" th:value="${search.eType}" class="form-control form-control-sm"></div>
-    <div class="col-auto">
-      <label class="form-label small mb-0">레벨</label>
-      <select name="eLevel" class="form-select form-select-sm">
+  <form method="get" th:action="@{/logs/exceptions}" class="fa-filter">
+    <div><label class="form-label" for="f-eType">유형</label><input id="f-eType" name="eType" th:value="${search.eType}" class="form-control"></div>
+    <div>
+      <label class="form-label" for="f-eLevel">레벨</label>
+      <select id="f-eLevel" name="eLevel" class="form-select">
         <option value="">전체</option>
         <option value="ERROR" th:selected="${search.eLevel == 'ERROR'}">ERROR</option>
         <option value="WARN" th:selected="${search.eLevel == 'WARN'}">WARN</option>
         <option value="INFO" th:selected="${search.eLevel == 'INFO'}">INFO</option>
       </select>
     </div>
-    <div class="col-auto"><label class="form-label small mb-0">메시지</label><input name="message" th:value="${search.message}" class="form-control form-control-sm"></div>
-    <div class="col-auto"><label class="form-label small mb-0">일시(문자열)</label><input name="createdtime" th:value="${search.createdtime}" placeholder="예: 2026-09-15" class="form-control form-control-sm"></div>
-    <div class="col-auto"><button class="btn btn-outline-secondary btn-sm">검색</button> <a th:href="@{/logs/exceptions}" class="btn btn-link btn-sm">초기화</a></div>
+    <div><label class="form-label" for="f-message">메시지</label><input id="f-message" name="message" th:value="${search.message}" class="form-control"></div>
+    <div><label class="form-label" for="f-createdtime">일시(문자열)</label><input id="f-createdtime" name="createdtime" th:value="${search.createdtime}" placeholder="예: 2026-09-15" class="form-control"></div>
+    <div class="fa-filter-actions">
+      <button class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>검색</button>
+      <a th:href="@{/logs/exceptions}" class="btn btn-link">초기화</a>
+    </div>
   </form>
-  <div class="table-responsive bg-white border rounded">
-    <table class="table table-sm table-hover fa-table mb-0">
-      <thead class="table-light"><tr><th>IDX</th><th>유형</th><th>레벨</th><th>메시지</th><th>일시</th></tr></thead>
-      <tbody>
-        <tr th:each="r : ${page.content}">
-          <td><a th:href="@{/logs/exceptions/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
-          <td th:text="${r.type}"></td>
-          <td><span class="badge" th:classappend="${r.level == 'ERROR'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${r.level}"></span></td>
-          <td th:text="${#strings.abbreviate(r.message, 80)}"></td>
-          <td th:text="${r.createdtime}"></td>
-        </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="5" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="d-flex justify-content-between align-items-center mt-2 small text-secondary">
-    <span th:text="|총 ${page.totalElements}건|"></span>
-    <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+  <div class="fa-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle fa-table mb-0">
+        <thead class="table-light"><tr><th>IDX</th><th>유형</th><th>레벨</th><th>메시지</th><th>일시</th></tr></thead>
+        <tbody>
+          <tr th:each="r : ${page.content}">
+            <td class="fa-mono"><a th:href="@{/logs/exceptions/{id}(id=${r.idx})}" th:text="${r.idx}">0</a></td>
+            <td th:text="${r.type}"></td>
+            <td><span class="badge" th:classappend="${r.level == 'ERROR'} ? 'text-bg-danger' : 'text-bg-secondary'" th:text="${r.level}"></span></td>
+            <td th:text="${#strings.abbreviate(r.message, 80)}"></td>
+            <td class="text-nowrap fa-mono" th:text="${r.createdtime}"></td>
+          </tr>
+          <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(5, '데이터가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="|총 ${page.totalElements}건|"></span>
+      <div th:replace="~{fragments/pagination :: pagination(${page}, ${basePath})}"></div>
+    </div>
   </div>
 </main>
 </body>

@@ -2,33 +2,46 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>FIDO 로그 상세</title></head>
 <body>
-<main>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0" th:text="|FIDO 로그 #${item.idx}|"></h1>
-    <a th:href="@{/logs/fido(logDate=${logDate})}"
-       class="btn btn-link btn-sm">목록</a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div>
+      <a class="fa-back" th:href="@{/logs/fido(logDate=${logDate})}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
+      <div class="fa-title-row">
+        <h1 class="h4" th:text="|FIDO 로그 #${item.idx}|"></h1>
+        <span th:replace="~{fragments/fido-log :: status(${item.status})}"></span>
+      </div>
+    </div>
   </div>
-  <div class="bg-white border rounded">
-    <table class="table table-sm fa-detail mb-0"><tbody>
-      <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
-      <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
-      <tr><th>시리얼</th><td class="fa-mono" th:text="${item.serialcode}"></td></tr>
-      <!--/* 아래는 JSONDATA 를 풀어 꺼낸 값(FidoLogPayload). 풀어낸 원문은 맨 아래 JSONDATA 에 있다. */-->
-      <tr><th>구분</th><td><span th:replace="~{fragments/fido-log :: op(${item.op})}"></span></td></tr>
-      <tr><th>사용자</th><td class="fa-mono" th:text="${item.user ?: '-'}"></td></tr>
-      <tr><th>서비스명</th><td th:text="${item.servicename ?: '-'}"></td></tr>
-      <tr><th>FIDO종류</th><td th:text="${item.fidoKind ?: '-'}"></td></tr>
-      <tr><th>타입</th><td th:text="${item.type ?: '-'}"></td></tr>
-      <tr><th>사용자ID</th><td class="fa-mono" th:text="${item.userid ?: '-'}"></td></tr>
-      <tr><th>요청IP</th><td class="fa-mono" th:text="${item.accessIp ?: '-'}"></td></tr>
-      <tr><th>인증장치</th><td><span th:replace="~{fragments/fido-log :: bio(${item.bioType})}"></span></td></tr>
-      <tr><th>로깅시간</th><td th:text="${item.logtime ?: '-'}"></td></tr>
-      <tr><th>UserAgent</th><td class="small" th:text="${item.userAgent ?: '-'}"></td></tr>
-      <tr><th>상태</th><td><span th:replace="~{fragments/fido-log :: status(${item.status})}"></span></td></tr>
-      <tr><th>JSONDATA</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.jsondataPretty}"></pre></td></tr>
-      <tr><th>일시</th><td th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-    </tbody></table>
-  </div>
+  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('로그 내용', ~{this :: logRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('JSONDATA', ~{this :: jsonRows})}"></div>
 </main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="basicRows">
+  <tr><th>IDX</th><td th:text="${item.idx}"></td></tr>
+  <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+  <tr><th>시리얼</th><td class="fa-mono" th:text="${item.serialcode}"></td></tr>
+  <tr><th>일시</th><td class="fa-mono" th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
+
+<!--/* 아래는 JSONDATA 를 풀어 꺼낸 값(FidoLogPayload). 풀어낸 원문은 맨 아래 JSONDATA 에 있다. */-->
+<tbody th:fragment="logRows">
+  <tr><th>구분</th><td><span th:replace="~{fragments/fido-log :: op(${item.op})}"></span></td></tr>
+  <tr><th>사용자</th><td class="fa-mono" th:text="${item.user ?: '-'}"></td></tr>
+  <tr><th>서비스명</th><td th:text="${item.servicename ?: '-'}"></td></tr>
+  <tr><th>FIDO종류</th><td th:text="${item.fidoKind ?: '-'}"></td></tr>
+  <tr><th>타입</th><td th:text="${item.type ?: '-'}"></td></tr>
+  <tr><th>사용자ID</th><td class="fa-mono" th:text="${item.userid ?: '-'}"></td></tr>
+  <tr><th>요청IP</th><td class="fa-mono" th:text="${item.accessIp ?: '-'}"></td></tr>
+  <tr><th>인증장치</th><td><span th:replace="~{fragments/fido-log :: bio(${item.bioType})}"></span></td></tr>
+  <tr><th>로깅시간</th><td class="fa-mono" th:text="${item.logtime ?: '-'}"></td></tr>
+  <tr><th>UserAgent</th><td class="fa-mono small" th:text="${item.userAgent ?: '-'}"></td></tr>
+  <tr><th>상태</th><td><span th:replace="~{fragments/fido-log :: status(${item.status})}"></span></td></tr>
+</tbody>
+
+<tbody th:fragment="jsonRows">
+  <tr><th>JSONDATA</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.jsondataPretty}"></pre></td></tr>
+</tbody>
 </body>
 </html>
