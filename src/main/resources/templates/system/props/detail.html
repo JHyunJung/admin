@@ -2,28 +2,31 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
 <head><title>시스템 설정 상세</title></head>
 <body>
-<main>
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h4 mb-0" th:text="|시스템 설정 ${item.propKey}|">시스템 설정</h1>
-    <div class="d-flex gap-2">
-      <a th:href="@{/system/props/{id}/edit(id=${item.pathValue})}" class="btn btn-outline-primary btn-sm">수정</a>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div>
+      <a class="fa-back" th:href="@{/system/props}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
+      <div class="fa-title-row">
+        <h1 class="h4" th:text="|시스템 설정 ${item.propKey}|">시스템 설정</h1>
+      </div>
+    </div>
+    <div class="fa-page-actions">
+      <a th:href="@{/system/props/{id}/edit(id=${item.pathValue})}" class="btn btn-outline-secondary">수정</a>
       <form th:action="@{/system/props/{id}/delete(id=${item.pathValue})}" method="post" id="deleteForm" class="m-0">
-        <button type="button" class="btn btn-outline-danger btn-sm" data-confirm-form="deleteForm">삭제</button>
+        <button type="button" class="btn btn-outline-danger" data-confirm-form="deleteForm">삭제</button>
       </form>
-      <a th:href="@{/system/props}" class="btn btn-link btn-sm">목록</a>
     </div>
   </div>
-  <div class="bg-white border rounded">
-    <table class="table table-sm fa-detail mb-0">
-      <tbody>
-        <tr><th>키</th><td class="fa-mono" th:text="${item.propKey}"></td></tr>
-        <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
-        <tr><th>값</th><td class="fa-pre" th:text="${item.propValue}"></td></tr>
-        <tr><th>공유</th><td th:text="${item.shareType}"></td></tr>
-        <tr><th>수정일시</th><td th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
 </main>
+
+<!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
+<tbody th:fragment="basicRows">
+  <tr><th>키</th><td class="fa-mono" th:text="${item.propKey}"></td></tr>
+  <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
+  <tr><th>값</th><td class="fa-pre" th:text="${item.propValue}"></td></tr>
+  <tr><th>공유</th><td th:text="${item.shareType}"></td></tr>
+  <tr><th>수정일시</th><td class="fa-mono" th:text="${#temporals.format(item.updatedtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
+</tbody>
 </body>
 </html>
