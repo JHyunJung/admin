@@ -12,8 +12,7 @@
       </div>
     </div>
   </div>
-  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
-  <div th:replace="~{fragments/detail-section :: section('예외 내용', ~{this :: bodyRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('로그 정보', ~{this :: basicRows})}"></div>
 </main>
 
 <!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
@@ -22,13 +21,10 @@
   <tr><th>고객사</th><td th:text="|${companyName} (${item.companyIdx})|"></td></tr>
   <tr><th>유형</th><td th:text="${item.type}"></td></tr>
   <tr><th>레벨</th><td th:text="${item.level}"></td></tr>
-  <tr><th>일시</th><td class="fa-mono" th:text="${item.createdtime}"></td></tr>
-</tbody>
-
-<tbody th:fragment="bodyRows">
   <tr><th>메시지</th><td class="fa-pre" th:text="${item.message}"></td></tr>
   <tr><th>상세 메시지</th><td class="fa-pre" th:text="${item.detailMessage}"></td></tr>
   <tr><th>예외 데이터</th><td><pre class="fa-pre fa-mono mb-0" th:text="${item.data}"></pre></td></tr>
+  <tr><th>일시</th><td class="fa-mono" th:text="${item.createdtime}"></td></tr>
 </tbody>
 </body>
 </html>

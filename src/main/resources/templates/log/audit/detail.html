@@ -11,8 +11,7 @@
       </div>
     </div>
   </div>
-  <div th:replace="~{fragments/detail-section :: section('기본 정보', ~{this :: basicRows})}"></div>
-  <div th:replace="~{fragments/detail-section :: section('요청 정보', ~{this :: reqRows})}"></div>
+  <div th:replace="~{fragments/detail-section :: section('로그 정보', ~{this :: basicRows})}"></div>
 </main>
 
 <!-- 구획 내용 정의. main 밖에 두어야 카드 밖에 중복 출력되지 않는다. -->
@@ -22,13 +21,10 @@
   <tr><th>유형</th><td th:text="${item.type}"></td></tr>
   <tr><th>사용자</th><td th:text="|${item.userName} (${item.userId})|"></td></tr>
   <tr><th>메시지</th><td class="fa-pre" th:text="${item.message}"></td></tr>
-  <tr><th>일시</th><td class="fa-mono" th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
-</tbody>
-
-<tbody th:fragment="reqRows">
   <tr><th>IP</th><td class="fa-mono" th:text="${item.ip}"></td></tr>
   <tr><th>User-Agent</th><td class="fa-pre fa-mono" th:text="${item.ua}"></td></tr>
   <tr><th>무결성 해시</th><td class="fa-mono" th:text="${item.intergrityHash}"></td></tr>
+  <tr><th>일시</th><td class="fa-mono" th:text="${#temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>
 </tbody>
 </body>
 </html>
