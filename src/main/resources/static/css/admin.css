@@ -1,13 +1,13 @@
 /* FIDO Admin V2 테마 — 밝은 표면 + 강조색 하나(#1F5EDB). 값은 캔버스 V2_DesignSystem 보드와 1:1.
    외부 자원 없음: 폰트·이미지는 jar 안에서 서빙한다. */
 
-/* IBM Plex Sans KR / Mono (SIL OFL 1.1, /fonts/LICENSE.txt). 한글 상용 글자·라틴만 남긴 서브셋이다. */
-@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Regular.subset.woff2) format('woff2'); }
-@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Medium.subset.woff2) format('woff2'); }
-@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-SemiBold.subset.woff2) format('woff2'); }
-@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 700; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Bold.subset.woff2) format('woff2'); }
-@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexMono-Regular.subset.woff2) format('woff2'); }
-@font-face { font-family: 'IBM Plex Mono'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexMono-Medium.subset.woff2) format('woff2'); }
+/* FA Sans KR / FA Mono = IBM 서체의 서브셋을 OFL 1.1 §3 에 따라 이름을 바꾼 수정본(/fonts/LICENSE.txt). 한글 상용 글자·라틴만 남겼다. */
+@font-face { font-family: 'FA Sans KR'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/FASansKR-Regular.subset.woff2) format('woff2'); }
+@font-face { font-family: 'FA Sans KR'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/FASansKR-Medium.subset.woff2) format('woff2'); }
+@font-face { font-family: 'FA Sans KR'; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/FASansKR-SemiBold.subset.woff2) format('woff2'); }
+@font-face { font-family: 'FA Sans KR'; font-weight: 700; font-style: normal; font-display: swap; src: url(../fonts/FASansKR-Bold.subset.woff2) format('woff2'); }
+@font-face { font-family: 'FA Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/FAMono-Regular.subset.woff2) format('woff2'); }
+@font-face { font-family: 'FA Mono'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/FAMono-Medium.subset.woff2) format('woff2'); }
 
 :root {
   --fa-bg: #F6F8FB;
@@ -39,8 +39,8 @@
   --fa-radius-card: 10px;
   --fa-shadow: 0 1px 2px rgba(15, 27, 45, .06);
   --fa-shadow-modal: 0 8px 24px rgba(15, 27, 45, .12);
-  --fa-font: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --fa-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fa-font: 'FA Sans KR', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --fa-mono: 'FA Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --fa-sidebar-w: 248px;
   --fa-topbar-h: 56px;
 
@@ -176,10 +176,10 @@ textarea.form-control { height: auto; }
 .form-switch .form-check-input { width: 36px; height: 20px; }
 
 /* ---------- 필터 바 ---------- */
-.fa-filter, .fa-content form.row.g-2, .fa-search-panel { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card);
+.fa-filter { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card);
   padding: 16px; margin: 0 !important; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; box-shadow: var(--fa-shadow); }
-.fa-filter > *, .fa-content form.row.g-2 > *, .fa-search-panel > * { width: auto; max-width: none; padding: 0; margin: 0; flex: 0 0 auto; }
-.fa-filter .form-label, .fa-content form.row.g-2 .form-label { font-size: 12px; font-weight: 600; color: var(--fa-ink-3); margin-bottom: 4px; display: block; }
+.fa-filter > * { width: auto; max-width: none; padding: 0; margin: 0; flex: 0 0 auto; }
+.fa-filter .form-label { font-size: 12px; font-weight: 600; color: var(--fa-ink-3); margin-bottom: 4px; display: block; }
 .fa-filter .form-control, .fa-filter .form-select { height: 36px; min-width: 160px; }
 .fa-filter-actions { display: flex; gap: 4px; align-items: center; }
 .fa-filter-split { justify-content: space-between; }
@@ -188,7 +188,7 @@ textarea.form-control { height: auto; }
 .fa-filter-bulk-label { font-size: 12px; color: var(--fa-ink-3); }
 
 /* ---------- 표 카드 ---------- */
-.fa-table-card, .fa-content .table-responsive.bg-white.border.rounded { background: var(--fa-surface); border: 1px solid var(--fa-line) !important;
+.fa-table-card { background: var(--fa-surface); border: 1px solid var(--fa-line) !important;
   border-radius: var(--fa-radius-card) !important; box-shadow: var(--fa-shadow); overflow: hidden; }
 .fa-table-card .table-responsive { border: 0; }
 .table { --bs-table-hover-bg: var(--fa-bg); --bs-table-border-color: var(--fa-line-soft); margin-bottom: 0; font-size: 14px; }
@@ -216,8 +216,8 @@ textarea.form-control { height: auto; }
 /* ---------- 배지 ---------- */
 .badge { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0; }
 .badge::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; flex: none; }
-.badge.text-bg-success, .fa-list-classic .badge.text-bg-success { background: var(--fa-success-soft) !important; color: var(--fa-success) !important; }
-.badge.text-bg-danger, .fa-list-classic .badge.text-bg-danger { background: var(--fa-danger-soft) !important; color: var(--fa-danger) !important; }
+.badge.text-bg-success { background: var(--fa-success-soft) !important; color: var(--fa-success) !important; }
+.badge.text-bg-danger { background: var(--fa-danger-soft) !important; color: var(--fa-danger) !important; }
 .badge.text-bg-warning { background: var(--fa-warning-soft) !important; color: var(--fa-warning) !important; }
 .badge.text-bg-secondary, .badge.text-bg-light, .badge.text-bg-dark { background: var(--fa-neutral-soft) !important; color: var(--fa-neutral) !important; }
 .badge.text-bg-primary, .badge.text-bg-info { background: var(--fa-primary-soft) !important; color: var(--fa-primary-ink) !important; }

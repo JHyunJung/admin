@@ -203,7 +203,6 @@ class TenantSelectionControllerWebTest {
         assertThat(html).contains("type=\"submit\"");
     }
 
-    /** COMPANY 는 고를 것이 없다. */
     /** 고객사를 고르지 않은 SUPER 가 선택 화면을 보면 사이드바 전환기가 경고 스킨이다. 메뉴에 없는 경로라 브레드크럼은 없다. */
     @Test void 미선택이면_전환기가_경고로_보이고_미등록_경로에는_브레드크럼이_없다() throws Exception {
         when(companies.all()).thenReturn(List.of());
@@ -215,6 +214,7 @@ class TenantSelectionControllerWebTest {
         assertThat(html).doesNotContain(">/select-tenant<");
     }
 
+    /** COMPANY 는 고를 것이 없다. */
     @Test void COMPANY_는_대시보드로_보낸다() throws Exception {
         mvc.perform(get("/select-tenant").with(user(companyUser(5L))))
             .andExpect(redirectedUrl("/"));

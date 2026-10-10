@@ -29,9 +29,9 @@ class ThemeCssTest {
 
     @Test void 번들_폰트만_쓴다() throws Exception {
         String css = css();
-        assertThat(css).contains("font-family: 'IBM Plex Sans KR'", "font-family: 'IBM Plex Mono'",
-            "url(../fonts/IBMPlexSansKR-Regular.subset.woff2)", "url(../fonts/IBMPlexMono-Regular.subset.woff2)");
-        assertThat(css).doesNotContain("Pretendard", "fonts.googleapis", "http://", "https://");
+        assertThat(css).contains("font-family: 'FA Sans KR'", "font-family: 'FA Mono'",
+            "url(../fonts/FASansKR-Regular.subset.woff2)", "url(../fonts/FAMono-Regular.subset.woff2)");
+        assertThat(css).doesNotContain("Pretendard", "fonts.googleapis", "http://", "https://", "IBM Plex");
     }
 
     @Test void V1_남색_테마가_남아_있지_않다() throws Exception {

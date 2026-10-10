@@ -1,4 +1,4 @@
-IBM Plex Sans KR / IBM Plex Mono — SIL Open Font License 1.1. 한글 상용 글자·라틴만 남긴 서브셋이다.
+FA Sans KR / FA Mono — Modified Versions (subsets: 한글 상용 글자·라틴만 남김) of IBM Plex Sans KR / IBM Plex Mono, renamed per SIL OFL 1.1 §3 (the Reserved Font Name "Plex" is not used for these files). The original fonts are available from IBM (https://github.com/IBM/plex) under the same licence.
 
 Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
 

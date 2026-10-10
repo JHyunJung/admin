@@ -36,8 +36,7 @@
 
     <div class="row g-3 align-items-end">
       <div class="col-md-5">
-        <!-- row g-2 를 쓰면 .fa-content form.row.g-2(검색 바 스킨)에 걸려 카드 안에
-             테두리·그림자 패널이 겹쳐 보인다. d-flex 로 같은 배치를 만든다. -->
+        <!-- 카드 안의 폼이라 별도 패널 스킨 없이 d-flex 로 배치한다. -->
         <form th:action="@{/signups/{id}/approve(id=${m.idx})}" method="post"
               th:id="|approveForm${m.idx}|" class="d-flex gap-2 align-items-end m-0">
           <div class="flex-grow-1">

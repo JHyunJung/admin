@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openModal(btn, formId) {
     targetFormId = formId;
-    messageEl.textContent =btn.getAttribute('data-confirm-message') || defaultMessage;
+    messageEl.textContent = btn.getAttribute('data-confirm-message') || defaultMessage;
     okBtn.textContent = btn.getAttribute('data-confirm-ok') || defaultOk;
     okBtn.classList.toggle('btn-danger', !btn.hasAttribute('data-confirm-ok'));
     okBtn.classList.toggle('btn-primary', btn.hasAttribute('data-confirm-ok'));

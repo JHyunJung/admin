@@ -208,9 +208,9 @@ class LayoutWebTest {
     /** 폰트는 jar 안에서 서빙한다(외부 호출 금지). 로그인 전에도 받을 수 있어야 한다. */
     @Test void anonymousCanFetchBundledFont() throws Exception {
         for (String path : new String[] {
-                "/fonts/IBMPlexSansKR-Regular.subset.woff2", "/fonts/IBMPlexSansKR-Medium.subset.woff2",
-                "/fonts/IBMPlexSansKR-SemiBold.subset.woff2", "/fonts/IBMPlexSansKR-Bold.subset.woff2",
-                "/fonts/IBMPlexMono-Regular.subset.woff2", "/fonts/IBMPlexMono-Medium.subset.woff2"}) {
+                "/fonts/FASansKR-Regular.subset.woff2", "/fonts/FASansKR-Medium.subset.woff2",
+                "/fonts/FASansKR-SemiBold.subset.woff2", "/fonts/FASansKR-Bold.subset.woff2",
+                "/fonts/FAMono-Regular.subset.woff2", "/fonts/FAMono-Medium.subset.woff2"}) {
             mvc.perform(get(path)).andExpect(status().isOk());
         }
     }
