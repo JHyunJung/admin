@@ -1,10 +1,12 @@
-<div xmlns:th="http://www.thymeleaf.org" th:fragment="flash">
-  <div class="alert alert-success alert-dismissible" th:if="${flashSuccess}">
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="flash" th:remove="tag">
+  <div class="alert alert-success alert-dismissible" role="status" th:if="${flashSuccess}">
+    <i class="bi bi-check-circle" aria-hidden="true"></i>
     <span th:text="${flashSuccess}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
   </div>
-  <div class="alert alert-danger alert-dismissible" th:if="${flashError}">
+  <div class="alert alert-danger alert-dismissible" role="alert" th:if="${flashError}">
+    <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
     <span th:text="${flashError}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="닫기"></button>
   </div>
 </div>

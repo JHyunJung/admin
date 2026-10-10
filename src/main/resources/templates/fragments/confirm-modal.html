@@ -1,10 +1,13 @@
-<div xmlns:th="http://www.thymeleaf.org" th:fragment="modal" class="modal fade" id="confirmModal" tabindex="-1">
-  <div class="modal-dialog modal-sm">
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="modal" class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
     <div class="modal-content">
-      <div class="modal-body">정말 삭제하시겠습니까?</div>
-      <div class="modal-footer py-2">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">취소</button>
-        <button type="button" class="btn btn-sm btn-danger" id="confirmModalOk">삭제</button>
+      <div class="modal-body">
+        <div class="modal-title" id="confirmModalTitle">확인</div>
+        <div class="fa-confirm-message">정말 삭제하시겠습니까?</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-danger" id="confirmModalOk">삭제</button>
       </div>
     </div>
   </div>

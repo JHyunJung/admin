@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!modalEl || typeof bootstrap === 'undefined') return;
   var modal = new bootstrap.Modal(modalEl);
   var okBtn = document.getElementById('confirmModalOk');
-  var defaultMessage = modalEl.querySelector('.modal-body').textContent;
+  var messageEl = modalEl.querySelector('.fa-confirm-message');
+  var defaultMessage = messageEl.textContent;
   var defaultOk = okBtn.textContent;
   var targetFormId = null;
   // 모달에서 확인을 눌러 스스로 제출한 폼. 아래 submit 가드가 이 폼만 통과시킨다.
@@ -11,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function openModal(btn, formId) {
     targetFormId = formId;
-    modalEl.querySelector('.modal-body').textContent = btn.getAttribute('data-confirm-message') || defaultMessage;
+    messageEl.textContent =btn.getAttribute('data-confirm-message') || defaultMessage;
     okBtn.textContent = btn.getAttribute('data-confirm-ok') || defaultOk;
     okBtn.classList.toggle('btn-danger', !btn.hasAttribute('data-confirm-ok'));
     okBtn.classList.toggle('btn-primary', btn.hasAttribute('data-confirm-ok'));
