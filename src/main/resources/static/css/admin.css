@@ -1,249 +1,332 @@
-/* FIDO Admin 테마 — 밝은 SaaS 톤(A) + 남색 사이드바(B). 외부 자원 없음. */
+/* FIDO Admin V2 테마 — 밝은 표면 + 강조색 하나(#1F5EDB). 값은 캔버스 V2_DesignSystem 보드와 1:1.
+   외부 자원 없음: 폰트·이미지는 jar 안에서 서빙한다. */
 
-/* Pretendard (SIL Open Font License 1.1, /fonts/LICENSE.txt).
-   한글 상용 2,780자 서브셋만 번들한다. 서브셋 밖 글자(희귀 한자 등)는
-   font-family 뒤쪽의 시스템 폰트가 받으므로 깨지지 않는다. */
-@font-face {
-  font-family: 'Pretendard';
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src: local('Pretendard Regular'), url(../fonts/Pretendard-Regular.subset.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Pretendard';
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: local('Pretendard Medium'), url(../fonts/Pretendard-Medium.subset.woff2) format('woff2');
-}
-@font-face {
-  font-family: 'Pretendard';
-  font-weight: 600 700;
-  font-style: normal;
-  font-display: swap;
-  src: local('Pretendard SemiBold'), url(../fonts/Pretendard-SemiBold.subset.woff2) format('woff2');
-}
+/* IBM Plex Sans KR / Mono (SIL OFL 1.1, /fonts/LICENSE.txt). 한글 상용 글자·라틴만 남긴 서브셋이다. */
+@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Regular.subset.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Medium.subset.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 600; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-SemiBold.subset.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans KR'; font-weight: 700; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexSansKR-Bold.subset.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 400; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexMono-Regular.subset.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Mono'; font-weight: 500; font-style: normal; font-display: swap; src: url(../fonts/IBMPlexMono-Medium.subset.woff2) format('woff2'); }
 
 :root {
-  --fa-sidebar-w: 236px;
+  --fa-bg: #F6F8FB;
+  --fa-surface: #FFFFFF;
+  --fa-surface-2: #F1F4F9;
+  --fa-line: #E2E7EF;
+  --fa-line-soft: #EEF1F5;
+  --fa-line-strong: #C9D2DF;
+  --fa-ink: #0F1B2D;
+  --fa-ink-2: #3D4A5C;
+  --fa-ink-3: #5B6779;
+  --fa-primary: #1F5EDB;
+  --fa-primary-hover: #184BB0;
+  --fa-primary-soft: #E8EFFC;
+  --fa-primary-ink: #1846A3;
+  --fa-primary-line: #C7D6F5;
+  --fa-success: #157347;
+  --fa-success-soft: #E6F4EC;
+  --fa-success-line: #B7DEC8;
+  --fa-warning: #9A5B00;
+  --fa-warning-soft: #FDF3E1;
+  --fa-warning-line: #F1D3A1;
+  --fa-danger: #B42318;
+  --fa-danger-soft: #FDECEA;
+  --fa-danger-line: #F3B8B2;
+  --fa-neutral: #3D4A5C;
+  --fa-neutral-soft: #EEF1F5;
+  --fa-radius-ctl: 6px;
+  --fa-radius-card: 10px;
+  --fa-shadow: 0 1px 2px rgba(15, 27, 45, .06);
+  --fa-shadow-modal: 0 8px 24px rgba(15, 27, 45, .12);
+  --fa-font: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --fa-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --fa-sidebar-w: 248px;
   --fa-topbar-h: 56px;
-  --fa-navy: #1e2a44;
-  --fa-navy-2: #2a3856;
-  --fa-navy-3: #2f3f63;
-  --fa-navy-text: #c7d0e0;
-  --fa-navy-muted: #8593ad;
-  --fa-accent: #2563eb;
-  --fa-accent-dark: #1d4ed8;
-  --fa-accent-soft: #e8efff;
-  --fa-surface: #ffffff;
-  --fa-line: #e5e7eb;
-  --fa-muted: #64748b;
-  --fa-head-bg: #f8fafc;
-  --fa-shadow: 0 1px 3px rgba(16, 24, 40, .06), 0 1px 2px rgba(16, 24, 40, .04);
 
-  /* Bootstrap 변수 재정의 — 유틸리티(.border/.rounded/.bg-*)까지 함께 바뀐다 */
-  --bs-body-bg: #f4f6fb;
-  --bs-body-color: #1f2937;
-  --bs-body-font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
-  --bs-border-color: #e5e7eb;
-  --bs-border-radius: 12px;
-  --bs-border-radius-sm: 8px;
-  --bs-link-color-rgb: 29, 78, 216;
-  --bs-link-hover-color-rgb: 30, 64, 175;
-  --bs-focus-ring-color: rgba(37, 99, 235, .25);
-  --bs-secondary-color: #64748b;
+  --bs-body-bg: var(--fa-bg);
+  --bs-body-color: var(--fa-ink);
+  --bs-body-font-family: var(--fa-font);
+  --bs-body-font-size: 14px;
+  --bs-body-line-height: 1.45;
+  --bs-primary: #1F5EDB;
+  --bs-primary-rgb: 31, 94, 219;
+  --bs-border-color: var(--fa-line);
+  --bs-border-radius: var(--fa-radius-card);
+  --bs-border-radius-sm: var(--fa-radius-ctl);
+  --bs-link-color-rgb: 24, 70, 163;
+  --bs-link-hover-color-rgb: 15, 27, 45;
+  --bs-focus-ring-color: rgba(31, 94, 219, .25);
+  --bs-secondary-color: var(--fa-ink-3);
 }
 
-body { background: var(--bs-body-bg); color: var(--bs-body-color); }
+body { background: var(--fa-bg); color: var(--fa-ink); font-size: 14px; line-height: 1.45; }
+:focus-visible { outline: 2px solid var(--fa-primary); outline-offset: 2px; }
+.fa-mono, code, pre { font-family: var(--fa-mono); }
+.fa-mono { font-size: 13px; }
+.fa-pre { white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto;
+  background: var(--fa-bg); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-ctl); padding: 12px; font-size: 12.5px; }
+.fa-req { color: var(--fa-danger); margin-left: 2px; }
+.text-secondary { color: var(--fa-ink-3) !important; }
 
-/* ---------- 골격 ---------- */
-.fa-shell { display: flex; min-height: 100vh; }
-.fa-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.fa-content { flex: 1; padding: 28px 32px !important; }
+/* ---------- 셸 ---------- */
+.fa-shell { display: flex; flex-wrap: wrap; min-height: 100vh; }
+.fa-main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; }
+.fa-content { flex: 1; width: 100%; max-width: 1200px; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 20px; }
+.fa-content > * { margin-bottom: 0 !important; }
 
-/* ---------- 사이드바 (남색) ---------- */
-.fa-sidebar { width: var(--fa-sidebar-w); flex: 0 0 var(--fa-sidebar-w); background: var(--fa-navy); color: var(--fa-navy-text); }
-.fa-brand { color: #fff; font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; padding: 18px 20px !important; border-bottom: 1px solid var(--fa-navy-2); }
-
-/* ---------- 헤더 고객사 전환 드롭다운 ----------
-   고객사가 수십 개로 늘면 목록이 화면 밖으로 흘러 아래쪽은 고를 수 없게 된다(드롭다운 자체는
-   스크롤되지 않는다). 목록에만 최대 높이를 주어 그 안에서 스크롤하게 한다.
-   60vh 는 화면 높이에 따라 줄어들므로 노트북 화면에서도 하단 "선택 화면으로" 가 함께 보인다. */
-.fa-tenant-menu { max-width: 320px; }
-.fa-tenant-list { max-height: 60vh; overflow-y: auto; }
-/* 긴 상호가 드롭다운 폭을 밀어내지 않게 한 줄로 자른다(전체 이름은 title 로 본다). */
-.fa-tenant-menu .dropdown-item { max-width: 100%; }
-
-/* ---------- 사이드바 테넌트 배너 ----------
-   아래 업무 메뉴가 전부 이 선택에 걸려 있으므로, 그룹 라벨보다 눈에 먼저 들어와야 한다.
-   눌러서 고객사 선택 화면으로 간다(전환 수단이 헤더 드롭다운 하나뿐이면 찾기 어렵다). */
-.fa-tenant { display: block; margin: 12px 12px 14px; padding: 9px 12px; border-radius: var(--bs-border-radius-sm);
-  background: var(--fa-navy-2); border-left: 3px solid var(--fa-accent); text-decoration: none; }
-.fa-tenant:hover { background: var(--fa-navy-3); }
-.fa-tenant-label { display: flex; align-items: center; gap: 5px; font-size: .68rem; text-transform: uppercase;
-  letter-spacing: .05em; color: var(--fa-navy-muted); }
-/* 고객사명은 이 배너에서 가장 중요한 한 줄이다. 사이드바에서 유일하게 흰 글씨로 둔다. */
-.fa-tenant-name { display: block; margin-top: 2px; color: #fff; font-weight: 600; font-size: .93rem; }
-/* 미선택은 경고다 — 업무 메뉴가 열리지 않는 상태이므로 색으로 구분한다. */
-.fa-tenant-none { background: rgba(245, 158, 11, .14); border-left-color: #f59e0b; }
-.fa-tenant-none:hover { background: rgba(245, 158, 11, .22); }
-.fa-tenant-none .fa-tenant-label { color: #fbbf24; }
-.fa-tenant-none .fa-tenant-name { color: #fcd34d; }
-.fa-group { color: var(--fa-navy-muted) !important; font-size: .68rem !important; font-weight: 600; letter-spacing: .12em; margin: 18px 0 6px; }
-.fa-link { color: var(--fa-navy-text); text-decoration: none; font-size: .9rem; margin: 1px 8px; padding: 7px 12px !important; border-radius: 6px; }
-.fa-link:hover { background: var(--fa-navy-2); color: #fff; }
-.fa-link.active { background: var(--fa-navy-3); color: #fff; font-weight: 600; box-shadow: inset 3px 0 0 #7aa2ff; }
-/* 메뉴 아이콘 — 글자보다 흐리게 두어 제목이 먼저 읽히게 한다. 너비를 고정해 제목 시작선을 맞춘다. */
-.fa-link .bi { width: 1.1rem; flex: 0 0 1.1rem; font-size: 1rem; line-height: 1; text-align: center; color: var(--fa-navy-muted); }
-.fa-link:hover .bi, .fa-link.active .bi { color: #fff; }
+/* ---------- 사이드바 ---------- */
+.fa-sidebar { flex: 1 1 var(--fa-sidebar-w); background: var(--fa-surface); border-right: 1px solid var(--fa-line);
+  padding: 16px 12px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; }
+.fa-brand { display: flex; flex-direction: column; gap: 3px; padding: 6px 8px 14px; }
+.fa-brand img { height: 18px; width: auto; display: block; align-self: flex-start; }
+.fa-brand span { font-size: 11.5px; color: var(--fa-ink-3); line-height: 1.2; }
+.fa-tenant { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px;
+  border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); background: var(--fa-surface);
+  text-decoration: none; color: var(--fa-ink); }
+.fa-tenant:hover { background: var(--fa-surface-2); color: var(--fa-ink); }
+.fa-tenant-avatar { width: 32px; height: 32px; flex: none; border-radius: 8px; background: var(--fa-primary-soft); color: var(--fa-primary-ink);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+.fa-tenant-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.fa-tenant-label { font-size: 11px; color: var(--fa-ink-3); letter-spacing: .04em; }
+.fa-tenant-name { font-weight: 600; font-size: 14px; }
+.fa-tenant .bi-chevron-expand { color: var(--fa-ink-3); }
+.fa-tenant-none { background: var(--fa-warning-soft); border-color: var(--fa-warning-line); }
+.fa-tenant-none:hover { background: var(--fa-warning-soft); }
+.fa-tenant-none .fa-tenant-avatar { background: var(--fa-surface); color: var(--fa-warning); }
+.fa-tenant-none .fa-tenant-label, .fa-tenant-none .fa-tenant-name { color: var(--fa-warning); }
+.fa-group { padding: 12px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--fa-ink-3); }
+.fa-link { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--fa-radius-ctl);
+  color: var(--fa-ink-2); text-decoration: none; font-size: 14px; }
+.fa-link:hover { background: var(--fa-surface-2); color: var(--fa-ink); }
+.fa-link.active { background: var(--fa-primary-soft); color: var(--fa-primary-ink); font-weight: 600; }
+.fa-link .bi { width: 16px; flex: 0 0 16px; font-size: 16px; line-height: 1; text-align: center; }
+.fa-nav-disabled { opacity: .45; }
+.fa-nav-divider { margin: 12px 10px 0; padding-top: 12px; border-top: 1px solid var(--fa-line);
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--fa-ink-3); }
+.fa-powered { margin-top: auto; padding: 16px 10px 0; border-top: 1px solid var(--fa-line); display: flex; align-items: center; gap: 8px; }
+.fa-powered span { font-size: 10px; color: var(--fa-ink-3); white-space: nowrap; }
+.fa-powered img { height: 13px; width: auto; display: block; opacity: .85; }
 
 /* ---------- 상단바 ---------- */
-.fa-topbar { height: var(--fa-topbar-h); background: var(--fa-surface); border-bottom: 1px solid var(--fa-line); box-shadow: 0 1px 2px rgba(16, 24, 40, .04); padding: 0 32px !important; }
-.fa-topbar .badge { background: #eef2f7 !important; color: #475569 !important; }
+.fa-topbar { height: var(--fa-topbar-h); background: var(--fa-surface); border-bottom: 1px solid var(--fa-line);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 32px; gap: 12px; flex-wrap: wrap; }
+.fa-crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fa-ink-3); }
+.fa-crumb-current { color: var(--fa-ink); font-weight: 600; }
+.fa-topbar-right { display: flex; align-items: center; gap: 12px; }
+.fa-sys-badge { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px;
+  background: var(--fa-neutral-soft); color: var(--fa-neutral); font-size: 12px; font-weight: 600; }
+.fa-account-btn { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px 0 6px; border: 1px solid var(--fa-line);
+  border-radius: 999px; background: var(--fa-surface); color: var(--fa-ink); font: inherit; font-size: 13px; }
+.fa-account-btn:hover { background: var(--fa-surface-2); }
+.fa-avatar { width: 26px; height: 26px; border-radius: 999px; background: var(--fa-ink); color: #FFFFFF;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.fa-role-badge { padding: 1px 8px; border-radius: 999px; background: var(--fa-primary-soft); color: var(--fa-primary-ink); font-size: 11px; font-weight: 700; }
+.dropdown-menu { border-color: var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow-modal); font-size: 14px; }
+.dropdown-item.active, .dropdown-item:active { background: var(--fa-primary-soft); color: var(--fa-primary-ink); }
 
-/* ---------- 제목 ---------- */
-h1.h4 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; color: #111827; }
+/* ---------- 페이지 머리 ---------- */
+.fa-page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.fa-page-head h1, h1.h4 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.01em; color: var(--fa-ink); }
+.fa-page-desc { margin: 4px 0 0; font-size: 13px; color: var(--fa-ink-3); }
+.fa-page-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fa-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--fa-ink-3); text-decoration: none; margin-bottom: 6px; }
+.fa-back:hover { color: var(--fa-ink); }
+.fa-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-/* ---------- 카드형 컨테이너 (목록 표, 상세 표, 폼, 대시보드 카드) ---------- */
-.fa-content .bg-white.border.rounded,
-.fa-content .table-responsive.bg-white.border.rounded { box-shadow: var(--fa-shadow); overflow: hidden; }
-.card { box-shadow: var(--fa-shadow); }
+/* ---------- 버튼 ---------- */
+.btn { --bs-btn-border-radius: var(--fa-radius-ctl); --bs-btn-font-weight: 600; --bs-btn-padding-x: 14px; --bs-btn-padding-y: 0;
+  --bs-btn-font-size: 14px; height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-sm { --bs-btn-padding-x: 12px; --bs-btn-font-size: 13px; height: 30px; }
+.btn-link.p-0 { height: auto; }
+.btn-primary { --bs-btn-bg: var(--fa-primary); --bs-btn-border-color: var(--fa-primary); --bs-btn-hover-bg: var(--fa-primary-hover);
+  --bs-btn-hover-border-color: var(--fa-primary-hover); --bs-btn-active-bg: var(--fa-primary-hover); --bs-btn-active-border-color: var(--fa-primary-hover);
+  --bs-btn-disabled-bg: var(--fa-primary); --bs-btn-disabled-border-color: var(--fa-primary); }
+.btn-outline-secondary, .btn-secondary, .btn-light { --bs-btn-color: var(--fa-ink); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-line-strong);
+  --bs-btn-hover-color: var(--fa-ink); --bs-btn-hover-bg: var(--fa-surface-2); --bs-btn-hover-border-color: var(--fa-line-strong);
+  --bs-btn-active-color: var(--fa-ink); --bs-btn-active-bg: var(--fa-surface-2); --bs-btn-active-border-color: var(--fa-line-strong); }
+.btn-outline-primary { --bs-btn-color: var(--fa-primary-ink); --bs-btn-border-color: var(--fa-primary-line); --bs-btn-hover-bg: var(--fa-primary-soft);
+  --bs-btn-hover-color: var(--fa-primary-ink); --bs-btn-hover-border-color: var(--fa-primary-line); }
+.btn-link { --bs-btn-color: var(--fa-primary-ink); --bs-btn-hover-color: var(--fa-ink); text-decoration: none; }
+.btn-outline-danger, .btn-danger { --bs-btn-color: var(--fa-danger); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-danger-line);
+  --bs-btn-hover-color: var(--fa-danger); --bs-btn-hover-bg: var(--fa-danger-soft); --bs-btn-hover-border-color: var(--fa-danger-line);
+  --bs-btn-active-color: var(--fa-danger); --bs-btn-active-bg: var(--fa-danger-soft); --bs-btn-active-border-color: var(--fa-danger-line); }
+.btn-outline-warning, .btn-outline-success { --bs-btn-color: var(--fa-ink); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-line-strong);
+  --bs-btn-hover-color: var(--fa-ink); --bs-btn-hover-bg: var(--fa-surface-2); --bs-btn-hover-border-color: var(--fa-line-strong); }
 
-/* 검색 폼 */
-.fa-content form.row.g-2 { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--bs-border-radius); padding: 14px 16px; margin-bottom: 18px !important; box-shadow: var(--fa-shadow); }
-.fa-content form.row.g-2 .form-label { color: var(--fa-muted); font-weight: 500; }
+/* ---------- 입력 ---------- */
+.form-label { font-size: 13px; font-weight: 600; color: var(--fa-ink); margin-bottom: 6px; }
+.form-control, .form-select { height: 38px; border: 1px solid var(--fa-line-strong); border-radius: var(--fa-radius-ctl); font-size: 14px; color: var(--fa-ink); }
+textarea.form-control { height: auto; }
+.form-control-sm, .form-select-sm { height: 36px; font-size: 13px; border-radius: var(--fa-radius-ctl); }
+.form-control:focus, .form-select:focus { border-color: var(--fa-primary); box-shadow: 0 0 0 3px rgba(31, 94, 219, .15); }
+.form-control.is-invalid, .form-select.is-invalid { border-color: var(--fa-danger); }
+.invalid-feedback { color: var(--fa-danger); font-size: 12px; }
+.form-text { font-size: 12px; color: var(--fa-ink-3); }
+.form-check-input:checked { background-color: var(--fa-primary); border-color: var(--fa-primary); }
+.form-switch .form-check-input { width: 36px; height: 20px; }
 
-/* ---------- 표 ---------- */
-.table { --bs-table-hover-bg: #f5f8ff; --bs-table-border-color: var(--fa-line); }
-.fa-table td, .fa-table th { white-space: nowrap; }
-.fa-table th { font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding: 12px 14px; }
-.fa-table td { padding: 11px 14px; vertical-align: middle; }
-/* 행 전체가 상세로 가는 목록. admin.js 가 링크 있는 행에만 이 클래스를 단다
-   (빈 목록의 "데이터가 없습니다" 행은 클릭되지 않으므로 커서도 바뀌지 않는다). */
+/* ---------- 필터 바 ---------- */
+.fa-filter, .fa-content form.row.g-2, .fa-search-panel { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card);
+  padding: 16px; margin: 0 !important; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; box-shadow: var(--fa-shadow); }
+.fa-filter > *, .fa-content form.row.g-2 > *, .fa-search-panel > * { width: auto; max-width: none; padding: 0; margin: 0; flex: 0 0 auto; }
+.fa-filter .form-label, .fa-content form.row.g-2 .form-label { font-size: 12px; font-weight: 600; color: var(--fa-ink-3); margin-bottom: 4px; display: block; }
+.fa-filter .form-control, .fa-filter .form-select { height: 36px; min-width: 160px; }
+.fa-filter-actions { display: flex; gap: 4px; align-items: center; }
+
+/* ---------- 표 카드 ---------- */
+.fa-table-card, .fa-content .table-responsive.bg-white.border.rounded { background: var(--fa-surface); border: 1px solid var(--fa-line) !important;
+  border-radius: var(--fa-radius-card) !important; box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-table-card .table-responsive { border: 0; }
+.table { --bs-table-hover-bg: var(--fa-bg); --bs-table-border-color: var(--fa-line-soft); margin-bottom: 0; font-size: 14px; }
+.table-light, .fa-table thead { --bs-table-bg: var(--fa-surface-2); --bs-table-color: var(--fa-ink-3); }
+.fa-table th { font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--fa-ink-3); padding: 10px 16px; border-bottom: 1px solid var(--fa-line); white-space: nowrap; }
+.fa-table td { padding: 12px 16px; height: 44px; vertical-align: middle; white-space: nowrap; }
+.fa-table td.text-end, .fa-table th.text-end { font-variant-numeric: tabular-nums; }
 .fa-table tbody tr.fa-row-link { cursor: pointer; }
-/* 행 전체가 클릭되므로 대표값만 파랗게 두면 "여기만 눌러야 하나" 로 읽힌다.
-   글자색은 본문과 같게 두고 굵기로만 대표값임을 알린다.
+.fa-table tbody tr.fa-row-link a { color: var(--fa-primary-ink); text-decoration: none; font-weight: 600; }
+.fa-table tbody tr.fa-row-link:hover a, .fa-table tbody tr.fa-row-link a:focus-visible { text-decoration: underline; }
+.fa-table-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px; border-top: 1px solid var(--fa-line); font-size: 13px; color: var(--fa-ink-3); background: var(--fa-surface); }
 
-   링크 자체는 남긴다(스타일만 죽인다). admin.js 가 이 href 를 읽어 행의 목적지를
-   정하고, 키보드·스크린리더는 이 링크로 상세에 들어가며, 우클릭 "새 탭에서 열기"도
-   진짜 <a> 여야 동작한다. */
-.fa-table tbody tr.fa-row-link a { color: inherit; text-decoration: none; font-weight: 600; }
-/* 행에 마우스를 올리면 밑줄로 갈 곳이 있음을 알린다(행 전체가 과녁이라 hover 를 행에 건다). */
-.fa-table tbody tr.fa-row-link:hover a { text-decoration: underline; }
-/* 키보드 초점은 그대로 보이게 둔다 — 마우스가 없는 사용자의 유일한 단서다. */
-.fa-table tbody tr.fa-row-link a:focus-visible { text-decoration: underline; }
-.table-light { --bs-table-bg: var(--fa-head-bg); --bs-table-color: var(--fa-muted); }
-.fa-detail th { width: 200px; background: var(--fa-head-bg); color: var(--fa-muted); font-weight: 500; font-size: .82rem; padding: 12px 18px; }
-/* ---------- 대시보드 요약 카드 ----------
-   지표마다 위쪽 색 띠와 아이콘 색으로 구분한다. 숫자는 검게 두어 가독성을 지킨다. */
-.fa-stat { position: relative; height: 100%; background: var(--fa-surface); border: 1px solid var(--fa-line);
-  border-radius: var(--bs-border-radius); padding: 16px 18px; box-shadow: var(--fa-shadow); overflow: hidden; }
-.fa-stat::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--fa-stat-color); }
-.fa-stat-head { display: flex; align-items: center; gap: 7px; color: var(--fa-muted); font-size: .82rem; margin-bottom: 6px; }
-.fa-stat-head .bi { color: var(--fa-stat-color); font-size: .95rem; }
-.fa-stat-value { font-size: 1.5rem; font-weight: 700; color: #111827; letter-spacing: -.01em; line-height: 1.2; }
-.fa-stat-sep { color: #cbd5e1; font-weight: 400; margin: 0 2px; }
-.fa-stat-fail { color: #dc2626; }
-.fa-stat-note { font-size: .78rem; color: var(--fa-muted); margin-top: 4px; }
-.fa-stat-auth { --fa-stat-color: #2563eb; }
-.fa-stat-reg { --fa-stat-color: #16a34a; }
-.fa-stat-dereg { --fa-stat-color: #f59e0b; }
-.fa-stat-tc { --fa-stat-color: #7c3aed; }
+/* ---------- 페이지 이동 ---------- */
+.pagination { --bs-pagination-color: var(--fa-ink-2); --bs-pagination-bg: transparent; --bs-pagination-border-color: transparent;
+  --bs-pagination-hover-bg: var(--fa-surface-2); --bs-pagination-hover-color: var(--fa-ink); --bs-pagination-hover-border-color: transparent;
+  --bs-pagination-active-bg: var(--fa-primary-soft); --bs-pagination-active-color: var(--fa-primary-ink); --bs-pagination-active-border-color: transparent;
+  --bs-pagination-disabled-bg: transparent; --bs-pagination-disabled-border-color: transparent; gap: 4px; margin: 0; }
+.page-link { min-width: 30px; height: 30px; padding: 0 8px; display: flex; align-items: center; justify-content: center; border-radius: var(--fa-radius-ctl) !important; font-size: 13px; }
+.page-item:first-child .page-link, .page-item:last-child .page-link { border: 1px solid var(--fa-line); }
+.page-item.active .page-link { font-weight: 600; }
+.fa-result-badge { font-size: 13px; color: var(--fa-ink-3); }
 
-/* ---------- 상세 화면 구획 ---------- */
-.fa-section + .fa-section { margin-top: 20px; }
-.fa-section-title { font-size: .95rem; font-weight: 600; color: #374151; margin: 0 0 8px 2px; }
-.fa-detail td { padding: 12px 18px; }
+/* ---------- 배지 ---------- */
+.badge { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: 0; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: currentColor; flex: none; }
+.badge.text-bg-success, .fa-list-classic .badge.text-bg-success { background: var(--fa-success-soft) !important; color: var(--fa-success) !important; }
+.badge.text-bg-danger, .fa-list-classic .badge.text-bg-danger { background: var(--fa-danger-soft) !important; color: var(--fa-danger) !important; }
+.badge.text-bg-warning { background: var(--fa-warning-soft) !important; color: var(--fa-warning) !important; }
+.badge.text-bg-secondary, .badge.text-bg-light, .badge.text-bg-dark { background: var(--fa-neutral-soft) !important; color: var(--fa-neutral) !important; }
+.badge.text-bg-primary, .badge.text-bg-info { background: var(--fa-primary-soft) !important; color: var(--fa-primary-ink) !important; }
+.badge.fa-badge-reg, .badge.fa-badge-progress { background: var(--fa-primary-soft); color: var(--fa-primary-ink); }
+.badge.fa-badge-auth { background: var(--fa-neutral-soft); color: var(--fa-ink); }
+.badge.fa-badge-dereg { background: var(--fa-warning-soft); color: var(--fa-warning); }
+.badge.fa-badge-tc { background: var(--fa-neutral-soft); color: var(--fa-neutral); }
+.fa-bio-finger, .fa-bio-face, .fa-bio-pin, .fa-bio-pattern, .fa-bio-iris, .fa-bio-voice, .fa-bio-palm { color: var(--fa-primary); }
 
-/* ---------- 버튼·입력 ---------- */
-.btn { --bs-btn-border-radius: 8px; font-weight: 500; }
-.btn-sm { --bs-btn-padding-y: 6px; --bs-btn-padding-x: 12px; }
-.btn-primary { --bs-btn-bg: var(--fa-accent); --bs-btn-border-color: var(--fa-accent); --bs-btn-hover-bg: var(--fa-accent-dark); --bs-btn-hover-border-color: var(--fa-accent-dark); --bs-btn-active-bg: var(--fa-accent-dark); }
-.btn-outline-primary { --bs-btn-color: var(--fa-accent); --bs-btn-border-color: #bfd0fb; --bs-btn-hover-bg: var(--fa-accent); --bs-btn-hover-border-color: var(--fa-accent); }
-.btn-outline-secondary { --bs-btn-color: #374151; --bs-btn-border-color: #d1d5db; --bs-btn-bg: var(--fa-surface); --bs-btn-hover-bg: #f3f4f6; --bs-btn-hover-color: #111827; --bs-btn-hover-border-color: #d1d5db; }
-.form-control, .form-select { border-radius: 8px; border-color: #d1d5db; }
-.form-control-sm, .form-select-sm { border-radius: 8px; }
+/* ---------- 상세 구획 ---------- */
+.fa-section { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-section + .fa-section { margin-top: 0; }
+.fa-section-title { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--fa-line); font-size: 16px; font-weight: 600; color: var(--fa-ink); }
+.fa-detail { margin: 0; }
+.fa-detail th { width: 200px; background: var(--fa-bg); color: var(--fa-ink-3); font-weight: 400; font-size: 13px; padding: 12px 20px; border-color: var(--fa-line-soft); vertical-align: top; }
+.fa-detail td { padding: 12px 20px; font-size: 14px; border-color: var(--fa-line-soft); overflow-wrap: anywhere; }
+.fa-detail tr:last-child th, .fa-detail tr:last-child td { border-bottom: 0; }
 
-/* ---------- 배지 (연한 배경 + 진한 글자) ---------- */
-.badge { border-radius: 999px; padding: 5px 10px; font-weight: 600; letter-spacing: .02em; }
-.badge.text-bg-secondary { background: #eef2f7 !important; color: #475569 !important; }
-.badge.text-bg-success { background: #dcfce7 !important; color: #166534 !important; }
-.badge.text-bg-danger { background: #fee2e2 !important; color: #991b1b !important; }
-.badge.text-bg-warning { background: #fef3c7 !important; color: #92400e !important; }
-.badge.text-bg-primary { background: var(--fa-accent-soft) !important; color: var(--fa-accent-dark) !important; }
-/* FIDO 로그 구분(Reg·Auth·DeReg·TC)과 진행 중 상태(RequestOK·ResponseOK). 상태의 초록·빨강·노랑과 겹치지 않는 색을 쓴다. */
-.badge.fa-badge-reg { background: #dbeafe; color: #1e40af; }
-.badge.fa-badge-auth { background: #ccfbf1; color: #115e59; }
-.badge.fa-badge-dereg { background: #ffedd5; color: #9a3412; }
-.badge.fa-badge-tc { background: #ede9fe; color: #5b21b6; }
-.badge.fa-badge-progress { background: #e0f2fe; color: #075985; }
-/* FIDO 로그 인증장치 아이콘 색. 사람이 고르는 인증 수단마다 다른 색, 그 밖(PRESENCE·없음·알수없음 등)은 회색(text-secondary). */
-.fa-bio-finger { color: #4338ca; }
-.fa-bio-face { color: #be185d; }
-.fa-bio-pin { color: #4d7c0f; }
-.fa-bio-pattern { color: #0e7490; }
-.fa-bio-iris { color: #a21caf; }
-.fa-bio-voice { color: #be123c; }
-.fa-bio-palm { color: #a16207; }
+/* ---------- 폼 카드 ---------- */
+.fa-form-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); max-width: 720px; overflow: hidden; }
+.fa-form-body { padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.fa-form-section { font-size: 16px; font-weight: 600; margin: 0; }
+.fa-form-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px; border-top: 1px solid var(--fa-line); background: var(--fa-surface); }
 
-/* ---------- 알림·페이지네이션 ---------- */
-.alert { border-radius: var(--bs-border-radius); }
-.page-link { border-radius: 8px !important; margin: 0 2px; }
-.pagination { --bs-pagination-active-bg: var(--fa-accent); --bs-pagination-active-border-color: var(--fa-accent); --bs-pagination-color: #374151; }
+/* ---------- 알림 ---------- */
+.alert { display: flex; gap: 10px; align-items: flex-start; border: 1px solid; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--fa-ink); margin: 0; }
+.alert > .bi { flex: none; font-size: 16px; line-height: 1.2; }
+.alert-info, .alert-primary { background: var(--fa-primary-soft); border-color: var(--fa-primary-line); }
+.alert-info > .bi, .alert-primary > .bi { color: var(--fa-primary-ink); }
+.alert-success { background: var(--fa-success-soft); border-color: var(--fa-success-line); }
+.alert-success > .bi { color: var(--fa-success); }
+.alert-warning { background: var(--fa-warning-soft); border-color: var(--fa-warning-line); }
+.alert-warning > .bi { color: var(--fa-warning); }
+.alert-danger { background: var(--fa-danger-soft); border-color: var(--fa-danger-line); }
+.alert-danger > .bi { color: var(--fa-danger); }
+.alert-dismissible { padding-right: 40px; }
+.alert .btn-close { padding: 14px; }
 
-/* ---------- 목록 규격 (AppID 관리 · 멤버코드 관리 · AAID(정책) 보기) ---------- */
-/* 검색 패널: 회색 바탕에 오른쪽 정렬, 노란 검색 버튼 */
-.fa-search-panel { background: #f4f5f7; border: 1px solid var(--fa-line); border-radius: var(--bs-border-radius); padding: 14px 16px; margin-bottom: 18px; }
-.fa-search-panel .form-control, .fa-search-panel .form-select { min-height: 38px; }
-.btn-search { --bs-btn-bg: #f3b84a; --bs-btn-border-color: #f3b84a; --bs-btn-color: #fff; --bs-btn-hover-bg: #e5a72e; --bs-btn-hover-border-color: #e5a72e; --bs-btn-active-bg: #d99a23; --bs-btn-active-border-color: #d99a23; --bs-btn-active-color: #fff; min-width: 180px; font-weight: 600; }
-/* 결과 건수: 파란 알약 배지 */
-.fa-result-badge { display: inline-block; background: #1e9bd8; color: #fff; font-size: .8rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
-/* 상태 배지는 진한 바탕 + 흰 글자 */
-.fa-list-classic .badge.text-bg-success { background: #5cb85c !important; color: #fff !important; border-radius: 3px; }
-.fa-list-classic .badge.text-bg-danger { background: #d9534f !important; color: #fff !important; border-radius: 3px; }
-.fa-list-classic .fa-table th { text-transform: none; letter-spacing: 0; font-size: .82rem; }
+/* ---------- 확인창 ---------- */
+.modal-content { border: 1px solid var(--fa-line); border-radius: 12px; box-shadow: var(--fa-shadow-modal); }
+.modal-body { padding: 20px 20px 8px; color: var(--fa-ink-2); font-size: 14px; }
+.modal-title { font-size: 16px; font-weight: 600; color: var(--fa-ink); margin-bottom: 8px; }
+.modal-footer { border-top: 0; padding: 12px 20px 20px; gap: 8px; }
 
-/* ---------- 텍스트 유틸 ---------- */
-.fa-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85rem; }
-.fa-pre { white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow: auto; }
+/* ---------- 빈 상태 ---------- */
+.fa-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 16px; text-align: center; }
+.fa-empty img { width: 160px; height: 120px; object-fit: contain; }
+.fa-empty p { margin: 0; font-size: 14px; font-weight: 600; color: var(--fa-ink); white-space: normal; }
+.fa-table td.fa-empty-cell { height: auto; padding: 0; }
 
-/* ---------- 로그인·오류 페이지 ---------- */
-body.bg-light { background: var(--bs-body-bg) !important; }
-body.bg-light .card { border: 1px solid var(--fa-line); }
+/* ---------- 대시보드 KPI ---------- */
+.fa-stat { height: 100%; background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); padding: 16px 18px; box-shadow: var(--fa-shadow); }
+.fa-stat-head { display: flex; align-items: center; gap: 7px; color: var(--fa-ink-3); font-size: 12px; font-weight: 600; letter-spacing: .04em; margin-bottom: 6px; }
+.fa-stat-head .bi { color: var(--fa-ink-3); font-size: 14px; }
+.fa-stat-value { font-size: 28px; font-weight: 700; color: var(--fa-ink); letter-spacing: -.01em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.fa-stat-sep { color: var(--fa-line-strong); font-weight: 400; margin: 0 2px; }
+.fa-stat-fail { color: var(--fa-danger); }
+.fa-stat-note { font-size: 12px; color: var(--fa-ink-3); margin-top: 4px; }
+.fa-stat-auth, .fa-stat-reg, .fa-stat-dereg, .fa-stat-tc { }
+.fa-chart-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); padding: 20px; }
+.fa-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--fa-ink-2); }
+.fa-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
 
-@media (max-width: 900px) { .fa-sidebar { display: none; } }
+/* ---------- 로그인·가입 (셸 밖) ---------- */
+.fa-auth { min-height: 100vh; display: flex; flex-wrap: wrap; background: var(--fa-surface); }
+.fa-auth-panel { flex: 1 1 420px; background: var(--fa-primary-soft); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 24px; padding: 48px; box-sizing: border-box; }
+.fa-auth-logo { display: flex; flex-direction: column; gap: 6px; }
+.fa-auth-logo img { height: 28px; width: auto; display: block; align-self: flex-start; }
+.fa-auth-logo span { font-size: 13px; font-weight: 600; color: var(--fa-ink-2); }
+.fa-auth-ill { width: 360px; max-width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 12px; background: var(--fa-surface); }
+.fa-auth-lead { margin: 0; font-size: 22px; font-weight: 700; }
+.fa-auth-sub { margin: 8px 0 0; font-size: 14px; color: var(--fa-ink-2); }
+.fa-auth-body { flex: 1 1 480px; display: flex; justify-content: center; align-items: center; padding: 48px 24px; box-sizing: border-box; }
+.fa-auth-form { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+.fa-auth-form.wide { max-width: 560px; }
+.fa-auth-form h1 { margin: 0; font-size: 24px; font-weight: 700; }
+.fa-auth-links { text-align: center; font-size: 13px; }
 
-/* ---------- 사용자 상세: 기기 전환 ---------- */
-/* 계정 표는 컬럼이 많아 좁은 화면에서 줄바꿈으로 뭉개진다. 최소 폭을 주어 가로 스크롤로 넘긴다. */
+/* ---------- 에러 화면 ---------- */
+.fa-error { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 48px 16px; box-sizing: border-box; background: var(--fa-bg); }
+.fa-error-box { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; max-width: 480px; }
+.fa-error-box img { width: 240px; height: 180px; object-fit: contain; border-radius: 12px; background: var(--fa-surface); }
+.fa-error-code { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--fa-neutral-soft); color: var(--fa-neutral); font-size: 12px; font-weight: 700; font-family: var(--fa-mono); }
+.fa-error-box h1 { margin: 0; font-size: 22px; font-weight: 700; }
+.fa-error-box p { margin: 0; color: var(--fa-ink-2); }
+
+/* ---------- 고객사 선택 ---------- */
+.fa-pick-card { width: 100%; max-width: 560px; align-self: center; background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: 12px; box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-pick-head { padding: 24px 24px 16px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; }
+.fa-pick-head img { width: 160px; height: 120px; object-fit: contain; }
+.fa-pick-list { max-height: 420px; overflow-y: auto; border-top: 1px solid var(--fa-line); }
+.fa-pick-initial { width: 32px; height: 32px; border-radius: 8px; background: var(--fa-primary-soft); color: var(--fa-primary-ink); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; flex: none; }
+
+/* ---------- 설정 행 (FIDO 서버 설정·시스템 설정) ---------- */
+.fa-set-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); overflow: hidden; }
+.fa-set-head { padding: 16px 20px; border-bottom: 1px solid var(--fa-line); font-size: 16px; font-weight: 600; background: var(--fa-surface); }
+.fa-set-body { display: flex; flex-direction: column; }
+.fa-set-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--fa-line-soft); min-height: 56px; }
+.fa-set-row:last-child { border-bottom: 0; }
+.fa-set-wide { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.fa-set-label { margin: 0; font-weight: 600; font-size: 14px; color: var(--fa-ink); text-align: left; }
+.fa-set-field { min-width: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fa-set-muted { font-size: 13px; color: var(--fa-ink-3); }
+.fa-set-switch { padding-left: 0; min-height: 0; }
+.fa-set-switch .form-check-input { width: 36px; height: 20px; margin: 0; float: none; cursor: pointer; }
+.fa-set-check { font-size: 13px; font-weight: 600; cursor: pointer; }
+.fa-set-check .form-check-input { width: 18px; height: 18px; cursor: pointer; }
+.fa-set-range { min-width: 0; flex: 1; }
+.fa-set-badge { background: var(--fa-primary-soft); color: var(--fa-primary-ink); font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fa-set-select, .fa-set-input { max-width: 480px; }
+
+/* ---------- 승인 대기 카드 ---------- */
+.fa-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); }
+
+/* ---------- 등록 기기 상세: 기기 전환 ---------- */
 .user-account-table { width: 100%; min-width: 760px; table-layout: fixed; }
-/* flex 항목의 기본 min-width:auto 를 풀어야 긴 AAID 가 칸을 밀어내지 않는다. */
 .user-min-width { min-width: 0; }
 .user-break { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 
-/* ---------- FIDO 서버 설정 ---------- */
-.fa-set-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--bs-border-radius); margin-bottom: 18px; box-shadow: var(--fa-shadow); overflow: hidden; }
-.fa-set-head { background: #f4f6f3; border-bottom: 1px solid var(--fa-line); padding: 10px 16px; font-weight: 700; font-size: .9rem; }
-/* 섹션 안의 항목은 3열로 흐른다. 폭이 모자라면 2열 → 1열. */
-.fa-set-body { padding: 8px 16px 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; }
-.fa-set-row { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); column-gap: 14px; align-items: center; min-height: 48px; padding: 4px 0; }
-.fa-set-wide { grid-column: 1 / -1; grid-template-columns: calc((100% - 56px) / 3 * 0.38) 1fr; }
-.fa-set-label { text-align: right; font-weight: 600; font-size: .85rem; color: #374151; margin: 0; }
-.fa-set-field { min-width: 0; }
-.fa-set-muted { font-size: .85rem; color: #4b5563; }
-.fa-set-switch { padding-left: 0; min-height: 0; }
-.fa-set-switch .form-check-input { width: 2.6rem; height: 1.3rem; margin: 0; float: none; cursor: pointer; }
-.fa-set-switch .form-check-input:checked { background-color: #3bafda; border-color: #3bafda; }
-.fa-set-check { font-size: .85rem; font-weight: 600; cursor: pointer; }
-.fa-set-check .form-check-input { width: 1.15rem; height: 1.15rem; cursor: pointer; }
-.fa-set-check .form-check-input:checked { background-color: #3bafda; border-color: #3bafda; }
-.fa-set-range { min-width: 0; flex: 1; }
-.fa-set-badge { background: #3bafda; color: #fff; font-size: .78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.fa-set-select { max-width: 480px; }
-.fa-set-input { max-width: 480px; }
-@media (max-width: 1400px) { .fa-set-body { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fa-set-wide { grid-template-columns: calc((100% - 28px) / 2 * 0.38) 1fr; } }
-@media (max-width: 900px) {
-  .fa-set-body { grid-template-columns: 1fr; }
-  .fa-set-row, .fa-set-wide { grid-template-columns: 1fr; row-gap: 6px; }
-  .fa-set-label { text-align: left; }
+/* ---------- 좁은 화면 ---------- */
+@media (max-width: 720px) {
+  .fa-content { padding: 20px 16px 40px; }
+  .fa-topbar { padding: 0 16px; height: auto; min-height: var(--fa-topbar-h); }
+  .fa-set-row, .fa-set-wide { grid-template-columns: 1fr; }
+  .fa-detail th { width: 120px; }
 }

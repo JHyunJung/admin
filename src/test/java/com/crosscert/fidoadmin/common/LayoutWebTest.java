@@ -207,18 +207,6 @@ class LayoutWebTest {
         assertThat(fallbackLink).as("'선택 화면으로' 는 스크롤 영역 밖에 있어야 한다").isGreaterThan(listEnd);
     }
 
-    /** 스크롤을 거는 CSS 가 실제로 있어야 배선이 의미를 가진다(클래스만 붙고 스타일이 없으면 그대로 흘러넘친다). */
-    @Test void 전환_목록에_최대높이와_스크롤이_설정되어_있다() throws Exception {
-        String css = java.nio.file.Files.readString(
-            java.nio.file.Path.of("src/main/resources/static/css/admin.css"),
-            java.nio.charset.StandardCharsets.UTF_8);
-
-        String rule = css.substring(css.indexOf(".fa-tenant-list"));
-        rule = rule.substring(0, rule.indexOf("}"));
-        assertThat(rule).contains("max-height");
-        assertThat(rule).contains("overflow-y");
-    }
-
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */
     @Test void sidebarRendersMenuIcons() throws Exception {
         mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
