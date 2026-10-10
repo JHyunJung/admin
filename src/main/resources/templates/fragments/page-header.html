@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* 페이지 머리: 제목 + 설명. 동작 버튼이 필요한 화면은 같은 클래스로 직접 쓴다:
+  <div class="fa-page-head">
+    <div><h1 class="h4">제목</h1><p class="fa-page-desc">설명</p></div>
+    <div class="fa-page-actions"> …버튼… </div>
+  </div>
+  상세 화면은 제목 위에 <a class="fa-back" href="목록">← 목록</a>, 제목 옆에 상태 배지를 .fa-title-row 로 묶는다. */-->
+<div th:fragment="header(title, desc)" class="fa-page-head">
+  <div>
+    <h1 class="h4" th:text="${title}">제목</h1>
+    <p class="fa-page-desc" th:if="${desc != null}" th:text="${desc}">설명</p>
+  </div>
+</div>
+</body>
+</html>

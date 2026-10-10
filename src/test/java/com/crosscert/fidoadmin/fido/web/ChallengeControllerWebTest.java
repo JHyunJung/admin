@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
@@ -110,6 +111,18 @@ class ChallengeControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("<select name=\"companyIdx\""))))
             .andExpect(content().string(containsString("데이터가 없습니다.")));
+    }
+
+    /** 빈 목록은 일러스트와 문구를 보인다. 빈 행에는 링크가 없어 행 클릭 대상이 아니다. */
+    @Test void 빈_목록은_일러스트와_문구를_보인다() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
+        String html = mvc.perform(get("/challenges").session(session).with(user(superUser)))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("/img/ill/empty", ".webp").contains("데이터가 없습니다.");
+        String empty = html.substring(html.indexOf("fa-empty-cell"));
+        empty = empty.substring(0, empty.indexOf("</tr>"));
+        assertThat(empty).doesNotContain("href=");
     }
 
     @Test void detailRendersAllColumns() throws Exception {

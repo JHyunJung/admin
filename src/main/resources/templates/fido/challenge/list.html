@@ -25,7 +25,7 @@
           <td th:text="${r.logidx}"></td>
           <td th:text="${#temporals.format(r.createtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
         </tr>
-        <tr th:if="${page.totalElements == 0}"><td colspan="7" class="text-center text-secondary py-4">데이터가 없습니다.</td></tr>
+        <th:block th:if="${page.totalElements == 0}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
       </tbody>
     </table>
   </div>
