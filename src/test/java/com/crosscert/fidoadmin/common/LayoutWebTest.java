@@ -257,11 +257,12 @@ class LayoutWebTest {
 
     /** 폰트는 jar 안에서 서빙한다(외부 호출 금지). 로그인 전에도 받을 수 있어야 한다. */
     @Test void anonymousCanFetchBundledFont() throws Exception {
-        mvc.perform(get("/fonts/Pretendard-Regular.subset.woff2"))
-            .andExpect(result -> {
-                int s = result.getResponse().getStatus();
-                if (s == 302) throw new AssertionError("폰트가 로그인으로 넘어간다(302). permitAll 대상이어야 한다.");
-            });
+        for (String path : new String[] {
+                "/fonts/IBMPlexSansKR-Regular.subset.woff2", "/fonts/IBMPlexSansKR-Medium.subset.woff2",
+                "/fonts/IBMPlexSansKR-SemiBold.subset.woff2", "/fonts/IBMPlexSansKR-Bold.subset.woff2",
+                "/fonts/IBMPlexMono-Regular.subset.woff2", "/fonts/IBMPlexMono-Medium.subset.woff2"}) {
+            mvc.perform(get(path)).andExpect(status().isOk());
+        }
     }
 
     @Test void companyGetsForbiddenOnSuperUrl() throws Exception {

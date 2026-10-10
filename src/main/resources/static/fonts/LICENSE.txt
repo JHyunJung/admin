@@ -1,9 +1,10 @@
-Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard),
-with Reserved Font Name Pretendard.
+IBM Plex Sans KR / IBM Plex Mono — SIL Open Font License 1.1. 한글 상용 글자·라틴만 남긴 서브셋이다.
+
+Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
-This license is copied below, and is also available with a FAQ at:
-https://scripts.sil.org/OFL
+
+This license is copied below, and is also available with a FAQ at: http://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------
