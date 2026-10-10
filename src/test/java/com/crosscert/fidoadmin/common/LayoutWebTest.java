@@ -312,4 +312,14 @@ class LayoutWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString("tenant-switcher"))));
     }
+
+    /** 로그인·가입·에러 화면의 그림은 로그인 전에 받아야 한다. 302 면 그림이 깨진다. */
+    @Test void anonymousCanFetchImages() throws Exception {
+        for (String path : new String[] {"/img/crosscert-logo.png", "/img/ill/signin.webp",
+                "/img/ill/signup.webp", "/img/ill/403.webp", "/img/ill/404.webp", "/img/ill/500.webp",
+                "/img/ill/empty.webp", "/img/ill/tenant.webp", "/img/ill/password.webp",
+                "/img/ill/dashboard.webp", "/img/ill/pending.webp"}) {
+            mvc.perform(get(path)).andExpect(status().isOk());
+        }
+    }
 }
