@@ -10,32 +10,41 @@
   <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
   <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
-<body class="bg-light">
-<main class="container" style="max-width: 420px; margin-top: 12vh;">
-  <div class="card shadow-sm">
-    <div class="card-body p-4">
-      <h1 class="h4 mb-4 text-center">FIDO Admin</h1>
+<body>
+<div class="fa-auth">
+  <section class="fa-auth-panel" aria-label="제품 소개">
+    <div class="fa-auth-logo">
+      <img th:src="@{/img/crosscert-logo.png}" alt="CROSSCERT" width="129" height="28">
+      <span>FIDO Admin</span>
+    </div>
+    <img class="fa-auth-ill" th:src="@{/img/ill/signin.webp}" alt="지문이 담긴 방패와 열쇠, 자물쇠 일러스트" width="360" height="270">
+    <div>
+      <p class="fa-auth-lead">FIDO 인증 서버 관리 콘솔</p>
+      <p class="fa-auth-sub">고객사별 FIDO 로그·등록자·서버 설정을 한곳에서 관리합니다.</p>
+    </div>
+  </section>
+  <div class="fa-auth-body">
+    <main class="fa-auth-form">
+      <h1>FIDO Admin</h1>
       <!-- 계정 존재 여부·잠금·비활성 여부가 드러나지 않도록 실패 사유를 구분하지 않는다. -->
-      <div class="alert alert-danger py-2" th:if="${param.error != null}">로그인할 수 없습니다. 아이디와 비밀번호를 확인하세요.</div>
-      <div class="alert alert-info py-2" th:if="${param.logout != null}">로그아웃되었습니다.</div>
-      <div class="alert alert-warning py-2" th:if="${param.expired != null}">다른 곳에서 로그인되어 세션이 종료되었습니다.</div>
-      <div class="alert alert-success py-2" th:if="${param.signup != null}">가입 신청이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.</div>
-      <form th:action="@{/login}" method="post">
-        <div class="mb-3">
+      <div class="alert alert-danger" role="alert" th:if="${param.error != null}"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>로그인할 수 없습니다. 아이디와 비밀번호를 확인하세요.</span></div>
+      <div class="alert alert-info" th:if="${param.logout != null}"><i class="bi bi-info-circle" aria-hidden="true"></i><span>로그아웃되었습니다.</span></div>
+      <div class="alert alert-warning" th:if="${param.expired != null}"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><span>다른 곳에서 로그인되어 세션이 종료되었습니다.</span></div>
+      <div class="alert alert-success" th:if="${param.signup != null}"><i class="bi bi-check-circle" aria-hidden="true"></i><span>가입 신청이 접수되었습니다. 관리자 승인 후 로그인할 수 있습니다.</span></div>
+      <form th:action="@{/login}" method="post" class="d-flex flex-column gap-3 m-0">
+        <div>
           <label for="username" class="form-label">아이디</label>
           <input id="username" name="username" class="form-control" autocomplete="username" required autofocus>
         </div>
-        <div class="mb-3">
+        <div>
           <label for="password" class="form-label">비밀번호</label>
           <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required>
         </div>
-        <button type="submit" class="btn btn-primary w-100">로그인</button>
+        <button type="submit" class="btn btn-primary w-100" style="height: 44px;">로그인</button>
       </form>
-      <div class="text-center mt-3">
-        <a th:href="@{/signup}" class="small">가입 신청</a>
-      </div>
-    </div>
+      <div class="fa-auth-links"><a th:href="@{/signup}">가입 신청</a></div>
+    </main>
   </div>
-</main>
+</div>
 </body>
 </html>

@@ -8,11 +8,15 @@
   <link rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
   <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head>
-<body class="bg-light">
-<main class="container text-center" style="margin-top: 15vh;">
-  <h1 class="display-6">404</h1>
-  <p class="text-secondary">요청한 페이지나 데이터를 찾을 수 없습니다.</p>
-  <a th:href="@{/}" class="btn btn-primary btn-sm">대시보드로</a>
+<body>
+<main class="fa-error">
+  <div class="fa-error-box">
+    <img th:src="@{/img/ill/404.webp}" alt="경로가 끊긴 지도와 표지판 일러스트" width="240" height="180">
+    <span class="fa-error-code">404</span>
+    <h1>페이지를 찾을 수 없음</h1>
+    <p>요청한 페이지나 데이터를 찾을 수 없습니다.</p>
+    <a th:href="@{/}" class="btn btn-primary">대시보드로</a>
+  </div>
 </main>
 </body>
 </html>

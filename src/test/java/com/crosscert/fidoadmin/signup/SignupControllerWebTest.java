@@ -345,4 +345,24 @@ class SignupControllerWebTest {
             .andExpect(model().attributeHasFieldErrors("form", "reason"));
         verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), any(), any());
     }
+
+    @Test void 로그인_화면은_V2_분할_레이아웃이다() throws Exception {
+        mvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("class=\"fa-auth\"")))
+            .andExpect(content().string(containsString("/img/crosscert-logo")))
+            .andExpect(content().string(containsString(".png")))
+            .andExpect(content().string(containsString("/img/ill/signin")))
+            .andExpect(content().string(containsString(".webp")))
+            .andExpect(content().string(containsString("name=\"username\"")))
+            .andExpect(content().string(containsString("name=\"password\"")));
+    }
+
+    @Test void 가입_화면은_V2_분할_레이아웃이다() throws Exception {
+        mvc.perform(get("/signup"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("class=\"fa-auth\"")))
+            .andExpect(content().string(containsString("/img/ill/signup")))
+            .andExpect(content().string(containsString(".webp")));
+    }
 }
