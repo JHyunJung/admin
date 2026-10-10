@@ -169,44 +169,6 @@ class LayoutWebTest {
             .andExpect(redirectedUrl("/select-tenant"));
     }
 
-    /**
-     * 고객사가 많아져도 전환 드롭다운의 모든 항목에 닿을 수 있어야 한다.
-     *
-     * <p>예전에는 목록에 최대 높이가 없어 화면 밖으로 흘렀고, 드롭다운 자체는 스크롤되지 않아
-     * 아래쪽 고객사는 <em>아예 고를 수 없었다</em>(63개로 재현했을 때 29개만 보이고 35개가
-     * 접근 불가였다). 스크롤 컨테이너를 씌워 해결했다.
-     *
-     * <p>높이는 CSS 가 정하므로 서버 테스트로는 볼 수 없다. 대신 그 배선(스크롤 영역과
-     * 그 밖의 "선택 화면으로")이 유지되는지, 항목이 빠짐없이 렌더링되는지를 고정한다.
-     */
-    @Test void 고객사가_많아도_전환_목록이_스크롤_영역에_담긴다() throws Exception {
-        List<CcfaCompany> many = new java.util.ArrayList<>();
-        for (int i = 1; i <= 40; i++) {
-            CcfaCompany c = new CcfaCompany();
-            c.setIdx((long) (100 + i));
-            c.setCompanyName("고객사" + i);
-            many.add(c);
-        }
-        when(companies.all()).thenReturn(many);
-
-        String html = mvc.perform(get("/").session(superSelecting(9L))
-                .with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString();
-
-        String switcher = html.substring(html.indexOf("id=\"tenant-switcher\""));
-        switcher = switcher.substring(0, switcher.indexOf("</div>", switcher.indexOf("fa-tenant-list")));
-
-        assertThat(switcher).as("목록을 감싸는 스크롤 영역이 있어야 한다").contains("fa-tenant-list");
-        assertThat(switcher).as("40개가 모두 렌더링되어야 한다").contains("고객사1\"", "고객사40");
-
-        // "선택 화면으로" 는 목록이 길어도 늘 보여야 하므로 스크롤 영역 밖에 있어야 한다.
-        int listEnd = html.indexOf("</ul>", html.indexOf("fa-tenant-list"));
-        int fallbackLink = html.indexOf("고객사 선택 화면으로");
-        assertThat(fallbackLink).as("'선택 화면으로' 가 렌더링되어야 한다").isGreaterThan(0);
-        assertThat(fallbackLink).as("'선택 화면으로' 는 스크롤 영역 밖에 있어야 한다").isGreaterThan(listEnd);
-    }
-
     /** 사이드바 메뉴에 Bootstrap Icons 아이콘이 렌더링되고, 아이콘 폰트 CSS 가 실린다. */
     @Test void sidebarRendersMenuIcons() throws Exception {
         mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
@@ -281,11 +243,38 @@ class LayoutWebTest {
             .andExpect(content().string(containsString("가입 승인")));
     }
 
-    /** TENANT 화면(대시보드)을 보는 SUPER 는 상단 고객사 전환 드롭다운을 본다. */
-    @Test void 테넌트_화면에는_선택기가_보인다() throws Exception {
-        mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+    /** V2: 고객사 전환은 사이드바 전환기(선택 화면 링크) 하나로 한다. 상단바 드롭다운은 없앴다. */
+    @Test void 상단바에는_고객사_전환_드롭다운이_없다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).doesNotContain("tenant-switcher").doesNotContain("고객사 선택 화면으로");
+        String sidebar = html.substring(html.indexOf("fa-sidebar"), html.indexOf("fa-main"));
+        assertThat(sidebar).contains("href=\"/select-tenant\"").contains("KB국민은행");
+    }
+
+    /** 상단바 왼쪽은 "그룹 / 메뉴명" 브레드크럼이다. */
+    @Test void 상단바에_브레드크럼이_있다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String crumbs = html.substring(html.indexOf("aria-label=\"현재 위치\""));
+        crumbs = crumbs.substring(0, crumbs.indexOf("</nav>"));
+        assertThat(crumbs).contains("대시보드").contains("통계");
+    }
+
+    /** 사이드바 위아래에 CI 로고가 있다(위: 로고 + "FIDO Admin", 아래: "Powered by"). 경로에는 콘텐츠 해시가 붙는다. */
+    @Test void 사이드바에_CI_로고가_있다() throws Exception {
+        String html = mvc.perform(get("/").session(superSelecting(9L)).with(SecurityMockMvcRequestPostProcessors.user(user(0L))))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String sidebar = html.substring(html.indexOf("fa-sidebar"), html.indexOf("fa-main"));
+        assertThat(sidebar).contains("/img/crosscert-logo").contains(".png").contains("alt=\"CROSSCERT\"").contains("Powered by");
+    }
+
+    /** 이름이 비어 있어도 상단바 이니셜이 예외 없이 그려진다(substring 예외면 모든 화면이 500). */
+    @Test void 이름이_비어도_상단바가_그려진다() throws Exception {
+        ManagerUserDetails noName = new ManagerUserDetails(1L, "u", null, "", 1L, "KB", true, true);
+        mvc.perform(get("/").with(SecurityMockMvcRequestPostProcessors.user(noName)))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("tenant-switcher")));
+            .andExpect(content().string(containsString("class=\"fa-avatar\"")));
     }
 
     /**

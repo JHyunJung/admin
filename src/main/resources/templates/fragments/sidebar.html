@@ -1,50 +1,54 @@
 <nav xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
-     class="fa-sidebar" th:fragment="sidebar"
+     class="fa-sidebar" th:fragment="sidebar" aria-label="주 메뉴"
      th:with="isSuper=${#authorization.expression('hasRole(''SUPER'')')},
               tenantItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).TENANT)},
               systemItems=${@menuRegistry.itemsFor(isSuper, T(com.crosscert.fidoadmin.common.MenuArea).SYSTEM)},
               hasTenant=${selectedCompanyName != null}">
-  <div class="fa-brand px-3 py-3">FIDO Admin</div>
+  <div class="fa-brand">
+    <img th:src="@{/img/crosscert-logo.png}" alt="CROSSCERT" width="83" height="18">
+    <span>FIDO Admin</span>
+  </div>
 
-  <!--/* 지금 어느 고객사를 보고 있는지. 아래 업무 메뉴가 전부 이 선택에 걸려 있어서
-         그룹 라벨과 섞이지 않게 별도 배너로 둔다. 눌러서 바로 전환할 수 있다. */-->
+  <!--/* 고객사 전환기. 아래 업무 메뉴가 전부 이 선택에 걸려 있다. 누르면 고객사 선택 화면으로 간다
+         (V2: 상단바 드롭다운을 없애고 전환 수단을 이 하나로 모았다). */-->
   <a th:href="@{/select-tenant}" class="fa-tenant" th:classappend="${hasTenant} ? '' : 'fa-tenant-none'"
      th:title="${hasTenant} ? |선택된 고객사: ${selectedCompanyName} (눌러서 전환)| : '고객사를 선택해야 업무 메뉴가 열립니다'">
-    <span class="fa-tenant-label">
-      <i class="bi" th:classappend="${hasTenant} ? 'bi-building' : 'bi-exclamation-triangle'" aria-hidden="true"></i>
-      <span th:text="${hasTenant} ? '선택된 고객사' : '고객사 미선택'">선택된 고객사</span>
+    <span class="fa-tenant-avatar" aria-hidden="true"
+          th:text="${hasTenant and !#strings.isEmpty(selectedCompanyName)} ? ${#strings.substring(selectedCompanyName, 0, 1)} : '!'">고</span>
+    <span class="fa-tenant-text">
+      <span class="fa-tenant-label" th:text="${hasTenant} ? '선택된 고객사' : '고객사 미선택'">선택된 고객사</span>
+      <span class="fa-tenant-name text-truncate" th:text="${hasTenant} ? ${selectedCompanyName} : '선택하기'">고객사</span>
     </span>
-    <span class="fa-tenant-name text-truncate"
-          th:text="${hasTenant} ? ${selectedCompanyName} : '선택하기'">고객사</span>
+    <i class="bi bi-chevron-expand" aria-hidden="true"></i>
   </a>
-  <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(tenantItems)}" class="mb-2"
-       th:classappend="${hasTenant} ? '' : 'opacity-50'">
-    <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
+
+  <th:block th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(tenantItems)}">
+    <div class="fa-group" th:classappend="${hasTenant} ? '' : 'fa-nav-disabled'" th:text="${g.key}">그룹</div>
     <a th:each="m : ${g.value}" th:href="${hasTenant} ? @{${m.href}} : 'javascript:void(0)'"
-       th:classappend="${currentPath == m.href} ? 'active' : ''"
-       th:attr="tabindex=${hasTenant} ? null : '-1', aria-disabled=${hasTenant} ? null : 'true'"
-       class="fa-link d-flex align-items-center gap-2 px-3 py-1">
+       th:classappend="${(currentPath == m.href ? 'active ' : '') + (hasTenant ? '' : 'fa-nav-disabled')}"
+       th:attr="tabindex=${hasTenant} ? null : '-1', aria-disabled=${hasTenant} ? null : 'true', aria-current=${currentPath == m.href} ? 'page' : null"
+       class="fa-link">
       <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
       <span th:text="${m.title}">메뉴</span>
     </a>
-  </div>
+  </th:block>
 
-  <!-- 시스템 영역: 선택과 무관한 전역 화면 -->
-  <div th:if="${isSuper}">
-    <hr class="my-2 mx-3">
-    <div th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(systemItems)}" class="mb-2">
-      <div class="fa-group px-3 text-uppercase small text-secondary" th:text="${g.key}">그룹</div>
-      <a th:each="m : ${g.value}" th:href="@{${m.href}}"
+  <th:block th:if="${isSuper}">
+    <div class="fa-nav-divider">시스템 · SUPER 전용</div>
+    <th:block th:each="g : ${T(com.crosscert.fidoadmin.common.MenuRegistry).groups(systemItems)}">
+      <div class="fa-group" th:text="${g.key}">그룹</div>
+      <a th:each="m : ${g.value}" th:href="@{${m.href}}" class="fa-link"
          th:classappend="${currentPath == m.href} ? 'active' : ''"
-         class="fa-link d-flex align-items-center gap-2 px-3 py-1">
+         th:attr="aria-current=${currentPath == m.href} ? 'page' : null">
         <i class="bi" th:classappend="${m.icon}" aria-hidden="true"></i>
         <span th:text="${m.title}">메뉴</span>
       </a>
-    </div>
-  </div>
+    </th:block>
+  </th:block>
 
-  <!--/* 개인 영역(MenuArea.PERSONAL)은 여기서 그리지 않는다. 본인 계정 관련 메뉴라
-         업무 메뉴와 성격이 달라 헤더 우측의 사용자 드롭다운으로 옮겼다(layout/base.html).
-         MenuRegistry 의 항목 자체는 남아 있다 — 그 영역 값이 테넌트 선택 인터셉터의
-         판정 근거이기도 하다(개인 화면은 고객사 선택 없이 열려야 한다). */-->
+  <!--/* 개인 영역(MenuArea.PERSONAL)은 상단바 계정 메뉴에 있다(layout/base.html). */-->
+  <div class="fa-powered">
+    <span>Powered by</span>
+    <img th:src="@{/img/crosscert-logo.png}" alt="CROSSCERT" width="60" height="13">
+  </div>
 </nav>

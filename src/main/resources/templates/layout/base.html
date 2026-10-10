@@ -16,60 +16,32 @@
 <div class="fa-shell">
   <nav class="fa-sidebar" th:replace="~{fragments/sidebar :: sidebar}"></nav>
   <div class="fa-main">
-    <header class="fa-topbar d-flex align-items-center justify-content-between px-3">
-      <span class="fw-semibold">FIDO Admin</span>
-      <div class="d-flex align-items-center gap-3 small">
-
-        <!-- SUPER + 테넌트 영역: 고객사 전환 드롭다운 -->
-        <div class="dropdown" id="tenant-switcher"
-             th:if="${currentArea?.name() == 'TENANT' and !#lists.isEmpty(selectableCompanies)}">
-          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                  data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-building" aria-hidden="true"></i>
-            <span th:text="${selectedCompanyName} ?: '고객사 선택'">고객사</span>
-          </button>
-          <!--/* 고객사가 수십 개가 되면 목록이 화면 밖으로 흘러 아래쪽 항목은 고를 수 없게 된다
-                 (스크롤도 되지 않아 아예 선택 불가였다). 목록에만 최대 높이와 스크롤을 준다.
-                 "선택 화면으로" 는 목록 길이와 무관하게 늘 보여야 하므로 스크롤 영역 밖의
-                 별도 ul 에 둔다 — ul 안에 div 를 넣으면 브라우저가 DOM 을 재배치한다. */-->
-          <div class="dropdown-menu dropdown-menu-end fa-tenant-menu">
-            <ul class="fa-tenant-list list-unstyled m-0">
-              <li th:each="c : ${selectableCompanies}">
-                <form method="post" th:action="@{/select-tenant}" class="m-0">
-                  <input type="hidden" name="companyIdx" th:value="${c.idx}">
-                  <input type="hidden" name="returnTo" th:value="${currentPath}">
-                  <button type="submit" class="dropdown-item text-truncate" th:text="${c.companyName}"
-                          th:title="${c.companyName}">고객사</button>
-                </form>
-              </li>
-            </ul>
-            <hr class="dropdown-divider">
-            <a class="dropdown-item" th:href="@{/select-tenant}">
-              <i class="bi bi-gear" aria-hidden="true"></i> 고객사 선택 화면으로</a>
-          </div>
-        </div>
-
+    <header class="fa-topbar">
+      <!--/* 브레드크럼 "그룹 / 메뉴명". 메뉴에 없는 경로(고객사 선택·에러 등)는 그리지 않는다. */-->
+      <nav class="fa-crumbs" aria-label="현재 위치" th:if="${@menuRegistry.isRegistered(currentPath)}">
+        <span th:text="${@menuRegistry.groupFor(currentPath)}">그룹</span>
+        <span aria-hidden="true">/</span>
+        <span class="fa-crumb-current" th:text="${@menuRegistry.titleFor(currentPath)}">메뉴</span>
+      </nav>
+      <span th:unless="${@menuRegistry.isRegistered(currentPath)}"></span>
+      <div class="fa-topbar-right">
         <!-- SUPER + 시스템 영역: 테넌트 맥락이 아님을 드러낸다 -->
-        <span class="badge text-bg-dark" sec:authorize="hasRole('SUPER')"
-              th:if="${currentArea?.name() == 'SYSTEM'}">
+        <span class="fa-sys-badge" sec:authorize="hasRole('SUPER')" th:if="${currentArea?.name() == 'SYSTEM'}">
           <i class="bi bi-gear" aria-hidden="true"></i> 시스템 관리
         </span>
-
-        <!-- 본인 계정 메뉴. 업무 메뉴(사이드바)와 성격이 달라 여기 모은다.
-             항목은 MenuArea.PERSONAL 에서 읽으므로 개인 화면이 늘면 여기 자동으로 들어온다. -->
+        <!-- 본인 계정 메뉴. 항목은 MenuArea.PERSONAL 에서 읽는다. -->
         <div class="dropdown" id="account-menu"
              th:with="personalItems=${@menuRegistry.itemsFor(
                         #authorization.expression('hasRole(''SUPER'')'),
-                        T(com.crosscert.fidoadmin.common.MenuArea).PERSONAL)}">
-          <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
-                  type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle" aria-hidden="true"></i>
+                        T(com.crosscert.fidoadmin.common.MenuArea).PERSONAL)},
+                      nm=${#authentication.principal.userNm}">
+          <button class="fa-account-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="fa-avatar" aria-hidden="true" th:text="${#strings.isEmpty(nm)} ? '?' : ${#strings.substring(nm, 0, 1)}">이</span>
             <span sec:authentication="principal.userNm">이름</span>
-            <span class="badge text-bg-secondary" sec:authorize="hasRole('SUPER')">SUPER</span>
+            <span class="fa-role-badge" sec:authorize="hasRole('SUPER')">SUPER</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li class="px-3 py-1 small text-secondary">
-              <!-- 소속. SUPER 는 전역이라 고정 문구가 아니라 실제 소속명을 그대로 보여준다. -->
               <span sec:authentication="principal.companyName">고객사</span>
             </li>
             <li><hr class="dropdown-divider"></li>
@@ -82,7 +54,7 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-              <!-- 로그아웃은 상태를 바꾸므로 링크가 아니라 POST 폼이다(CSRF 토큰이 함께 간다). -->
+              <!-- 로그아웃은 상태를 바꾸므로 POST 폼이다(CSRF 토큰이 함께 간다). -->
               <form th:action="@{/logout}" method="post" class="m-0">
                 <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
                   <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
@@ -94,7 +66,7 @@
         </div>
       </div>
     </header>
-    <div class="fa-content p-3">
+    <div class="fa-content">
       <div th:replace="~{fragments/alert :: flash}"></div>
       <main th:replace="${content}"></main>
     </div>
