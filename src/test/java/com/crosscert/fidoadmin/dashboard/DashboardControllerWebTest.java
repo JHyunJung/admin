@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.dashboard;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -125,5 +126,16 @@ class DashboardControllerWebTest {
         org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(" Month ", List.of("day", "month"))).isEqualTo("month");
         org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby("week", List.of("day"))).isEqualTo("day");
         org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(null, List.of())).isNull();
+    }
+
+    @Test void 대시보드_차트는_V2_색과_선_모양을_쓴다() throws Exception {
+        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
+        when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 0, 0, 10, 0, 0, 0)));
+        var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
+        String html = mvc.perform(get("/").with(user(user)))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("borderColor: '#1F5EDB'", "borderColor: '#B42318'", "borderDash: [6, 4]", "borderColor: '#0F1B2D'",
+            "class=\"fa-chart-card\"");
     }
 }
