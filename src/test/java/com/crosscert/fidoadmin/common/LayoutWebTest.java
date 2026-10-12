@@ -12,12 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
-import com.crosscert.fidoadmin.company.entity.CcfaCompany;
 import com.crosscert.fidoadmin.config.CurrentPathAdvice;
 import com.crosscert.fidoadmin.config.SecurityConfig;
 import com.crosscert.fidoadmin.config.WebMvcConfig;
 import com.crosscert.fidoadmin.dashboard.DashboardController;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,15 +49,13 @@ class LayoutWebTest {
     }
 
     /**
-     * Task 10 부터 사이드바·상단바가 {@code selectedCompanyName}·{@code selectableCompanies}
-     * (둘 다 CompanyLookup 을 거친다)로 테넌트 선택 여부를 가린다. 목을 기본값(null/빈 리스트)으로
-     * 두면 COMPANY 계정도 "미선택"으로 보여 TENANT 메뉴가 비활성화되므로, 모든 테스트가 공유하는
-     * 기본값을 여기서 채운다. 특정 테넌트 이름이 필요한 SUPER 케이스는 superSelecting() 이 덮어쓴다.
+     * 사이드바가 {@code selectedCompanyName}(CompanyLookup 을 거친다)으로 테넌트 선택 여부를 가린다.
+     * 목을 기본값(null)으로 두면 COMPANY 계정도 "미선택"으로 보여 TENANT 메뉴가 비활성화되므로,
+     * 모든 테스트가 공유하는 기본값을 여기서 채운다. 특정 테넌트 이름이 필요한 SUPER 케이스는
+     * superSelecting() 이 덮어쓴다. (V2 에서 상단바 드롭다운이 없어져 목록 조회는 더 이상 하지 않는다.)
      */
     @BeforeEach void stubCompanyLookupDefaults() {
         when(companies.name(anyLong())).thenReturn("KB");
-        CcfaCompany kb = new CcfaCompany(); kb.setIdx(9L); kb.setCompanyName("KB국민은행");
-        when(companies.all()).thenReturn(List.of(kb));
     }
 
     /**
