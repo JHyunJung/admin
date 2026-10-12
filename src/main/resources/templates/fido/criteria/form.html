@@ -15,7 +15,7 @@
             FIDO UAF 메타데이터 문(JSON)을 붙여 넣으세요. AAID·인증 방식 등은 JSON 에서 읽어 채웁니다.
             등록한 AAID 는 모든 고객사에서 <strong>비활성</strong>으로 시작합니다.
           </p>
-          <label class="form-label" for="jsondata">메타데이터 JSON<span class="fa-req">*</span></label>
+          <label class="form-label" for="jsondata">메타데이터 JSON<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <textarea th:field="*{jsondata}" id="jsondata" rows="16" class="form-control fa-mono"
                     th:classappend="${#fields.hasErrors('jsondata')} ? 'is-invalid'"></textarea>
           <div class="invalid-feedback" th:errors="*{jsondata}"></div>

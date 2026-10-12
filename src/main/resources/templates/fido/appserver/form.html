@@ -17,12 +17,12 @@
           <input th:unless="${isNew}" id="memberCodeView" type="text" class="form-control fa-mono" th:value="*{memberCode}" readonly>
         </div>
         <div class="col-md-6">
-          <label class="form-label" for="memberId">멤버키<span class="fa-req">*</span></label>
+          <label class="form-label" for="memberId">멤버키<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{memberId}" class="form-control" th:classappend="${#fields.hasErrors('memberId')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{memberId}"></div>
         </div>
         <div class="col-md-3">
-          <label class="form-label" for="type">상태<span class="fa-req">*</span></label>
+          <label class="form-label" for="type">상태<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{type}" class="form-select">
             <option value="use">활성</option>
             <option value="unuse">비활성</option>

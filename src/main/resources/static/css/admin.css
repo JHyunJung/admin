@@ -235,7 +235,6 @@ textarea.form-control { height: auto; }
 .fa-section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--fa-line); }
 .fa-section-head .fa-section-title { padding: 0; border: 0; }
 .fa-section-note { font-size: 12px; color: var(--fa-ink-3); }
-.fa-section + .fa-section { margin-top: 0; }
 .fa-section-title { margin: 0; padding: 16px 20px; border-bottom: 1px solid var(--fa-line); font-size: 16px; font-weight: 600; color: var(--fa-ink); }
 .fa-detail { margin: 0; }
 .fa-detail th { width: 200px; background: var(--fa-bg); color: var(--fa-ink-3); font-weight: 400; font-size: 13px; padding: 12px 20px; border-color: var(--fa-line-soft); vertical-align: top; }
@@ -287,7 +286,6 @@ textarea.form-control { height: auto; }
 .fa-stat-sep { color: var(--fa-line-strong); font-weight: 400; }
 .fa-stat-fail { color: var(--fa-danger); }
 .fa-stat-note { font-size: 13px; color: var(--fa-ink-3); }
-.fa-stat-auth, .fa-stat-reg, .fa-stat-dereg, .fa-stat-tc { }
 .fa-chart-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); overflow: hidden; }
 .fa-chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--fa-line); }
 .fa-chart-head .fa-section-title { padding: 0; border: 0; }
@@ -323,6 +321,7 @@ textarea.form-control { height: auto; }
 .fa-auth-links { text-align: center; font-size: 13px; color: var(--fa-ink-3); }
 .fa-auth-links a { font-weight: 600; }
 .fa-auth-form form { gap: 18px !important; }
+.fa-auth-form button[type="submit"] { height: 40px; }
 .fa-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 
 /* ---------- 에러 화면 ---------- */
@@ -388,8 +387,11 @@ textarea.form-control { height: auto; }
 
 /* ---------- 등록 기기 상세: 기기 전환 ---------- */
 .user-account-table { width: 100%; min-width: 760px; table-layout: fixed; }
-.user-min-width { min-width: 0; }
-.user-break { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.fa-wrap { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.fa-pw-alert { max-width: 720px; }
+.fa-pw-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.fa-pw-form { flex: 1 1 400px; max-width: 480px; }
+.fa-pw-aside { flex: 1 1 260px; max-width: 340px; }
 
 /* ---------- 좁은 화면 ---------- */
 @media (max-width: 720px) {

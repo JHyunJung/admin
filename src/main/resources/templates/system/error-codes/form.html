@@ -12,7 +12,7 @@
       </div>
       <div class="row g-3">
         <div class="col-md-4">
-          <label class="form-label" for="errorCode">코드 <span class="fa-req">*</span></label>
+          <label class="form-label" for="errorCode">코드 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{errorCode}" class="form-control" th:readonly="${!isNew}"
                  th:classappend="${#fields.hasErrors('errorCode')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{errorCode}"></div>

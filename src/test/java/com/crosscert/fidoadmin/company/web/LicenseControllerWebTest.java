@@ -80,8 +80,7 @@ class LicenseControllerWebTest {
     /**
      * Task 10: 테넌트는 세션이 정하므로 목록은 더는 고객사 검색 select 나 고객사 컬럼을 보여주지 않는다.
      * (companyNames 는 상세 화면이 여전히 쓰므로 컨트롤러에는 남아 있다 — 목록 템플릿만 걷어냈다.)
-     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
-     * 검색폼 select 태그로 특정한다.
+     * "name=\"companyIdx\"" 는 다른 폼의 hidden 필드에도 쓰일 수 있으므로 검색폼 select 태그로 특정한다.
      */
     @Test void superListRendersRowsWithoutCompanyFilter() throws Exception {
         CcfaLicense l = new CcfaLicense(); l.setIdx(1L); l.setCompanyIdx(1L); l.setServiceName("kbstar"); l.setContactName("홍길동");

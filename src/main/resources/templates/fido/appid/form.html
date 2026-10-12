@@ -15,7 +15,7 @@
            (DEVICE ios·android, DEVICE_DEFAULT T·F, STATUS use·unuse). */-->
       <div class="row g-3">
         <div class="col-12">
-          <label class="form-label" for="appid">APPID<span class="fa-req">*</span></label>
+          <label class="form-label" for="appid">APPID<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{appid}" class="form-control" th:classappend="${#fields.hasErrors('appid')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{appid}"></div>
         </div>
@@ -33,11 +33,11 @@
         </div>
         <div class="col-md-6"><label class="form-label" for="servicename">서비스명</label><input th:field="*{servicename}" class="form-control"></div>
         <div class="col-md-6">
-          <label class="form-label" for="deviceDefault">기본값<span class="fa-req">*</span></label>
+          <label class="form-label" for="deviceDefault">기본값<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{deviceDefault}" class="form-select"><option value="T">설정</option><option value="F">설정안함</option></select>
         </div>
         <div class="col-md-6">
-          <label class="form-label" for="status">상태<span class="fa-req">*</span></label>
+          <label class="form-label" for="status">상태<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{status}" class="form-select"><option value="use">활성</option><option value="unuse">비활성</option></select>
         </div>
       </div>

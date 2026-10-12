@@ -20,10 +20,11 @@
     <div class="d-flex flex-wrap gap-2">
       <a th:each="device : ${devices}"
          th:href="@{/users/{id}(id=${device.idx},back=${back})}"
-         class="fa-card px-3 py-2 text-decoration-none user-min-width"
-         th:classappend="${device.idx == item.idx} ? 'border-primary' : ''">
+         class="fa-card px-3 py-2 text-decoration-none min-w-0"
+         th:classappend="${device.idx == item.idx} ? 'border-primary' : ''"
+         th:attr="aria-current=${device.idx == item.idx} ? 'true' : null">
         <strong class="d-block small" th:text="|등록 기기 #${device.idx}|"></strong>
-        <span class="fa-mono small user-break" th:text="${device.aaid}"></span>
+        <span class="fa-mono small fa-wrap" th:text="${device.aaid}"></span>
       </a>
     </div>
   </div>

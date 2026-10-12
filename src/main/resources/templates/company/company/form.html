@@ -13,7 +13,7 @@
       </div>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label" for="companyName">이름<span class="fa-req">*</span></label>
+          <label class="form-label" for="companyName">이름<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{companyName}" class="form-control" th:classappend="${#fields.hasErrors('companyName')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{companyName}"></div>
         </div>
@@ -24,7 +24,7 @@
         <div class="col-md-3"><label class="form-label" for="contactPhone2">전화2</label><input th:field="*{contactPhone2}" class="form-control"></div>
         <div class="col-12"><label class="form-label" for="contactAddr">주소</label><input th:field="*{contactAddr}" class="form-control"></div>
         <div class="col-md-3">
-          <label class="form-label" for="enableType">사용<span class="fa-req">*</span></label>
+          <label class="form-label" for="enableType">사용<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{enableType}" class="form-select"><option value="Y">Y</option><option value="N">N</option></select>
         </div>
         <div class="col-md-3"><label class="form-label" for="maxAppid">최대 앱 ID</label><input type="number" min="0" th:field="*{maxAppid}" class="form-control"><div class="invalid-feedback d-block" th:errors="*{maxAppid}"></div></div>

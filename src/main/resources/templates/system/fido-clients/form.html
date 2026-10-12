@@ -12,22 +12,22 @@
       </div>
       <div class="row g-3">
         <div class="col-md-4">
-          <label class="form-label" for="servercode">코드 <span class="fa-req">*</span></label>
+          <label class="form-label" for="servercode">코드 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{servercode}" class="form-control" th:readonly="${!isNew}"
                  th:classappend="${#fields.hasErrors('servercode')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{servercode}"></div>
         </div>
         <div class="col-md-3">
-          <label class="form-label" for="status">상태 <span class="fa-req">*</span></label>
+          <label class="form-label" for="status">상태 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{status}" class="form-select"><option value="ON">ON</option><option value="OFF">OFF</option></select>
         </div>
         <div class="col-12">
-          <label class="form-label" for="servername">이름 <span class="fa-req">*</span></label>
+          <label class="form-label" for="servername">이름 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{servername}" class="form-control" th:classappend="${#fields.hasErrors('servername')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{servername}"></div>
         </div>
         <div class="col-12">
-          <label class="form-label" for="serverurl">URL <span class="fa-req">*</span></label>
+          <label class="form-label" for="serverurl">URL <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{serverurl}" class="form-control" th:classappend="${#fields.hasErrors('serverurl')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{serverurl}"></div>
         </div>

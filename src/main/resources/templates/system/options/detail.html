@@ -52,7 +52,7 @@
     <form th:action="@{/system/options/{id}/items(id=${item.idx})}" th:object="${itemForm}" method="post"
           class="d-flex flex-wrap gap-3 align-items-end p-3 px-4">
       <div>
-        <label class="form-label" for="optionValue">값 <span class="fa-req">*</span></label>
+        <label class="form-label" for="optionValue">값 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
         <input th:field="*{optionValue}" class="form-control">
       </div>
       <div><label class="form-label" for="optionTitle">제목</label><input th:field="*{optionTitle}" class="form-control"></div>

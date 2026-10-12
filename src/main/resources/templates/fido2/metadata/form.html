@@ -12,12 +12,12 @@
       <h2 class="fa-form-section">식별 정보</h2>
       <div class="row g-3">
         <div class="col-12">
-          <label class="form-label" for="description">설명<span class="fa-req">*</span></label>
+          <label class="form-label" for="description">설명<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{description}" class="form-control" th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{description}"></div>
         </div>
         <div class="col-12">
-          <label class="form-label" for="aaguid">AAGUID<span class="fa-req">*</span></label>
+          <label class="form-label" for="aaguid">AAGUID<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{aaguid}" class="form-control fa-mono" th:classappend="${#fields.hasErrors('aaguid')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{aaguid}"></div>
         </div>

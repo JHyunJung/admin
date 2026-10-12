@@ -2,13 +2,15 @@
      th:with="start=${T(java.lang.Math).max(0, page.number - 4)}, end=${T(java.lang.Math).min(page.totalPages - 1, page.number + 4)}, qs=${searchQs ?: ''}">
   <ul class="pagination">
     <li class="page-item" th:classappend="${page.first} ? 'disabled'">
-      <a class="page-link" aria-label="이전 페이지" th:href="@{${baseUrl + '?page=' + (page.number - 1) + qs}}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+      <span th:if="${page.first}" class="page-link" aria-label="이전 페이지" aria-disabled="true"><i class="bi bi-chevron-left" aria-hidden="true"></i></span>
+      <a th:unless="${page.first}" class="page-link" aria-label="이전 페이지" th:href="@{${baseUrl + '?page=' + (page.number - 1) + qs}}"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
     </li>
     <li class="page-item" th:each="i : ${#numbers.sequence(start, end)}" th:classappend="${i == page.number} ? 'active'">
       <a class="page-link" th:href="@{${baseUrl + '?page=' + i + qs}}" th:text="${i + 1}" th:attr="aria-current=${i == page.number} ? 'page' : null">1</a>
     </li>
     <li class="page-item" th:classappend="${page.last} ? 'disabled'">
-      <a class="page-link" aria-label="다음 페이지" th:href="@{${baseUrl + '?page=' + (page.number + 1) + qs}}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+      <span th:if="${page.last}" class="page-link" aria-label="다음 페이지" aria-disabled="true"><i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+      <a th:unless="${page.last}" class="page-link" aria-label="다음 페이지" th:href="@{${baseUrl + '?page=' + (page.number + 1) + qs}}"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
     </li>
   </ul>
 </nav>

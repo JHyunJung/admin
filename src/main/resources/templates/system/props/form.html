@@ -12,7 +12,7 @@
       </div>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label" for="propKey">키 <span class="fa-req">*</span></label>
+          <label class="form-label" for="propKey">키 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{propKey}" class="form-control fa-mono" th:readonly="${!isNew}"
                  th:classappend="${#fields.hasErrors('propKey')} ? 'is-invalid'">
           <div class="form-text">영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 사용할 수 있습니다.</div>
@@ -20,7 +20,7 @@
         </div>
         <!-- 고객사는 세션이 선택한 유효 테넌트로 컨트롤러가 채운다(등록·수정 모두 식별자는 여기서 다루지 않는다). -->
         <div class="col-md-3">
-          <label class="form-label" for="shareType">공유 <span class="fa-req">*</span></label>
+          <label class="form-label" for="shareType">공유 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{shareType}" class="form-select"><option value="NO">NO</option><option value="YES">YES</option></select>
         </div>
         <div class="col-12"><label class="form-label" for="propValue">값</label><textarea th:field="*{propValue}" rows="4" class="form-control"></textarea></div>

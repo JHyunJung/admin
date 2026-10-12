@@ -37,10 +37,10 @@
         <tbody>
           <tr th:each="r : ${page.content}">
             <td class="text-end fa-mono" th:text="${r.idx}">0</td>
-            <td class="fa-mono" style="white-space: normal; overflow-wrap: anywhere;"><a th:href="@{/appids/{id}(id=${r.idx})}" th:text="${r.appid}">appid</a></td>
+            <td class="fa-mono fa-wrap"><a th:href="@{/appids/{id}(id=${r.idx})}" th:text="${r.appid}">appid</a></td>
             <td th:text="${r.servicename}"></td>
             <td><span th:replace="~{fragments/device :: label(${r.device})}"></span></td>
-            <td style="white-space: normal; overflow-wrap: anywhere;" th:text="${r.memo}"></td>
+            <td class="fa-wrap" th:text="${r.memo}"></td>
             <td th:text="${r.deviceDefault == 'T' ? '설정' : ''}"></td>
             <td>
               <span class="badge text-nowrap"

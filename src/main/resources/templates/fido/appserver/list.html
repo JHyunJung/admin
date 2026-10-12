@@ -43,8 +43,7 @@
                  th:text="${r.memberCode}"></a>
             </td>
             <td class="fa-mono" th:text="${r.memberId}"></td>
-            <td th:text="${r.note}"
-                style="white-space: normal; overflow-wrap: anywhere;"></td>
+            <td class="fa-wrap" th:text="${r.note}"></td>
             <td>
               <span class="badge text-nowrap"
                     th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"

@@ -12,7 +12,7 @@
       </div>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label" for="aaid">AAID <span class="fa-req">*</span></label>
+          <label class="form-label" for="aaid">AAID <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{aaid}" class="form-control" th:classappend="${#fields.hasErrors('aaid')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{aaid}"></div>
         </div>

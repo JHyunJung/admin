@@ -11,17 +11,17 @@
       </div>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label" for="credType">타입<span class="fa-req">*</span></label>
+          <label class="form-label" for="credType">타입<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input th:field="*{credType}" class="form-control" th:classappend="${#fields.hasErrors('credType')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{credType}"></div>
         </div>
         <div class="col-md-6">
-          <label class="form-label" for="credAlg">알고리즘(COSE)<span class="fa-req">*</span></label>
+          <label class="form-label" for="credAlg">알고리즘(COSE)<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <input type="number" th:field="*{credAlg}" class="form-control" placeholder="-7 (ES256), -257 (RS256)" th:classappend="${#fields.hasErrors('credAlg')} ? 'is-invalid'">
           <div class="invalid-feedback" th:errors="*{credAlg}"></div>
         </div>
         <div class="col-md-6">
-          <label class="form-label" for="status">상태<span class="fa-req">*</span></label>
+          <label class="form-label" for="status">상태<span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label>
           <select th:field="*{status}" class="form-select"><option value="T">T (사용)</option><option value="F">F (미사용)</option></select>
         </div>
       </div>

@@ -101,8 +101,7 @@ class ChallengeControllerWebTest {
 
     /**
      * Task 10: 테넌트는 세션이 정하므로 SUPER 도 목록 검색폼에서 고객사를 따로 고르지 않는다.
-     * "name=\"companyIdx\"" 만으로는 상단 고객사 전환 드롭다운의 hidden 필드와 구별되지 않으므로
-     * 검색폼 select 태그로 특정한다.
+     * "name=\"companyIdx\"" 는 다른 폼의 hidden 필드에도 쓰일 수 있으므로 검색폼 select 태그로 특정한다.
      */
     @Test void superUserDoesNotSeeCompanyFilterOnList() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
@@ -114,6 +113,20 @@ class ChallengeControllerWebTest {
     }
 
     /** 빈 목록은 일러스트와 문구를 보인다. 빈 행에는 링크가 없어 행 클릭 대상이 아니다. */
+    /** 첫 페이지의 "이전" 은 링크가 아니라 비활성 표시다(page=-1 로 가는 href 를 내지 않는다). */
+    @Test void 첫_페이지의_이전_링크는_href_없이_비활성이다() throws Exception {
+        when(service.defaultSort()).thenReturn(Sort.by("idx"));
+        when(service.search(any(), any())).thenReturn(
+            new PageImpl<>(List.of(challenge()), org.springframework.data.domain.PageRequest.of(0, 1), 3));
+        when(companies.names()).thenReturn(Map.of(1L, "KB국민은행"));
+        String html = mvc.perform(get("/challenges").with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        String prev = html.substring(html.indexOf("aria-label=\"이전 페이지\"") - 40, html.indexOf("aria-label=\"이전 페이지\"") + 80);
+        assertThat(prev).contains("aria-disabled=\"true\"").doesNotContain("href=").doesNotContain("page=-1");
+        String next = html.substring(html.indexOf("aria-label=\"다음 페이지\"") - 40, html.indexOf("aria-label=\"다음 페이지\"") + 80);
+        assertThat(next).contains("href=").contains("page=1").doesNotContain("aria-disabled");
+    }
+
     @Test void 빈_목록은_일러스트와_문구를_보인다() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));

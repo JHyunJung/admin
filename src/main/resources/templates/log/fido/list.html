@@ -8,7 +8,7 @@
   <!--/* 값은 base64url JSONDATA 를 풀어 꺼낸다(FidoLogPayload). 드롭다운은 고르면 즉시 조회된다(admin.js). */-->
   <form method="get" th:action="@{/logs/fido}" class="fa-filter">
     <!-- 날짜별 분할 테이블이라 기간이 아니라 날짜 하나를 고른다(FidoLogSearchForm 주석 참고). -->
-    <div><label class="form-label" for="f-logDate">조회 날짜 <span class="fa-req">*</span></label><input id="f-logDate" type="date" name="logDate" th:value="${search.logDate}" class="form-control" required></div>
+    <div><label class="form-label" for="f-logDate">조회 날짜 <span class="fa-req" aria-hidden="true">*</span><span class="visually-hidden">(필수)</span></label><input id="f-logDate" type="date" name="logDate" th:value="${search.logDate}" class="form-control" required></div>
     <div>
       <label class="form-label" for="f-op">구분</label>
       <select id="f-op" name="op" class="form-select">
