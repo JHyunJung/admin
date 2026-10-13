@@ -6,9 +6,12 @@
   <div class="fa-page-head">
     <div><h1 class="h4">FIDO 서버</h1><p class="fa-page-desc">어드민이 reload 를 보낼 FIDO 서버 목록입니다.</p></div>
     <div class="fa-page-actions">
-      <form method="post" th:action="@{/system/fido-clients/reload}" class="m-0"
-            onsubmit="return confirm('STATUS=ON 인 모든 FIDO 서버에 reload 를 보냅니다.');">
-        <button class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>지금 reload 보내기</button>
+      <!-- 확인은 브라우저 기본 대화상자가 아니라 공통 모달(admin.js 의 data-confirm-form)로 묻는다(README 규칙). -->
+      <form method="post" th:action="@{/system/fido-clients/reload}" class="m-0" id="reloadForm">
+        <button type="button" class="btn btn-outline-secondary"
+                data-confirm-form="reloadForm"
+                data-confirm-message="STATUS=ON 인 모든 FIDO 서버에 reload 를 보냅니다."
+                data-confirm-ok="보내기"><i class="bi bi-arrow-repeat" aria-hidden="true"></i>지금 reload 보내기</button>
       </form>
       <a th:href="@{/system/fido-clients/new}" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>등록</a>
     </div>

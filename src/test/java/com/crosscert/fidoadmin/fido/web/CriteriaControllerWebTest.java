@@ -116,7 +116,12 @@ class CriteriaControllerWebTest {
             .andExpect(content().string(not(containsString("Sample fingerprint"))))
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))))
             .andExpect(content().string(containsString("/criteria/new")))
-            .andExpect(content().string(not(containsString("data-confirm-form"))));
+            // 이 화면에는 삭제가 없다. 상태 토글 확인은 README 규칙대로 네이티브 confirm() 이 아니라 모달이다.
+            .andExpect(content().string(not(containsString("/delete"))))
+            .andExpect(content().string(not(containsString("confirm("))))
+            .andExpect(content().string(containsString("data-confirm-form=\"aaidBulkOnForm\"")))
+            .andExpect(content().string(containsString("data-confirm-form=\"aaidBulkOffForm\"")))
+            .andExpect(content().string(containsString("data-confirm-form=\"aaidForm1\"")));
         ArgumentCaptor<CriteriaSearchForm> captor = ArgumentCaptor.forClass(CriteriaSearchForm.class);
         verify(service).search(captor.capture(), any());
         org.assertj.core.api.Assertions.assertThat(captor.getValue().getAaid()).isEqualTo("0012");
