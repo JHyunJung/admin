@@ -31,4 +31,18 @@ class SecurityConfigTest {
     @Test void publishesSessionEventsToTheSessionRegistry() {
         assertThat(context.getBeansOfType(HttpSessionEventPublisher.class)).hasSize(1);
     }
+
+    /**
+     * SUPER 전용 경로 목록은 필터체인 안의 매처와 같은 상수에서 나와야 한다. 그래야 ArchitectureRulesTest 가
+     * MenuRegistry.superOnly 와 교차 검증할 수 있다. /criteria 는 의도된 예외(COMPANY 도 쓴다).
+     */
+    @Test void superPathsAreExposedForCrossChecking() {
+        assertThat(SecurityConfig.isSuperPath("/companies")).isTrue();
+        assertThat(SecurityConfig.isSuperPath("/companies/12/edit")).isTrue();
+        assertThat(SecurityConfig.isSuperPath("/signups")).isTrue();
+        assertThat(SecurityConfig.isSuperPath("/managers/super")).isTrue();
+        assertThat(SecurityConfig.isSuperPath("/criteria")).isFalse();
+        assertThat(SecurityConfig.isSuperPath("/users/1")).isFalse();
+        assertThat(SecurityConfig.isSuperPath("/")).isFalse();
+    }
 }

@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.util.AntPathMatcher;
 
 /**
  * 접근 제어는 URL 매처(여기)와 서비스 계층({@code CrudService.requireSuperForGlobalTable}) 두 겹이다.
@@ -19,6 +20,27 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    /**
+     * SUPER 전용 경로. 필터체인의 매처와 {@link #isSuperPath} 가 같은 배열을 본다 — ArchitectureRulesTest 가
+     * MenuRegistry.superOnly 와 교차 검증한다. /signups(복수)는 가입 승인 화면이고 permitAll 인 /signup(단수)과 다르다.
+     *
+     * <p>/criteria 는 여기 없다. AAID(정책)는 기준 데이터 자체는 전역이지만 화면의 용도가
+     * 고객사별 활성/비활성 토글이라 COMPANY 운영자도 쓴다. 고객사 경계는 CriteriaQueryService 가 유효 테넌트로 건다.
+     */
+    static final String[] SUPER_PATHS = {
+        "/companies/**", "/licenses/**", "/managers/**", "/system/**", "/fido2/**", "/signups", "/signups/**"
+    };
+
+    private static final AntPathMatcher PATHS = new AntPathMatcher();
+
+    /** 이 경로가 SUPER 전용 매처에 걸리는가. 테스트의 교차 검증용이며 필터체인은 같은 배열을 직접 쓴다. */
+    public static boolean isSuperPath(String path) {
+        for (String pattern : SUPER_PATHS) {
+            if (PATHS.match(pattern, path)) return true;
+        }
+        return false;
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -48,13 +70,8 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/signup", "/api/svc/**", "/external/**", "/error/**", "/webjars/**", "/css/**", "/js/**", "/fonts/**", "/img/**",
                     "/favicon.ico", "/favicon.png", "/favicon-*.ico", "/favicon-*.png").permitAll()
                 // /external/** 는 FIDO 서버가 라이선스를 받아 가는 경로다(ExternalLicenseController).
-                // /signups(복수)는 가입 승인 화면이다. 위 permitAll 의 /signup(단수, 신청)과 다르다.
-                //
-                // /criteria 는 여기 없다. AAID(정책)는 기준 데이터 자체는 전역이지만 화면의 용도가
-                // 고객사별 활성/비활성 토글이라 COMPANY 운영자도 쓴다. 고객사 경계는
-                // CriteriaQueryService 가 유효 테넌트로 건다.
-                .requestMatchers("/companies/**", "/licenses/**", "/managers/**", "/system/**",
-                                 "/fido2/**", "/signups", "/signups/**").hasRole("SUPER")
+                // SUPER 전용 경로는 SUPER_PATHS 의 설명을 본다.
+                .requestMatchers(SUPER_PATHS).hasRole("SUPER")
                 .anyRequest().authenticated())
             .formLogin(form -> form
                 .loginPage("/login")
