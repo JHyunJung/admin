@@ -11,5 +11,5 @@ out/
 logs/
 
 # 기동 스크립트 설정(비밀값 포함)
-scripts/fido-admin.env
-fido-admin.pid
+scripts/fido-admin*.env
+fido-admin.pid*

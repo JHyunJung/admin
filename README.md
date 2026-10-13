@@ -57,7 +57,7 @@ FIDO 서버 운영을 위한 관리자 웹. KBFIDO Oracle 스키마를 사용한
 | `SPRING_DATASOURCE_USERNAME` | 예 | DB 계정 |
 | `SPRING_DATASOURCE_PASSWORD` | 예 | DB 비밀번호 |
 | `DB_CONFIG_KEY` | 암호문을 쓸 때 | DB 접속 정보 복호화 키(Base64, 디코딩 후 32바이트) |
-| `LOG_PATH` | 아니오 | 로그 디렉터리. 기본 `./logs` |
+| `LOGGING_FILE_PATH` | 아니오 | 로그 디렉터리. 기본 `./logs`(실행 위치 기준). 기동 스크립트는 `LOG_PATH` 로 받는다 |
 | `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` | 아니오 | 인증 없는 서버 간 경로의 접근 허용 대역. 비우면 모두 허용 |
 
 ```
@@ -68,18 +68,28 @@ SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
 
 ### 기동 스크립트
 
-서버에서는 `scripts/fido-admin.sh` 로 띄우고 내린다.
+서버에서는 `scripts/fido-admin.sh` 로 띄우고 내린다. 프로파일은 무엇이든 지정할 수 있다.
 
 ```
-./gradlew bootJar                                        # build/libs/fido-admin-*.jar
-cp scripts/fido-admin.env.example scripts/fido-admin.env # 값 채우기(저장소에 올리지 않는다)
-scripts/fido-admin.sh start | stop | restart | status
+./gradlew bootJar                                    # build/libs/fido-admin-*.jar
+scripts/fido-admin.sh start qa                       # qa 로 기동
+scripts/fido-admin.sh start prod                     # prod 로 기동
+scripts/fido-admin.sh start local                    # 로컬 도커 DB 로 기동
+scripts/fido-admin.sh start qa,debug                 # 여러 프로파일을 함께
+scripts/fido-admin.sh restart                        # 실행 중인 프로파일 그대로 재기동
+scripts/fido-admin.sh restart prod                   # 다른 프로파일로 재기동
+scripts/fido-admin.sh stop | status
 ```
 
-- 설정은 `scripts/fido-admin.env`(또는 `FIDO_ADMIN_ENV` 가 가리키는 파일)에서 읽는다. 이미 환경에 있는 값이 우선한다.
+- 프로파일은 인자 > `SPRING_PROFILES_ACTIVE` 환경 변수 > `fido-admin.env` 의 값 > `prod` 순으로 정한다.
+- 설정 파일은 `scripts/` 에서 읽는다(`FIDO_ADMIN_ENV_DIR` 로 바꿀 수 있다). `fido-admin.env.example` 을 복사해 쓴다.
+  - `fido-admin-<프로파일>.env` — 그 프로파일 전용 값(예: `fido-admin-qa.env`, `fido-admin-prod.env`)
+  - `fido-admin.env` — 모든 프로파일 공통 값
+  - 같은 키는 환경 변수 > 프로파일 전용 파일 > 공통 파일 순으로 앞의 것이 이긴다. 이 파일들은 저장소에 올리지 않는다.
+- `local` 이 아닌 프로파일은 DB 접속 정보 세 값이 없으면 기동하지 않는다.
+- jar 안에 `application-<프로파일>.yml` 이 없는 프로파일은 경고만 하고 공통 설정으로 띄운다.
 - jar 는 `APP_JAR` 를 쓰고, 없으면 앱 디렉터리와 `build/libs` 에서 가장 최근 `fido-admin*.jar` 를 찾는다.
-- 프로파일은 `SPRING_PROFILES_ACTIVE`(기본 `prod`)다. `local` 이 아니면 DB 접속 정보 세 값이 없을 때 기동하지 않는다.
-- 콘솔 출력은 `LOG_PATH/console.out`, PID 는 `fido-admin.pid` 에 남긴다.
+- 로그는 `LOG_PATH`(기본 `<앱 디렉터리>/logs`)에 쓴다. 콘솔 출력은 `console.out`, PID 와 실행 프로파일은 `fido-admin.pid`(`.profile`)에 남긴다.
 - `stop` 은 SIGTERM 후 `STOP_TIMEOUT`(기본 60초)까지 기다리고, 그래도 남아 있으면 강제 종료한다.
   감사 로그 대기열을 비우는 데 최대 30초를 쓰므로 이보다 짧게 잡지 않는다.
 
@@ -96,7 +106,7 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 
 ### 로그
 
-- `LOG_PATH` 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)에 쓴다. 일자별로 롤링하고 30일 보관한다.
+- 로그 디렉터리 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)에 쓴다. 일자별로 롤링하고 30일 보관한다.
 - 모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙는다. 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나가므로,
   오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
 
