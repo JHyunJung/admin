@@ -1,10 +1,13 @@
 package com.crosscert.fidoadmin.common;
 
 import lombok.extern.slf4j.Slf4j;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.crosscert.fidoadmin.audit.AuditChanges;
 import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import jakarta.persistence.EntityNotFoundException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import org.springframework.core.GenericTypeResolver;
@@ -12,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -26,6 +30,10 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     protected final TenantContext tenant;
     /** E 의 실제 클래스. {@link #listExcludedProperties} 를 쓰는 부분 조회가 메타모델을 찾는 데 쓴다. */
     private final Class<E> entityType;
+    /** 대용량 로그 목록이 기본으로 쓰는 건수 캐시 유효 시간. */
+    protected static final Duration LOG_COUNT_TTL = Duration.ofSeconds(30);
+    /** (테넌트, 검색 조건) → 총 건수. {@link #countCacheTtl()} 이 0 이면 만들지 않는다. */
+    private volatile Cache<String, Long> counts;
 
     @SuppressWarnings("unchecked")
     protected CrudService(AdminRepository<E, ID> repository, AuditLogger audit, TenantContext tenant) {
@@ -56,6 +64,13 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
      * ({@link PartialFetch}). 목록 DTO 가 그 속성을 쓰지 않는 화면만 선언한다. 상세({@link #get})는 영향이 없다.
      */
     protected java.util.Set<String> listExcludedProperties() { return java.util.Set.of(); }
+    /**
+     * 목록 총 건수를 이 시간만큼 재사용한다. 기본 0(매번 센다). 행이 많은 로그 목록은 페이지를 넘길 때마다
+     * 같은 조건으로 COUNT(*) 를 다시 보내는데, 그 비용이 본문 조회보다 크다. 켜면 "총 N건" 과 마지막 페이지가
+     * 이 시간만큼 늦게 반영된다(본문 행은 매번 DB 에서 읽는다). 켜는 서비스의 리포지터리는 {@link PartialFetch} 를
+     * 직접 상속하고, 검색 폼은 모든 조건을 {@code extraParams()} 에 넣어야 한다({@link SearchForm#conditionKey()}).
+     */
+    protected Duration countCacheTtl() { return Duration.ZERO; }
     protected void applyDefaults(E entity) {}
     protected void touchCreated(E entity, LocalDateTime now) {}
     protected void touchUpdated(E entity, LocalDateTime now) {}
@@ -84,14 +99,32 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     public Page<E> search(S form, Pageable pageable) {
         Specification<E> spec = listSpecification(form);
         java.util.Set<String> excluded = listExcludedProperties();
-        if (excluded.isEmpty()) return repository.findAll(spec, pageable);
+        boolean cacheCount = !countCacheTtl().isZero();
+        if (excluded.isEmpty() && !cacheCount) return repository.findAll(spec, pageable);
         if (!(repository instanceof PartialFetch)) {
             throw new IllegalStateException(tableName() + " 리포지터리가 PartialFetch 를 직접 상속해야 목록에서 "
-                + excluded + " 을(를) 뺄 수 있습니다");
+                + excluded + " 을(를) 빼거나 건수를 캐시할 수 있습니다");
         }
         @SuppressWarnings("unchecked")
         PartialFetch<E> partial = (PartialFetch<E>) repository;
-        return partial.findAllExcluding(entityType, spec, pageable, excluded);
+        if (!cacheCount) return partial.findAllExcluding(entityType, spec, pageable, excluded);
+        java.util.List<E> content = partial.findContentExcluding(entityType, spec, pageable, excluded);
+        // 키에 테넌트를 넣는다. 조건이 같아도 고객사가 다르면 다른 건수다.
+        String key = (companyIdxAttribute() == null ? "-" : tenant.companyIdx()) + "|" + form.conditionKey();
+        return PageableExecutionUtils.getPage(content, pageable, () -> countCache().get(key, k -> repository.count(spec)));
+    }
+
+    private Cache<String, Long> countCache() {
+        Cache<String, Long> c = counts;
+        if (c == null) {
+            synchronized (this) {
+                c = counts;
+                if (c == null) {
+                    counts = c = Caffeine.newBuilder().expireAfterWrite(countCacheTtl()).maximumSize(1_000).build();
+                }
+            }
+        }
+        return c;
     }
 
     /** 목록 조건 = 화면 조건 + 유효 테넌트. SUPER 전용 검사도 여기서 한다. */

@@ -37,5 +37,7 @@ public class ChallengeQueryService extends CrudService<Challenge, Long, Challeng
      * (같은 시각에 들어온 행끼리는 순서가 다를 수 있다). 시각 정렬은 목록 머리글로 고를 수 있다.
      */
     @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "idx"); }
+    /** 행이 많은 로그라 페이지를 넘길 때마다 COUNT(*) 를 다시 보내지 않는다. "총 N건" 은 최대 30초 늦다. */
+    @Override protected java.time.Duration countCacheTtl() { return LOG_COUNT_TTL; }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "createtime"); }
 }

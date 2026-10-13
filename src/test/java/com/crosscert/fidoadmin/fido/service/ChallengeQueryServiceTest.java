@@ -16,7 +16,6 @@ import com.crosscert.fidoadmin.fido.web.ChallengeSearchForm;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -35,7 +34,6 @@ class ChallengeQueryServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 
-    /** 로그류는 최근 것이 먼저다. idx 를 뒤에 붙여 같은 시각의 순서를 고정한다. */
     /** 시퀀스 PK 역순. PK 인덱스를 거꾸로 읽어 첫 페이지만 가져온다(생성 시각 정렬은 전체 정렬이 필요하다). */
     @Test void defaultSortIsIdxDescending() {
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));
@@ -53,10 +51,11 @@ class ChallengeQueryServiceTest {
     /** COMPANY 로그인으로 검색하면 Specification 이 만들어져 repository 에 전달된다(테넌트 필터는 기반 테스트가 검증). */
     @Test void searchPassesSpecificationToRepository() {
         login(1L);
-        when(repo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));
+        when(repo.findContentExcluding(any(), any(Specification.class), any(), any())).thenReturn(List.of());
         ChallengeSearchForm f = new ChallengeSearchForm();
         f.setUserid("user001");
         service.search(f, PageRequest.of(0, 20, service.defaultSort()));
-        verify(repo).findAll(any(Specification.class), any(PageRequest.class));
+        // 건수 캐시를 쓰므로 본문은 findContentExcluding 으로 읽는다.
+        verify(repo).findContentExcluding(any(), any(Specification.class), any(), any());
     }
 }

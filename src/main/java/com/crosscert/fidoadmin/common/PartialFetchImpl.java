@@ -37,6 +37,13 @@ public class PartialFetchImpl<E> implements PartialFetch<E> {
 
     @Override
     public Page<E> findAllExcluding(Class<E> type, Specification<E> spec, Pageable pageable, Set<String> excluded) {
+        List<E> content = findContentExcluding(type, spec, pageable, excluded);
+        return PageableExecutionUtils.getPage(content, pageable, () -> countMatching(type, spec));
+    }
+
+    @Override
+    public List<E> findContentExcluding(Class<E> type, Specification<E> spec, Pageable pageable, Set<String> excluded) {
+        if (excluded.isEmpty()) return findEntities(type, spec, pageable);
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Tuple> query = cb.createTupleQuery();
         Root<E> root = query.from(type);
@@ -50,18 +57,33 @@ public class PartialFetchImpl<E> implements PartialFetch<E> {
             selections.add(root.get(a.getName()));
         }
         query.multiselect(selections);
+        restrict(query, root, cb, spec, pageable);
+        return page(em.createQuery(query), pageable).getResultList().stream()
+            .map(t -> materialize(type, attributes, t)).toList();
+    }
 
+    /** 제외할 속성이 없으면 엔티티를 그대로 읽는다. */
+    private List<E> findEntities(Class<E> type, Specification<E> spec, Pageable pageable) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<E> query = cb.createQuery(type);
+        Root<E> root = query.from(type);
+        query.select(root);
+        restrict(query, root, cb, spec, pageable);
+        return page(em.createQuery(query), pageable).getResultList();
+    }
+
+    private void restrict(CriteriaQuery<?> query, Root<E> root, CriteriaBuilder cb, Specification<E> spec, Pageable pageable) {
         Predicate where = spec == null ? null : spec.toPredicate(root, query, cb);
         if (where != null) query.where(where);
         if (pageable.getSort().isSorted()) query.orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
+    }
 
-        TypedQuery<Tuple> typed = em.createQuery(query);
+    private static <T> TypedQuery<T> page(TypedQuery<T> typed, Pageable pageable) {
         if (pageable.isPaged()) {
             typed.setFirstResult((int) pageable.getOffset());
             typed.setMaxResults(pageable.getPageSize());
         }
-        List<E> content = typed.getResultList().stream().map(t -> materialize(type, attributes, t)).toList();
-        return PageableExecutionUtils.getPage(content, pageable, () -> countMatching(type, spec));
+        return typed;
     }
 
     private long countMatching(Class<E> type, Specification<E> spec) {

@@ -141,6 +141,58 @@ class CrudServiceTest {
         verify(repo, org.mockito.Mockito.never()).findAllExcluding(any(), any(), any(), any());
     }
 
+    /** 건수 캐시를 켠 서비스. 대용량 로그 목록이 이렇게 선언한다. */
+    CrudService<CcfaLicense, Long, SearchForm> cachedCountService = new CrudService<>(repo, audit, tenant) {
+        @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }
+        @Override protected String companyIdxAttribute() { return "companyIdx"; }
+        @Override protected Long companyIdxOf(CcfaLicense e) { return e.getCompanyIdx(); }
+        @Override protected void setCompanyIdx(CcfaLicense e, Long c) { e.setCompanyIdx(c); }
+        @Override public String idOf(CcfaLicense e) { return String.valueOf(e.getIdx()); }
+        @Override protected String tableName() { return "CCFA_LICENSE"; }
+        @Override protected java.time.Duration countCacheTtl() { return java.time.Duration.ofSeconds(30); }
+    };
+
+    /**
+     * 같은 조건으로 페이지만 넘기면 COUNT(*) 를 다시 보내지 않는다. 본문은 매번 DB 에서 읽는다.
+     * 첫 페이지가 꽉 차야 총 건수가 필요하므로 페이지 크기만큼 돌려준다.
+     */
+    @SuppressWarnings("unchecked")
+    @Test void countIsCachedAcrossPagesForSameConditions() {
+        login(1L);
+        when(repo.findContentExcluding(eq(CcfaLicense.class), any(Specification.class), any(), eq(java.util.Set.of())))
+            .thenReturn(java.util.List.of(license(1, 1), license(2, 1)));
+        when(repo.count(any(Specification.class))).thenReturn(10L);
+
+        var first = cachedCountService.search(new SearchForm(), PageRequest.of(0, 2));
+        var second = cachedCountService.search(new SearchForm(), PageRequest.of(1, 2));
+
+        assertThat(first.getTotalElements()).isEqualTo(10L);
+        assertThat(second.getTotalElements()).isEqualTo(10L);
+        verify(repo, org.mockito.Mockito.times(1)).count(any(Specification.class));
+        verify(repo, org.mockito.Mockito.times(2)).findContentExcluding(any(), any(), any(), any());
+        verify(repo, org.mockito.Mockito.never()).findAll(any(Specification.class), any(PageRequest.class));
+    }
+
+    /** 조건이나 테넌트가 다르면 건수를 따로 센다. 캐시가 테넌트 경계를 넘지 않는다. */
+    @SuppressWarnings("unchecked")
+    @Test void countCacheIsKeyedByConditionsAndTenant() {
+        when(repo.findContentExcluding(any(), any(Specification.class), any(), any()))
+            .thenReturn(java.util.List.of(license(1, 1), license(2, 1)));
+        when(repo.count(any(Specification.class))).thenReturn(10L, 20L, 30L);
+
+        login(1L);
+        cachedCountService.search(new SearchForm(), PageRequest.of(0, 2));
+        SearchForm other = new SearchForm();
+        other.setFromDate(java.time.LocalDate.of(2026, 10, 1));
+        cachedCountService.search(other, PageRequest.of(0, 2));
+        SecurityContextHolder.clearContext();
+        login(2L);
+        var tenant2 = cachedCountService.search(new SearchForm(), PageRequest.of(0, 2));
+
+        assertThat(tenant2.getTotalElements()).isEqualTo(30L);
+        verify(repo, org.mockito.Mockito.times(3)).count(any(Specification.class));
+    }
+
     /** 미선택 SUPER 는 조회 자체가 성립하지 않는다. */
     @Test void searchThrowsWhenSuperHasNoTenantSelected() {
         login(0L);

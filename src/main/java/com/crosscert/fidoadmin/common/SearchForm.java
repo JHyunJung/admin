@@ -76,5 +76,23 @@ public class SearchForm {
         return sb.toString();
     }
 
+    /**
+     * 검색 조건만으로 만든 키(페이지·크기·정렬 제외). 목록 건수 캐시가 쓴다.
+     * 하위 폼은 페이지 이동 링크가 조건을 이어 가도록 모든 조건을 {@link #extraParams()} 에 넣으므로,
+     * 이 키가 같으면 조건이 같다.
+     */
+    public String conditionKey() {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("fromDate", fromDate);
+        params.put("toDate", toDate);
+        params.putAll(extraParams());
+        StringBuilder sb = new StringBuilder();
+        params.forEach((k, v) -> {
+            if (v == null || v.toString().isBlank()) return;
+            sb.append('&').append(k).append('=').append(URLEncoder.encode(v.toString(), StandardCharsets.UTF_8));
+        });
+        return sb.toString();
+    }
+
     protected Map<String, Object> extraParams() { return Map.of(); }
 }
