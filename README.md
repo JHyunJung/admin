@@ -66,6 +66,23 @@ SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
   java -jar fido-admin.jar --spring.profiles.active=prod
 ```
 
+### 기동 스크립트
+
+서버에서는 `scripts/fido-admin.sh` 로 띄우고 내린다.
+
+```
+./gradlew bootJar                                        # build/libs/fido-admin-*.jar
+cp scripts/fido-admin.env.example scripts/fido-admin.env # 값 채우기(저장소에 올리지 않는다)
+scripts/fido-admin.sh start | stop | restart | status
+```
+
+- 설정은 `scripts/fido-admin.env`(또는 `FIDO_ADMIN_ENV` 가 가리키는 파일)에서 읽는다. 이미 환경에 있는 값이 우선한다.
+- jar 는 `APP_JAR` 를 쓰고, 없으면 앱 디렉터리와 `build/libs` 에서 가장 최근 `fido-admin*.jar` 를 찾는다.
+- 프로파일은 `SPRING_PROFILES_ACTIVE`(기본 `prod`)다. `local` 이 아니면 DB 접속 정보 세 값이 없을 때 기동하지 않는다.
+- 콘솔 출력은 `LOG_PATH/console.out`, PID 는 `fido-admin.pid` 에 남긴다.
+- `stop` 은 SIGTERM 후 `STOP_TIMEOUT`(기본 60초)까지 기다리고, 그래도 남아 있으면 강제 종료한다.
+  감사 로그 대기열을 비우는 데 최대 30초를 쓰므로 이보다 짧게 잡지 않는다.
+
 ### DB 접속 정보 암호화
 
 DB 접속 정보 세 값은 평문 대신 `ENC(...)` 암호문(AES-256-GCM)으로 줄 수 있다. 이때 `DB_CONFIG_KEY` 를 함께 준다.
