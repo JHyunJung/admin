@@ -110,7 +110,7 @@ class Fido2DemoAccessCodeControllerWebTest {
             .andExpect(redirectedUrl("/fido2/demo-access-codes/DEMO-0003"));
     }
 
-    /** 초가 있는 epoch 값(1770000000)을 수정 폼에 채웠을 때 초까지 표시되어야 한다(설계: 초 유실 방지). */
+    /** 초가 있는 epoch 값(1770000000)을 수정 폼에 채웠을 때 초까지 표시되어야 한다(초 유실 방지). */
     @Test void editFormRendersSecondsFromEpoch() throws Exception {
         Fido2DemoAccessCode c = seedCode();
         c.setStarttime(1770000000L);

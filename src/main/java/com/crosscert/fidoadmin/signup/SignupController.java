@@ -40,7 +40,7 @@ public class SignupController {
         // 즉 공격자는 아이디를 하나씩 넣어보며 그 계정이 있는지 확인할 수 있다.
         // 그럼에도 이렇게 두는 이유: 이 도구는 사내망 전용이고 운영자 계정은 한 자릿수라
         // 실제 노출이 작은 반면, 왜 신청이 안 됐는지 모르는 사용자의 비용은 계속 발생한다.
-        // 외부에 노출되는 환경으로 바뀌면 이 판단을 다시 해야 한다(설계서 6.1).
+        // 외부에 노출되는 환경으로 바뀌면 이 판단을 다시 해야 한다.
         if (form.getUserId() != null && !form.getUserId().isBlank()
             && service.existsUserId(form.getUserId())) {
             binding.rejectValue("userId", "duplicate", DUPLICATE_MESSAGE);

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** 가입 승인. SUPER 전용이며 접근 차단은 {@code SecurityConfig} 가 한다(설계서 6.2). */
+/** 가입 승인. SUPER 전용이며 접근 차단은 {@code SecurityConfig} 가 한다. */
 @Controller
 @RequestMapping("/signups")
 @RequiredArgsConstructor

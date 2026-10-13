@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * USERINFO 조회 + 상태 변경. 등록·수정·삭제는 컨트롤러에서 노출하지 않는다(설계 1.2 "조회 + 상태 변경").
+ * USERINFO 조회 + 상태 변경. 등록·수정·삭제는 컨트롤러에서 노출하지 않는다.
  * 상태는 'O'(정상) / 'X'(해지) 만 허용한다.
  */
 @Service

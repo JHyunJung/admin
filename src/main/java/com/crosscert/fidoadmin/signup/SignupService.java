@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 로그인 사용자가 없으면 예외를 던진다.
  *
  * <p>감사 로그는 {@code apply()} 에만 남지 않는다. AuditLogger 는 로그인 사용자가 없으면
- * 조용히 기록을 건너뛰는데, 신청은 익명 호출이기 때문이다(의도된 동작, 설계서 참조).
+ * 조용히 기록을 건너뛰는데, 신청은 익명 호출이기 때문이다(의도된 동작).
  * 승인·거절은 로그인한 슈퍼 관리자가 수행하므로 정상적으로 기록된다.
  */
 @Service

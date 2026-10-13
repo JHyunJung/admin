@@ -35,7 +35,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * 시스템 설정은 식별자가 URL 에 그대로 들어간다({@code /system/props/{key}@{companyIdx}}).
- * checkTenant() 가 이미 Task 3 에서 다른 테넌트의 값을 막지만, 이 화면에서는 식별자가 URL
+ * checkTenant() 가 이미 다른 테넌트의 값을 막지만, 이 화면에서는 식별자가 URL
  * 세그먼트로만 보여서 그 보호가 가장 눈에 잘 띄지 않는다 — 그래서 실제 서비스(목이 아니다)를
  * 태워 리포지터리에 존재하는 값이라도 다른 테넌트의 것이면 404 인지 직접 확인한다.
  * 존재 자체를 숨겨야 하므로 403 이 아니라 404 다.

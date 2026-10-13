@@ -83,7 +83,7 @@ class PasswordPolicyTest {
      * <p><b>이 테스트는 "선언이 한 곳뿐인가" 를 검사하지 않는다.</b> 자바는 {@code static final}
      * 상수를 컴파일 시 값으로 박아 넣으므로, 어떤 파일이 상수를 참조하든 리터럴을 다시 적든
      * 값을 비교하는 테스트는 똑같이 통과한다. 단일 선언은 구조로 보장되는 것이지
-     * 테스트로 고정할 수 있는 성질이 아니다(tasks/lessons.md).
+     * 테스트로 고정할 수 있는 성질이 아니다.
      */
     @Test void constantsExpressTheIntendedRule() {
         java.util.regex.Pattern p = java.util.regex.Pattern.compile(PasswordPolicy.PATTERN);

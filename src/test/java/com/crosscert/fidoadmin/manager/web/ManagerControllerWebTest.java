@@ -63,7 +63,7 @@ class ManagerControllerWebTest {
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     /**
-     * /managers 는 TENANT 영역이라 TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를
+     * /managers 는 TENANT 영역이라 TenantSelectionInterceptor 가 미선택 SUPER 를
      * /select-tenant 로 돌려보낸다. 이 클래스의 관심사는 운영자 CRUD 이므로,
      * 매 테스트마다 세션에 테넌트를 미리 선택해 둔다.
      */
@@ -91,7 +91,7 @@ class ManagerControllerWebTest {
         mvc.perform(get("/managers").with(user(companyUser))).andExpect(status().isForbidden());
     }
 
-    /** 민감 컬럼 USER_PW 는 목록·상세 어디에도 실리지 않는다(설계 2.2). */
+    /** 민감 컬럼 USER_PW 는 목록·상세 어디에도 실리지 않는다. */
     @Test void listNeverExposesPasswordHash() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(manager(2L, "kbadmin"))));
@@ -177,7 +177,7 @@ class ManagerControllerWebTest {
     }
 
     /**
-     * Task 10 부터 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다).
+     * 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다).
      * companyIdx 를 알 수 없는 이름 조회로도 "null" 이 새지 않는지는 여전히 지킨다.
      */
     @Test void listRendersRowWithoutLeakingNullForUnknownCompany() throws Exception {

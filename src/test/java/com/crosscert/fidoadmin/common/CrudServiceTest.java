@@ -284,7 +284,7 @@ class CrudServiceTest {
     private static Long companyIdxEqualsIn(Specification<CcfaLicense> spec) {
         return CriteriaProbe.equalsValueFor(spec, "companyIdx");
     }
-    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용이어야 한다(설계 3.3). */
+    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용이어야 한다. */
     @Test void globalTableIsSuperOnly() {
         CrudService<CcfaLicense, Long, SearchForm> global = new CrudService<>(repo, audit, tenant) {
             @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }

@@ -40,10 +40,10 @@ class FidoSettingKeyTest {
     }
 
     /**
-     * 운영 DB 에서 확인한 실제 키다. 하나라도 이름이 달라지면 저장한 값을 FIDO 서버가
+     * FIDO 서버가 읽는 키 이름이다. 하나라도 이름이 달라지면 저장한 값을 FIDO 서버가
      * 읽지 못한다 — 화면은 정상으로 보이는데 설정만 먹지 않는 상태가 되므로 이름을 고정한다.
      */
-    @Test void 운영_DB_의_실제_키_이름을_쓴다() {
+    @Test void FIDO_서버가_읽는_키_이름을_쓴다() {
         var keys = Arrays.stream(FidoSettingKey.values()).map(FidoSettingKey::key).collect(Collectors.toSet());
         assertThat(keys).containsExactlyInAnyOrder(
             // 인증서 설정
@@ -59,7 +59,7 @@ class FidoSettingKeyTest {
     }
 
     /**
-     * 값 형식이 키마다 다르다. 운영 데이터에서 확인한 예외 둘을 고정한다 —
+     * 값 형식이 키마다 다르다. 예외 둘을 고정한다 —
      * 대부분 ENABLE/DISABLE 인데 AAID 검증만 Y/N 이고 인증서 검증만 소문자 yes/no 다.
      */
     @Test void 값_형식의_예외_둘을_지킨다() {
@@ -86,7 +86,7 @@ class FidoSettingKeyTest {
         }
     }
 
-    /** 운영 데이터의 실제 표기를 그대로 읽어야 한다(대소문자 혼용 포함). */
+    /** 저장된 표기를 그대로 읽어야 한다(대소문자 혼용 포함). */
     @Test void 운영_표기를_읽는다() {
         assertThat(ValueStyle.ENABLE_DISABLE.isOn("ENABLE")).isTrue();
         assertThat(ValueStyle.ENABLE_DISABLE.isOn("DISABLE")).isFalse();

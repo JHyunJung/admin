@@ -40,7 +40,7 @@ class SystemPropServiceTest {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
         when(em.createNativeQuery(anyString())).thenReturn(mock(Query.class));
-        selected.select(1L); // create() 가 id.companyIdx 를 이 값으로 덮어쓴다(설계: 유효 테넌트가 소유자를 정한다)
+        selected.select(1L); // create() 가 id.companyIdx 를 이 값으로 덮어쓴다(유효 테넌트가 소유자를 정한다)
     }
     @AfterEach void clear() { SecurityContextHolder.clearContext(); }
 
@@ -70,7 +70,7 @@ class SystemPropServiceTest {
     /**
      * 이름은 중립적이었지만 원래 감사 로그 단언이 "PW_FAIL_LIMIT@0" 을 기대했다 — 즉 폼에 넣은
      * companyIdx(0) 가 결과 키에 그대로 남는지를 검증하고 있었다. 새 모델에서는 유효 테넌트가
-     * companyIdx 를 정하므로(설계: Task 3), 저장된 id.companyIdx 가 선택 테넌트(1)인지로
+     * companyIdx 를 정하므로, 저장된 id.companyIdx 가 선택 테넌트(1)인지로
      * 단언을 바꾼다. 기본값·타임스탬프·감사 호출 검증은 그대로 둔다.
      */
     @Test void createPersistsWithSelectedTenantAsCompanyIdx() {

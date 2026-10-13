@@ -1,6 +1,6 @@
 # FIDO Admin
 
-기존 KBFIDO Oracle 스키마를 **변경 없이** 사용하는 관리자 웹. Java 17, Spring Boot 3.5, Thymeleaf, Spring Data JPA.
+KBFIDO Oracle 스키마를 쓰는 FIDO 관리자 웹. Java 17, Spring Boot 3.5, Thymeleaf, Spring Data JPA.
 
 ## 실행
 
@@ -103,7 +103,7 @@ localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 
 - `docker/init/*.sql` 은 **로컬 검증 전용. 운영 DB 에 적용하지 않는다.**
   스크립트 앞에 `DB_NAME` 이 `FREE` 가 아니면 중단하는 가드가 있지만, 가드를 믿고 실행하지 않는다.
-- 엔티티 컬럼은 KBFIDO 스키마와 1:1 (39 테이블 / 354 컬럼).
+- 엔티티 컬럼은 DB 스키마와 일치해야 한다(39 테이블 / 354 컬럼).
   `SchemaConformanceTest` 가 검증하며, 컬럼을 빼거나 더하면 실패한다. 대조용 컬럼표(`src/test/resources/schema-columns.txt`)는
   저장소에 올리지 않으므로, 그 파일이 없는 환경에서는 이 테스트를 건너뛴다.
 - 외부 CSS/JS/폰트 호출 없음. 정적 자원은 WebJars 와 `src/main/resources/static`.
@@ -141,7 +141,7 @@ localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 ## 알려진 제약
 
 - `CCFA_AUDIT_LOG.IP` 가 `VARCHAR2(15)` 라 IPv6 주소는 앞 15자만 저장된다(스키마 무변경 제약).
-- 비밀번호는 운영 DB 에 저장된 값과 맞추려고 salt 없는 SHA-256 hex 로 저장한다(범위 밖).
+- 비밀번호는 salt 없는 SHA-256 hex 로 저장한다(저장 형식 변경은 범위 밖).
 - 고객사 삭제 전 하위 데이터 검사는 검사와 삭제 사이의 동시 삽입을 막지 못한다(스키마에 FK 없음).
 - SUPER 가 고객사를 재배정하는 것과 COMPANY 의 수정이 동시에 일어나면 경쟁이 발생할 수 있다.
 - 가입 신청(`/signup`)에 횟수 제한이 없다. 사내망 전용이 현재의 유일한 완화책이다. 아이디 중복 응답으로 계정 존재를 추측할 수 있고, 승인대기 행을 대량으로 쌓을 수 있다.

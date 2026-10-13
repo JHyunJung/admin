@@ -14,7 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-/** FIDO2_METADATA. COMPANY_IDX 가 없어 SUPER 전용(설계 3.3). UPDATEDTIME 컬럼이 없다. */
+/** FIDO2_METADATA. COMPANY_IDX 가 없어 SUPER 전용. UPDATEDTIME 컬럼이 없다. */
 @Service
 public class Fido2MetadataService extends CrudService<Fido2Metadata, Long, Fido2MetadataSearchForm> {
 

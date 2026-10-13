@@ -22,7 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * 고객사 조회는 2부의 여러 화면에서 select 옵션·이름 표시에 쓰인다.
+ * 고객사 조회는 여러 화면에서 select 옵션·이름 표시에 쓰인다.
  * 범위를 서비스 안에서 강제하지 않으면 COMPANY 화면에 다른 고객사 이름이 노출된다.
  */
 class CompanyLookupTest {

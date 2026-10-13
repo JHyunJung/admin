@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 /**
  * 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다.
  *
- * <p>COMPANY_IDX 가 없는 테이블(FIDO2_*, 시스템)의 화면은 SUPER 전용이다(설계 3.3).
+ * <p>COMPANY_IDX 가 없는 테이블(FIDO2_*, 시스템)의 화면은 SUPER 전용이다.
  * CRITERIA 는 예외다 — 테이블은 전역이지만 화면의 용도가 고객사별 토글이라
  * TENANT 로 두었다(아래 /criteria 항목의 주석 참고).
  */
@@ -31,8 +31,8 @@ public class MenuRegistry {
      * 데모 접근코드는 이름 그대로 데모용이라 운영 동선에 들어오지 않는다.
      *
      * <p>"메일/SMS 큐"(/logs/mailing)도 운영에서 쓰지 않아 뺐다. 어드민은 CCFA_MAILING 을
-     * 읽기만 하고 발송은 다른 시스템이 한다 — 존치 검토 문서가 "그 발송 주체가 지금도
-     * 동작하는가" 를 확인 사항으로 남겨 둔 화면이다. 발송 주체가 살아 있고 큐를 봐야 할
+     * 읽기만 하고 발송은 다른 시스템이 한다 — 그 발송 주체가 지금도
+     * 동작하는지 확인되지 않은 화면이다. 발송 주체가 살아 있고 큐를 봐야 할
      * 일이 생기면 그때 되살린다.
      *
      * <p>다만 이것은 목록에서 지우지 않고 {@code hidden} 으로 감춘다. TENANT 경로라서
@@ -101,7 +101,7 @@ public class MenuRegistry {
     }
 
     /**
-     * 영역으로 거른 목록. 사이드바가 영역별로 나눠 그리는 데 쓴다(Task 10).
+     * 영역으로 거른 목록. 사이드바가 영역별로 나눠 그리는 데 쓴다.
      *
      * <p>템플릿의 SpEL 에는 {@code items.?[area.name() == 'TENANT']} 같은 선택 연산자 전례가
      * 없어, 필터를 자바로 옮겨 이 오버로드로 둔다. 기존 {@code itemsFor(boolean)} 시그니처는

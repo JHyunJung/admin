@@ -82,7 +82,7 @@ class UserinfoServiceTest {
     }
 
     /**
-     * Task 3 가 막은 구멍: SUPER 가 미선택 상태로건, 선택한 것과 다른 테넌트의 행이건
+     * 막아야 하는 구멍: SUPER 가 미선택 상태로건, 선택한 것과 다른 테넌트의 행이건
      * URL 로 상태를 바꿀 수 있어서는 안 된다. 소유(2)와 다른 테넌트(9)를 선택하면
      * TenantMismatchException 이어야 한다(404 로 처리됨, CrudService.checkTenant 참고).
      */

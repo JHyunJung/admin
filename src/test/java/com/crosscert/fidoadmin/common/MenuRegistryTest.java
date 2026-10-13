@@ -39,7 +39,7 @@ class MenuRegistryTest {
     }
 
     /**
-     * COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용(설계 3.3)이라 COMPANY 에게는
+     * COMPANY_IDX 가 없는 테이블의 화면은 SUPER 전용이라 COMPANY 에게는
      * FIDO2 그룹과 시스템관리 그룹이 통째로 사라진다. 나머지 그룹은 유지된다.
      */
     @Test void companySeesNoFido2Group() {

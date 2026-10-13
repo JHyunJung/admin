@@ -158,7 +158,7 @@ class ManagerServiceTest {
      * 승인대기 행을 운영자 수정 화면에서 열면 상태 선택지에 그 값이 없어 브라우저가 `활성` 을 고른다.
      * 이름만 고쳐 저장해도 상태가 `활성` 으로 바뀌어 승인 절차(감사 로그·상태 재확인·행 잠금)를
      * 통째로 건너뛰게 된다. 템플릿을 고치는 것만으로는 조작된 POST 를 막지 못하므로
-     * 서비스가 거부해야 한다(설계서 4장).
+     * 서비스가 거부해야 한다.
      */
     @Test void updateCannotActivatePendingRow() {
         CcfaManager m = manager(2L, "applicant");

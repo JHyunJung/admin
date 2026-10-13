@@ -38,7 +38,7 @@ class Fido2MetadataServiceTest {
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 
-    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용(설계 3.3). 서비스 계층에서도 막힌다. */
+    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용. 서비스 계층에서도 막힌다. */
     @Test void companyRoleCannotSearch() {
         login(1L);
         assertThatThrownBy(() -> service.search(new Fido2MetadataSearchForm(), PageRequest.of(0, 20, Sort.by("idx"))))

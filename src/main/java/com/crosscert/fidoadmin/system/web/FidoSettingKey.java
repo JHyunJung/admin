@@ -8,15 +8,15 @@ import java.util.List;
  * FIDO 서버 설정 화면이 다루는 고정 키 목록. 값은 {@code CCFA_SYSTEM_PROP} 에
  * {@code (PROP_KEY, COMPANY_IDX)} 로 저장된다 — 고객사마다 다를 수 있다.
  *
- * <p>키 이름과 값 표기는 <b>운영 DB 의 실제 행에서 확인한 것</b>이다. 스키마에는
+ * <p>키 이름과 값 표기는 <b>FIDO 서버가 읽는 그대로</b>다. 스키마에는
  * 드러나지 않는다({@code CCFA_SYSTEM_PROP} 은 범용 key-value 테이블이다).
  * 이름을 바꾸면 화면은 그대로 동작하는데 FIDO 서버만 값을 못 읽는 상태가 되므로,
  * {@code FidoSettingKeyTest} 가 키 이름 전체를 고정해 둔다.
  *
  * <p>값 표기가 키마다 다르다. 대부분 {@code ENABLE}/{@code DISABLE} 인데
  * {@code FIDO_ATTESTCERT_AAID_CHECK} 만 {@code Y}/{@code N} 이고
- * {@code CERT_VERIFY} 만 소문자 {@code yes}/{@code no} 다. 운영 데이터가 그렇게
- * 저장되어 있어 통일하지 않는다 — 서버가 읽는 표기를 화면이 따라간다.
+ * {@code CERT_VERIFY} 만 소문자 {@code yes}/{@code no} 다. 통일하지 않는다
+ * — 서버가 읽는 표기를 화면이 따라간다.
  *
  * <p>화면에 넣지 않은 키: {@code LICENSE}·{@code *_ROOT}(경로)·{@code OCSP_*}.
  * 시스템 관리 화면에서 다루지 않는 항목이라 범위 밖이다.
@@ -57,7 +57,7 @@ public enum FidoSettingKey {
     public enum Type { TOGGLE, NUMBER, TEXT, PASSWORD }
 
     /**
-     * 켬/끔을 어떤 문자열로 저장하는지. 운영 데이터의 표기를 그대로 따른다.
+     * 켬/끔을 어떤 문자열로 저장하는지. FIDO 서버가 읽는 표기를 그대로 따른다.
      *
      * <p>{@link #RAW} 는 토글이 아닌 값(숫자·문자열)이다. 변환하지 않는다.
      */
@@ -80,7 +80,7 @@ public enum FidoSettingKey {
 
         /**
          * 저장된 값이 "켬" 인가. 대소문자는 무시한다 — 같은 키라도 고객사마다
-         * 표기가 섞여 들어온 흔적이 운영 데이터에 있다.
+         * 표기가 섞여 있을 수 있다.
          *
          * <p>{@code null} 은 꺼짐이다. 행이 없거나 PROP_VALUE 가 NULL 인 경우가 흔하다.
          */
@@ -139,7 +139,7 @@ public enum FidoSettingKey {
         return map;
     }
 
-    /** PROP_KEY 문자열 → enum. 모르는 키는 비어 있다(운영 DB 에 우리가 안 쓰는 키가 있어도 무시한다). */
+    /** PROP_KEY 문자열 → enum. 모르는 키는 비어 있다(DB 에 이 화면이 안 쓰는 키가 있어도 무시한다). */
     public static java.util.Optional<FidoSettingKey> of(String propKey) {
         return Arrays.stream(values()).filter(k -> k.key.equals(propKey)).findFirst();
     }

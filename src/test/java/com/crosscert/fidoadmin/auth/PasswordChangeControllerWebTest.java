@@ -36,7 +36,7 @@ import org.springframework.test.web.servlet.MockMvc;
  *
  * <p><b>이 테스트가 보장하지 않는 것</b>: 규칙의 선언이 한 곳뿐인지는 검사하지 않는다.
  * 자바는 {@code static final} 상수를 컴파일 시 값으로 박아 넣으므로, 이 폼이 상수를 참조하든
- * 리터럴을 다시 적든 동작은 같고 테스트도 똑같이 통과한다(tasks/lessons.md).
+ * 리터럴을 다시 적든 동작은 같고 테스트도 똑같이 통과한다.
  */
 @WebMvcTest(controllers = PasswordChangeController.class)
 @Import({SecurityConfig.class, WebMvcConfig.class, CurrentPathAdvice.class, MenuRegistry.class, GlobalExceptionHandler.class, com.crosscert.fidoadmin.common.TenantContext.class, com.crosscert.fidoadmin.common.SelectedTenant.class})

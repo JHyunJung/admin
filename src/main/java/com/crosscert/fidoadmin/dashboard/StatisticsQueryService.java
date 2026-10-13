@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * FIDO_STATISTICS 를 일자별로 합산한다. 읽기 전용 SQL 만 쓴다.
- * GROUPBY 값은 운영 데이터에 따라 다르므로 화면에서 고르게 하고, 없으면 첫 값을 쓴다.
+ * GROUPBY 값은 데이터에 따라 다르므로 화면에서 고르게 하고, 없으면 첫 값을 쓴다.
  *
  * <p>각 쿼리의 {@code (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx)} 절 중
  * {@code IS NULL} 쪽은 이제 도달할 수 없다. {@link TenantContext#companyIdx()} 는
@@ -112,7 +112,7 @@ public class StatisticsQueryService {
                    NVL(SUM(AUTH_S),0) AUTH_S, NVL(SUM(AUTH_F),0) AUTH_F, NVL(SUM(TC_S),0) TC_S, NVL(SUM(TC_F),0) TC_F,
                    NVL(SUM(REG_S),0) REG_S, NVL(SUM(REG_F),0) REG_F, NVL(SUM(DEREG_S),0) DEREG_S, NVL(SUM(DEREG_F),0) DEREG_F
               FROM FIDO_STATISTICS
-             -- 운영 데이터의 GROUPBY 표기가 섞여 있어도(day/DAY) 같은 단위로 본다
+             -- GROUPBY 표기가 섞여 있어도(day/DAY) 같은 단위로 본다
              WHERE UPPER(GROUPBY) = UPPER(:groupby)
                AND CREATEDTIME >= :from AND CREATEDTIME < :to
                AND (:companyIdx IS NULL OR COMPANY_IDX = :companyIdx)

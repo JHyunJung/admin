@@ -66,7 +66,7 @@ class CompanyControllerWebTest {
         mvc.perform(get("/companies").with(user(companyUser))).andExpect(status().isForbidden());
     }
 
-    /** /companies 는 SYSTEM 영역이라 SUPER 는 선택기 대신 "시스템 관리" 뱃지를 본다(Task 10). */
+    /** /companies 는 SYSTEM 영역이라 SUPER 는 선택기 대신 "시스템 관리" 뱃지를 본다. */
     @Test void 시스템_화면에는_시스템_뱃지가_보인다() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("idx"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));

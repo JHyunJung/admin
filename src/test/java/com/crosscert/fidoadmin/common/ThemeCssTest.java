@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
-/** V2 디자인 토큰과 번들 폰트 선언을 고정한다. 값은 캔버스 V2_DesignSystem 보드와 1:1 이다. */
+/** V2 디자인 토큰과 번들 폰트 선언을 고정한다. */
 class ThemeCssTest {
 
     private static String css() throws Exception {

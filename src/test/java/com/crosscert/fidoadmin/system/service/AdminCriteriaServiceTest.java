@@ -65,7 +65,7 @@ class AdminCriteriaServiceTest {
         verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_CRITERIA UPDATE 7"));
     }
 
-    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용(설계 3.3). */
+    /** COMPANY_IDX 가 없는 테이블은 SUPER 전용. */
     @Test void companyRoleIsDenied() {
         login(1L);
         assertThatThrownBy(() -> service.search(new AdminCriteriaSearchForm(), PageRequest.of(0, 20, Sort.by("idx"))))

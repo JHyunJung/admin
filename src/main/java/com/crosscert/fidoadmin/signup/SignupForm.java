@@ -13,7 +13,7 @@ import lombok.Setter;
  * 바인딩되지 않으므로, 가입 경로로 소속이나 상태를 지정할 통로 자체가 사라진다.
  * "덮어쓴다"가 아니라 "받을 곳이 없다"가 방어의 근거다.
  *
- * <p>길이 제한은 {@link ByteSize} 로 건다. KBFIDO 스키마의 VARCHAR2 는 바이트 의미
+ * <p>길이 제한은 {@link ByteSize} 로 건다. DB 의 VARCHAR2 는 바이트 의미
  * (NLS_LENGTH_SEMANTICS=BYTE, AL32UTF8)라 한글 1자가 3바이트다. 문자 수로 재는
  * {@code @Size} 를 쓰면 검증을 통과한 값이 컬럼에 안 들어가 ORA-12899 로 500 이 난다.
  *

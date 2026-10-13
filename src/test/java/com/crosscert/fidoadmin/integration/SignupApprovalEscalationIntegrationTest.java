@@ -179,14 +179,14 @@ class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
     /**
      * 미배정(COMPANY_IDX = -1) 행은 운영자 수정 화면 경로로 아예 도달할 수 없다.
      *
-     * <p>Task 3.5 가 열었던 시나리오("운영자 수정 화면으로 승인 절차를 우회할 수 없다")는 원래
+     * <p>"운영자 수정 화면으로 승인 절차를 우회할 수 없다" 시나리오는 원래
      * {@code ManagerService.update()} 의 상태 가드(IllegalStateException)를 검증하려 했다. 하지만
      * {@code applied()} 로 만든 승인대기 행은 COMPANY_IDX = -1(미배정)이고, 실재하는 고객사가
      * 아니므로 {@code SelectedTenant.select()} 로 테넌트로 선택할 수 없다({@code select(0L)} 은
      * SUPER 라서, {@code select(-1L)} 은 실재하지 않아서 둘 다 거부되거나 부정행위다). 그 결과
      * 어떤 유효 테넌트를 선택하고 들어와도 {@code ManagerService.update()} → {@code get()} 의
      * {@code checkTenant} 가 소유(-1)와 불일치로 상태 가드보다 먼저 {@code TenantMismatchException}
-     * 을 던진다. Task 12 (task-12-deferred-tests.md)의 결론대로, 이는 셋업 문제가 아니라 새 모델이
+     * 을 던진다. 이는 셋업 문제가 아니라 테넌트 모델이
      * 만든 더 강한 보장이다: "미배정 행은 운영자 수정 화면 경로로 나타나지도, 열리지도 않는다."
      * 그 보장을 여기서 고정한다. {@code TenantMismatchException} 은 404 로 매핑된다(존재를 숨긴다,
      * 403 이 아니다). 상태 가드 자체의 검증은
