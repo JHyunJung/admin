@@ -78,7 +78,8 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 ## 테스트
 
 `./gradlew test` — Docker 가 있으면 Testcontainers Oracle 통합 테스트까지 실행되고, 없으면 건너뛴다.
-`EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest` 는 로컬 Docker Oracle(`local` 프로파일)이 떠 있어야 통과한다.
+`EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest`, `SelectedTenantWiringTest` 는 로컬 Docker Oracle(`local` 프로파일)을 쓴다.
+localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 
 > Testcontainers 가 "Could not find a valid Docker environment" 로 실패하면
 > `~/.docker-java.properties` 에 `api.version=1.41` 을 넣는다.

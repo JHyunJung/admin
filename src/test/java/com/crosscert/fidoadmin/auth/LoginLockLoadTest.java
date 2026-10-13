@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("local")
+@org.junit.jupiter.api.condition.EnabledIf("com.crosscert.fidoadmin.LocalOracle#isUp") // 로컬 도커 Oracle 이 없으면 건너뛴다
 class LoginLockLoadTest {
 
     @Autowired CcfaManagerRepository managers;

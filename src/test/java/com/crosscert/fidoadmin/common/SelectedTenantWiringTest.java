@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
  */
 @SpringBootTest
 @ActiveProfiles("local")
+@org.junit.jupiter.api.condition.EnabledIf("com.crosscert.fidoadmin.LocalOracle#isUp") // 로컬 도커 Oracle 이 없으면 건너뛴다
 class SelectedTenantWiringTest {
 
     @Autowired SelectedTenant selectedTenant;
