@@ -21,6 +21,7 @@ class FidoReloadClientTest {
     HttpServer server;
     String base;
     List<String> hits = new CopyOnWriteArrayList<>();
+    java.util.concurrent.CountDownLatch barrier = new java.util.concurrent.CountDownLatch(2);
     CcfaFidoclientRepository repo = mock(CcfaFidoclientRepository.class);
     FidoReloadClient client;
 
@@ -40,6 +41,12 @@ class FidoReloadClientTest {
                 for (int i = 0; i < 15; i++) { ex.getResponseBody().write('x'); ex.getResponseBody().flush(); Thread.sleep(200); }
             } catch (Exception ignored) {}
             ex.close(); });
+        // 두 요청이 모두 도착해야 응답한다. 순차 전송이면 첫 요청이 응답 타임아웃(500ms)에 걸려 실패한다.
+        server.createContext("/barrier/api/command/reload", ex -> {
+            try { barrier.countDown(); barrier.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
+            ex.sendResponseHeaders(200, -1); ex.close(); });
+        // 기본 실행기는 단일 스레드라 동시 요청을 받지 못한다(barrier 가 영영 열리지 않는다).
+        server.setExecutor(java.util.concurrent.Executors.newCachedThreadPool());
         server.start();
         base = "http://127.0.0.1:" + server.getAddress().getPort();
         HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2))
@@ -62,6 +69,17 @@ class FidoReloadClientTest {
             assertThat(x.ok()).isTrue();
             assertThat(x.detail()).isEqualTo("HTTP 200");
         });
+    }
+
+    /**
+     * 서버 N대에 순서대로 보내고 하나씩 기다리면 수동 reload 가 N × 응답 타임아웃까지 걸린다.
+     * 요청을 모두 띄운 뒤 기다려야 한다. 결과 순서(서버 코드 순)는 그대로다.
+     */
+    @Test void sendsToAllServersConcurrently() {
+        when(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(List.of(c("A", base + "/barrier"), c("B", base + "/barrier")));
+        List<ReloadResult> r = client.reloadAll();
+        assertThat(r).extracting(ReloadResult::servercode).containsExactly("A", "B");
+        assertThat(r).extracting(ReloadResult::ok).containsExactly(true, true);
     }
 
     @Test void trimsTrailingSlashAndWhitespace() {

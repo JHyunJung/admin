@@ -18,7 +18,7 @@ spring:
       validation-timeout: 3000
       idle-timeout: 600000           # 10분
       max-lifetime: 1800000          # 30분 — DB·방화벽의 유휴 연결 끊김보다 짧게
-      connection-test-query: SELECT 1 FROM DUAL
+      # connection-test-query 는 두지 않는다. ojdbc 는 JDBC4 isValid() 를 지원하므로 Hikari 가 그것으로 검사한다.
   jpa:
     show-sql: false
   thymeleaf:

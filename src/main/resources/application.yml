@@ -19,6 +19,9 @@ spring:
       hibernate:
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 50
+        # Oracle 드라이버의 행 프리페치는 기본 10행이다. 목록 상한(SearchForm.MAX_SIZE=200)만큼 한 번에 받아
+        # 200행 페이지의 왕복을 20회에서 1회로 줄인다. CLOB 은 로케이터만 오므로 메모리 영향은 작다.
+        jdbc.fetch_size: 200
   thymeleaf:
     cache: true
   web:
