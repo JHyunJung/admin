@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  prod 프로파일 로그. 파일에만 쓴다.
+  프로파일을 지정하지 않은 기동도 이 설정을 쓴다(application.yml 의 logging.config) — 어느 환경인지 모르므로
+  운영과 같게(보수적으로) 둔다. 레벨은 application-prod.yml(앱 INFO, 프레임워크 WARN)에서 정한다.
+-->
+<configuration>
+  <include resource="logback/base.xml"/>
+  <include resource="logback/file-appenders.xml"/>
+
+  <root level="INFO">
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="ERROR_FILE"/>
+  </root>
+</configuration>

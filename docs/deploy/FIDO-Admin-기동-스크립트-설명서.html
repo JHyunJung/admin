@@ -185,11 +185,13 @@ $ scripts/fido-admin.sh stop
   <li><code>local</code> 이 들어 있으면 DB 접속 정보 점검을 건너뛴다(로컬 도커 DB 가 설정에 고정돼 있다).</li>
 </ul>
 <table>
-  <tr><th style="width:15%">프로파일</th><th style="width:22%">DB</th><th style="width:28%">로그 레벨(앱/프레임워크)</th><th>로그 출력</th></tr>
-  <tr><td><code>prod</code></td><td>설정 파일·환경 변수</td><td>INFO / WARN</td><td>파일</td></tr>
-  <tr><td><code>qa</code></td><td>설정 파일·환경 변수</td><td>DEBUG / INFO</td><td>콘솔 + 파일</td></tr>
-  <tr><td><code>local</code></td><td>로컬 도커 고정</td><td>DEBUG / INFO</td><td>콘솔</td></tr>
+  <tr><th style="width:12%">프로파일</th><th style="width:19%">DB</th><th style="width:22%">로그 레벨(앱/프레임워크)</th><th style="width:15%">로그 출력</th><th>로그 설정 파일</th></tr>
+  <tr><td><code>prod</code></td><td>설정 파일·환경 변수</td><td>INFO / WARN</td><td>파일</td><td><code>logback-prod.xml</code></td></tr>
+  <tr><td><code>qa</code></td><td>설정 파일·환경 변수</td><td>DEBUG / INFO</td><td>콘솔 + 파일</td><td><code>logback-qa.xml</code></td></tr>
+  <tr><td><code>local</code></td><td>로컬 도커 고정</td><td>DEBUG / INFO</td><td>콘솔</td><td><code>logback-local.xml</code></td></tr>
 </table>
+<p>로그 설정 파일은 jar 안 <code>logback/</code> 에 있다. jar 에 없는 프로파일 이름(예: <code>staging</code>)이나 프로파일 미지정 기동은 <code>logback-prod.xml</code> 을 쓴다.
+운영 중 설정을 바꿔야 하면 외부 파일을 만들어 <code>LOGGING_CONFIG=/경로/logback.xml</code> 로 지정할 수 있다.</p>
 
 <h2>7. 로그 · PID · 종료</h2>
 <h3>로그</h3>

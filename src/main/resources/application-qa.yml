@@ -1,4 +1,4 @@
-# QA. 로그는 콘솔과 파일 둘 다(logback-spring.xml 의 qa 프로필). 앱 로그는 DEBUG 라 재현·분석에 쓴다.
+# QA. 로그는 콘솔과 파일 둘 다(logback/logback-qa.xml). 앱 로그는 DEBUG 라 재현·분석에 쓴다.
 spring:
   # DB 접속 정보는 환경 변수로만 받는다 — 기본값 없음(없으면 기동 실패). 비밀번호를 이 파일에 적지 않는다.
   #   SPRING_DATASOURCE_URL      예) jdbc:oracle:thin:@qa-db.example.local:1521/KBFIDO
@@ -32,6 +32,7 @@ server:
     # QA 는 재현·분석용이라 JSON 오류 응답에 예외 메시지를 남긴다(기본값 never 를 덮어쓴다). 운영은 숨긴다.
     include-message: always
 logging:
+  config: classpath:logback/logback-qa.xml
   level:
     com.crosscert.fidoadmin: debug
     org.springframework: info

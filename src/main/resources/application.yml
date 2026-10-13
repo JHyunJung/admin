@@ -36,13 +36,17 @@ spring:
           content:
             enabled: true
             paths: /**
+# 로그 설정 파일. 프로파일별 yml 이 자기 파일(logback/logback-<프로파일>.xml)로 덮어쓴다.
+# 프로파일을 지정하지 않은 기동은 어느 환경인지 모르므로 운영 설정을 쓴다.
+logging:
+  config: classpath:logback/logback-prod.xml
 server:
   port: 8080
   servlet:
     session:
       timeout: 30m
       # 쿠키 보호 플래그는 프로필과 무관하게 기본값으로 둔다. 프로필을 지정하지 않은 기동(= 운영으로 취급,
-      # logback-spring.xml 과 같은 판단)에서도 Secure/SameSite 가 빠지지 않게 하려는 것이다.
+      # logback/logback-prod.xml 을 쓰는 것과 같은 판단)에서도 Secure/SameSite 가 빠지지 않게 하려는 것이다.
       # local 만 http 라 secure 를 끈다(application-local.yml).
       cookie:
         http-only: true

@@ -107,6 +107,17 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 
 ### 로그
 
+프로파일마다 로그 설정 파일이 따로 있다(`src/main/resources/logback/`). 각 프로파일 yml 의 `logging.config` 가 자기 파일을 고른다.
+
+| 프로파일 | 설정 파일 | 출력 |
+|---|---|---|
+| `local` | `logback-local.xml` | 콘솔 |
+| `qa` | `logback-qa.xml` | 콘솔 + 파일 |
+| `prod`, 미지정 | `logback-prod.xml` | 파일 |
+| `test` | `logback-test.xml` | 콘솔(WARN 이상) |
+
+공통 값(로그 위치·패턴)은 `base.xml`, 출력 정의는 `console-appender.xml`·`file-appenders.xml` 에 있다.
+
 - 로그 디렉터리 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)에 쓴다. 일자별로 롤링하고 30일 보관한다.
 - 모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙는다. 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나가므로,
   오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.

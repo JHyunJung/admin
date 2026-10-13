@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  qa 프로파일 로그. 콘솔과 파일에 함께 쓴다.
+  레벨은 application-qa.yml(앱 DEBUG, 프레임워크 INFO)에서 정한다.
+-->
+<configuration>
+  <include resource="logback/base.xml"/>
+  <include resource="logback/console-appender.xml"/>
+  <include resource="logback/file-appenders.xml"/>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="ERROR_FILE"/>
+  </root>
+</configuration>

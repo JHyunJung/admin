@@ -74,7 +74,7 @@ LOG_PATH="${LOG_PATH:-${APP_HOME}/logs}"
 CONSOLE_LOG="${LOG_PATH}/console.out"
 # 종료 대기 시간(초). 감사 로그 대기열을 비우는 데 최대 30초를 쓴다.
 STOP_TIMEOUT="${STOP_TIMEOUT:-60}"
-# 앱 로그 파일 위치는 logging.file.path 로 정해진다(logback-spring.xml). LOG_PATH 를 그대로 넘긴다.
+# 앱 로그 파일 위치는 logging.file.path 로 정해진다(logback/base.xml). LOG_PATH 를 그대로 넘긴다.
 export LOGGING_FILE_PATH="${LOGGING_FILE_PATH:-${LOG_PATH}}"
 
 has_profile() {

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  local 프로파일 로그. 개발 PC 용이라 콘솔(색상)만 쓴다.
+  앱 패키지는 DEBUG. SQL 과 바인딩 값은 application-local.yml 의 레벨로 켠다.
+-->
+<configuration>
+  <include resource="logback/base.xml"/>
+  <include resource="logback/console-appender.xml"/>
+
+  <logger name="com.crosscert.fidoadmin" level="DEBUG"/>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

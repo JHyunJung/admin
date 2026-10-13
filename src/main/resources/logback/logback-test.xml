@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- test 프로파일(통합 테스트) 로그. 콘솔만, WARN 이상으로 조용하게. -->
+<configuration>
+  <include resource="logback/base.xml"/>
+  <include resource="logback/console-appender.xml"/>
+
+  <root level="WARN">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>
