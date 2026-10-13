@@ -23,7 +23,6 @@ public class FieldController extends CrudController<CcfaFields, Long, FieldForm,
     @Override protected CrudService<CcfaFields, Long, FieldSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/fields"; }
     @Override protected String viewDir() { return "system/fields"; }
-    @Override protected FieldSearchForm newSearchForm() { return new FieldSearchForm(); }
     @Override protected FieldForm newForm() { return new FieldForm(); }
     @Override protected FieldForm toForm(CcfaFields e) { return FieldForm.from(e); }
     @Override protected CcfaFields toEntity(FieldForm f) { return f.toNewEntity(); }

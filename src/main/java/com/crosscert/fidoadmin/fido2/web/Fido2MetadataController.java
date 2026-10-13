@@ -18,7 +18,6 @@ public class Fido2MetadataController extends CrudController<Fido2Metadata, Long,
     @Override protected CrudService<Fido2Metadata, Long, Fido2MetadataSearchForm> service() { return service; }
     @Override protected String basePath() { return "/fido2/metadata"; }
     @Override protected String viewDir() { return "fido2/metadata"; }
-    @Override protected Fido2MetadataSearchForm newSearchForm() { return new Fido2MetadataSearchForm(); }
     @Override protected Fido2MetadataForm newForm() { return new Fido2MetadataForm(); }
     @Override protected Fido2MetadataForm toForm(Fido2Metadata e) { return Fido2MetadataForm.from(e); }
     @Override protected Fido2Metadata toEntity(Fido2MetadataForm f) { Fido2Metadata m = new Fido2Metadata(); f.applyTo(m); return m; }

@@ -6,16 +6,18 @@ import com.crosscert.fidoadmin.auth.LoginSuccessHandler;
 import com.crosscert.fidoadmin.auth.Sha256PasswordEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
+/**
+ * 접근 제어는 URL 매처(여기)와 서비스 계층({@code CrudService.requireSuperForGlobalTable}) 두 겹이다.
+ * 메서드 보안 어노테이션(@PreAuthorize 등)은 쓰지 않으므로 @EnableMethodSecurity 는 두지 않는다.
+ */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean

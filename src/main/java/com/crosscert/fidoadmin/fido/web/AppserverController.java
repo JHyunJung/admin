@@ -22,7 +22,6 @@ public class AppserverController extends CrudController<Appserver, Long, Appserv
     @Override protected CrudService<Appserver, Long, AppserverSearchForm> service() { return service; }
     @Override protected String basePath() { return "/appservers"; }
     @Override protected String viewDir() { return "fido/appserver"; }
-    @Override protected AppserverSearchForm newSearchForm() { return new AppserverSearchForm(); }
     @Override protected AppserverForm newForm() { return new AppserverForm(); }
     @Override protected AppserverForm toForm(Appserver e) { return AppserverForm.from(e); }
     @Override protected Appserver toEntity(AppserverForm f) { Appserver a = new Appserver(); f.applyTo(a); return a; }

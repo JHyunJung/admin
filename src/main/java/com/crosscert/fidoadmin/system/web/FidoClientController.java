@@ -26,7 +26,6 @@ public class FidoClientController extends CrudController<CcfaFidoclient, String,
     @Override protected CrudService<CcfaFidoclient, String, FidoClientSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/fido-clients"; }
     @Override protected String viewDir() { return "system/fido-clients"; }
-    @Override protected FidoClientSearchForm newSearchForm() { return new FidoClientSearchForm(); }
     @Override protected FidoClientForm newForm() { return new FidoClientForm(); }
     @Override protected FidoClientForm toForm(CcfaFidoclient e) { return FidoClientForm.from(e); }
     @Override protected CcfaFidoclient toEntity(FidoClientForm f) { return f.toNewEntity(); }

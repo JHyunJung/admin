@@ -19,7 +19,6 @@ public class Fido2CredentialParamsController
     @Override protected CrudService<Fido2CredentialParams, Long, Fido2CredentialParamsSearchForm> service() { return service; }
     @Override protected String basePath() { return "/fido2/credential-params"; }
     @Override protected String viewDir() { return "fido2/credential-params"; }
-    @Override protected Fido2CredentialParamsSearchForm newSearchForm() { return new Fido2CredentialParamsSearchForm(); }
     @Override protected Fido2CredentialParamsForm newForm() { return new Fido2CredentialParamsForm(); }
     @Override protected Fido2CredentialParamsForm toForm(Fido2CredentialParams e) { return Fido2CredentialParamsForm.from(e); }
     @Override protected Fido2CredentialParams toEntity(Fido2CredentialParamsForm f) {

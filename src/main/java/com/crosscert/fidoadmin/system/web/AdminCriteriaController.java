@@ -20,7 +20,6 @@ public class AdminCriteriaController extends CrudController<CcfaCriteria, Long, 
     @Override protected CrudService<CcfaCriteria, Long, AdminCriteriaSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/criteria"; }
     @Override protected String viewDir() { return "system/criteria"; }
-    @Override protected AdminCriteriaSearchForm newSearchForm() { return new AdminCriteriaSearchForm(); }
     @Override protected AdminCriteriaForm newForm() { return new AdminCriteriaForm(); }
     @Override protected AdminCriteriaForm toForm(CcfaCriteria e) { return AdminCriteriaForm.from(e); }
     @Override protected CcfaCriteria toEntity(AdminCriteriaForm f) { return f.toNewEntity(); }

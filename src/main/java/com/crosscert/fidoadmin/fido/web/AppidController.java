@@ -21,7 +21,6 @@ public class AppidController extends CrudController<Appid, Long, AppidForm, Appi
     @Override protected CrudService<Appid, Long, AppidSearchForm> service() { return service; }
     @Override protected String basePath() { return "/appids"; }
     @Override protected String viewDir() { return "fido/appid"; }
-    @Override protected AppidSearchForm newSearchForm() { return new AppidSearchForm(); }
     @Override protected AppidForm newForm() { return new AppidForm(); }
     @Override protected AppidForm toForm(Appid e) { return AppidForm.from(e); }
     @Override protected Appid toEntity(AppidForm f) { Appid a = new Appid(); f.applyTo(a); return a; }

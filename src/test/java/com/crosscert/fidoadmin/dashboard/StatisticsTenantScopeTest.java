@@ -40,12 +40,11 @@ class StatisticsTenantScopeTest {
             .setAuthentication(new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 
-    private DashboardSearchForm form(Long requestedCompanyIdx) {
+    private DashboardSearchForm form() {
         DashboardSearchForm f = new DashboardSearchForm();
         f.setGroupby("day");
         f.setFromDate(LocalDate.now().minusDays(7));
         f.setToDate(LocalDate.now());
-        f.setCompanyIdx(requestedCompanyIdx);
         return f;
     }
 
@@ -62,7 +61,7 @@ class StatisticsTenantScopeTest {
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
 
-        service.daily(form(2L)); // 다른 고객사를 요청해도
+        service.daily(form()); // 폼에는 고객사 칸이 없다 — 세션 테넌트만 쓴다
 
         assertThat(capturedCompanyIdx()).isEqualTo(1L); // 자기 것으로 강제
     }
@@ -75,7 +74,7 @@ class StatisticsTenantScopeTest {
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
 
-        service.daily(form(2L));
+        service.daily(form());
 
         assertThat(capturedCompanyIdx()).isEqualTo(2L);
     }
@@ -87,7 +86,7 @@ class StatisticsTenantScopeTest {
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
 
-        DashboardSearchForm f = form(null);
+        DashboardSearchForm f = form();
         f.setFromDate(null);
         f.setToDate(null);
 
@@ -120,7 +119,7 @@ class StatisticsTenantScopeTest {
     void 미선택_SUPER_는_집계를_볼_수_없다() {
         login(0L);
 
-        assertThatThrownBy(() -> service.daily(form(null)))
+        assertThatThrownBy(() -> service.daily(form()))
             .isInstanceOf(NoTenantSelectedException.class);
     }
 
@@ -131,13 +130,13 @@ class StatisticsTenantScopeTest {
         login(1L);
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
-        service.daily(form(null));
+        service.daily(form());
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class));
         assertThat(sql.getValue()).contains("UPPER(GROUPBY) = UPPER(:groupby)");
 
         when(jdbc.queryForObject(anyString(), any(Map.class), any(Class.class))).thenReturn(null);
-        assertThat(service.lastStatDate(form(2L))).isEmpty();
+        assertThat(service.lastStatDate(form())).isEmpty();
         ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
         verify(jdbc).queryForObject(anyString(), params.capture(), any(Class.class));
         assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);

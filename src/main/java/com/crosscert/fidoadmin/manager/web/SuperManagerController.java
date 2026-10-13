@@ -32,7 +32,6 @@ public class SuperManagerController extends CrudController<CcfaManager, Long, Ma
     @Override protected CrudService<CcfaManager, Long, ManagerSearchForm> service() { return service; }
     @Override protected String basePath() { return "/managers/super"; }
     @Override protected String viewDir() { return "manager/super"; }
-    @Override protected ManagerSearchForm newSearchForm() { return new ManagerSearchForm(); }
     @Override protected ManagerForm newForm() { return new ManagerForm(); }
     @Override protected ManagerForm toForm(CcfaManager e) { return ManagerForm.from(e); }
 
