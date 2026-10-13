@@ -1,12 +1,15 @@
 package com.crosscert.fidoadmin.log.service;
 
 import com.crosscert.fidoadmin.common.TenantContext;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.crosscert.fidoadmin.log.web.FidoLogRow;
 import com.crosscert.fidoadmin.log.web.FidoLogSearchForm;
 import com.crosscert.fidoadmin.log.web.FidoLogSearchResult;
 import com.crosscert.fidoadmin.log.web.FidoLogView;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -51,11 +54,31 @@ public class FidoLogQueryService {
     private static final Set<String> OPS = Set.of("reg", "auth", "dereg", "tc");
 
     /**
+     * 같은 조건으로 페이지를 넘길 때 다시 쓰는 시간. 조건 검색은 매번 그날 로그를 최대 {@link #SCAN_LIMIT} 건
+     * 풀어야 해서 비싸다. 이 시간 안에는 새로 쌓인 로그와 "총 N건" 이 늦게 보인다.
+     */
+    static final Duration RESULT_TTL = Duration.ofSeconds(30);
+
+    /** (고객사, 테이블, 조건) → 조건에 맞은 행 전체. 행 수로 무게를 매겨 메모리 상한을 둔다(행은 작은 값 몇 개). */
+    private final Cache<String, Scan> scans = Caffeine.newBuilder()
+        .expireAfterWrite(RESULT_TTL)
+        .maximumWeight(4L * SCAN_LIMIT)
+        .<String, Scan>weigher((k, v) -> v.matched().size() + 1)
+        .build();
+    /** (고객사, 테이블, 번호 조건) → 총 건수. 조건 없는 목록은 본문은 매번 읽고 건수만 다시 쓴다. */
+    private final Cache<String, Long> counts = Caffeine.newBuilder()
+        .expireAfterWrite(RESULT_TTL).maximumSize(1_000).build();
+
+    private record Scan(List<FidoLogRow> matched, boolean truncated) {}
+
+    /**
      * 목록. 없는 날짜면 빈 페이지다(오류가 아니다 — 그날 로그가 없다는 뜻이다).
      *
      * <p>운영 JSONDATA 는 base64url 이라 DB 가 안을 볼 수 없다. 번호(IDX)는 컬럼이라 언제나 SQL 로 건다.
      * JSONDATA 조건이 없으면 DB 가 한 페이지만 읽고 그 행만 푼다. 구분·서비스명·사용자·인증장치·상태 조건이 하나라도 있으면 그날 그 고객사 로그를 최근 것부터
      * {@link #SCAN_LIMIT} 건까지 풀어 Java 에서 거른 뒤 페이지를 나눈다.
+     *
+     * <p>같은 조건으로 페이지를 넘기면 {@link #RESULT_TTL} 동안 거른 결과(조건 없는 목록은 총 건수)를 다시 쓴다.
      */
     @Transactional(readOnly = true)
     public FidoLogSearchResult search(FidoLogSearchForm form, Pageable pageable) {
@@ -82,8 +105,11 @@ public class FidoLogQueryService {
         String userid = termOrNull(form.getUserid());
         String status = termOrNull(form.getStatus());
         Long bioType = form.getBioType();
+        // 키에 고객사를 넣는다. 조건이 같아도 고객사가 다르면 다른 결과다.
+        String baseKey = companyIdx + "|" + table + "|" + form.getIdx();
         if (op == null && servicename == null && userid == null && status == null && bioType == null) {
-            Long total = jdbc.queryForObject("SELECT COUNT(*) FROM " + table + where, params, Long.class);
+            String countSql = "SELECT COUNT(*) FROM " + table + where;
+            Long total = counts.get(baseKey, k -> jdbc.queryForObject(countSql, params, Long.class));
             if (total == null || total == 0) {
                 return new FidoLogSearchResult(new PageImpl<>(List.of(), pageable, 0), false);
             }
@@ -95,17 +121,25 @@ public class FidoLogQueryService {
             return new FidoLogSearchResult(new PageImpl<>(rows, pageable, total), false);
         }
 
-        params.addValue("cap", SCAN_LIMIT + 1);
-        List<FidoLogRow> scanned = jdbc.query(
-            "SELECT * FROM (" + select + ") WHERE rownum <= :cap", params, (rs, i) -> toRow(rs));
-        boolean truncated = scanned.size() > SCAN_LIMIT;
-        List<FidoLogRow> matched = (truncated ? scanned.subList(0, SCAN_LIMIT) : scanned).stream()
-            .filter(r -> op == null || op.equalsIgnoreCase(r.op()))
-            .filter(r -> servicename == null || containsIgnoreCase(r.servicename(), servicename))
-            .filter(r -> userid == null || containsIgnoreCase(r.userid(), userid))
-            .filter(r -> status == null || status.equalsIgnoreCase(r.status()))
-            .filter(r -> bioType == null || bioType.equals(r.bioType()))
-            .toList();
+        // 비교가 대소문자를 무시하므로 키도 소문자로 맞춘다.
+        String scanKey = (baseKey + "|" + op + "|" + servicename + "|" + userid + "|" + status + "|" + bioType)
+            .toLowerCase(Locale.ROOT);
+        Scan scan = scans.get(scanKey, k -> {
+            params.addValue("cap", SCAN_LIMIT + 1);
+            List<FidoLogRow> scanned = jdbc.query(
+                "SELECT * FROM (" + select + ") WHERE rownum <= :cap", params, (rs, i) -> toRow(rs));
+            boolean cut = scanned.size() > SCAN_LIMIT;
+            List<FidoLogRow> hits = (cut ? scanned.subList(0, SCAN_LIMIT) : scanned).stream()
+                .filter(r -> op == null || op.equalsIgnoreCase(r.op()))
+                .filter(r -> servicename == null || containsIgnoreCase(r.servicename(), servicename))
+                .filter(r -> userid == null || containsIgnoreCase(r.userid(), userid))
+                .filter(r -> status == null || status.equalsIgnoreCase(r.status()))
+                .filter(r -> bioType == null || bioType.equals(r.bioType()))
+                .toList();
+            return new Scan(hits, cut);
+        });
+        List<FidoLogRow> matched = scan.matched();
+        boolean truncated = scan.truncated();
         int from = (int) Math.min(pageable.getOffset(), matched.size());
         int to = Math.min(from + pageable.getPageSize(), matched.size());
         return new FidoLogSearchResult(new PageImpl<>(matched.subList(from, to), pageable, matched.size()), truncated);
