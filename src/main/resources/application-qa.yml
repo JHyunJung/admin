@@ -24,14 +24,11 @@ spring:
     show-sql: false
   thymeleaf:
     cache: true
+# 세션 쿠키 플래그(HttpOnly/Secure/SameSite)는 application.yml 의 기본값을 그대로 쓴다.
 server:
-  servlet:
-    session:
-      cookie:
-        http-only: true
-        secure: true
   error:
     include-stacktrace: never
+    # QA 는 재현·분석용이라 JSON 오류 응답에 예외 메시지를 남긴다(기본값 never 를 덮어쓴다). 운영은 숨긴다.
     include-message: always
 logging:
   level:
