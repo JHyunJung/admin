@@ -1,29 +1,47 @@
 # FIDO Admin
 
-KBFIDO Oracle 스키마를 쓰는 FIDO 관리자 웹. Java 17, Spring Boot 3.5, Thymeleaf, Spring Data JPA.
+FIDO 서버 운영을 위한 관리자 웹. KBFIDO Oracle 스키마를 사용한다.
 
-## 실행
+- Java 17, Spring Boot 3.5, Spring Security, Spring Data JPA, Thymeleaf
+- Oracle (운영), Docker Oracle Free (로컬·테스트)
 
-1. Docker Desktop 실행 후 로컬 Oracle 기동 (로컬 검증 전용):
-   `docker compose -f docker/docker-compose.yml up -d` — `docker compose -f docker/docker-compose.yml ps` 에서 `healthy` 확인.
-2. 애플리케이션: `./gradlew bootRun --args='--spring.profiles.active=local'`
-3. `http://localhost:8080` — 계정 `superuser / Admin1234!` (SUPER), `kbadmin / Company1234!` (고객사 운영자)
+## 목차
 
-QA·운영은 `local` 대신 `qa` / `prod` 프로파일로 띄우고, DB 는 환경 변수 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` 로 준다. 기본값은 없다.
+1. [로컬 실행](#로컬-실행)
+2. [배포 설정](#배포-설정)
+3. [화면 구성](#화면-구성)
+4. [테스트](#테스트)
+5. [개발 규칙](#개발-규칙)
+6. [DB 참고 사항](#db-참고-사항)
+7. [알려진 제약](#알려진-제약)
 
-```
-SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/SVC SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
-  java -jar fido-admin.jar --spring.profiles.active=prod
-```
+## 로컬 실행
 
-DB 접속 정보 세 값은 평문 대신 `ENC(...)` 암호문(AES-256-GCM)으로 줄 수 있다. 이때 복호화 키를 환경 변수 `DB_CONFIG_KEY`(Base64, 디코딩 후 32바이트)로 함께 준다.
-각 프로필 yml 의 `fido-admin.db-config-key` 가 이 변수를 받으며, 모두 평문이면 키는 없어도 된다. `ENC(` 로 시작하는 평문은 `[plain]` 을 앞에 붙인다.
+1. Docker Desktop 을 켜고 로컬 Oracle 을 띄운다. 처음에는 이미지 다운로드와 초기화에 2~3분 걸린다.
 
-```
-export DB_CONFIG_KEY=$(openssl rand -base64 32)          # 키는 안전한 곳에 따로 보관
-DB_CONFIG_VALUE='비밀번호' ./gradlew -q encryptDbConfig  # → ENC(...) 출력
-SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles.active=prod
-```
+   ```
+   docker compose -f docker/docker-compose.yml up -d
+   docker compose -f docker/docker-compose.yml ps   # healthy 확인
+   ```
+
+2. 애플리케이션을 띄운다.
+
+   ```
+   ./gradlew bootRun --args='--spring.profiles.active=local'
+   ```
+
+3. `http://localhost:8080` 에 접속한다.
+
+   | 계정 | 비밀번호 | 역할 |
+   |---|---|---|
+   | `superuser` | `Admin1234!` | 슈퍼관리자(SUPER) |
+   | `kbadmin` | `Company1234!` | 고객사 운영자(COMPANY) |
+
+로컬 DB 접속 정보와 초기화 방법은 [`docker/README.md`](docker/README.md) 에 있다.
+
+## 배포 설정
+
+### 프로파일
 
 | 프로파일 | DB | SQL 출력 | 로그 레벨(앱/프레임워크) | 로그 출력 |
 |---|---|---|---|---|
@@ -31,123 +49,171 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 | `qa` | 환경 변수 | 끔 | DEBUG / INFO | 콘솔 + 파일 |
 | `prod` (또는 미지정) | 환경 변수 | 끔 | INFO / WARN | 파일 |
 
-로그 파일은 `LOG_PATH`(기본 `./logs`, `logging.file.path` 로도 지정) 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)이며 일자별로 롤링해 30일 보관한다.
-모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙고, 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나간다 — 오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
+### 환경 변수
 
-세션 쿠키의 `HttpOnly`/`Secure`/`SameSite=Lax` 와 오류 응답의 예외 정보 숨김은 프로파일과 무관한 기본값이다(`application.yml`).
-`local` 만 http 라 `Secure` 를 끈다.
+| 변수 | 필수 | 설명 |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | 예 | JDBC URL. 기본값 없음 |
+| `SPRING_DATASOURCE_USERNAME` | 예 | DB 계정 |
+| `SPRING_DATASOURCE_PASSWORD` | 예 | DB 비밀번호 |
+| `DB_CONFIG_KEY` | 암호문을 쓸 때 | DB 접속 정보 복호화 키(Base64, 디코딩 후 32바이트) |
+| `LOG_PATH` | 아니오 | 로그 디렉터리. 기본 `./logs` |
+| `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` | 아니오 | 인증 없는 서버 간 경로의 접근 허용 대역. 비우면 모두 허용 |
 
-인증 없이 열린 서버 간 경로 두 개(`/api/svc/**` FIDO 서버 자가등록, `/external/**` 라이선스 수신)는
-환경 변수 `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS`(쉼표 구분 CIDR 또는 IP, 예 `10.0.0.0/8,192.168.1.5`)로 접근 대역을 제한할 수 있다.
-비어 있으면(기본값) 모두 허용한다. 리버스 프록시 뒤라면 `server.forward-headers-strategy` 도 함께 설정해야 실제 주소로 판정한다.
+```
+SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/SVC \
+SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
+  java -jar fido-admin.jar --spring.profiles.active=prod
+```
 
-화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
+### DB 접속 정보 암호화
 
-여기에 더해 운영자 가입 흐름 화면 2개가 있다.
+DB 접속 정보 세 값은 평문 대신 `ENC(...)` 암호문(AES-256-GCM)으로 줄 수 있다. 이때 `DB_CONFIG_KEY` 를 함께 준다.
+모두 평문이면 키는 없어도 된다. `ENC(` 로 시작하는 평문은 앞에 `[plain]` 을 붙인다.
+
+```
+export DB_CONFIG_KEY=$(openssl rand -base64 32)          # 키는 안전한 곳에 따로 보관
+DB_CONFIG_VALUE='비밀번호' ./gradlew -q encryptDbConfig  # → ENC(...) 출력
+SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles.active=prod
+```
+
+### 로그
+
+- `LOG_PATH` 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)에 쓴다. 일자별로 롤링하고 30일 보관한다.
+- 모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙는다. 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나가므로,
+  오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
+
+### 보안 기본값
+
+- 세션 쿠키는 `HttpOnly`, `Secure`, `SameSite=Lax` 이고 오류 응답에 예외 정보를 싣지 않는다(`application.yml`).
+  `local` 만 http 라 `Secure` 를 끈다.
+- 인증 없는 서버 간 경로 `/api/svc/**`(FIDO 서버 자가등록)과 `/external/**`(라이선스 수신)는
+  `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS`(쉼표 구분 CIDR 또는 IP, 예 `10.0.0.0/8,192.168.1.5`)로 접근 대역을 제한한다.
+  리버스 프록시 뒤라면 `server.forward-headers-strategy` 도 설정해야 실제 클라이언트 주소로 판정한다.
+
+## 화면 구성
+
+화면은 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)와 운영자 가입 화면 2개다.
+메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
+
+### 영역과 테넌트
+
+슈퍼관리자는 한 번에 한 고객사만 본다. 로그인하면 `/select-tenant` 에서 고객사를 고르고,
+이후 사이드바의 고객사 전환기로 언제든 바꿀 수 있다. 선택한 고객사가 조회·등록·수정·삭제 전부의 경계다.
+
+| 영역 | 열리는 조건 | 화면 |
+|---|---|---|
+| 테넌트 | 고객사를 선택해야 열림 | 대시보드, FIDO 데이터, 로그(감사 로그 포함), 라이선스, 운영자(`/managers`), 시스템 설정 등 `COMPANY_IDX` 로 데이터를 가르는 화면 |
+| 시스템 | 항상 열림(SUPER 전용) | 고객사 관리, 가입 승인, 슈퍼관리자 계정, FIDO2 메타데이터, 시스템 정보 등 `COMPANY_IDX` 가 없는 전역 테이블 화면 |
+| 개인 | 항상 열림 | 내 비밀번호 변경 |
+
+- 고객사 운영자(`COMPANY`)는 고객사를 고르지 않고 항상 자기 소속 고객사만 본다.
+- 슈퍼관리자 계정(`COMPANY_IDX = 0`)은 고객사로 선택될 수 없어 `/managers` 에 나타나지 않는다.
+  슈퍼관리자 계정은 `/managers/super` 에서만 관리한다.
+
+### 운영자 가입
 
 - **가입 신청 `/signup`** — 로그인 없이 열리는 공개 폼. 로그인 화면의 "가입 신청" 링크로 들어간다.
-  소속 고객사 선택란이 없고, 저장은 항상 `STATUS = 승인대기`, `COMPANY_IDX = -1`(미배정) 로 고정된다.
-  신청만으로는 로그인할 수 없다.
-- **가입 승인 `/signups`** — **SUPER 전용**. 사이드바 "운영자" 그룹에 있으며 고객사 계정에는 보이지 않고 접근 시 403 이다.
-  승인할 때 슈퍼 관리자가 실제 고객사를 지정하고 `STATUS = 활성` 로 바꾼다. 거절은 사유를 남긴다.
-  선택 목록에 전역(`IDX 0`, SUPER) 고객사는 나오지 않으며, 승인 경로로 SUPER 계정을 만들 수 없다.
+  소속 고객사를 고르지 않으며 항상 `STATUS = 승인대기`, `COMPANY_IDX = -1`(미배정)로 저장된다. 신청만으로는 로그인할 수 없다.
+- **가입 승인 `/signups`** — SUPER 전용. 승인할 때 고객사를 지정하고 `STATUS = 활성` 으로 바꾼다. 거절은 사유를 남긴다.
+  전역 고객사(`IDX 0`)는 고를 수 없어 승인으로 SUPER 계정을 만들 수 없다.
 
-## 테넌트 선택
+### 로그 목록 동작
 
-슈퍼관리자는 한 번에 하나의 고객사만 본다. 로그인하면 `/select-tenant` 에서
-고객사를 고르고, 이후 상단 선택기로 언제든 바꿀 수 있다. 선택한 고객사가 조회·상세·등록·수정·삭제
-전부의 경계다.
-
-화면은 세 영역으로 나뉜다.
-
-- **테넌트 영역** — 고객사를 선택해야 열린다. 대시보드, FIDO 데이터(챌린지·거래확인 등),
-  로그(감사 로그 포함), 라이선스, 운영자(`/managers`), 시스템 설정 등 `COMPANY_IDX` 로 데이터를
-  가르는 화면.
-- **시스템 영역** — 고객사 선택과 무관하게 항상 열린다. 고객사 관리, 가입 승인, 슈퍼관리자 계정,
-  FIDO2 메타데이터, 시스템 정보 등 `COMPANY_IDX` 컬럼이 없는 전역 테이블을 다루는 화면.
-- **개인 영역** — 내 비밀번호 변경. 로그인 계정 본인에게만 적용되므로 테넌트 선택과 무관하다.
-
-슈퍼관리자 계정(`COMPANY_IDX = 0`)은 어떤 고객사로도 선택될 수 없으므로, `COMPANY_IDX` 로
-필터링되는 일반 운영자 목록(`/managers`)에는 나타나지 않는다. 이 때문에 슈퍼관리자 계정 전용
-화면인 **`/managers/super`** 가 별도로 존재하며, 슈퍼관리자 계정은 오직 여기서만 관리한다.
-
-고객사 운영자(`COMPANY` 역할) 계정의 동작은 이번 작업 전과 **동일하다**. `COMPANY` 계정은
-테넌트 선택기를 쓰지 않고, 항상 자기 소속 고객사만 본다 — 이 변경은 SUPER 계정의 동작에만
-영향을 준다.
+- 행이 많은 로그 목록(SIGN, CHALLENGE, TRANSACTIONHASH, TRANSACTION_CONFIRMATION, 감사 로그, FIDO 로그)은
+  기본 정렬이 `IDX` 역순이다. 시각 정렬은 목록 머리글로 고를 수 있다(FIDO 로그 제외).
+- 이 목록들은 같은 조건의 총 건수를 30초간 다시 쓴다. FIDO 로그는 조건 검색 결과도 30초간 다시 쓴다.
+  그 사이 새로 쌓인 행과 "총 N건" 은 늦게 보일 수 있다.
+- 감사 로그는 전용 스레드가 저장한다. 대기열(500건)이 차면 요청 스레드에서 바로 저장하고, 종료할 때는 대기열을 비운다.
 
 ## 테스트
 
-`./gradlew test` — Docker 가 있으면 Testcontainers Oracle 통합 테스트까지 실행되고, 없으면 건너뛴다.
-`EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest`, `SelectedTenantWiringTest` 는 로컬 Docker Oracle(`local` 프로파일)을 쓴다.
-localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
+```
+./gradlew test
+```
+
+- Docker 가 있으면 Testcontainers Oracle 통합 테스트까지 실행하고, 없으면 건너뛴다.
+- `EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest`, `SelectedTenantWiringTest`, `PartialFetchIntegrationTest` 는
+  로컬 Docker Oracle(`local` 프로파일)을 쓴다. `localhost:1521` 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 
 > Testcontainers 가 "Could not find a valid Docker environment" 로 실패하면
 > `~/.docker-java.properties` 에 `api.version=1.41` 을 넣는다.
 > Docker Desktop 의 최소 API 버전과 docker-java 기본값이 어긋나는 경우가 있다.
 
-## 시퀀스 이름 교체
+## 개발 규칙
 
-시퀀스 이름은 임시로 `<TABLE>_SEQ` 다. 실제 이름은 운영 DB 에서 아래로 확인한다.
+### 공통
 
-    SELECT table_name, column_name, data_default
-      FROM user_tab_columns
-     WHERE UPPER(data_default) LIKE '%NEXTVAL%'
-     ORDER BY table_name;
-
-교체 위치: 각 엔티티의 `@SequenceGenerator(sequenceName = ...)`, `docker/init/01-schema.sql`.
-교체 전까지 운영 DB INSERT 는 보장하지 않는다.
-
-목록 인덱스와 감사 로그 시퀀스 캐시·증가폭은 DBA 요청 사항으로 `docs/dba/2026-10-13-인덱스-시퀀스-요청.md` 에 정리했다.
-
-## 규칙
-
-- `docker/init/*.sql` 은 **로컬 검증 전용. 운영 DB 에 적용하지 않는다.**
-  스크립트 앞에 `DB_NAME` 이 `FREE` 가 아니면 중단하는 가드가 있지만, 가드를 믿고 실행하지 않는다.
-- 엔티티 컬럼은 DB 스키마와 일치해야 한다(39 테이블 / 354 컬럼).
-  `SchemaConformanceTest` 가 검증하며, 컬럼을 빼거나 더하면 실패한다. 대조용 컬럼표(`src/test/resources/schema-columns.txt`)는
-  저장소에 올리지 않으므로, 그 파일이 없는 환경에서는 이 테스트를 건너뛴다.
-- 외부 CSS/JS/폰트 호출 없음. 정적 자원은 WebJars 와 `src/main/resources/static`.
-- JS `alert/confirm/prompt` 금지. 삭제 확인은 Bootstrap 모달.
+- 외부 CSS/JS/폰트를 호출하지 않는다. 정적 자원은 WebJars 와 `src/main/resources/static` 에 둔다.
+- JS `alert/confirm/prompt` 를 쓰지 않는다. 확인 창은 공통 Bootstrap 모달을 쓴다.
+- `docker/init/*.sql` 은 로컬 검증 전용이다. 운영 DB 에 적용하지 않는다.
+  스크립트 앞에 `DB_NAME` 이 `FREE` 가 아니면 멈추는 가드가 있지만, 가드를 믿고 실행하지 않는다.
 
 ### 화면을 추가할 때
 
 - `CrudController`/`CrudService` 또는 `ReadOnlyController` 를 상속한다.
-  테넌트 격리(목록 필터, 상세·수정·삭제 소유 검사, 등록 시 `COMPANY_IDX` 강제)는 기반이 처리한다.
-- `companyIdxAttribute()` 는 **반드시** 해당 엔티티의 `COMPANY_IDX` 속성명을 돌려준다.
-  `null` 을 돌려주면 그 화면은 SUPER 전용이 된다(`COMPANY_IDX` 가 없는 메타·시스템 테이블용).
-- 문자열 길이 검증은 `@Size` 가 아니라 **`@ByteSize`** 를 쓴다.
-  DB 가 BYTE 의미(`NLS_LENGTH_SEMANTICS=BYTE`, `AL32UTF8`)라 한글 1자가 3바이트다.
-  `@Size` 를 쓰면 검증을 통과한 뒤 `ORA-12899` 로 저장에 실패한다.
-- 정렬 가능한 컬럼은 `sortableProperties()` 에 선언한다. 목록에 없는 값은 기본 정렬로 되돌아간다
-  (매핑되지 않은 속성이 들어오면 500 이 나기 때문).
-- `toEntity(form)` 에서 **식별자를 폼 값으로 채우지 않는다.** 채우면 `save()` 가 INSERT 가 아니라
-  MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
-- 폼 화면에는 `#fields.allErrors()` 로 모든 검증 오류를 표시한다.
-- CLOB 컬럼이 있는 테이블의 화면은 목록 DTO 에서 그 컬럼을 빼고, 서비스의 `listExcludedProperties()` 에 같은 속성명을 적는다.
-  Hibernate 는 `@Lob String` 을 항상 즉시 읽으므로, 적어 두면 목록 조회가 SELECT 절에서 그 컬럼을 뺀다(`PartialFetch`).
-  목록 행에서는 그 속성이 `null` 이고 상세(`get`)는 영향이 없다.
-- 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `CrudService` 대신 **`AssignedIdCrudService`** 를 상속하고
-  `assignedId()` 를 구현한다. 등록은 존재 검사 + `persist` 로만 수행되어, 이미 있는 키를 입력해도 기존 행이 덮어써지지 않고
-  "이미 존재하는 값" 오류로 돌아온다(`save()` 는 식별자가 있으면 MERGE 로 동작한다).
-- `COMPANY_IDX` 가 없는 CRITERIA·FIDO2 화면은 시스템 메뉴와 같이 **SUPER 전용**이다.
-  `MenuRegistry` 의 `superOnly` 와 `SecurityConfig.SUPER_PATHS` 를 함께 맞춘다.
-- 위 규칙 가운데 코드로 검사할 수 있는 것은 `ArchitectureRulesTest` 가 고정한다 — 메뉴 `superOnly` 와 SUPER 매처의 일치,
-  화면 경로의 `MenuRegistry` 등록(또는 SUPER 매처 안), `basePath()` 와 `@RequestMapping` 의 일치, 전역 테이블 화면의 SUPER 전용,
-  `sortableProperties()`/`defaultSort()` 속성의 실재, 폼의 `@ByteSize` 사용. 새 화면을 넣고 이 테스트가 빨개지면 셋 중 어디를 빠뜨렸는지 알려 준다.
-- 운영자 계정 화면 둘(`/managers`, `/managers/super`)의 공통 규칙은 `ManagerAccountService` 에 있고,
-  `USER_ID` 전역 유일성은 가입 신청까지 포함해 `ManagerUserIdGuard` 하나가 지킨다.
-- 참고 구현: CRUD 는 `company/`, 조회 전용은 `log/audit`.
+  테넌트 격리(목록 필터, 상세·수정·삭제 소유 검사, 등록 시 `COMPANY_IDX` 강제)는 기반 클래스가 처리한다.
+- `companyIdxAttribute()` 는 엔티티의 `COMPANY_IDX` 속성명을 돌려준다.
+  `null` 을 돌려주면 SUPER 전용 화면이 된다(`COMPANY_IDX` 가 없는 메타·시스템 테이블용).
+- `COMPANY_IDX` 가 없는 화면은 `MenuRegistry` 의 `superOnly` 와 `SecurityConfig.SUPER_PATHS` 를 함께 맞춘다.
+- 문자열 길이 검증은 `@Size` 가 아니라 `@ByteSize` 를 쓴다. DB 가 BYTE 의미(`NLS_LENGTH_SEMANTICS=BYTE`, `AL32UTF8`)라
+  한글 1자가 3바이트이고, `@Size` 로는 검증을 통과한 값이 `ORA-12899` 로 저장에 실패한다.
+- 정렬 가능한 컬럼은 `sortableProperties()` 에 선언한다. 목록에 없는 값은 기본 정렬로 되돌아간다.
+- `toEntity(form)` 에서 식별자를 폼 값으로 채우지 않는다. 채우면 `save()` 가 MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
+- 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `AssignedIdCrudService` 를 상속하고 `assignedId()` 를 구현한다.
+  등록은 존재 검사 + `persist` 로만 하므로 이미 있는 키는 "이미 존재하는 값" 오류가 된다.
+- CLOB 컬럼이 있는 테이블은 목록 DTO 에서 그 컬럼을 빼고 서비스의 `listExcludedProperties()` 에 같은 속성명을 적는다.
+  목록 조회가 SELECT 절에서 그 컬럼을 뺀다(`PartialFetch`). 상세 조회는 영향이 없다.
+- 행이 많은 목록은 `countCacheTtl()` 로 총 건수를 캐시할 수 있다. 리포지터리는 `PartialFetch` 를 직접 상속하고,
+  검색 폼은 모든 조건을 `extraParams()` 에 넣어야 한다.
+- 폼 화면은 `#fields.allErrors()` 로 모든 검증 오류를 표시한다.
+- 예시 구현: CRUD 는 `company/`, 조회 전용은 `log/`.
+
+`ArchitectureRulesTest` 가 위 규칙 중 코드로 검사할 수 있는 것을 확인한다 — 메뉴 `superOnly` 와 SUPER 매처의 일치,
+화면 경로의 `MenuRegistry` 등록, `basePath()` 와 `@RequestMapping` 의 일치, 전역 테이블 화면의 SUPER 전용,
+정렬 속성의 실재, 폼의 `@ByteSize` 사용.
+
+### 운영자 계정
+
+- `/managers` 와 `/managers/super` 의 공통 규칙은 `ManagerAccountService` 에 있다.
+- `USER_ID` 전역 유일성은 가입 신청까지 포함해 `ManagerUserIdGuard` 가 지킨다.
+
+## DB 참고 사항
+
+### 스키마 일치
+
+엔티티 컬럼은 DB 스키마와 일치해야 한다(39 테이블 / 354 컬럼). `SchemaConformanceTest` 가 컬럼표
+`src/test/resources/schema-columns.txt` 와 대조한다. 이 파일은 저장소에 없으며, 없으면 테스트를 건너뛴다.
+
+### 시퀀스 이름
+
+시퀀스 이름은 임시로 `<TABLE>_SEQ` 다. 배포 전에 대상 DB 에서 실제 이름을 확인해 바꾼다.
+
+```sql
+SELECT table_name, column_name, data_default
+  FROM user_tab_columns
+ WHERE UPPER(data_default) LIKE '%NEXTVAL%'
+ ORDER BY table_name;
+```
+
+바꿀 곳은 각 엔티티의 `@SequenceGenerator(sequenceName = ...)` 와 `docker/init/01-schema.sql` 이다.
+바꾸기 전에는 대상 DB 에 대한 INSERT 가 보장되지 않는다.
+
+### DBA 요청 사항
+
+목록 인덱스와 감사 로그 시퀀스의 캐시·증가폭 변경은 [`docs/dba/2026-10-13-인덱스-시퀀스-요청.md`](docs/dba/2026-10-13-인덱스-시퀀스-요청.md) 에 정리했다.
 
 ## 알려진 제약
 
-- `CCFA_AUDIT_LOG.IP` 가 `VARCHAR2(15)` 라 IPv6 주소는 앞 15자만 저장된다(스키마 무변경 제약).
-- 비밀번호는 salt 없는 SHA-256 hex 로 저장한다(저장 형식 변경은 범위 밖).
+- `CCFA_AUDIT_LOG.IP` 가 `VARCHAR2(15)` 라 IPv6 주소는 앞 15자만 저장된다.
+- 비밀번호는 salt 없는 SHA-256 hex 로 저장한다.
 - 고객사 삭제 전 하위 데이터 검사는 검사와 삭제 사이의 동시 삽입을 막지 못한다(스키마에 FK 없음).
-- SUPER 가 고객사를 재배정하는 것과 COMPANY 의 수정이 동시에 일어나면 경쟁이 발생할 수 있다.
-- 가입 신청(`/signup`)에 횟수 제한이 없다. 사내망 전용이 현재의 유일한 완화책이다. 아이디 중복 응답으로 계정 존재를 추측할 수 있고, 승인대기 행을 대량으로 쌓을 수 있다.
-- 가입 신청은 감사 로그가 남지 않는다. `AuditLogger` 가 인증된 주체 없이는 아무것도 기록하지 않기 때문이다(승인·거절은 기록된다).
-- `/api/svc/**`(FIDO 서버 자가등록)과 `/external/**`(라이선스 수신)는 인증이 없다. FIDO 서버 코드를 고치지 않는 전제라 토큰을 둘 수 없고,
-  누구나 서버를 등록·OFF 하거나 등록된 URL 로 어드민이 reload GET 을 보내게 할 수 있다. `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 가 현재의 완화책이다.
-- 감사 로그의 무결성 해시는 키 없는 SHA-256 이라 DB 쓰기 권한자가 재계산해 맞출 수 있다(변조 "탐지" 가 아니라 일관성 검사 수준).
-- `CCFA_SYSTEM_PROP` 화면은 복합키를 경로 한 조각 `{PROP_KEY}@{COMPANY_IDX}` 로 다루므로 `PROP_KEY` 에 `/` 가 들어간 키는 화면에서 지원하지 않는다(등록 폼에서 거부).
-
+- SUPER 의 고객사 재배정과 COMPANY 의 수정이 동시에 일어나면 경쟁이 생길 수 있다.
+- 가입 신청에 횟수 제한이 없다. 사내망 전용이 현재의 완화책이다. 아이디 중복 응답으로 계정 존재를 추측할 수 있고,
+  승인대기 행을 대량으로 쌓을 수 있다.
+- 가입 신청은 감사 로그를 남기지 않는다. `AuditLogger` 는 인증된 사용자가 없으면 기록하지 않는다(승인·거절은 기록된다).
+- `/api/svc/**` 와 `/external/**` 는 인증이 없다. FIDO 서버가 토큰을 보내지 않기 때문이다.
+  누구나 서버를 등록·OFF 하거나 등록된 URL 로 reload 요청을 보내게 할 수 있다. `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 가 현재의 완화책이다.
+- 감사 로그 무결성 해시는 키 없는 SHA-256 이라 DB 쓰기 권한자가 재계산해 맞출 수 있다(변조 탐지가 아니라 일관성 검사 수준).
+- 감사 로그는 비동기로 저장하므로 프로세스가 강제 종료되면 대기열에 남은 기록이 유실될 수 있다.
+- `CCFA_SYSTEM_PROP` 화면은 복합키를 경로 한 조각 `{PROP_KEY}@{COMPANY_IDX}` 로 다루므로 `/` 가 들어간 `PROP_KEY` 는 지원하지 않는다(등록 폼에서 거부).
