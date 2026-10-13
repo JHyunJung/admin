@@ -93,6 +93,41 @@ class AuditChangesTest {
         verify(audit, never()).log(eq(AuditType.UPDATE), anyString());
     }
 
+    /**
+     * CCFA_SYSTEM_PROP 은 범용 key-value 라 비밀 여부가 필드명(propValue)이 아니라
+     * 키(SMTP_PASSWORD)에 있다. 필드명만 보면 SMTP 비밀번호 전후 값이 감사 로그에 평문으로 실리고,
+     * 그 테넌트의 COMPANY 운영자가 /logs/audit 에서 읽는다.
+     */
+    @Test void systemPropWithSecretKeyMasksItsValue() {
+        var row = new com.crosscert.fidoadmin.system.entity.CcfaSystemProp();
+        row.setId(new com.crosscert.fidoadmin.system.entity.CcfaSystemPropId("SMTP_PASSWORD", 5L));
+        row.setPropValue("old-secret");
+        Map<String, String> before = AuditChanges.snapshot(row);
+        row.setPropValue("new-secret");
+
+        AuditChanges.record(audit, "CCFA_SYSTEM_PROP", "SMTP_PASSWORD@5", before, row);
+
+        ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+        verify(audit).log(eq(AuditType.UPDATE), msg.capture());
+        assertThat(msg.getValue()).contains("propValue: ******** → ********");
+        assertThat(msg.getValue()).doesNotContain("old-secret", "new-secret");
+    }
+
+    /** 비밀 키가 아닌 시스템 설정은 지금처럼 값이 그대로 남아야 한다(변경 추적이 목적이다). */
+    @Test void systemPropWithPlainKeyKeepsItsValue() {
+        var row = new com.crosscert.fidoadmin.system.entity.CcfaSystemProp();
+        row.setId(new com.crosscert.fidoadmin.system.entity.CcfaSystemPropId("SMTP_HOST", 5L));
+        row.setPropValue("mail.old");
+        Map<String, String> before = AuditChanges.snapshot(row);
+        row.setPropValue("mail.new");
+
+        AuditChanges.record(audit, "CCFA_SYSTEM_PROP", "SMTP_HOST@5", before, row);
+
+        ArgumentCaptor<String> msg = ArgumentCaptor.forClass(String.class);
+        verify(audit).log(eq(AuditType.UPDATE), msg.capture());
+        assertThat(msg.getValue()).contains("propValue: mail.old → mail.new");
+    }
+
     @Test void recordWritesTableIdAndDiff() {
         Row r = new Row(); r.userNm = "홍길동";
         Map<String, String> before = AuditChanges.snapshot(r);

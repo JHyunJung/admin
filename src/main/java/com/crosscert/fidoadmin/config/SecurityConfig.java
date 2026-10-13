@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableWebSecurity
@@ -20,6 +21,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new Sha256PasswordEncoder();
+    }
+
+    /**
+     * maximumSessions(1) 이 쓰는 SessionRegistry 는 세션 소멸 이벤트를 받아야 항목을 지운다.
+     * 이 빈이 없으면 타임아웃·로그아웃으로 사라진 세션 정보가 레지스트리에 계속 쌓인다.
+     */
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
     @Bean

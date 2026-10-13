@@ -4,12 +4,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
+import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+/**
+ * {@link CredentialsContainer} 를 구현해야 DaoAuthenticationProvider 가 로그인 직후
+ * {@link #eraseCredentials()} 를 부른다. 메서드만 있으면 호출되지 않아 세션에 저장된 principal 에
+ * 비밀번호 해시(salt 없는 SHA-256 — 그대로 로그인에 쓸 수 있는 값)가 남는다.
+ */
 @Getter
-public class ManagerUserDetails implements UserDetails {
+public class ManagerUserDetails implements UserDetails, CredentialsContainer {
 
     public static final String ROLE_SUPER = "ROLE_SUPER";
     public static final String ROLE_COMPANY = "ROLE_COMPANY";
@@ -51,7 +57,7 @@ public class ManagerUserDetails implements UserDetails {
     @Override public boolean isAccountNonLocked() { return accountNonLocked; }
     @Override public boolean isCredentialsNonExpired() { return true; }
     @Override public boolean isEnabled() { return enabled; }
-    public void eraseCredentials() { this.password = null; }
+    @Override public void eraseCredentials() { this.password = null; }
 
     /**
      * 동시 세션 제어(maximumSessions)는 SessionRegistry 가 principal 의 equals/hashCode 로

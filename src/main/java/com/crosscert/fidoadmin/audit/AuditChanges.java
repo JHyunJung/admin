@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.audit;
 
 import com.crosscert.fidoadmin.system.SecretProps;
+import com.crosscert.fidoadmin.system.entity.CcfaSystemProp;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.temporal.Temporal;
@@ -9,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 엔티티의 변경 전후를 비교해 감사 메시지로 남긴다.
@@ -54,13 +56,21 @@ public final class AuditChanges {
      */
     public static void record(AuditLogger audit, String table, String id,
                               Map<String, String> before, Object after) {
-        String diff = describe(before, snapshot(after));
+        String diff = describe(before, snapshot(after), secretFieldsOf(after));
         if (diff.isEmpty()) return;
         audit.log(AuditType.UPDATE, table + " UPDATE " + id + " | " + diff);
     }
 
     /** 변경 항목을 "필드: 전 → 후" 로 이어 붙인다. 없으면 빈 문자열. */
     static String describe(Map<String, String> before, Map<String, String> after) {
+        return describe(before, after, Set.of());
+    }
+
+    /**
+     * {@code secretFields} 는 필드명 규칙으로는 비밀임을 알 수 없는데 값이 비밀인 필드다.
+     * 그 필드는 바뀌었다는 사실만 남기고 값은 마스크한다.
+     */
+    static String describe(Map<String, String> before, Map<String, String> after, Set<String> secretFields) {
         List<String> parts = new ArrayList<>();
         int skipped = 0;
         for (Map.Entry<String, String> e : after.entrySet()) {
@@ -72,7 +82,8 @@ public final class AuditChanges {
                 skipped++;
                 continue;
             }
-            parts.add(name + ": " + display(name, was) + " → " + display(name, now));
+            boolean secret = secretFields.contains(name);
+            parts.add(name + ": " + display(name, was, secret) + " → " + display(name, now, secret));
         }
         if (parts.isEmpty()) return "";
         String joined = String.join(", ", parts);
@@ -92,10 +103,25 @@ public final class AuditChanges {
     }
 
     /** 화면에 내보낼 값. 비밀 필드는 값 대신 마스크, 없으면 "(없음)". */
-    private static String display(String fieldName, String value) {
+    private static String display(String fieldName, String value, boolean secret) {
         if (value == null || value.isEmpty()) return "(없음)";
-        if (SecretProps.isSecret(columnName(fieldName))) return SecretProps.MASK;
+        if (secret || SecretProps.isSecret(columnName(fieldName))) return SecretProps.MASK;
         return cut(value);
+    }
+
+    /**
+     * 비밀 여부가 필드명이 아니라 <b>행의 키</b>에 있는 엔티티의 비밀 필드.
+     *
+     * <p>CCFA_SYSTEM_PROP 은 범용 key-value 라 {@code propValue} 라는 필드명만 보면 비밀값인지
+     * 알 수 없다. {@code SMTP_PASSWORD} 행이면 값 필드가 비밀이다 — 화면({@link SecretProps#forDisplay})과
+     * 같은 판별을 써야, 화면에서 가린 값이 감사 로그로 새지 않는다.
+     */
+    private static Set<String> secretFieldsOf(Object entity) {
+        if (entity instanceof CcfaSystemProp prop && prop.getId() != null
+            && SecretProps.isSecret(prop.getId().getPropKey())) {
+            return Set.of("propValue");
+        }
+        return Set.of();
     }
 
     /**
