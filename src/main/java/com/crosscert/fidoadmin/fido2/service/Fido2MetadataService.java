@@ -45,5 +45,7 @@ public class Fido2MetadataService extends CrudService<Fido2Metadata, Long, Fido2
     @Override public Set<String> sortableProperties() {
         return Set.of("idx", "description", "aaguid", "protocolfamily", "createdtime");
     }
+    /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
+    @Override protected Set<String> listExcludedProperties() { return Set.of("attestationrootcertificates", "icon"); }
     @Override protected void touchCreated(Fido2Metadata e, LocalDateTime now) { e.setCreatedtime(now); }
 }

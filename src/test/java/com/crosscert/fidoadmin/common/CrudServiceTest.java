@@ -29,7 +29,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 class CrudServiceTest {
 
-    interface LicenseRepo extends AdminRepository<CcfaLicense, Long> {}
+    interface LicenseRepo extends AdminRepository<CcfaLicense, Long>, PartialFetch<CcfaLicense> {}
 
     LicenseRepo repo = mock(LicenseRepo.class);
     AuditLogger audit = mock(AuditLogger.class);
@@ -94,6 +94,51 @@ class CrudServiceTest {
         loginSuperSelecting(9L);
         when(repo.findById(9L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.get(9L)).isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
+    }
+
+    /**
+     * CLOB 컬럼이 있는 테이블의 목록은 그 컬럼을 빼고 읽는다(listExcludedProperties).
+     * Hibernate 는 @Lob String 을 항상 즉시 읽어 목록 DTO 가 버리는 값을 매 행 전송하므로,
+     * 제외 속성을 선언한 서비스는 repository.findAllExcluding 으로 간다. 테넌트 필터는 그대로 들어간다.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test void searchExcludesDeclaredPropertiesButKeepsTenantFilter() {
+        CrudService<CcfaLicense, Long, SearchForm> clobService = new CrudService<>(repo, audit, tenant) {
+            @Override protected Specification<CcfaLicense> toSpecification(SearchForm f) { return null; }
+            @Override protected String companyIdxAttribute() { return "companyIdx"; }
+            @Override protected Long companyIdxOf(CcfaLicense e) { return e.getCompanyIdx(); }
+            @Override protected void setCompanyIdx(CcfaLicense e, Long c) { e.setCompanyIdx(c); }
+            @Override public String idOf(CcfaLicense e) { return String.valueOf(e.getIdx()); }
+            @Override protected String tableName() { return "CCFA_LICENSE"; }
+            @Override protected java.util.Set<String> listExcludedProperties() { return java.util.Set.of("license"); }
+        };
+        login(1L);
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by("idx"));
+        when(repo.findAllExcluding(eq(CcfaLicense.class), any(Specification.class), eq(pageable), eq(java.util.Set.of("license"))))
+            .thenReturn(new PageImpl<>(java.util.List.of()));
+
+        clobService.search(new SearchForm(), pageable);
+
+        ArgumentCaptor<Specification<CcfaLicense>> captor = ArgumentCaptor.forClass(Specification.class);
+        verify(repo).findAllExcluding(eq(CcfaLicense.class), captor.capture(), eq(pageable), eq(java.util.Set.of("license")));
+        verify(repo, org.mockito.Mockito.never()).findAll(any(Specification.class), any(PageRequest.class));
+        var root = mock(jakarta.persistence.criteria.Root.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        var cb = mock(jakarta.persistence.criteria.CriteriaBuilder.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+        captor.getValue().toPredicate(root, mock(jakarta.persistence.criteria.CriteriaQuery.class), cb);
+        verify(root).get("companyIdx");
+    }
+
+    /** 제외 속성이 없는 보통 서비스는 지금처럼 findAll 로 간다. */
+    @SuppressWarnings("unchecked")
+    @Test void searchWithoutExclusionsUsesPlainFindAll() {
+        login(1L);
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by("idx"));
+        when(repo.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(java.util.List.of()));
+
+        service.search(new SearchForm(), pageable);
+
+        verify(repo).findAll(any(Specification.class), eq(pageable));
+        verify(repo, org.mockito.Mockito.never()).findAllExcluding(any(), any(), any(), any());
     }
 
     /** 미선택 SUPER 는 조회 자체가 성립하지 않는다. */

@@ -67,18 +67,18 @@ class CriteriaQueryServiceTest {
      */
     @Test void companyRoleCanSearchAndGet() {
         login(1L);
-        when(repo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));
+        when(repo.findAllExcluding(any(), any(Specification.class), any(PageRequest.class), any())).thenReturn(new PageImpl<>(List.of()));
         when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
 
         service.search(new CriteriaSearchForm(), PageRequest.of(0, 20, service.defaultSort()));
 
         assertThat(service.get(1L).getAaid()).isEqualTo("0012#0001");
-        verify(repo).findAll(any(Specification.class), any(PageRequest.class));
+        verify(repo).findAllExcluding(any(), any(Specification.class), any(PageRequest.class), any());
     }
 
     @Test void superRoleCanSearchAndGet() {
         login(0L);
-        when(repo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(new PageImpl<>(List.of()));
+        when(repo.findAllExcluding(any(), any(Specification.class), any(PageRequest.class), any())).thenReturn(new PageImpl<>(List.of()));
         when(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")));
         CriteriaSearchForm f = new CriteriaSearchForm();
         f.setAaid("0012");
@@ -86,7 +86,7 @@ class CriteriaQueryServiceTest {
         service.search(f, PageRequest.of(0, 20, service.defaultSort()));
 
         assertThat(service.get(1L).getAaid()).isEqualTo("0012#0001");
-        verify(repo).findAll(any(Specification.class), any(PageRequest.class));
+        verify(repo).findAllExcluding(any(), any(Specification.class), any(PageRequest.class), any());
     }
 
     /** 로그인하지 않았으면 열리지 않는다. 전역 차단을 푼 뒤에도 이것은 남는다. */

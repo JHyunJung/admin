@@ -121,6 +121,9 @@ localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 - `toEntity(form)` 에서 **식별자를 폼 값으로 채우지 않는다.** 채우면 `save()` 가 INSERT 가 아니라
   MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
 - 폼 화면에는 `#fields.allErrors()` 로 모든 검증 오류를 표시한다.
+- CLOB 컬럼이 있는 테이블의 화면은 목록 DTO 에서 그 컬럼을 빼고, 서비스의 `listExcludedProperties()` 에 같은 속성명을 적는다.
+  Hibernate 는 `@Lob String` 을 항상 즉시 읽으므로, 적어 두면 목록 조회가 SELECT 절에서 그 컬럼을 뺀다(`PartialFetch`).
+  목록 행에서는 그 속성이 `null` 이고 상세(`get`)는 영향이 없다.
 - 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `CrudService` 대신 **`AssignedIdCrudService`** 를 상속하고
   `assignedId()` 를 구현한다. 등록은 존재 검사 + `persist` 로만 수행되어, 이미 있는 키를 입력해도 기존 행이 덮어써지지 않고
   "이미 존재하는 값" 오류로 돌아온다(`save()` 는 식별자가 있으면 MERGE 로 동작한다).

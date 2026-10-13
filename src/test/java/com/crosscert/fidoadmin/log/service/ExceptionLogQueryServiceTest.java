@@ -57,14 +57,14 @@ class ExceptionLogQueryServiceTest {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Test void createdtimeIsSearchedAsStringLike() {
-        when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+        when(repo.findAllExcluding(any(), any(Specification.class), any(Pageable.class), any())).thenReturn(new PageImpl<>(List.of()));
         ExceptionLogSearchForm f = new ExceptionLogSearchForm();
         f.setEType("AUTH"); f.setELevel("ERROR"); f.setMessage("signature"); f.setCreatedtime("2026-09-15");
 
         service.search(f, PageRequest.of(0, 20, service.defaultSort()));
 
         ArgumentCaptor<Specification<CcfaExceptions>> captor = ArgumentCaptor.forClass(Specification.class);
-        verify(repo).findAll(captor.capture(), any(Pageable.class));
+        verify(repo).findAllExcluding(any(), captor.capture(), any(Pageable.class), any()); // CLOB(exceptionData) 을 빼고 읽는다
         Root<CcfaExceptions> root = mock(Root.class, Mockito.RETURNS_DEEP_STUBS);
         CriteriaBuilder cb = mock(CriteriaBuilder.class, Mockito.RETURNS_DEEP_STUBS);
         captor.getValue().toPredicate(root, mock(CriteriaQuery.class), cb);

@@ -29,6 +29,8 @@ public class AdminCriteriaService extends CrudService<CcfaCriteria, Long, AdminC
     @Override public String idOf(CcfaCriteria e) { return String.valueOf(e.getIdx()); }
     @Override protected String tableName() { return "CCFA_CRITERIA"; }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "aaid", "updatedtime"); }
+    /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
+    @Override protected Set<String> listExcludedProperties() { return Set.of("jsondata"); }
 
     @Override protected void touchCreated(CcfaCriteria e, LocalDateTime now) { e.setCreatetime(now); e.setUpdatedtime(now); }
     @Override protected void touchUpdated(CcfaCriteria e, LocalDateTime now) { e.setUpdatedtime(now); }

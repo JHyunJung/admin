@@ -7,6 +7,7 @@ import com.crosscert.fidoadmin.audit.AuditType;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,11 +24,16 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
     protected final AdminRepository<E, ID> repository;
     protected final AuditLogger audit;
     protected final TenantContext tenant;
+    /** E 의 실제 클래스. {@link #listExcludedProperties} 를 쓰는 부분 조회가 메타모델을 찾는 데 쓴다. */
+    private final Class<E> entityType;
 
+    @SuppressWarnings("unchecked")
     protected CrudService(AdminRepository<E, ID> repository, AuditLogger audit, TenantContext tenant) {
         this.repository = repository;
         this.audit = audit;
         this.tenant = tenant;
+        Class<?>[] args = GenericTypeResolver.resolveTypeArguments(getClass(), CrudService.class);
+        this.entityType = args == null ? null : (Class<E>) args[0];
     }
 
     // ---- 훅 ----
@@ -44,6 +50,12 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
      * 목록에 없는 값이 들어오면 기본 정렬로 되돌아간다(매핑되지 않은 속성으로 인한 500 방지).
      */
     public java.util.Set<String> sortableProperties() { return java.util.Set.of("idx"); }
+    /**
+     * 목록에서 읽지 않을 엔티티 속성(CLOB 필드). Hibernate 는 {@code @Lob String} 을 항상 즉시 읽어,
+     * 목록 DTO 가 버리는 값을 행마다 전송한다. 여기 적은 속성은 SELECT 절에서 빠지고 목록 행에서 null 이다
+     * ({@link PartialFetch}). 목록 DTO 가 그 속성을 쓰지 않는 화면만 선언한다. 상세({@link #get})는 영향이 없다.
+     */
+    protected java.util.Set<String> listExcludedProperties() { return java.util.Set.of(); }
     protected void applyDefaults(E entity) {}
     protected void touchCreated(E entity, LocalDateTime now) {}
     protected void touchUpdated(E entity, LocalDateTime now) {}
@@ -70,6 +82,20 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 
     @Transactional(readOnly = true)
     public Page<E> search(S form, Pageable pageable) {
+        Specification<E> spec = listSpecification(form);
+        java.util.Set<String> excluded = listExcludedProperties();
+        if (excluded.isEmpty()) return repository.findAll(spec, pageable);
+        if (!(repository instanceof PartialFetch)) {
+            throw new IllegalStateException(tableName() + " 리포지터리가 PartialFetch 를 직접 상속해야 목록에서 "
+                + excluded + " 을(를) 뺄 수 있습니다");
+        }
+        @SuppressWarnings("unchecked")
+        PartialFetch<E> partial = (PartialFetch<E>) repository;
+        return partial.findAllExcluding(entityType, spec, pageable, excluded);
+    }
+
+    /** 목록 조건 = 화면 조건 + 유효 테넌트. SUPER 전용 검사도 여기서 한다. */
+    protected Specification<E> listSpecification(S form) {
         requireSuperForGlobalTable();
         Specification<E> spec = toSpecification(form);
         String attr = companyIdxAttribute();
@@ -77,7 +103,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
             // 역할을 묻지 않는다. 유효 테넌트가 곧 경계다.
             spec = Specs.all(spec, Specs.eq(attr, tenant.companyIdx()));
         }
-        return repository.findAll(spec == null ? Specs.all() : spec, pageable);
+        return spec == null ? Specs.all() : spec;
     }
 
     @Transactional(readOnly = true)

@@ -37,7 +37,7 @@ class ArchitectureRulesTest {
     @Test void scannerFindsTheScreens() {
         assertThat(screenControllers()).hasSizeGreaterThanOrEqualTo(20);
         assertThat(services()).hasSizeGreaterThanOrEqualTo(20);
-        assertThat(classes(c -> c.getSimpleName().endsWith("Form"))).hasSizeGreaterThanOrEqualTo(20);
+        assertThat(classes(name -> name.endsWith("Form"))).hasSizeGreaterThanOrEqualTo(20);
     }
 
     /** 메뉴의 superOnly 와 SecurityConfig 의 SUPER 매처는 같은 말을 해야 한다. */
@@ -121,7 +121,7 @@ class ArchitectureRulesTest {
     @Test void formStringFieldsUseByteSizeNotSize() {
         Set<String> allowed = Set.of("com.crosscert.fidoadmin.auth.PasswordChangeForm");
         SoftAssertions soft = new SoftAssertions();
-        for (Class<?> form : classes(c -> c.getSimpleName().endsWith("Form"))) {
+        for (Class<?> form : classes(name -> name.endsWith("Form"))) {
             if (allowed.contains(form.getName())) continue;
             for (Field f : form.getDeclaredFields()) {
                 soft.assertThat(f.isAnnotationPresent(Size.class))
@@ -153,12 +153,19 @@ class ArchitectureRulesTest {
             .toList();
     }
 
-    static List<Class<?>> classes(java.util.function.Predicate<Class<?>> filter) {
+    /**
+     * 클래스 이름으로 고른다. 메타데이터 단계에서 걸러야 한다 — 후보가 아닌 클래스까지 로딩하면
+     * 테스트 클래스의 정적 초기화(Testcontainers 기동 등)가 따라 돈다.
+     */
+    static List<Class<?>> classes(java.util.function.Predicate<String> simpleNameFilter) {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter((reader, factory) -> filter.test(load(reader.getClassMetadata().getClassName())));
+        scanner.addIncludeFilter((reader, factory) -> {
+            String name = reader.getClassMetadata().getClassName();
+            String simple = name.substring(name.lastIndexOf('.') + 1);
+            return !name.contains("Test") && simpleNameFilter.test(simple);
+        });
         return scanner.findCandidateComponents(BASE_PACKAGE).stream()
             .<Class<?>>map(bd -> load(bd.getBeanClassName()))
-            .filter(c -> !c.getName().contains("Test"))
             .toList();
     }
 
