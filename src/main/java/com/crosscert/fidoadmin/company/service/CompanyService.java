@@ -39,11 +39,13 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
     private final CcfaSystemPropRepository props;
     private final CriteriaQueryService criteria;
     private final ApplicationEventPublisher events;
+    private final CompanyLookup lookup;
 
     public CompanyService(CcfaCompanyRepository repository, AuditLogger audit, AppidRepository appids,
                           UserinfoRepository users, CcfaManagerRepository managers,
                           CcfaSystemPropRepository props, TenantContext tenant,
-                          CriteriaQueryService criteria, ApplicationEventPublisher events) {
+                          CriteriaQueryService criteria, ApplicationEventPublisher events,
+                          CompanyLookup lookup) {
         super(repository, audit, tenant);
         this.appids = appids;
         this.users = users;
@@ -51,6 +53,12 @@ public class CompanyService extends CrudService<CcfaCompany, Long, CompanySearch
         this.props = props;
         this.criteria = criteria;
         this.events = events;
+        this.lookup = lookup;
+    }
+
+    /** 고객사 이름은 {@link CompanyLookup} 이 캐시한다. 행이 바뀌면 지워서 바뀐 이름이 바로 보이게 한다. */
+    @Override protected void afterChange(String action, CcfaCompany e) {
+        lookup.evict(e.getIdx());
     }
 
     @Override protected Specification<CcfaCompany> toSpecification(CompanySearchForm f) {
