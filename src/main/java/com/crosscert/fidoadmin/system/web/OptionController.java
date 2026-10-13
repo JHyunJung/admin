@@ -25,7 +25,6 @@ public class OptionController extends CrudController<CcfaOption, Long, OptionFor
     @Override protected CrudService<CcfaOption, Long, OptionSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/options"; }
     @Override protected String viewDir() { return "system/options"; }
-    @Override protected OptionSearchForm newSearchForm() { return new OptionSearchForm(); }
     @Override protected OptionForm newForm() { return new OptionForm(); }
     @Override protected OptionForm toForm(CcfaOption e) { return OptionForm.from(e); }
     @Override protected CcfaOption toEntity(OptionForm f) { return f.toNewEntity(); }

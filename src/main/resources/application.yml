@@ -19,6 +19,9 @@ spring:
       hibernate:
         jdbc.time_zone: Asia/Seoul
         default_batch_fetch_size: 50
+        # Oracle 드라이버의 행 프리페치는 기본 10행이다. 목록 상한(SearchForm.MAX_SIZE=200)만큼 한 번에 받아
+        # 200행 페이지의 왕복을 20회에서 1회로 줄인다. CLOB 은 로케이터만 오므로 메모리 영향은 작다.
+        jdbc.fetch_size: 200
   thymeleaf:
     cache: true
   web:
@@ -38,10 +41,25 @@ server:
   servlet:
     session:
       timeout: 30m
+      # 쿠키 보호 플래그는 프로필과 무관하게 기본값으로 둔다. 프로필을 지정하지 않은 기동(= 운영으로 취급,
+      # logback-spring.xml 과 같은 판단)에서도 Secure/SameSite 가 빠지지 않게 하려는 것이다.
+      # local 만 http 라 secure 를 끈다(application-local.yml).
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+  # 오류 응답에 예외 정보를 싣지 않는다. 화면은 error/*.html 이 그리고, JSON 요청(BasicErrorController)에도 메시지를 숨긴다.
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-exception: false
 fido-admin:
   # DB 접속 정보 복호화 키(환경 변수 DB_CONFIG_KEY). 프로필 미지정 때의 기본값 — 각 프로필 yml 에도 같은 항목이 있다.
   db-config-key: ${DB_CONFIG_KEY:}
-  page-size: 20
+  # 인증 없는 서버 간 경로(/api/svc/** 자가등록, /external/** 라이선스)를 부를 수 있는 FIDO 서버 대역.
+  # 쉼표로 구분한 CIDR 또는 IP(예: 10.0.0.0/8,192.168.1.5). 비어 있으면 모두 허용(기존 동작). ExternalAccessFilter 가 본다.
+  #   FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS
+  external-allowed-cidrs: ${FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS:}
   password-fail-limit: 5
   # 비밀번호 만료. auto: 처음 필요할 때 CCFA_MANAGER.LAST_PW_CHANGE_DATE 열이 있는지 보고 있으면 켠다. false: 끈다.
   password-expiry:

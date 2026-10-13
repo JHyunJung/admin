@@ -32,7 +32,7 @@ class SignupApprovalServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     com.crosscert.fidoadmin.auth.PasswordExpiryPolicy expiry = mock(com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class);
     CcfaCompanyRepository companies = mock(CcfaCompanyRepository.class);
-    SignupService service = new SignupService(managers, companies, em, audit, expiry);
+    SignupService service = new SignupService(managers, companies, new com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard(managers, em), audit, expiry);
 
     private CcfaManager pending() {
         CcfaManager m = new CcfaManager();

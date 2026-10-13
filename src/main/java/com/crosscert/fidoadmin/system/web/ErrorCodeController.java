@@ -19,7 +19,6 @@ public class ErrorCodeController extends CrudController<CcfaErrorTable, String, 
     @Override protected CrudService<CcfaErrorTable, String, ErrorCodeSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/error-codes"; }
     @Override protected String viewDir() { return "system/error-codes"; }
-    @Override protected ErrorCodeSearchForm newSearchForm() { return new ErrorCodeSearchForm(); }
     @Override protected ErrorCodeForm newForm() { return new ErrorCodeForm(); }
     @Override protected ErrorCodeForm toForm(CcfaErrorTable e) { return ErrorCodeForm.from(e); }
     @Override protected CcfaErrorTable toEntity(ErrorCodeForm f) { return f.toNewEntity(); }

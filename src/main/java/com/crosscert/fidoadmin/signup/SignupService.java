@@ -4,19 +4,14 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy;
 import com.crosscert.fidoadmin.common.ManagerStatus;
+import com.crosscert.fidoadmin.common.Utf8;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
-import jakarta.persistence.EntityManager;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
+import com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +34,7 @@ public class SignupService {
 
     private final CcfaManagerRepository managers;
     private final CcfaCompanyRepository companies;
-    private final EntityManager em;
+    private final ManagerUserIdGuard userIdGuard;
     private final AuditLogger audit;
     private final PasswordExpiryPolicy expiry;
 
@@ -52,17 +47,13 @@ public class SignupService {
      * 신청을 저장한다. 상태와 소속은 입력과 무관하게 강제된다(권한 상승 차단 1단계).
      * 상태·소속을 받을 파라미터 자체가 없으므로 호출자가 값을 끼워 넣을 통로가 없다.
      *
-     * <p>USER_ID 에 DB 유니크 제약이 없어 동시 신청 시 중복이 생길 수 있다.
-     * {@code ManagerService.insert()} 와 같은 방식으로 테이블을 배타 잠금해 직렬화한다.
-     * 가입은 드물게 일어나므로 테이블 잠금 비용은 수용 가능하다.
+     * <p>USER_ID 에 DB 유니크 제약이 없어 동시 신청 시 중복이 생길 수 있다. 잠금 → 존재 검사 → INSERT 는
+     * 운영자 등록 화면과 같은 {@link ManagerUserIdGuard} 가 맡는다 — "USER_ID 는 전역 유일" 을 지키는
+     * 코드가 한 곳이어야 한다. 가입은 드물게 일어나므로 테이블 잠금 비용은 수용 가능하다.
      */
     @Transactional
     public CcfaManager apply(String userId, String encodedPw, String userNm,
                              String userEmail, String userPhone, String reason) {
-        em.createNativeQuery("LOCK TABLE CCFA_MANAGER IN EXCLUSIVE MODE").executeUpdate();
-        if (managers.findByUserId(userId).isPresent()) {
-            throw new DataIntegrityViolationException("CCFA_MANAGER " + userId + " 은(는) 이미 존재합니다");
-        }
         LocalDateTime now = LocalDateTime.now();
         CcfaManager m = new CcfaManager();
         // IDX 는 CCFA_MANAGER_SEQ 가 채번한다. 직접 넣지 않는다.
@@ -74,13 +65,13 @@ public class SignupService {
         // 승인 전까지 로그인 불가. 소속은 미배정(-1)이며 SUPER 인 0 이 될 수 없다.
         m.setStatus(SignupPolicy.STATUS_PENDING);
         m.setCompanyIdx(SignupPolicy.UNASSIGNED_COMPANY_IDX);
-        m.setLogin("OFF-LINE");
-        m.setAlramType("none");
-        m.setAlramLevel("0");
+        m.setLogin(ManagerStatus.LOGIN_OFFLINE);
+        m.setAlramType(ManagerStatus.ALARM_TYPE_NONE);
+        m.setAlramLevel(ManagerStatus.ALARM_LEVEL_DEFAULT);
         m.setEtc(reason == null || reason.isBlank() ? null : "신청 사유: " + reason);
         m.setCreatedtime(now);
         m.setUpdatedtime(now);
-        return managers.save(m);
+        return userIdGuard.insert(m);
     }
 
     /** 승인 대기 목록. 오래된 신청이 위로 온다. */
@@ -165,23 +156,6 @@ public class SignupService {
     private static String appendReason(String etc, String reason) {
         String added = "거절 사유: " + (reason == null || reason.isBlank() ? "(사유 없음)" : reason);
         String merged = etc == null || etc.isBlank() ? added : etc + "\n" + added;
-        return truncateToBytes(merged, ETC_MAX_BYTES);
-    }
-
-    /**
-     * UTF-8 바이트 기준으로 자른다. 경계에서 멀티바이트 문자가 쪼개지면 깨진 글자가
-     * 저장되므로, 잘린 바이트를 무시하는 디코더로 문자 경계에서 끊는다.
-     */
-    private static String truncateToBytes(String s, int maxBytes) {
-        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length <= maxBytes) return s;
-        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
-            .onMalformedInput(CodingErrorAction.IGNORE)
-            .onUnmappableCharacter(CodingErrorAction.IGNORE);
-        try {
-            return decoder.decode(ByteBuffer.wrap(bytes, 0, maxBytes)).toString();
-        } catch (CharacterCodingException e) {
-            return s.substring(0, Math.min(s.length(), maxBytes));
-        }
+        return Utf8.truncateToBytes(merged, ETC_MAX_BYTES);
     }
 }

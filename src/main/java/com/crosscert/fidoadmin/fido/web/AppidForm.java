@@ -15,18 +15,17 @@ public class AppidForm {
     @ByteSize(max = 128) private String device;
     @NotBlank @ByteSize(max = 1) private String deviceDefault = "F";
     @ByteSize(max = 512) private String servicename;
-    /** SUPER 만 선택. COMPANY 는 서비스가 자기 고객사로 강제한다. */
-    private Long companyIdx;
+    // companyIdx 는 두지 않는다 — 폼에 입력 칸이 없고, CrudService 가 등록·수정 때 유효 테넌트로 강제한다.
 
     public static AppidForm from(Appid a) {
         AppidForm f = new AppidForm();
         f.appid = a.getAppid(); f.memo = a.getMemo(); f.status = a.getStatus(); f.device = a.getDevice();
-        f.deviceDefault = a.getDeviceDefault(); f.servicename = a.getServicename(); f.companyIdx = a.getCompanyIdx();
+        f.deviceDefault = a.getDeviceDefault(); f.servicename = a.getServicename();
         return f;
     }
 
     public void applyTo(Appid a) {
         a.setAppid(appid); a.setMemo(memo); a.setStatus(status); a.setDevice(device);
-        a.setDeviceDefault(deviceDefault); a.setServicename(servicename); a.setCompanyIdx(companyIdx);
+        a.setDeviceDefault(deviceDefault); a.setServicename(servicename);
     }
 }

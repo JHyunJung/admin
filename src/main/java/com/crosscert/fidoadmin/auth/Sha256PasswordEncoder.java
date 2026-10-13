@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Locale;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -33,6 +34,9 @@ public class Sha256PasswordEncoder implements PasswordEncoder {
         if (rawPassword == null || encodedPassword == null || encodedPassword.isBlank()) {
             return false;
         }
-        return encode(rawPassword).equalsIgnoreCase(encodedPassword.trim());
+        // 상수 시간 비교. 저장값은 대소문자가 섞여 있을 수 있어 소문자로 맞춘 뒤 비교한다(결과는 equalsIgnoreCase 와 같다).
+        byte[] actual = encode(rawPassword).getBytes(StandardCharsets.US_ASCII);
+        byte[] stored = encodedPassword.trim().toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(actual, stored);
     }
 }

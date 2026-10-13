@@ -75,11 +75,11 @@ class AdminCriteriaServiceTest {
 
     @Test void superSearchesWithoutTenantFilter() {
         login(0L);
-        when(repo.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(new PageImpl<>(java.util.List.of()));
+        when(repo.findAllExcluding(any(), any(Specification.class), any(PageRequest.class), any())).thenReturn(new PageImpl<>(java.util.List.of()));
         AdminCriteriaSearchForm f = new AdminCriteriaSearchForm();
         f.setAaid("0012");
         service.search(f, PageRequest.of(0, 20, service.defaultSort()));
-        verify(repo).findAll(any(Specification.class), any(PageRequest.class));
+        verify(repo).findAllExcluding(any(), any(Specification.class), any(PageRequest.class), eq(java.util.Set.of("jsondata")));
         assertThat(service.sortableProperties()).contains("idx", "aaid", "updatedtime");
     }
 }

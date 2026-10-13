@@ -23,6 +23,8 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
                              String accessIp, String userAgent, String logtime, boolean tcRequest, String json) {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** base64 안의 줄바꿈·공백. 행마다 호출되므로 한 번만 컴파일한다. */
+    private static final java.util.regex.Pattern WHITESPACE = java.util.regex.Pattern.compile("\\s");
     private static final FidoLogPayload EMPTY = new FidoLogPayload(null, null, null, null, null, null, null, null, false, null);
 
     private static final String[] OP_KEYS = {"op"};
@@ -181,7 +183,7 @@ public record FidoLogPayload(String op, String serviceName, String userName, Lon
 
     /** base64url·표준 base64·패딩 유무·줄바꿈을 모두 받는다. 풀리지 않거나 UTF-8 이 아니면 null. */
     private static String decodeBase64(String text) {
-        String normalized = text.replaceAll("\\s", "").replace('+', '-').replace('/', '_').replace("=", "");
+        String normalized = WHITESPACE.matcher(text).replaceAll("").replace('+', '-').replace('/', '_').replace("=", "");
         try {
             return new String(Base64.getUrlDecoder().decode(normalized), StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {

@@ -28,7 +28,6 @@ public class ManagerController extends CrudController<CcfaManager, Long, Manager
     @Override protected CrudService<CcfaManager, Long, ManagerSearchForm> service() { return service; }
     @Override protected String basePath() { return "/managers"; }
     @Override protected String viewDir() { return "manager/manager"; }
-    @Override protected ManagerSearchForm newSearchForm() { return new ManagerSearchForm(); }
     @Override protected ManagerForm newForm() { return new ManagerForm(); }
     @Override protected ManagerForm toForm(CcfaManager e) { return ManagerForm.from(e); }
 

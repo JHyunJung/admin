@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.system.web;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -148,7 +149,10 @@ class FidoClientControllerWebTest {
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of()));
         mvc.perform(get("/system/fido-clients").with(user(superUser)))
             .andExpect(content().string(containsString("/system/fido-clients/reload")))
-            .andExpect(content().string(containsString("지금 reload 보내기")));
+            .andExpect(content().string(containsString("지금 reload 보내기")))
+            // 확인은 README 규칙대로 네이티브 confirm() 이 아니라 모달(data-confirm-*)이다.
+            .andExpect(content().string(not(containsString("confirm("))))
+            .andExpect(content().string(containsString("data-confirm-form=\"reloadForm\"")));
     }
 
     @Test void reloadIsReservedServerCode() throws Exception {

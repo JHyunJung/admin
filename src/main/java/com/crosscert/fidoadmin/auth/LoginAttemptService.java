@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth;
 
+import com.crosscert.fidoadmin.common.ManagerStatus;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
@@ -91,7 +92,7 @@ public class LoginAttemptService {
         String userId = normalize(rawUserId);
         managers.findByUserIdForUpdate(userId).ifPresent(m -> {
             LocalDateTime now = LocalDateTime.now();
-            m.setLogin("ON-LINE");
+            m.setLogin(ManagerStatus.LOGIN_ONLINE);
             m.setLastAccess(now);
             // 만료된 잠금으로 들어온 로그인이면 여기서 실제로 푼다.
             m.setBlockTime(null);
@@ -144,7 +145,7 @@ public class LoginAttemptService {
     public void onLogout(String rawUserId) {
         String userId = normalize(rawUserId);
         managers.findByUserIdForUpdate(userId).ifPresent(m -> {
-            m.setLogin("OFF-LINE");
+            m.setLogin(ManagerStatus.LOGIN_OFFLINE);
             m.setUpdatedtime(LocalDateTime.now());
             managers.save(m);
         });

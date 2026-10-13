@@ -19,7 +19,6 @@ public class CompanyController extends CrudController<CcfaCompany, Long, Company
     @Override protected CrudService<CcfaCompany, Long, CompanySearchForm> service() { return service; }
     @Override protected String basePath() { return "/companies"; }
     @Override protected String viewDir() { return "company/company"; }
-    @Override protected CompanySearchForm newSearchForm() { return new CompanySearchForm(); }
     @Override protected CompanyForm newForm() { return new CompanyForm(); }
     @Override protected CompanyForm toForm(CcfaCompany e) { return CompanyForm.from(e); }
     @Override protected CcfaCompany toEntity(CompanyForm f) { CcfaCompany c = new CcfaCompany(); f.applyTo(c); return c; }

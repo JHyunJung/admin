@@ -23,7 +23,6 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     protected abstract String basePath();
     /** "company/company" 처럼 templates/ 아래 디렉터리. */
     protected abstract String viewDir();
-    protected abstract S newSearchForm();
     protected abstract F newForm();
     protected abstract F toForm(E entity);
     /**

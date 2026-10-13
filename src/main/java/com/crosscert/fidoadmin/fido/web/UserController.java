@@ -94,10 +94,24 @@ public class UserController {
             .credentialsOf(entity.getUserid(), entity.getServicename() == null ? "" : entity.getServicename())
             .stream().map(UserRow::from).toList();
         model.addAttribute("devices", devices);
-        model.addAttribute("back", back);
+        model.addAttribute("back", safeBack(back));
         // 기기 상세는 PUBKEY·CERTIFICATE 앞부분을 보여 준다. 누가 어느 기기를 열었는지 남긴다.
         AuditView.add(model, "USERINFO", String.valueOf(entity.getIdx()));
         return "fido/user/detail";
+    }
+
+    /**
+     * 돌아갈 곳으로 받을 수 있는 유일한 형태 — 이 화면의 기기 목록 경로.
+     * {@code credentials.html} 이 만드는 값과 같은 꼴만 통과시킨다. 그 밖(외부 주소, {@code javascript:},
+     * {@code //host}, 다른 화면)은 버리고 기본 목록으로 돌아간다. 값은 그대로 {@code th:href} 에 실리므로
+     * 여기서 걸러야 운영자 화면에 임의 링크가 박히지 않는다.
+     */
+    private static final java.util.regex.Pattern SAFE_BACK =
+        java.util.regex.Pattern.compile("/users/[^/?#]+/credentials(\\?servicename=[^/?#&]*)?");
+
+    static String safeBack(String back) {
+        if (back == null || !SAFE_BACK.matcher(back).matches()) return null;
+        return back;
     }
 
     @PostMapping("/{id}/status")

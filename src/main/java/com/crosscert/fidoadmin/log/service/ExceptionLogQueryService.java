@@ -34,4 +34,6 @@ public class ExceptionLogQueryService extends CrudService<CcfaExceptions, Long, 
     @Override protected String tableName() { return "CCFA_EXCEPTIONS"; }
     @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "idx"); }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "createdtime", "eType", "eLevel"); }
+    /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
+    @Override protected Set<String> listExcludedProperties() { return Set.of("exceptionData"); }
 }

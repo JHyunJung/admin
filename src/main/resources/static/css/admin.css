@@ -146,11 +146,9 @@ body { background: var(--fa-bg); color: var(--fa-ink); font-size: 14px; line-hei
 .btn-primary { --bs-btn-bg: var(--fa-primary); --bs-btn-border-color: var(--fa-primary); --bs-btn-hover-bg: var(--fa-primary-hover);
   --bs-btn-hover-border-color: var(--fa-primary-hover); --bs-btn-active-bg: var(--fa-primary-hover); --bs-btn-active-border-color: var(--fa-primary-hover);
   --bs-btn-disabled-bg: var(--fa-primary); --bs-btn-disabled-border-color: var(--fa-primary); }
-.btn-outline-secondary, .btn-secondary, .btn-light { --bs-btn-color: var(--fa-ink); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-line-strong);
+.btn-outline-secondary { --bs-btn-color: var(--fa-ink); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-line-strong);
   --bs-btn-hover-color: var(--fa-ink); --bs-btn-hover-bg: var(--fa-surface-2); --bs-btn-hover-border-color: var(--fa-line-strong);
   --bs-btn-active-color: var(--fa-ink); --bs-btn-active-bg: var(--fa-surface-2); --bs-btn-active-border-color: var(--fa-line-strong); }
-.btn-outline-primary { --bs-btn-color: var(--fa-primary-ink); --bs-btn-border-color: var(--fa-primary-line); --bs-btn-hover-bg: var(--fa-primary-soft);
-  --bs-btn-hover-color: var(--fa-primary-ink); --bs-btn-hover-border-color: var(--fa-primary-line); }
 .btn-link { --bs-btn-color: var(--fa-primary-ink); --bs-btn-hover-color: var(--fa-ink); text-decoration: none; }
 .btn-outline-danger, .btn-danger { --bs-btn-color: var(--fa-danger); --bs-btn-bg: var(--fa-surface); --bs-btn-border-color: var(--fa-danger-line);
   --bs-btn-hover-color: var(--fa-danger); --bs-btn-hover-bg: var(--fa-danger-soft); --bs-btn-hover-border-color: var(--fa-danger-line);
@@ -166,7 +164,7 @@ body { background: var(--fa-bg); color: var(--fa-ink); font-size: 14px; line-hei
 .form-label { font-size: 13px; font-weight: 600; color: var(--fa-ink); margin-bottom: 6px; }
 .form-control, .form-select { background-color: var(--fa-surface); height: 38px; border: 1px solid var(--fa-line-strong); border-radius: var(--fa-radius-ctl); font-size: 14px; color: var(--fa-ink); }
 textarea.form-control { height: auto; }
-.form-control-sm, .form-select-sm { height: 36px; font-size: 13px; border-radius: var(--fa-radius-ctl); }
+.form-select-sm { height: 36px; font-size: 13px; border-radius: var(--fa-radius-ctl); }
 .form-control:focus, .form-select:focus { border-color: var(--fa-primary); box-shadow: 0 0 0 3px rgba(31, 94, 219, .15); }
 .form-control.is-invalid, .form-select.is-invalid { border-color: var(--fa-danger); }
 .invalid-feedback { color: var(--fa-danger); font-size: 12px; }
@@ -255,8 +253,8 @@ textarea.form-control { height: auto; }
 /* ---------- 알림 ---------- */
 .alert { display: flex; gap: 10px; align-items: flex-start; border: 1px solid; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--fa-ink); margin: 0; }
 .alert > .bi { flex: none; font-size: 16px; line-height: 1.2; }
-.alert-info, .alert-primary { background: var(--fa-primary-soft); border-color: var(--fa-primary-line); }
-.alert-info > .bi, .alert-primary > .bi { color: var(--fa-primary-ink); }
+.alert-info { background: var(--fa-primary-soft); border-color: var(--fa-primary-line); }
+.alert-info > .bi { color: var(--fa-primary-ink); }
 .alert-success { background: var(--fa-success-soft); border-color: var(--fa-success-line); }
 .alert-success > .bi { color: var(--fa-success); }
 .alert-warning { background: var(--fa-warning-soft); border-color: var(--fa-warning-line); }
@@ -386,7 +384,6 @@ textarea.form-control { height: auto; }
 .fa-card { background: var(--fa-surface); border: 1px solid var(--fa-line); border-radius: var(--fa-radius-card); box-shadow: var(--fa-shadow); }
 
 /* ---------- 등록 기기 상세: 기기 전환 ---------- */
-.user-account-table { width: 100%; min-width: 760px; table-layout: fixed; }
 .fa-wrap { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .fa-pw-alert { max-width: 720px; }
 .fa-pw-layout { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }

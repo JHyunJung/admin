@@ -45,16 +45,64 @@ public class FidoReloadClient {
         this.responseTimeout = responseTimeout;
     }
 
+    /**
+     * 모든 서버에 요청을 먼저 띄운 뒤 서버 코드 순으로 결과를 모은다. 하나씩 보내고 기다리면
+     * 수동 reload 가 서버 수 × 응답 타임아웃까지 걸린다. 결과 순서는 서버 코드 순 그대로다.
+     */
     public List<ReloadResult> reloadAll() {
-        List<ReloadResult> results = new ArrayList<>();
+        List<Pending> pending = new ArrayList<>();
         for (CcfaFidoclient c : clients.findByStatusOrderByServercodeAsc(STATUS_ON)) {
-            results.add(send(c));
+            pending.add(start(c));
+        }
+        List<ReloadResult> results = new ArrayList<>(pending.size());
+        for (Pending p : pending) {
+            results.add(p.await());
         }
         return results;
     }
 
-    private ReloadResult send(CcfaFidoclient c) {
-        long start = System.nanoTime();
+    /** 띄워 둔 요청 하나. URL 이 틀려 보내지 못한 경우는 {@code failed} 에 결과가 미리 들어 있다. */
+    private final class Pending {
+        private final CcfaFidoclient client;
+        private final String raw;
+        private final long start = System.nanoTime();
+        private CompletableFuture<HttpResponse<Void>> future;
+        private ReloadResult failed;
+
+        Pending(CcfaFidoclient client) {
+            this.client = client;
+            this.raw = client.getServerurl();
+        }
+
+        ReloadResult await() {
+            if (failed != null) return failed;
+            try {
+                // HttpRequest.timeout 은 헤더까지만 본다. 본문을 천천히 흘려 스레드를 붙잡지 못하게 전체를 자른다.
+                // 요청들은 함께 띄웠으므로 각자 자기 시작 시각 기준으로 남은 시간만 기다린다.
+                long remaining = Math.max(0, responseTimeout.toMillis() - millisSince(start));
+                int code = future.get(remaining, TimeUnit.MILLISECONDS).statusCode();
+                return result(code >= 200 && code < 300, "HTTP " + code);
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                return result(false, "request timed out");
+            } catch (InterruptedException e) {
+                future.cancel(true);
+                Thread.currentThread().interrupt();
+                return result(false, "중단됨");
+            } catch (Exception e) {
+                Throwable t = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
+                String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getClass().getSimpleName() + ": " + t.getMessage();
+                return result(false, oneLine(msg));
+            }
+        }
+
+        private ReloadResult result(boolean ok, String detail) {
+            return new ReloadResult(client.getServercode(), raw, ok, detail, millisSince(start));
+        }
+    }
+
+    private Pending start(CcfaFidoclient c) {
+        Pending p = new Pending(c);
         String raw = c.getServerurl();
         String base = raw == null ? "" : raw.trim().replaceAll("/+$", "");
         URI uri;
@@ -67,28 +115,19 @@ public class FidoReloadClient {
         if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
             || uri.getHost() == null || uri.getRawQuery() != null
             || uri.getRawFragment() != null || uri.getRawUserInfo() != null) {
-            return new ReloadResult(c.getServercode(), raw, false, oneLine("지원하지 않는 URL: " + (raw == null ? "" : raw.trim())), 0);
+            p.failed = new ReloadResult(c.getServercode(), raw, false, oneLine("지원하지 않는 URL: " + (raw == null ? "" : raw.trim())), 0);
+            return p;
         }
-        CompletableFuture<HttpResponse<Void>> f = null;
         try {
             HttpRequest req = HttpRequest.newBuilder(URI.create(base + "/api/command/reload"))
                 .timeout(responseTimeout).GET().build();
-            f = http.sendAsync(req, HttpResponse.BodyHandlers.discarding());
-            // HttpRequest.timeout 은 헤더까지만 본다. 본문을 천천히 흘려 스레드를 붙잡지 못하게 전체를 자른다.
-            int code = f.get(responseTimeout.toMillis(), TimeUnit.MILLISECONDS).statusCode();
-            return new ReloadResult(c.getServercode(), raw, code >= 200 && code < 300, "HTTP " + code, millisSince(start));
-        } catch (TimeoutException e) {
-            f.cancel(true);
-            return new ReloadResult(c.getServercode(), raw, false, "request timed out", millisSince(start));
-        } catch (InterruptedException e) {
-            if (f != null) f.cancel(true);
-            Thread.currentThread().interrupt();
-            return new ReloadResult(c.getServercode(), raw, false, "중단됨", millisSince(start));
-        } catch (Exception e) {
-            Throwable t = e instanceof ExecutionException && e.getCause() != null ? e.getCause() : e;
-            String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getClass().getSimpleName() + ": " + t.getMessage();
-            return new ReloadResult(c.getServercode(), raw, false, oneLine(msg), millisSince(start));
+            p.future = http.sendAsync(req, HttpResponse.BodyHandlers.discarding());
+        } catch (RuntimeException e) {
+            // 요청을 만들거나 띄우는 단계의 오류. 기존처럼 결과로만 돌려주고 다음 서버를 막지 않는다.
+            String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getClass().getSimpleName() + ": " + e.getMessage();
+            p.failed = new ReloadResult(c.getServercode(), raw, false, oneLine(msg), millisSince(p.start));
         }
+        return p;
     }
 
     private static long millisSince(long startNanos) { return (System.nanoTime() - startNanos) / 1_000_000; }

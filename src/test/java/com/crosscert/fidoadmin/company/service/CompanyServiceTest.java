@@ -46,8 +46,15 @@ class CompanyServiceTest {
     AuditLogger audit = mock(AuditLogger.class);
     CriteriaQueryService criteria = mock(CriteriaQueryService.class);
     ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
+    CompanyLookup lookup = mock(CompanyLookup.class);
     CompanyService service = new CompanyService(companies, audit, appids, users, managers, props,
-        new TenantContext(new SelectedTenant()), criteria, events);
+        new TenantContext(new SelectedTenant()), criteria, events, lookup);
+
+    /** 고객사 이름은 CompanyLookup 이 캐시한다. 이 서비스가 행을 바꾸면 그 캐시를 지워야 이름 변경이 바로 보인다. */
+    @Test void changesEvictTheCachedCompanyName() {
+        service.afterChange("UPDATE", company(3L));
+        verify(lookup).evict(3L);
+    }
 
     @BeforeEach void loginSuper() {
         var u = new ManagerUserDetails(1L, "superuser", null, "슈퍼", 0L, "전역", true, true);

@@ -10,6 +10,12 @@ spring:
         format_sql: true
   thymeleaf:
     cache: false
+server:
+  servlet:
+    session:
+      cookie:
+        # 로컬은 http://localhost 라 Secure 쿠키를 브라우저가 보내지 않는다. 여기서만 끈다.
+        secure: false
 logging:
   level:
     org.hibernate.orm.jdbc.bind: trace

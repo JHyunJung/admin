@@ -19,19 +19,17 @@ spring:
       idle-timeout: 300000           # 5분 쉬면 반납
       max-lifetime: 1800000          # 30분 — DB·방화벽의 유휴 연결 끊김보다 짧게
       leak-detection-threshold: 20000  # 20초 넘게 안 돌려준 커넥션을 WARN 으로 알림(QA 에서 누수 찾기)
-      connection-test-query: SELECT 1 FROM DUAL
+      # connection-test-query 는 두지 않는다. ojdbc 는 JDBC4 isValid() 를 지원하므로 Hikari 가 그것으로 검사하며,
+      # SELECT 문 검증보다 가볍다.
   jpa:
     show-sql: false
   thymeleaf:
     cache: true
+# 세션 쿠키 플래그(HttpOnly/Secure/SameSite)는 application.yml 의 기본값을 그대로 쓴다.
 server:
-  servlet:
-    session:
-      cookie:
-        http-only: true
-        secure: true
   error:
     include-stacktrace: never
+    # QA 는 재현·분석용이라 JSON 오류 응답에 예외 메시지를 남긴다(기본값 never 를 덮어쓴다). 운영은 숨긴다.
     include-message: always
 logging:
   level:

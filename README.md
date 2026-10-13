@@ -34,6 +34,13 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 로그 파일은 `LOG_PATH`(기본 `./logs`, `logging.file.path` 로도 지정) 아래 `fido-admin.log`(전체)와 `fido-admin-error.log`(WARN 이상)이며 일자별로 롤링해 30일 보관한다.
 모든 줄에 `[req=요청ID user=로그인ID tenant=소속]` 이 붙고, 같은 요청 ID 가 응답 헤더 `X-Request-Id` 로 나간다 — 오류 신고 때 이 값을 받으면 그 요청의 로그만 바로 찾을 수 있다.
 
+세션 쿠키의 `HttpOnly`/`Secure`/`SameSite=Lax` 와 오류 응답의 예외 정보 숨김은 프로파일과 무관한 기본값이다(`application.yml`).
+`local` 만 http 라 `Secure` 를 끈다.
+
+인증 없이 열린 서버 간 경로 두 개(`/api/svc/**` FIDO 서버 자가등록, `/external/**` 라이선스 수신)는
+환경 변수 `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS`(쉼표 구분 CIDR 또는 IP, 예 `10.0.0.0/8,192.168.1.5`)로 접근 대역을 제한할 수 있다.
+비어 있으면(기본값) 모두 허용한다. 리버스 프록시 뒤라면 `server.forward-headers-strategy` 도 함께 설정해야 실제 주소로 판정한다.
+
 화면 29개(대시보드 1, 폼 1, CRUD 18, 조회 9)가 모두 구현되어 있다. 메뉴는 `MenuRegistry` 에 고정되어 있고 `CCFA_MENU` 는 데이터로만 다룬다.
 
 여기에 더해 운영자 가입 흐름 화면 2개가 있다.
@@ -71,7 +78,8 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 ## 테스트
 
 `./gradlew test` — Docker 가 있으면 Testcontainers Oracle 통합 테스트까지 실행되고, 없으면 건너뛴다.
-`EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest` 는 로컬 Docker Oracle(`local` 프로파일)이 떠 있어야 통과한다.
+`EntityBootTest`, `AuditLogRoundTripTest`, `LoginLockLoadTest`, `SelectedTenantWiringTest` 는 로컬 Docker Oracle(`local` 프로파일)을 쓴다.
+localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 
 > Testcontainers 가 "Could not find a valid Docker environment" 로 실패하면
 > `~/.docker-java.properties` 에 `api.version=1.41` 을 넣는다.
@@ -113,11 +121,19 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 - `toEntity(form)` 에서 **식별자를 폼 값으로 채우지 않는다.** 채우면 `save()` 가 INSERT 가 아니라
   MERGE 로 동작해 기존 행을 덮어쓸 수 있다.
 - 폼 화면에는 `#fields.allErrors()` 로 모든 검증 오류를 표시한다.
+- CLOB 컬럼이 있는 테이블의 화면은 목록 DTO 에서 그 컬럼을 빼고, 서비스의 `listExcludedProperties()` 에 같은 속성명을 적는다.
+  Hibernate 는 `@Lob String` 을 항상 즉시 읽으므로, 적어 두면 목록 조회가 SELECT 절에서 그 컬럼을 뺀다(`PartialFetch`).
+  목록 행에서는 그 속성이 `null` 이고 상세(`get`)는 영향이 없다.
 - 할당형 PK 테이블(문자열 PK, COMPANY_IDX PK, 복합키)은 `CrudService` 대신 **`AssignedIdCrudService`** 를 상속하고
   `assignedId()` 를 구현한다. 등록은 존재 검사 + `persist` 로만 수행되어, 이미 있는 키를 입력해도 기존 행이 덮어써지지 않고
   "이미 존재하는 값" 오류로 돌아온다(`save()` 는 식별자가 있으면 MERGE 로 동작한다).
 - `COMPANY_IDX` 가 없는 CRITERIA·FIDO2 화면은 시스템 메뉴와 같이 **SUPER 전용**이다.
-  `MenuRegistry` 의 `superOnly` 와 `SecurityConfig` 의 SUPER 매처를 함께 맞춘다.
+  `MenuRegistry` 의 `superOnly` 와 `SecurityConfig.SUPER_PATHS` 를 함께 맞춘다.
+- 위 규칙 가운데 코드로 검사할 수 있는 것은 `ArchitectureRulesTest` 가 고정한다 — 메뉴 `superOnly` 와 SUPER 매처의 일치,
+  화면 경로의 `MenuRegistry` 등록(또는 SUPER 매처 안), `basePath()` 와 `@RequestMapping` 의 일치, 전역 테이블 화면의 SUPER 전용,
+  `sortableProperties()`/`defaultSort()` 속성의 실재, 폼의 `@ByteSize` 사용. 새 화면을 넣고 이 테스트가 빨개지면 셋 중 어디를 빠뜨렸는지 알려 준다.
+- 운영자 계정 화면 둘(`/managers`, `/managers/super`)의 공통 규칙은 `ManagerAccountService` 에 있고,
+  `USER_ID` 전역 유일성은 가입 신청까지 포함해 `ManagerUserIdGuard` 하나가 지킨다.
 - 참고 구현: CRUD 는 `company/`, 조회 전용은 `log/audit`.
 
 ## 알려진 제약
@@ -128,5 +144,8 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 - SUPER 가 고객사를 재배정하는 것과 COMPANY 의 수정이 동시에 일어나면 경쟁이 발생할 수 있다.
 - 가입 신청(`/signup`)에 횟수 제한이 없다. 사내망 전용이 현재의 유일한 완화책이다. 아이디 중복 응답으로 계정 존재를 추측할 수 있고, 승인대기 행을 대량으로 쌓을 수 있다.
 - 가입 신청은 감사 로그가 남지 않는다. `AuditLogger` 가 인증된 주체 없이는 아무것도 기록하지 않기 때문이다(승인·거절은 기록된다).
+- `/api/svc/**`(FIDO 서버 자가등록)과 `/external/**`(라이선스 수신)는 인증이 없다. FIDO 서버 코드를 고치지 않는 전제라 토큰을 둘 수 없고,
+  누구나 서버를 등록·OFF 하거나 등록된 URL 로 어드민이 reload GET 을 보내게 할 수 있다. `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 가 현재의 완화책이다.
+- 감사 로그의 무결성 해시는 키 없는 SHA-256 이라 DB 쓰기 권한자가 재계산해 맞출 수 있다(변조 "탐지" 가 아니라 일관성 검사 수준).
 - `CCFA_SYSTEM_PROP` 화면은 복합키를 경로 한 조각 `{PROP_KEY}@{COMPANY_IDX}` 로 다루므로 `PROP_KEY` 에 `/` 가 들어간 키는 화면에서 지원하지 않는다(등록 폼에서 거부).
 

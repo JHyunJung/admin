@@ -19,7 +19,6 @@ public class SystemInfoController extends CrudController<CcfaSystemInfo, String,
     @Override protected CrudService<CcfaSystemInfo, String, SystemInfoSearchForm> service() { return service; }
     @Override protected String basePath() { return "/system/info"; }
     @Override protected String viewDir() { return "system/info"; }
-    @Override protected SystemInfoSearchForm newSearchForm() { return new SystemInfoSearchForm(); }
     @Override protected SystemInfoForm newForm() { return new SystemInfoForm(); }
     @Override protected SystemInfoForm toForm(CcfaSystemInfo e) { return SystemInfoForm.from(e); }
     @Override protected CcfaSystemInfo toEntity(SystemInfoForm f) { return f.toNewEntity(); }

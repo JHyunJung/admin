@@ -20,7 +20,6 @@ public class Fido2DemoAccessCodeController
     @Override protected CrudService<Fido2DemoAccessCode, String, Fido2DemoAccessCodeSearchForm> service() { return service; }
     @Override protected String basePath() { return "/fido2/demo-access-codes"; }
     @Override protected String viewDir() { return "fido2/demo-access-code"; }
-    @Override protected Fido2DemoAccessCodeSearchForm newSearchForm() { return new Fido2DemoAccessCodeSearchForm(); }
     @Override protected Fido2DemoAccessCodeForm newForm() { return new Fido2DemoAccessCodeForm(); }
     @Override protected Fido2DemoAccessCodeForm toForm(Fido2DemoAccessCode e) { return Fido2DemoAccessCodeForm.from(e); }
     /** 할당형 PK 예외: 등록 시에만 폼의 ACCESSCODE 를 식별자로 쓴다. 서비스가 존재 검사 후 persist 한다. */

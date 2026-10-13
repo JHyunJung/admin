@@ -14,4 +14,13 @@ public final class ManagerStatus {
 
     /** 로그인 가능한 정상 계정. */
     public static final String ACTIVE = "활성";
+
+    /** CCFA_MANAGER.LOGIN — 접속 중. LoginAttemptService 가 로그인 성공 때 쓴다. */
+    public static final String LOGIN_ONLINE = "ON-LINE";
+    /** CCFA_MANAGER.LOGIN — 접속 아님. 새 계정의 기본값이자 로그아웃 때 값. */
+    public static final String LOGIN_OFFLINE = "OFF-LINE";
+    /** CCFA_MANAGER.ALRAM_TYPE 기본값(알림 없음). */
+    public static final String ALARM_TYPE_NONE = "none";
+    /** CCFA_MANAGER.ALRAM_LEVEL 기본값. */
+    public static final String ALARM_LEVEL_DEFAULT = "0";
 }

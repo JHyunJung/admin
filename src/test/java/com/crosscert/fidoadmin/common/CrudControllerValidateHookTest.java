@@ -30,7 +30,6 @@ class CrudControllerValidateHookTest {
         @Override protected CrudService<CcfaLicense, Long, SearchForm> service() { return service; }
         @Override protected String basePath() { return "/x"; }
         @Override protected String viewDir() { return "x/x"; }
-        @Override protected SearchForm newSearchForm() { return new SearchForm(); }
         @Override protected Form newForm() { return new Form(); }
         @Override protected Form toForm(CcfaLicense e) { return new Form(); }
         @Override protected CcfaLicense toEntity(Form f) { return new CcfaLicense(); }

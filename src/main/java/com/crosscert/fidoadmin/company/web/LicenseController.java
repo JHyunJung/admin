@@ -21,7 +21,6 @@ public class LicenseController extends CrudController<CcfaLicense, Long, License
     @Override protected CrudService<CcfaLicense, Long, LicenseSearchForm> service() { return service; }
     @Override protected String basePath() { return "/licenses"; }
     @Override protected String viewDir() { return "company/license"; }
-    @Override protected LicenseSearchForm newSearchForm() { return new LicenseSearchForm(); }
     @Override protected LicenseForm newForm() { return new LicenseForm(); }
     @Override protected LicenseForm toForm(CcfaLicense e) { return LicenseForm.from(e); }
     @Override protected CcfaLicense toEntity(LicenseForm f) { CcfaLicense l = new CcfaLicense(); f.applyTo(l); return l; }

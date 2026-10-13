@@ -112,6 +112,31 @@ class UserControllerWebTest {
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))));
     }
 
+    /**
+     * back 은 "목록" 링크의 href 로 그대로 나간다. th:href 는 HTML 이스케이프만 하고 스킴은 검사하지
+     * 않으므로, 검증 없이 넘기면 javascript: 링크나 외부 주소가 운영자 화면에 박힌다.
+     * 기기 목록 경로(/users/{userid}/credentials...)만 받고 그 밖은 기본 목록으로 돌린다.
+     */
+    @Test void detailDropsBackThatIsNotACredentialsPath() throws Exception {
+        when(service.get(1L)).thenReturn(userinfo(1L));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        for (String evil : List.of("javascript:alert(1)", "https://evil.example/", "//evil.example/x", "/system/props")) {
+            mvc.perform(get("/users/1").param("back", evil).with(user(companyUser)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(evil))))
+                .andExpect(content().string(containsString("href=\"/users\"")));
+        }
+    }
+
+    @Test void detailKeepsBackPointingToCredentialsList() throws Exception {
+        when(service.get(1L)).thenReturn(userinfo(1L));
+        when(companies.name(1L)).thenReturn("KB국민은행");
+        String back = "/users/user001/credentials?servicename=kbstar";
+        mvc.perform(get("/users/1").param("back", back).with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("href=\"/users/user001/credentials?servicename=kbstar\"")));
+    }
+
     @Test void detailShowsOnlyFirst16CharsOfSensitiveColumns() throws Exception {
         when(service.get(1L)).thenReturn(userinfo(1L));
         when(companies.name(1L)).thenReturn("KB국민은행");
