@@ -59,14 +59,15 @@ class FidoLogPayloadIntegrationTest extends OracleContainerSupport {
     @Test void listDecodesBase64AndPlainRows() {
         var page = logs.search(form(), PageRequest.of(0, 20)).page();
 
-        assertThat(page.getContent()).extracting(FidoLogRow::idx).containsExactly(9001L, 9002L);
-        FidoLogRow tc = page.getContent().get(0);
+        // 정렬은 IDX 역순이다(생성 시각이 아니다). 9001 이 더 늦은 시각이어도 9002 가 먼저 온다.
+        assertThat(page.getContent()).extracting(FidoLogRow::idx).containsExactly(9002L, 9001L);
+        FidoLogRow tc = page.getContent().get(1);
         assertThat(tc.op()).isEqualTo("TC");
         assertThat(tc.servicename()).isEqualTo("com.kbstar.kbbank");
         assertThat(tc.userid()).isEqualTo("f5JyUa2Q1lm020DrWpGOnm8/vEmxHLmrOOHR");
         assertThat(tc.bioTypeLabel()).isEqualTo("지문");
         assertThat(tc.status()).isEqualTo("Success");
-        FidoLogRow plain = page.getContent().get(1);
+        FidoLogRow plain = page.getContent().get(0);
         assertThat(plain.servicename()).isEqualTo("kbpay"); // JSON 에 없으면 컬럼 값
         assertThat(plain.userid()).isEqualTo("user132");
     }

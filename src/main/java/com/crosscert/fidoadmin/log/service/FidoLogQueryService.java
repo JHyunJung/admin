@@ -72,8 +72,10 @@ public class FidoLogQueryService {
         }
         // 텍스트 블록을 쓰지 않는다 — 조각을 이어 붙이면 블록마다 들여쓰기가 따로 벗겨져
         // 앞뒤 공백이 사라진다(FROM 테이블명WHERE 처럼 붙어 ORA-03048 이 났다).
+        // 시퀀스 PK 역순. PK 인덱스를 거꾸로 읽어 필요한 만큼만 가져온다(CREATEDTIME 정렬은 그날 전체를 정렬한다).
+        // 생성 순서와 거의 같다 — 같은 시각에 들어온 행끼리만 순서가 다를 수 있다.
         String select = "SELECT IDX, COMPANY_IDX, SERVICENAME, CREATEDTIME, JSONDATA FROM " + table
-            + where + " ORDER BY CREATEDTIME DESC, IDX DESC";
+            + where + " ORDER BY IDX DESC";
 
         String op = opOrNull(form.getOp());
         String servicename = termOrNull(form.getServicename());

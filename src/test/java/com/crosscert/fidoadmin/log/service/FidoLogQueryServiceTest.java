@@ -129,7 +129,7 @@ class FidoLogQueryServiceTest {
     }
 
     /** 정렬은 고정이다 — 사용자 입력이 ORDER BY 로 들어갈 경로가 없다. */
-    @Test void orderingIsFixedToCreatedtimeDesc() {
+    @Test void orderingIsFixedToIdxDesc() {
         tableExists(true);
         when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(1L);
         when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
@@ -140,7 +140,7 @@ class FidoLogQueryServiceTest {
 
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
-        assertThat(sql.getValue()).contains("ORDER BY CREATEDTIME DESC, IDX DESC");
+        assertThat(sql.getValue()).contains("ORDER BY IDX DESC").doesNotContain("CREATEDTIME DESC");
         assertThat(sql.getValue()).doesNotContain("servicename DESC");
     }
 
@@ -249,7 +249,7 @@ class FidoLogQueryServiceTest {
         ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbc).query(sql.capture(), params.capture(), any(RowMapper.class));
         assertThat(sql.getValue()).contains("FIDO_LOGS_20260926").contains("COMPANY_IDX = :companyIdx")
-            .contains("rownum <= :cap").contains("ORDER BY CREATEDTIME DESC, IDX DESC");
+            .contains("rownum <= :cap").contains("ORDER BY IDX DESC").doesNotContain("CREATEDTIME DESC");
         assertThat(params.getValue().getValue("companyIdx")).isEqualTo(1L);
         assertThat(params.getValue().getValue("cap")).isEqualTo(FidoLogQueryService.SCAN_LIMIT + 1);
         verify(jdbc, never()).queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class));

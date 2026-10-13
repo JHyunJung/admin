@@ -31,7 +31,12 @@ public class SignQueryService extends CrudService<Sign, Long, SignSearchForm> {
     @Override protected void setCompanyIdx(Sign e, Long c) { e.setCompanyIdx(c); }
     @Override public String idOf(Sign e) { return String.valueOf(e.getIdx()); }
     @Override protected String tableName() { return "SIGN"; }
-    @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "createtime", "idx"); }
+    /**
+     * 시퀀스 PK 역순. 행이 많은 로그 테이블이라 CREATETIME 로 정렬하면 매 조회가 전체 정렬이 되고,
+     * IDX 로 정렬하면 PK 인덱스를 거꾸로 읽어 첫 페이지만 가져온다. 생성 순서와 거의 같다
+     * (같은 시각에 들어온 행끼리는 순서가 다를 수 있다). 시각 정렬은 목록 머리글로 고를 수 있다.
+     */
+    @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "idx"); }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "createtime"); }
     /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
     @Override protected Set<String> listExcludedProperties() { return Set.of("plaintext"); }

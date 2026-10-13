@@ -36,8 +36,9 @@ class ChallengeQueryServiceTest {
     }
 
     /** 로그류는 최근 것이 먼저다. idx 를 뒤에 붙여 같은 시각의 순서를 고정한다. */
-    @Test void defaultSortIsCreatetimeDescThenIdxDesc() {
-        assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "createtime", "idx"));
+    /** 시퀀스 PK 역순. PK 인덱스를 거꾸로 읽어 첫 페이지만 가져온다(생성 시각 정렬은 전체 정렬이 필요하다). */
+    @Test void defaultSortIsIdxDescending() {
+        assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.DESC, "idx"));
     }
 
     @Test void sortablePropertiesIncludeCreatetime() {
