@@ -1,30 +1,22 @@
 package com.crosscert.fidoadmin.manager.service;
 
 import com.crosscert.fidoadmin.audit.AuditLogger;
-import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.LoginAttemptService;
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy;
-import com.crosscert.fidoadmin.common.CrudService;
-import com.crosscert.fidoadmin.common.ManagerStatus;
 import com.crosscert.fidoadmin.common.Specs;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.TenantMismatchException;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
-import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import com.crosscert.fidoadmin.manager.web.ManagerSearchForm;
 import com.crosscert.fidoadmin.signup.SignupPolicy;
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Set;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * COMPANY_IDX = 0 인 슈퍼관리자 계정 전용 화면.
+ * COMPANY_IDX = 0 인 슈퍼관리자 계정 전용 화면. 공통 규칙은 {@link ManagerAccountService} 에 있다.
  *
  * <p>테넌트 선택 모델에서 IDX 0 은 선택할 수 없으므로(SelectedTenant.select),
  * 어떤 고객사를 골라도 슈퍼관리자 계정이 /managers 목록에 나오지 않는다.
@@ -33,29 +25,17 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>{@code ManagerService} 를 상속하지 않는다. 상속하면 유효 테넌트 경로(companyIdxAttribute
  * 가 "companyIdx" 를 돌려주고 tenant.companyIdx() 로 거는 경로)가 섞여, 미선택 SUPER 가
  * 이 화면을 열 때 {@code NoTenantSelectedException} 이 튀어나온다. 이 화면은 SYSTEM 영역이라
- * 선택 여부와 무관해야 하므로 {@code CrudService} 를 직접 상속하고 테넌트 필터를
- * 상수 0 으로 고정한다.
+ * 선택 여부와 무관해야 하므로 테넌트 필터를 상수 0 으로 고정한다.
  */
 @Service
-public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerSearchForm> {
-
-    private final CcfaManagerPwPolicyRepository policies;
-    private final LoginAttemptService loginAttempts;
-    private final EntityManager em;
-    private final ManagerUserIdGuard userIdGuard;
-    private final PasswordExpiryPolicy expiry;
+public class SuperManagerService extends ManagerAccountService {
 
     public SuperManagerService(CcfaManagerRepository managers, AuditLogger audit,
                                CcfaManagerPwPolicyRepository policies,
                                LoginAttemptService loginAttempts, EntityManager em,
                                TenantContext tenant, ManagerUserIdGuard userIdGuard,
                                PasswordExpiryPolicy expiry) {
-        super(managers, audit, tenant);
-        this.policies = policies;
-        this.loginAttempts = loginAttempts;
-        this.em = em;
-        this.userIdGuard = userIdGuard;
-        this.expiry = expiry;
+        super(managers, audit, policies, loginAttempts, em, tenant, userIdGuard, expiry);
     }
 
     @Override protected Specification<CcfaManager> toSpecification(ManagerSearchForm f) {
@@ -79,20 +59,14 @@ public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerS
      * 이중 방어다.
      *
      * <p><b>대가(trade-off)</b>: null 을 돌려주면 {@code CrudService.update()} 의 쓰기 측
-     * 정규화(companyIdxAttribute() != null 일 때 mutator 실행 뒤 setCompanyIdx(e,
-     * tenant.companyIdx()) 로 강제하는 부분)도 건너뛴다. checkTenant() 는 get(id) 시점,
-     * 즉 mutator 실행 <b>전</b> 에 걸리므로 "행을 읽을 때 COMPANY_IDX=0 이었는가" 만 보장하고
-     * "저장할 값도 0 인가" 는 보장하지 못한다. ManagerForm.applyTo() 는 폼이 실어온 companyIdx
-     * 를 그대로 엔티티에 쓰므로, 조작된 POST 로 companyIdx=7 을 보내면 이 화면이 관리하는
-     * 행이 다른 테넌트로 옮겨질 수 있다(되돌릴 UI가 없는 편도 함정). 그래서 update() 를
-     * 재정의해 mutator 실행 뒤 companyIdx 를 0 으로 다시 고정한다(아래 update() 참고).
+     * 정규화(mutator 실행 뒤 setCompanyIdx(e, tenant.companyIdx()) 로 강제하는 부분)도 건너뛴다.
+     * checkTenant() 는 get(id) 시점, 즉 mutator 실행 <b>전</b> 에 걸리므로 "행을 읽을 때 COMPANY_IDX=0
+     * 이었는가" 만 보장하고 "저장할 값도 0 인가" 는 보장하지 못한다. ManagerForm.applyTo() 는 폼이 실어온
+     * companyIdx 를 그대로 엔티티에 쓰므로, 조작된 POST 로 companyIdx=7 을 보내면 이 화면이 관리하는
+     * 행이 다른 테넌트로 옮겨질 수 있다(되돌릴 UI가 없는 편도 함정). 그래서 {@link #normalize} 가
+     * mutator 실행 뒤 companyIdx 를 0 으로 다시 고정한다.
      */
     @Override protected String companyIdxAttribute() { return null; }
-    @Override protected Long companyIdxOf(CcfaManager e) { return e.getCompanyIdx(); }
-    @Override protected void setCompanyIdx(CcfaManager e, Long c) { e.setCompanyIdx(c); }
-    @Override public String idOf(CcfaManager e) { return String.valueOf(e.getIdx()); }
-    @Override protected String tableName() { return "CCFA_MANAGER"; }
-    @Override public Set<String> sortableProperties() { return Set.of("idx", "userId", "userNm", "lastAccess"); }
 
     /** 상수 0 으로 검사한다. 테넌트 운영자 행은 이 화면에서 열 수 없다. */
     @Override protected void checkTenant(CcfaManager e) {
@@ -102,92 +76,14 @@ public class SuperManagerService extends CrudService<CcfaManager, Long, ManagerS
         }
     }
 
+    /** 이 화면이 만드는 계정은 항상 슈퍼관리자다. 나머지 기본값은 공통 규칙과 같다. */
     @Override protected void applyDefaults(CcfaManager e) {
-        e.setCompanyIdx(SignupPolicy.SUPER_COMPANY_IDX); // 이 화면이 만드는 계정은 항상 슈퍼관리자다
-        if (e.getStatus() == null || e.getStatus().isBlank()) e.setStatus(ManagerStatus.ACTIVE);
-        if (e.getLogin() == null) e.setLogin("OFF-LINE");
-        if (e.getAlramType() == null || e.getAlramType().isBlank()) e.setAlramType("none");
-        if (e.getAlramLevel() == null || e.getAlramLevel().isBlank()) e.setAlramLevel("0");
+        e.setCompanyIdx(SignupPolicy.SUPER_COMPANY_IDX);
+        super.applyDefaults(e);
     }
 
-    @Override protected void touchCreated(CcfaManager e, LocalDateTime now) { e.setCreatedtime(now); e.setUpdatedtime(now); }
-    @Override protected void touchUpdated(CcfaManager e, LocalDateTime now) { e.setUpdatedtime(now); }
-
-    /**
-     * USER_ID 전역 유일성 검사는 {@link ManagerUserIdGuard} 하나에 있다. {@link ManagerService}
-     * 도 같은 테이블에 INSERT 하므로, 이 화면에 검사를 따로 두면 "USER_ID 는 전역 유일"
-     * 이라는 보장이 두 코드로 갈라진다.
-     */
-    @Override protected CcfaManager insert(CcfaManager e) {
-        return userIdGuard.insert(e);
-    }
-
-    /** 새 운영자의 비밀번호 변경일을 기록한다. JDBC 갱신이 행을 보도록 먼저 flush 한다. */
-    @Override
-    @Transactional
-    public CcfaManager create(CcfaManager entity) {
-        CcfaManager saved = super.create(entity);
-        em.flush();
-        expiry.touch(saved.getUserId());
-        return saved;
-    }
-
-    /**
-     * 가입 신청 상태(승인대기·거절)인 행의 STATUS 는 이 화면에서 바꿀 수 없다.
-     * {@code ManagerService.update()} 와 같은 규칙이다(설계서 4장) — 승인대기 행의 상태를
-     * 조작된 POST 로 활성화하면 가입 승인 절차(감사 로그·상태 재확인·행 잠금)를 건너뛴다.
-     * COMPANY_IDX = 0 계정도 가입 신청 상태를 거칠 수 있으므로 이 화면에도 같은 검사가 필요하다.
-     *
-     * <p>companyIdx 를 0 으로 다시 고정하는 이유는 companyIdxAttribute() 의 주석을 참고한다.
-     * companyIdxAttribute() 가 null 이라 CrudService.update() 의 쓰기 측 정규화가 건너뛰어지고,
-     * checkTenant() 는 mutator 실행 전(행을 읽을 때)만 검사하므로, ManagerForm 이 실어온
-     * companyIdx 를 그대로 두면 조작된 POST 로 이 화면이 관리하는 행을 다른 테넌트로 옮길 수
-     * 있다(되돌릴 UI가 없는 편도 함정). mutator 가 어떤 값을 쓰든 마지막에 0 으로 되돌려
-     * "이 화면이 저장하는 행은 항상 COMPANY_IDX = 0" 이라는 불변조건을 지킨다.
-     */
-    @Override
-    @Transactional
-    public CcfaManager update(Long id, java.util.function.Consumer<CcfaManager> mutator) {
-        String[] pwBefore = new String[1];
-        CcfaManager saved = super.update(id, e -> {
-            pwBefore[0] = e.getUserPw();
-            String before = e.getStatus();
-            mutator.accept(e);
-            e.setCompanyIdx(SignupPolicy.SUPER_COMPANY_IDX);
-            if (SignupPolicy.isSignupStatus(before) && !before.equals(e.getStatus())) {
-                e.setStatus(before);
-                throw new IllegalStateException(
-                    "가입 신청 상태(" + before + ")인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.");
-            }
-        });
-        if (!java.util.Objects.equals(pwBefore[0], saved.getUserPw())) {
-            em.flush();
-            expiry.touch(saved.getUserId());
-        }
-        return saved;
-    }
-
-    /**
-     * 자기 자신은 삭제할 수 없다. {@code ManagerService.beforeDelete()} 와 같은 규칙이지만
-     * 이 화면에서는 더 중요하다 — 슈퍼관리자가 자기 계정을 지우면 복구 경로가 없다.
-     */
-    @Override protected void beforeDelete(CcfaManager e) {
-        if (e.getIdx() != null && e.getIdx().equals(tenant.require().getIdx())) {
-            throw new IllegalStateException("자기 자신은 삭제할 수 없습니다.");
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<CcfaManagerPwPolicy> lockState(String userId) {
-        return policies.findFirstByUserIdOrderByIdxDesc(userId);
-    }
-
-    /** 잠금 해제: PW_POLICY 초기화 + BLOCK_TIME 제거. 감사 로그 STATUS. ManagerService.unlock() 과 같다. */
-    @Transactional
-    public void unlock(Long id) {
-        CcfaManager m = get(id);
-        em.refresh(m, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
-        loginAttempts.unlock(m.getUserId());
-        audit.log(AuditType.STATUS, "CCFA_MANAGER UNLOCK " + m.getUserId());
+    /** "이 화면이 저장하는 행은 항상 COMPANY_IDX = 0" — mutator 가 어떤 값을 쓰든 마지막에 되돌린다. */
+    @Override protected void normalize(CcfaManager e) {
+        e.setCompanyIdx(SignupPolicy.SUPER_COMPANY_IDX);
     }
 }

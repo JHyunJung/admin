@@ -41,7 +41,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
-@Import({SignupService.class, ManagerUserDetailsService.class, LoginAttemptService.class,
+@Import({SignupService.class, com.crosscert.fidoadmin.manager.service.ManagerUserIdGuard.class, ManagerUserDetailsService.class, LoginAttemptService.class,
     com.crosscert.fidoadmin.auth.PasswordAgeStore.class, com.crosscert.fidoadmin.auth.PasswordExpiryPolicy.class})
 class SignupApprovalEscalationIntegrationTest extends OracleContainerSupport {
 
