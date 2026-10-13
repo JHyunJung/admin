@@ -4,15 +4,11 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.audit.AuditType;
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy;
 import com.crosscert.fidoadmin.common.ManagerStatus;
+import com.crosscert.fidoadmin.common.Utf8;
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository;
 import com.crosscert.fidoadmin.manager.entity.CcfaManager;
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository;
 import jakarta.persistence.EntityManager;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -165,23 +161,6 @@ public class SignupService {
     private static String appendReason(String etc, String reason) {
         String added = "거절 사유: " + (reason == null || reason.isBlank() ? "(사유 없음)" : reason);
         String merged = etc == null || etc.isBlank() ? added : etc + "\n" + added;
-        return truncateToBytes(merged, ETC_MAX_BYTES);
-    }
-
-    /**
-     * UTF-8 바이트 기준으로 자른다. 경계에서 멀티바이트 문자가 쪼개지면 깨진 글자가
-     * 저장되므로, 잘린 바이트를 무시하는 디코더로 문자 경계에서 끊는다.
-     */
-    private static String truncateToBytes(String s, int maxBytes) {
-        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length <= maxBytes) return s;
-        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
-            .onMalformedInput(CodingErrorAction.IGNORE)
-            .onUnmappableCharacter(CodingErrorAction.IGNORE);
-        try {
-            return decoder.decode(ByteBuffer.wrap(bytes, 0, maxBytes)).toString();
-        } catch (CharacterCodingException e) {
-            return s.substring(0, Math.min(s.length(), maxBytes));
-        }
+        return Utf8.truncateToBytes(merged, ETC_MAX_BYTES);
     }
 }

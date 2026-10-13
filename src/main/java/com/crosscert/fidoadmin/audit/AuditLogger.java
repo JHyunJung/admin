@@ -3,14 +3,10 @@ package com.crosscert.fidoadmin.audit;
 import com.crosscert.fidoadmin.auth.ManagerUserDetails;
 import com.crosscert.fidoadmin.auth.Sha256PasswordEncoder;
 import com.crosscert.fidoadmin.common.TenantContext;
+import com.crosscert.fidoadmin.common.Utf8;
 import com.crosscert.fidoadmin.company.service.CompanyLookup;
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog;
 import jakarta.servlet.http.HttpServletRequest;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
@@ -119,20 +115,9 @@ public class AuditLogger {
     /**
      * UTF-8 바이트 기준으로 자른다. CCFA_AUDIT_LOG 의 VARCHAR2 는 BYTE 의미라
      * 문자 수로 자르면 한글 입력에서 ORA-12899 가 나고 감사 기록이 유실된다.
-     * 멀티바이트 문자가 중간에서 쪼개지지 않도록 문자 경계에서 끊는다.
      */
     private static String cut(String s, int maxBytes) {
-        if (s == null) return null;
-        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length <= maxBytes) return s;
-        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
-            .onMalformedInput(CodingErrorAction.IGNORE)
-            .onUnmappableCharacter(CodingErrorAction.IGNORE);
-        try {
-            return decoder.decode(ByteBuffer.wrap(bytes, 0, maxBytes)).toString();
-        } catch (CharacterCodingException e) {
-            return s.substring(0, Math.min(s.length(), maxBytes));
-        }
+        return Utf8.truncateToBytes(s, maxBytes);
     }
 
     private static HttpServletRequest currentRequest() {
