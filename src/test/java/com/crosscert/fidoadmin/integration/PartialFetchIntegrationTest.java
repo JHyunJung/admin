@@ -98,4 +98,21 @@ class PartialFetchIntegrationTest {
         assertThat(selects).doesNotContain("plaintext");
         assertThat(older.getIdx()).isNotNull();
     }
+
+    /** 건수 캐시 경로: 본문만 읽고 COUNT 를 보내지 않는다. 제외 속성이 없으면 엔티티를 그대로 읽는다. */
+    @Test void contentOnlyQueryReadsWholeEntitiesWithoutCounting() {
+        sign("u1", "p1", LocalDateTime.of(2026, 1, 1, 10, 0));
+        Sign newer = sign("u2", "p2", LocalDateTime.of(2026, 1, 2, 10, 0));
+        em.flush(); em.clear();
+        sql.list.clear();
+
+        Specification<Sign> mine = (root, q, cb) -> cb.equal(root.get("companyIdx"), COMPANY);
+        var rows = signs.findContentExcluding(Sign.class, mine,
+            PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "idx")), Set.of());
+
+        assertThat(rows).extracting(Sign::getIdx).containsExactly(newer.getIdx());
+        assertThat(rows.get(0).getPlaintext()).isEqualTo("p2");
+        String selects = String.join("\n", sql.list.stream().map(ILoggingEvent::getFormattedMessage).toList()).toLowerCase(Locale.ROOT);
+        assertThat(selects).doesNotContain("count(");
+    }
 }

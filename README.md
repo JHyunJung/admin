@@ -97,6 +97,8 @@ localhost:1521 이 닫혀 있으면 건너뛴다(`LocalOracle#isUp`).
 교체 위치: 각 엔티티의 `@SequenceGenerator(sequenceName = ...)`, `docker/init/01-schema.sql`.
 교체 전까지 운영 DB INSERT 는 보장하지 않는다.
 
+목록 인덱스와 감사 로그 시퀀스 캐시·증가폭은 DBA 요청 사항으로 `docs/dba/2026-10-13-인덱스-시퀀스-요청.md` 에 정리했다.
+
 ## 규칙
 
 - `docker/init/*.sql` 은 **로컬 검증 전용. 운영 DB 에 적용하지 않는다.**

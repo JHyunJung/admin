@@ -129,7 +129,7 @@ class FidoLogQueryServiceTest {
     }
 
     /** 정렬은 고정이다 — 사용자 입력이 ORDER BY 로 들어갈 경로가 없다. */
-    @Test void orderingIsFixedToCreatedtimeDesc() {
+    @Test void orderingIsFixedToIdxDesc() {
         tableExists(true);
         when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(1L);
         when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class)))
@@ -140,7 +140,7 @@ class FidoLogQueryServiceTest {
 
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
         verify(jdbc).query(sql.capture(), any(MapSqlParameterSource.class), any(RowMapper.class));
-        assertThat(sql.getValue()).contains("ORDER BY CREATEDTIME DESC, IDX DESC");
+        assertThat(sql.getValue()).contains("ORDER BY IDX DESC").doesNotContain("CREATEDTIME DESC");
         assertThat(sql.getValue()).doesNotContain("servicename DESC");
     }
 
@@ -249,10 +249,67 @@ class FidoLogQueryServiceTest {
         ArgumentCaptor<MapSqlParameterSource> params = ArgumentCaptor.forClass(MapSqlParameterSource.class);
         verify(jdbc).query(sql.capture(), params.capture(), any(RowMapper.class));
         assertThat(sql.getValue()).contains("FIDO_LOGS_20260926").contains("COMPANY_IDX = :companyIdx")
-            .contains("rownum <= :cap").contains("ORDER BY CREATEDTIME DESC, IDX DESC");
+            .contains("rownum <= :cap").contains("ORDER BY IDX DESC").doesNotContain("CREATEDTIME DESC");
         assertThat(params.getValue().getValue("companyIdx")).isEqualTo(1L);
         assertThat(params.getValue().getValue("cap")).isEqualTo(FidoLogQueryService.SCAN_LIMIT + 1);
         verify(jdbc, never()).queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class));
+    }
+
+    /**
+     * 조건 검색은 그날 로그를 최대 SCAN_LIMIT 건 풀어야 한다. 같은 조건으로 페이지만 넘기면 그 결과를 다시 쓴다
+     * (최대 30초). 조건 문자열의 대소문자만 다르면 같은 결과다(비교가 대소문자를 무시한다).
+     */
+    @SuppressWarnings("unchecked")
+    @Test void filterResultIsReusedAcrossPages() {
+        tableExists(true);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of(
+            row(5, "TC", "s", "u"), row(4, "TC", "s", "u"), row(3, "TC", "s", "u")));
+        FidoLogSearchForm f = form(LocalDate.of(2026, 9, 26));
+        f.setOp("TC");
+        FidoLogSearchForm sameButLower = form(LocalDate.of(2026, 9, 26));
+        sameButLower.setOp("tc");
+
+        var first = service.search(f, PageRequest.of(0, 2));
+        var second = service.search(sameButLower, PageRequest.of(1, 2));
+
+        assertThat(first.page().getContent()).extracting(FidoLogRow::idx).containsExactly(5L, 4L);
+        assertThat(second.page().getContent()).extracting(FidoLogRow::idx).containsExactly(3L);
+        assertThat(second.page().getTotalElements()).isEqualTo(3);
+        verify(jdbc, org.mockito.Mockito.times(1)).query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class));
+    }
+
+    /** 조건이 다르거나 고객사가 다르면 다시 읽는다. */
+    @SuppressWarnings("unchecked")
+    @Test void filterResultIsKeyedByConditionsAndTenant() {
+        tableExists(true);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of(row(5, "TC", "s", "u")));
+        FidoLogSearchForm tc = form(LocalDate.of(2026, 9, 26));
+        tc.setOp("TC");
+        FidoLogSearchForm auth = form(LocalDate.of(2026, 9, 26));
+        auth.setOp("Auth");
+
+        service.search(tc, PageRequest.of(0, 20));
+        service.search(auth, PageRequest.of(0, 20));
+        var other = new ManagerUserDetails(3L, "other", null, "O", 2L, "O", true, true);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(other, null, other.getAuthorities()));
+        service.search(tc, PageRequest.of(0, 20));
+
+        verify(jdbc, org.mockito.Mockito.times(3)).query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class));
+    }
+
+    /** 조건 없는 목록은 본문을 매번 읽고 COUNT(*) 만 다시 쓴다. */
+    @SuppressWarnings("unchecked")
+    @Test void plainListReusesCountOnly() {
+        tableExists(true);
+        when(jdbc.queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class))).thenReturn(40L);
+        when(jdbc.query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class))).thenReturn(List.of(row(5, "TC", "s", "u")));
+
+        service.search(form(LocalDate.of(2026, 9, 26)), PageRequest.of(0, 20));
+        var second = service.search(form(LocalDate.of(2026, 9, 26)), PageRequest.of(1, 20));
+
+        assertThat(second.page().getTotalElements()).isEqualTo(40L);
+        verify(jdbc, org.mockito.Mockito.times(1)).queryForObject(anyString(), any(MapSqlParameterSource.class), eq(Long.class));
+        verify(jdbc, org.mockito.Mockito.times(2)).query(anyString(), any(MapSqlParameterSource.class), any(RowMapper.class));
     }
 
     /** 하루 로그가 상한을 넘으면 앞부분만 보고, 그 사실을 화면에 알린다. */

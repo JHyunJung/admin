@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.crosscert.fidoadmin.company.entity.CcfaLicense;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,17 @@ class CrudControllerValidateHookTest {
         assertThat(view).isEqualTo("x/x/form");
         assertThat(binding.getFieldError("name").getDefaultMessage()).isEqualTo("이름은 필수입니다.");
         verify(service, never()).create(any());
+    }
+
+    /** 서비스가 업무 규칙으로 등록을 거부하면 500 이 아니라 사유를 폼 오류로 돌려준다(update 와 같다). */
+    @Test void createShowsBusinessRuleRejectionOnForm() {
+        Form form = new Form();
+        form.setName("x");
+        BindingResult binding = new BeanPropertyBindingResult(form, "form");
+        when(service.create(any())).thenThrow(new IllegalStateException("이미 처리된 신청입니다."));
+        String view = controller.create(form, binding, new ExtendedModelMap(), new RedirectAttributesModelMap());
+        assertThat(view).isEqualTo("x/x/form");
+        assertThat(binding.getGlobalError().getDefaultMessage()).isEqualTo("이미 처리된 신청입니다.");
     }
 
     @Test void updateSkipsIsNewOnlyRule() {

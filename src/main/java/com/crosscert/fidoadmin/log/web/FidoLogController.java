@@ -33,7 +33,7 @@ public class FidoLogController {
     /** 목록. 날짜를 고르지 않으면 폼 기본값(오늘)로 조회한다. */
     @GetMapping
     public String list(@ModelAttribute("search") FidoLogSearchForm search, Model model) {
-        // 정렬은 CREATEDTIME DESC 고정이다(서비스의 SQL). 정렬 파라미터를 받지 않으므로
+        // 정렬은 IDX DESC 고정이다(서비스의 SQL). 정렬 파라미터를 받지 않으므로
         // 사용자 입력이 ORDER BY 로 들어갈 경로가 없다.
         var result = service.search(search, search.toPageable(Sort.unsorted()));
         model.addAttribute("page", result.page());

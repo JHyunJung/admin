@@ -47,6 +47,18 @@ class FidoClientServiceTest {
         CcfaFidoclient c = new CcfaFidoclient(); c.setServercode(code); c.setServername("n"); c.setServerurl("https://x"); return c;
     }
 
+    /** 컬럼은 BYTE 의미다. 한글 서버명을 글자 수로 자르면 ORA-12899 로 등록이 실패하므로 바이트로 자른다. */
+    @Test void registerCutsKoreanNamesByBytes() {
+        when(repo.findFirstByServernameOrderByCreatedtimeAsc(anyString())).thenReturn(java.util.Optional.empty());
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        String name = "가".repeat(400);   // 400자 = 1200바이트
+        CcfaFidoclient saved = service.register(name, "https://x/" + "나".repeat(700));
+        assertThat(saved.getServercode().getBytes(java.nio.charset.StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(64);
+        assertThat(saved.getServername().getBytes(java.nio.charset.StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(1024);
+        assertThat(saved.getServerurl().getBytes(java.nio.charset.StandardCharsets.UTF_8)).hasSizeLessThanOrEqualTo(2048);
+        assertThat(saved.getServercode()).isEqualTo("가".repeat(21));
+    }
+
     @Test void createRejectsDuplicateCode() {
         when(repo.existsById("FIDO01")).thenReturn(true);
         assertThatThrownBy(() -> service.create(client("FIDO01"))).isInstanceOf(DataIntegrityViolationException.class);

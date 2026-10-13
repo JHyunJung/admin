@@ -4,6 +4,7 @@ import com.crosscert.fidoadmin.audit.AuditLogger;
 import com.crosscert.fidoadmin.common.AssignedIdCrudService;
 import com.crosscert.fidoadmin.common.TenantContext;
 import com.crosscert.fidoadmin.common.Specs;
+import com.crosscert.fidoadmin.common.Utf8;
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient;
 import com.crosscert.fidoadmin.system.repository.CcfaFidoclientRepository;
 import com.crosscert.fidoadmin.system.web.FidoClientSearchForm;
@@ -93,8 +94,11 @@ public class FidoClientService extends AssignedIdCrudService<CcfaFidoclient, Str
             });
     }
 
-    /** 컬럼 길이를 넘는 값이 와도 등록 자체가 실패하지는 않게 한다. */
-    private static String cut(String value, int max) {
-        return value == null || value.length() <= max ? value : value.substring(0, max);
+    /**
+     * 컬럼 길이를 넘는 값이 와도 등록 자체가 실패하지는 않게 한다.
+     * 컬럼은 BYTE 의미라 글자 수가 아니라 UTF-8 바이트로 자른다(한글 서버명이 ORA-12899 로 실패하지 않는다).
+     */
+    private static String cut(String value, int maxBytes) {
+        return Utf8.truncateToBytes(value, maxBytes);
     }
 }

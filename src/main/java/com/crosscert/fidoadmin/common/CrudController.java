@@ -95,6 +95,10 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
         } catch (DataIntegrityViolationException e) {
             binding.reject("duplicate", "이미 존재하는 값이거나 제약 조건에 어긋납니다.");
             return backToForm(model, true);
+        } catch (IllegalStateException e) {
+            // 서비스가 업무 규칙으로 거부한 경우. update() 와 같이 500 이 아니라 사유를 폼에 돌려준다.
+            binding.reject("rejected", e.getMessage());
+            return backToForm(model, true);
         }
     }
 

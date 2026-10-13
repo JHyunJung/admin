@@ -32,7 +32,14 @@ public class TransactionConfirmationQueryService
     @Override protected void setCompanyIdx(TransactionConfirmation e, Long c) { e.setCompanyIdx(c); }
     @Override public String idOf(TransactionConfirmation e) { return String.valueOf(e.getIdx()); }
     @Override protected String tableName() { return "TRANSACTION_CONFIRMATION"; }
-    @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "createdtime", "idx"); }
+    /**
+     * 시퀀스 PK 역순. 행이 많은 로그 테이블이라 CREATEDTIME 로 정렬하면 매 조회가 전체 정렬이 되고,
+     * IDX 로 정렬하면 PK 인덱스를 거꾸로 읽어 첫 페이지만 가져온다. 생성 순서와 거의 같다
+     * (같은 시각에 들어온 행끼리는 순서가 다를 수 있다). 시각 정렬은 목록 머리글로 고를 수 있다.
+     */
+    @Override public Sort defaultSort() { return Sort.by(Sort.Direction.DESC, "idx"); }
+    /** 행이 많은 로그라 페이지를 넘길 때마다 COUNT(*) 를 다시 보내지 않는다. "총 N건" 은 최대 30초 늦다. */
+    @Override protected java.time.Duration countCacheTtl() { return LOG_COUNT_TTL; }
     @Override public Set<String> sortableProperties() { return Set.of("idx", "createdtime"); }
     /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
     @Override protected Set<String> listExcludedProperties() { return Set.of("content"); }

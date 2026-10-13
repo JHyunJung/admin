@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.common;
 
+import java.util.List;
 import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,7 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 /**
  * 일부 속성을 빼고 읽는 목록 조회. Spring Data 조각(fragment)이며 구현은 {@link PartialFetchImpl} 하나다.
- * CLOB 컬럼이 있는 테이블의 리포지터리가 <b>직접</b> 이 인터페이스를 상속한다 — Spring Data 는 조각 구현을
+ * CLOB 컬럼이 있는 테이블과 건수 캐시를 쓰는 목록({@code CrudService#countCacheTtl})의 리포지터리가 <b>직접</b> 이 인터페이스를 상속한다 — Spring Data 는 조각 구현을
  * 리포지터리 인터페이스가 직접 상속한 인터페이스에서만 찾으므로 {@link AdminRepository} 에 올릴 수 없다.
  *
  * <p>Hibernate 는 {@code @Lob String} 을 바이트코드 보강 없이는 항상 즉시 읽는다. 목록 DTO 가 CLOB 을
@@ -25,4 +26,10 @@ public interface PartialFetch<E> {
      * @param excluded 빼고 읽을 엔티티 속성명(예: CLOB 필드). 비어 있으면 {@code findAll} 과 같다
      */
     Page<E> findAllExcluding(Class<E> type, Specification<E> spec, Pageable pageable, Set<String> excluded);
+
+    /**
+     * {@link #findAllExcluding} 의 본문만. 총 건수를 세지 않는다 — 건수를 따로(캐시에서) 얻는 목록이 쓴다.
+     * {@code excluded} 가 비어 있으면 보통 엔티티 조회와 같다(영속 상태 엔티티를 돌려준다).
+     */
+    List<E> findContentExcluding(Class<E> type, Specification<E> spec, Pageable pageable, Set<String> excluded);
 }
