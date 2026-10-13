@@ -69,6 +69,7 @@ SPRING_DATASOURCE_USERNAME=… SPRING_DATASOURCE_PASSWORD=… \
 ### 기동 스크립트
 
 서버에서는 `scripts/fido-admin.sh` 로 띄우고 내린다. 프로파일은 무엇이든 지정할 수 있다.
+자세한 사용법은 [기동 스크립트 사용 설명서(PDF)](docs/deploy/FIDO-Admin-기동-스크립트-설명서.pdf)에 있다.
 
 ```
 ./gradlew bootJar                                    # build/libs/fido-admin-*.jar
