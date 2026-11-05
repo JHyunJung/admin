@@ -68,3 +68,11 @@ fido-admin:
   # 비밀번호 만료. auto: 처음 필요할 때 CCFA_MANAGER.LAST_PW_CHANGE_DATE 열이 있는지 보고 있으면 켠다. false: 끈다.
   password-expiry:
     enabled: auto
+  statistics:
+    # 매시간 FIDO_LOGS_yyyyMMdd → FIDO_STATISTICS 집계. 서버가 여러 대여도 한 번만 쌓인다(테이블 잠금).
+    #   FIDO_ADMIN_STATISTICS_ENABLED
+    enabled: ${FIDO_ADMIN_STATISTICS_ENABLED:true}
+    cron: "0 15 * * * *"
+    # 최근 몇 시간 안의 빠진 구간을 채울지. 멈춘 구간을 한 번에 채울 때만 잠시 올린다.
+    #   FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS
+    catch-up-hours: ${FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS:72}

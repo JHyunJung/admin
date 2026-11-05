@@ -3,3 +3,6 @@ logging:
 spring:
   jpa:
     show-sql: false
+fido-admin:
+  statistics:
+    enabled: false

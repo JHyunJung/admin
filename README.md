@@ -59,6 +59,8 @@ FIDO 서버 운영을 위한 관리자 웹. KBFIDO Oracle 스키마를 사용한
 | `DB_CONFIG_KEY` | 암호문을 쓸 때 | DB 접속 정보 복호화 키(Base64, 디코딩 후 32바이트) |
 | `LOGGING_FILE_PATH` | 아니오 | 로그 디렉터리. 기본 `./logs`(실행 위치 기준). 기동 스크립트는 `LOG_PATH` 로 받는다 |
 | `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` | 아니오 | 인증 없는 서버 간 경로의 접근 허용 대역. 비우면 모두 허용 |
+| `FIDO_ADMIN_STATISTICS_ENABLED` | 아니오 | 통계 시간별 집계 배치를 켤지. 기본 `true`(`local` 은 `false`) |
+| `FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS` | 아니오 | 최근 몇 시간 안의 빠진 통계 구간을 채울지. 기본 `72` |
 
 ```
 SPRING_DATASOURCE_URL=jdbc:oracle:thin:@db:1521/SVC \
@@ -129,6 +131,18 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 - 인증 없는 서버 간 경로 `/api/svc/**`(FIDO 서버 자가등록)과 `/external/**`(라이선스 수신)는
   `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS`(쉼표 구분 CIDR 또는 IP, 예 `10.0.0.0/8,192.168.1.5`)로 접근 대역을 제한한다.
   리버스 프록시 뒤라면 `server.forward-headers-strategy` 도 설정해야 실제 클라이언트 주소로 판정한다.
+
+### 통계 집계 배치
+
+대시보드는 `FIDO_STATISTICS` 만 읽는다. 이 테이블은 어드민 안의 배치(`FidoStatisticsJob`)가 매시 15분(KST)에 채운다.
+
+- 대상은 24시간 전 정각까지의 한 시간 구간이다. `FIDO_LOGS_yyyyMMdd` 를 회사(`CCFA_COMPANY`)·서비스별로 세어
+  `GROUPBY = 'yyyy/MM/dd/HH'`(로그 시간) 행을 넣는다. 구 어드민 배치와 같은 행 모양·세는 규칙이다.
+- 매 실행마다 최근 `catch-up-hours` 안에서 `GROUPBY` 가 없는 시간을 모두 채운다. 오래 멈췄던 구간은
+  `FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS` 를 잠시 올려(예: 600) 한 번 돌린 뒤 되돌린다.
+- 서버가 여러 대여도 한 시간은 한 번만 쌓인다(`LOCK TABLE FIDO_STATISTICS IN EXCLUSIVE MODE` 후 없는 회사만 넣는다).
+  구 어드민 배치가 함께 돌면 이 잠금을 잡지 않으므로 중복이 생긴다. 구 배치를 모두 내린 뒤 켠다.
+- 적재 결과는 `statistics:` 로 시작하는 INFO 로그, 디코드하지 못한 로그 건수는 WARN 으로 남는다.
 
 ## 화면 구성
 
