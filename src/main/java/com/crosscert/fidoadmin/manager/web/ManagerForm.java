@@ -11,7 +11,7 @@ import lombok.Setter;
  * CCFA_MANAGER 입력 폼. 비밀번호는 평문으로 받아 컨트롤러가 인코딩한다.
  * 등록 시 필수·수정 시 선택은 컨트롤러 validate() 가 본다(Bean Validation 으로는 구분할 수 없다).
  *
- * <p>companyIdx 는 Task 10 부터 폼 select 가 없다 — 세션이 정한 유효 테넌트를
+ * <p>companyIdx 는 폼에서 고르지 않는다 — 세션이 정한 유효 테넌트를
  * {@code CrudService.create()}/{@code update()} 가 덮어쓴다. 그래서 여기 {@code @NotNull} 을
  * 두면 폼에 값이 실려 오지 않는 모든 요청이 {@code @Valid} 단계에서 막혀, 등록 자체가 불가능해진다.
  */

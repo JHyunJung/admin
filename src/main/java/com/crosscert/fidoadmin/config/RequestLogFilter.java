@@ -22,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * 요청마다 추적 ID 를 만들어 MDC 에 넣고, 끝나면 한 줄 남긴다.
  *
- * <p>MDC 의 {@code req}/{@code user}/{@code tenant} 는 logback-spring.xml 의 패턴이 모든 줄에
+ * <p>MDC 의 {@code req}/{@code user}/{@code tenant} 는 logback/base.xml 의 패턴이 모든 줄에
  * 붙인다 — 한 요청이 남긴 로그를 파일에서 {@code req=} 로 묶어 볼 수 있다. 같은 ID 를
  * {@code X-Request-Id} 응답 헤더로도 돌려주어 운영자가 화면 오류를 신고할 때 붙일 수 있다.
  *

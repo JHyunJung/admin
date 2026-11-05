@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 /**
  * CCFA_MANAGER.LAST_PW_CHANGE_DATE 를 다루는 유일한 곳.
  *
- * <p>이 열은 운영 DB 에만 있고 스키마 정의에는 없다. JPA 엔티티에 매핑하면 열이 없는 DB 에서
+ * <p>이 열은 환경에 따라 없을 수 있다. JPA 엔티티에 매핑하면 열이 없는 DB 에서
  * CCFA_MANAGER 조회가 모두 ORA-00904 로 실패해 로그인부터 막히므로, JDBC 로만 읽고 쓴다.
  */
 @Component

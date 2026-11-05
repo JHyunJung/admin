@@ -51,7 +51,7 @@ class ExceptionLogQueryServiceTest {
     }
 
     /**
-     * CREATEDTIME 은 VARCHAR2 라 기간(between) 이 아니라 문자열 like 로 검색한다(설계 5.2).
+     * CREATEDTIME 은 VARCHAR2 라 기간(between) 이 아니라 문자열 like 로 검색한다.
      * 실수로 base fromDate 를 between 에 넣으면 문자열 컬럼 비교로 조회가 깨지므로,
      * Specification 이 createdtime 을 like 경로로만 쓰는지 확인한다.
      */

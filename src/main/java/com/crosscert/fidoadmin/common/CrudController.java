@@ -34,7 +34,7 @@ public abstract class CrudController<E, ID, F, S extends SearchForm> {
     protected abstract void applyForm(F form, E entity);
 
     /**
-     * 목록 행 → 출력용 DTO. 설계 2.2 에 따라 엔티티를 뷰에 직접 노출하지 않는다.
+     * 목록 행 → 출력용 DTO. 엔티티를 뷰에 직접 노출하지 않는다.
      * 민감 컬럼이 있는 테이블(CCFA_MANAGER.USER_PW, USERINFO.PUBKEY/CERTIFICATE,
      * AWS_INFO.AMZ_TOKEN)의 화면은 <b>반드시</b> 이 훅을 구현해 해당 컬럼을 빼거나
      * 앞 16자만 남긴다. CLOB 컬럼도 목록에서는 제외한다.

@@ -42,7 +42,6 @@ class StatisticsTenantScopeTest {
 
     private DashboardSearchForm form() {
         DashboardSearchForm f = new DashboardSearchForm();
-        f.setGroupby("day");
         f.setFromDate(LocalDate.now().minusDays(7));
         f.setToDate(LocalDate.now());
         return f;
@@ -94,21 +93,8 @@ class StatisticsTenantScopeTest {
 
         ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
         verify(jdbc).query(anyString(), params.capture(), any(org.springframework.jdbc.core.RowMapper.class));
-        assertThat(params.getValue().get("from")).isNotNull();
-        assertThat(params.getValue().get("to")).isNotNull();
-    }
-
-    /** 집계 단위 목록도 COMPANY 역할에게는 자기 고객사 것만 보여야 한다. */
-    @Test
-    void groupbysAreTenantScopedForCompanyRole() {
-        login(1L);
-        when(jdbc.queryForList(anyString(), any(Map.class), any(Class.class))).thenReturn(List.of("day"));
-
-        service.groupbys();
-
-        ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
-        verify(jdbc).queryForList(anyString(), params.capture(), any(Class.class));
-        assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);
+        assertThat(params.getValue().get("fromKey")).isNotNull();
+        assertThat(params.getValue().get("toKey")).isNotNull();
     }
 
     /**
@@ -123,22 +109,38 @@ class StatisticsTenantScopeTest {
             .isInstanceOf(NoTenantSelectedException.class);
     }
 
-    /** 집계 단위 비교는 대소문자를 가리지 않는다. 마지막 집계일 조회도 테넌트를 건다. */
+    /**
+     * 날짜는 로그 시간 구간인 GROUPBY('yyyy/MM/dd/HH')로 거른다. 종료일은 다음 날 0시 키 미만이다.
+     * 마지막 집계일 조회도 테넌트를 걸고 GROUPBY 에서 날짜를 읽는다.
+     */
     @Test
     @SuppressWarnings("unchecked")
-    void groupbyIsCaseInsensitiveAndLastDateIsTenantScoped() {
+    void 기간은_GROUPBY_키로_거르고_마지막_집계일도_테넌트를_건다() {
         login(1L);
         when(jdbc.query(anyString(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class)))
             .thenReturn(List.of());
-        service.daily(form());
+        DashboardSearchForm f = form();
+        f.setFromDate(LocalDate.of(2026, 10, 1));
+        f.setToDate(LocalDate.of(2026, 10, 31));
+        service.daily(f);
         ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
-        verify(jdbc).query(sql.capture(), any(Map.class), any(org.springframework.jdbc.core.RowMapper.class));
-        assertThat(sql.getValue()).contains("UPPER(GROUPBY) = UPPER(:groupby)");
+        ArgumentCaptor<Map<String, Object>> dailyParams = ArgumentCaptor.forClass(Map.class);
+        verify(jdbc).query(sql.capture(), dailyParams.capture(), any(org.springframework.jdbc.core.RowMapper.class));
+        assertThat(sql.getValue()).contains("GROUPBY >= :fromKey AND GROUPBY < :toKey");
+        assertThat(dailyParams.getValue()).containsEntry("fromKey", "2026/10/01/00").containsEntry("toKey", "2026/11/01/00");
 
-        when(jdbc.queryForObject(anyString(), any(Map.class), any(Class.class))).thenReturn(null);
-        assertThat(service.lastStatDate(form())).isEmpty();
+        when(jdbc.queryForObject(anyString(), any(Map.class), any(Class.class))).thenReturn("2026/10/15/14");
+        assertThat(service.lastStatDate(f)).contains(LocalDate.of(2026, 10, 15));
         ArgumentCaptor<Map<String, Object>> params = ArgumentCaptor.forClass(Map.class);
         verify(jdbc).queryForObject(anyString(), params.capture(), any(Class.class));
         assertThat(params.getValue().get("companyIdx")).isEqualTo(1L);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void 집계가_없으면_마지막_집계일이_비어_있다() {
+        login(1L);
+        when(jdbc.queryForObject(anyString(), any(Map.class), any(Class.class))).thenReturn(null);
+        assertThat(service.lastStatDate(form())).isEmpty();
     }
 }

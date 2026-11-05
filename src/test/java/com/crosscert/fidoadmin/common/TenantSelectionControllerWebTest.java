@@ -267,7 +267,7 @@ class TenantSelectionControllerWebTest {
      * <p>리다이렉트 목적지만 확인하면 selected.select() 가 이미 실행된 뒤에도 통과한다
      * (컨트롤러가 가드 없이 selected.select() 를 호출한 다음에야 "redirect:/" 를 반환해도
      * 이 단언은 여전히 성공한다). 그래서 세션의 SelectedTenant 가 그대로인지도 직접 확인한다 —
-     * 이것이 이 테스트의 핵심이다. 가드가 POST 에서만 빠지는 회귀(리뷰가 지목한 권한 상승
+     * 이것이 이 테스트의 핵심이다. 가드가 POST 에서만 빠지는 회귀(권한 상승
      * 경로)는 리다이렉트만 보는 단언으로는 절대 잡히지 않는다.
      */
     @Test void COMPANY_의_조작된_POST는_테넌트를_바꾸지_못하고_대시보드로_보낸다() throws Exception {

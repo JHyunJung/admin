@@ -65,7 +65,7 @@ class SystemPropControllerWebTest {
     }
 
     /**
-     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * TenantSelectionInterceptor 가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
      * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
      */
     MockHttpSession session;
@@ -87,7 +87,7 @@ class SystemPropControllerWebTest {
         mvc.perform(get("/system/props").with(user(companyUser))).andExpect(status().isForbidden());
     }
 
-    /** Task 10 부터 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다). 상세는 여전히 보여준다. */
+    /** 목록에는 고객사 컬럼이 없다(세션이 테넌트를 정한다). 상세는 여전히 보여준다. */
     @Test void listRendersRowsWithPathLinks() throws Exception {
         when(service.defaultSort()).thenReturn(Sort.by("id.propKey"));
         when(service.search(any(), any())).thenReturn(new PageImpl<>(List.of(prop("PW_FAIL_LIMIT", 0L, "5"))));

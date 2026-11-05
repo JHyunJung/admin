@@ -55,7 +55,7 @@ class LicenseControllerWebTest {
     ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     /**
-     * TenantSelectionInterceptor(Task 6)가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
+     * TenantSelectionInterceptor 가 미선택 SUPER 를 /select-tenant 로 돌려보낸다.
      * 이 클래스가 보는 경로는 TENANT 영역이므로, SUPER 요청에는 미리 테넌트를 선택해 둔다.
      */
     MockHttpSession session;
@@ -78,7 +78,7 @@ class LicenseControllerWebTest {
     }
 
     /**
-     * Task 10: 테넌트는 세션이 정하므로 목록은 더는 고객사 검색 select 나 고객사 컬럼을 보여주지 않는다.
+     * 테넌트는 세션이 정하므로 목록은 더는 고객사 검색 select 나 고객사 컬럼을 보여주지 않는다.
      * (companyNames 는 상세 화면이 여전히 쓰므로 컨트롤러에는 남아 있다 — 목록 템플릿만 걷어냈다.)
      * "name=\"companyIdx\"" 는 다른 폼의 hidden 필드에도 쓰일 수 있으므로 검색폼 select 태그로 특정한다.
      */
@@ -95,7 +95,7 @@ class LicenseControllerWebTest {
     }
 
     /**
-     * Task 10 부터 폼에 고객사 select 가 없다. companyIdx 는 CrudService.create() 가 유효
+     * 폼에 고객사 select 가 없다. companyIdx 는 CrudService.create() 가 유효
      * 테넌트로 채우므로 폼이 이 값을 안 보내도(브라우저가 못 보내므로) 등록은 그대로 성공해야 한다
      * (LicenseForm.companyIdx 의 @NotNull 을 뺐다 — 안 그러면 select 가 없어졌으므로 모든 등록이
      * @Valid 단계에서 막힌다). 이전의 "고객사 미선택 시 폼 재표시" 테스트는 그래서 의미가 사라졌다.

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  모든 프로파일이 함께 쓰는 값. 프로파일별 설정 파일(logback-<프로파일>.xml)이 include 한다.
+
+  줄마다 [req=요청ID user=로그인ID tenant=고객사] 가 붙는다. RequestLogFilter 가 MDC 에 채운다.
+  요청 밖(기동, 스케줄러)에서는 "-" 로 찍힌다.
+-->
+<included>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <!-- 로그 디렉터리. logging.file.path(환경 변수 LOGGING_FILE_PATH)로 바꾼다. 기동 스크립트는 LOG_PATH 를 이리로 넘긴다. -->
+  <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="./logs"/>
+  <property name="APP_NAME" value="fido-admin"/>
+  <property name="MDC" value="[req=%X{req:--} user=%X{user:--} tenant=%X{tenant:--}]"/>
+  <property name="FILE_PATTERN"
+            value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%15.15t] ${MDC} %-40.40logger{39} : %m%n%wEx"/>
+  <property name="CONSOLE_PATTERN"
+            value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(${MDC}){cyan} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+
+  <!-- 감사 로그 DB 기록 실패는 어느 환경이든 반드시 남긴다. 레벨을 낮춰도 이건 살아 있다. -->
+  <logger name="com.crosscert.fidoadmin.audit.AuditLogger" level="INFO"/>
+</included>

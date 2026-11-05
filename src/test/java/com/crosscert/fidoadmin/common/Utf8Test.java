@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 
 /**
- * KBFIDO 스키마의 VARCHAR2 는 BYTE 의미다. 저장 전에 자를 때는 바이트로 세되, 멀티바이트 문자가
+ * DB 의 VARCHAR2 는 BYTE 의미다. 저장 전에 자를 때는 바이트로 세되, 멀티바이트 문자가
  * 경계에서 쪼개져 깨진 글자가 저장되지 않도록 문자 경계에서 끊는다.
  * AuditLogger 와 SignupService 가 각자 들고 있던 같은 로직을 여기 한 곳으로 모은다.
  */

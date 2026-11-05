@@ -120,8 +120,8 @@ class TenantSelectionInterceptorWebTest {
 
     /**
      * areaOf 가 미등록 경로를 SYSTEM 으로 판정하는 한, 인터셉터는 미등록 경로에서
-     * 절대 선택을 요구하지 않는다. areaOf 가 "전부 TENANT" 로 회귀하면(Task 4 에서
-     * 이미 한 번 났던 Critical 버그) 이 테스트가 즉시 붉어진다.
+     * 절대 선택을 요구하지 않는다. areaOf 가 "전부 TENANT" 로 바뀌면
+     * 이 테스트가 즉시 실패한다.
      */
     @Test void 미선택_SUPER_가_미등록_경로를_요청하면_가로채지_않는다() throws Exception {
         mvc.perform(get("/xyz").with(user(superUser())))

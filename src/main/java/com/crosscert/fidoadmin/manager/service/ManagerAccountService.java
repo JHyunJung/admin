@@ -91,7 +91,7 @@ public abstract class ManagerAccountService extends CrudService<CcfaManager, Lon
      * <p>수정 화면의 상태 선택지는 활성·비활성 뿐이라 승인대기를 표현하지 못한다. 그래서 승인대기 행을
      * 열면 브라우저가 활성을 고르고, 이름만 고쳐 저장해도 상태가 활성이 된다. 그러면
      * {@code SignupService.approve()} 를 거치지 않으므로 승인 감사 로그가 남지 않고
-     * 승인대기 여부 재확인과 행 잠금도 건너뛴다(설계서 4장).
+     * 승인대기 여부 재확인과 행 잠금도 건너뛴다.
      *
      * <p>검사를 <b>서비스</b>에 두는 이유: 템플릿은 조작된 POST 를 막지 못하고, 컨트롤러의
      * {@code validate()} 훅은 폼만 받아 대상 행의 <b>현재</b> 상태를 알 수 없다. 현재 상태를 볼 수 있는

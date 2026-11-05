@@ -22,7 +22,7 @@ public final class SecretProps {
      * 비밀값으로 다룰 키인가.
      *
      * <p>이름에 PASSWORD / PASSWD / PW / SECRET / TOKEN 이 들어가면 비밀값으로 본다.
-     * 운영 DB 에 실제로 있는 키는 SMTP_PASSWORD 하나지만, 나중에 누가 비슷한 키를 넣어도
+     * 지금 해당하는 키는 SMTP_PASSWORD 하나지만, 나중에 누가 비슷한 키를 넣어도
      * 자동으로 가려지게 넓게 잡는다 — 빠뜨려서 새는 쪽이 과하게 가리는 쪽보다 해롭다.
      */
     public static boolean isSecret(String propKey) {

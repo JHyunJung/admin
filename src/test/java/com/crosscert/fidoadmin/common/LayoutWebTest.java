@@ -40,7 +40,7 @@ class LayoutWebTest {
     @MockitoBean com.crosscert.fidoadmin.auth.LoginFailureHandler failure;
     @MockitoBean com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler logout;
     @MockitoBean com.crosscert.fidoadmin.auth.ManagerUserDetailsService uds;
-    // Task 11 에서 DashboardController 가 통계 조회·고객사 조회를 주입받도록 바뀌었다.
+    // DashboardController 가 통계 조회·고객사 조회를 주입받는다.
     @MockitoBean com.crosscert.fidoadmin.dashboard.StatisticsQueryService stats;
     @MockitoBean com.crosscert.fidoadmin.company.service.CompanyLookup companies;
 
@@ -59,11 +59,11 @@ class LayoutWebTest {
     }
 
     /**
-     * SUPER 가 레이아웃 전체를 보려면 유효 테넌트가 있어야 한다(Task 6, TenantSelectionInterceptor).
+     * SUPER 가 레이아웃 전체를 보려면 유효 테넌트가 있어야 한다(TenantSelectionInterceptor).
      * 이 슬라이스에는 TenantSelectionController 가 없으므로 세션 스코프 빈에 직접 선택값을 넣는다.
      * 세션 빈은 요청 스레드에서만 프록시가 풀리므로, 세팅하는 동안만 RequestContextHolder 를 임시로 건다.
      *
-     * <p>Task 10 부터 사이드바가 {@code selectedCompanyName}(= {@code companies.name(idx)})으로
+     * <p>사이드바가 {@code selectedCompanyName}(= {@code companies.name(idx)})으로
      * 테넌트 선택 여부를 가린다. 목이 기본값(null)을 주면 "미선택"으로 보여 TENANT 메뉴가 비활성화되므로
      * 여기서 함께 이름을 채워 둔다.
      */
@@ -217,7 +217,7 @@ class LayoutWebTest {
     }
 
     /**
-     * 고객사 계정의 사이드바에 "가입 승인"이 렌더되지 않는다(설계서 8장 접근 제어).
+     * 고객사 계정의 사이드바에 "가입 승인"이 렌더되지 않는다(접근 제어).
      *
      * <p>{@code MenuRegistryTest} 는 레지스트리 <em>데이터</em>가 superOnly 인지만 본다.
      * 그러나 실제로 새는 곳은 렌더된 HTML 이다. 템플릿이 {@code itemsFor(isSuper)} 대신

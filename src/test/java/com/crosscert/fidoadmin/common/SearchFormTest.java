@@ -18,7 +18,7 @@ class SearchFormTest {
         }
     }
 
-    /** companyIdx 는 Task 10 부터 필드가 없다 — 테넌트는 세션이 정하며 검색 조건이 아니다. */
+    /** companyIdx 필드는 없다 — 테넌트는 세션이 정하며 검색 조건이 아니다. */
     @Test void queryStringEncodesAndSkipsNullsAndPage() {
         Sub f = new Sub();
         f.setPage(3); f.setSize(50); f.setFromDate(LocalDate.of(2026, 9, 1));

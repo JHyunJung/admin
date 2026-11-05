@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -19,13 +18,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final TenantSelectionInterceptor tenantSelection;
     private final AuditReadInterceptor auditRead;
-
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/error/403").setViewName("error/403");
-        registry.addViewController("/error/404").setViewName("error/404");
-        registry.addViewController("/error/500").setViewName("error/500");
-    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -49,6 +41,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 "/fonts/**", "/favicon*");
     }
 
+    /** 오류 상태를 화면으로 넘긴다. 화면은 {@link ErrorPageController} 가 그린다(메서드 무관). */
     @Bean
     public WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> errorPages() {
         return factory -> factory.addErrorPages(

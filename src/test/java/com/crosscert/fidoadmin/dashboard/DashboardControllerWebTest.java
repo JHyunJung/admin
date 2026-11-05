@@ -40,7 +40,7 @@ class DashboardControllerWebTest {
     private final ManagerUserDetails companyUser = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
 
     @Test void rendersTotalsAndSerializedRows() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 0, 0, 10, 0, 0, 0)));
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
@@ -59,7 +59,7 @@ class DashboardControllerWebTest {
      * <p>조회 버튼은 함께 남는다. 스크립트가 로드되지 않는 환경의 유일한 조회 수단이다.
      */
     @Test void 필터는_자동_조회_표식을_가진다() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of());
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
@@ -71,7 +71,7 @@ class DashboardControllerWebTest {
 
     /** 요약 카드는 지표마다 색 띠와 아이콘으로 구분한다. */
     @Test void summaryCardsAreColorCoded() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 5, 1, 10, 2, 3, 1)));
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);
@@ -89,19 +89,29 @@ class DashboardControllerWebTest {
             .andExpect(content().string(containsString("성공률 97.6%")));
     }
 
-    /** 통계가 아예 없는 고객사: 조회하지 않고 원인을 알린다. */
+    /** 통계가 아예 없는 고객사(마지막 집계일 없음): 원인을 알린다. */
     @Test void 통계가_없는_고객사는_원인을_알린다() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of());
         when(stats.serviceNames()).thenReturn(List.of());
+        when(stats.daily(any())).thenReturn(List.of());
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.empty());
         mvc.perform(get("/").with(user(companyUser)))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("이 고객사에는 통계 데이터가 없습니다")));
-        org.mockito.Mockito.verify(stats, org.mockito.Mockito.never()).daily(any());
+    }
+
+    /** 집계 단위 선택칸은 없다. GROUPBY 는 시간 구간이라 고를 대상이 아니다. */
+    @Test void 집계_단위_선택칸이_없다() throws Exception {
+        when(stats.serviceNames()).thenReturn(List.of("kbstar"));
+        when(stats.daily(any())).thenReturn(List.of());
+        mvc.perform(get("/").with(user(companyUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.not(containsString("집계 단위"))))
+            .andExpect(content().string(org.hamcrest.Matchers.not(containsString("name=\"groupby\""))));
     }
 
     /** 기간에 데이터가 없으면 기간과 마지막 집계일을 알린다. */
     @Test void 기간에_데이터가_없으면_마지막_집계일을_알린다() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of());
         when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.of(2026, 9, 19)));
@@ -112,7 +122,7 @@ class DashboardControllerWebTest {
 
     /** 데이터가 있지만 마지막 집계일이 종료일보다 이르면 배치 지연을 알린다. */
     @Test void 마지막_집계일_이후가_비면_알린다() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 19), 1, 0, 0, 0, 0, 0, 0, 0)));
         when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.of(2026, 9, 19)));
@@ -120,16 +130,8 @@ class DashboardControllerWebTest {
             .andExpect(content().string(containsString("마지막 집계일은 2026-09-19 입니다")));
     }
 
-    /** 집계 단위는 대소문자만 다르면 목록 값으로 맞춘다(DAY → day). */
-    @Test void 집계_단위는_대소문자를_가리지_않는다() {
-        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby("DAY", List.of("day", "month"))).isEqualTo("day");
-        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(" Month ", List.of("day", "month"))).isEqualTo("month");
-        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby("week", List.of("day"))).isEqualTo("day");
-        org.assertj.core.api.Assertions.assertThat(DashboardController.resolveGroupby(null, List.of())).isNull();
-    }
-
     @Test void 대시보드_차트는_V2_색과_선_모양을_쓴다() throws Exception {
-        when(stats.groupbys()).thenReturn(List.of("day"));
+        when(stats.lastStatDate(any())).thenReturn(java.util.Optional.of(LocalDate.now()));
         when(stats.serviceNames()).thenReturn(List.of("kbstar"));
         when(stats.daily(any())).thenReturn(List.of(new DailyStat(LocalDate.of(2026, 9, 1), 1200, 30, 0, 0, 10, 0, 0, 0)));
         var user = new ManagerUserDetails(2L, "kbadmin", null, "KB", 1L, "KB", true, true);

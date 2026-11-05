@@ -84,7 +84,7 @@ public abstract class CrudService<E, ID, S extends SearchForm> {
 
     // ---- 공개 API ----
     /**
-     * COMPANY_IDX 가 없는 테이블(메타·시스템 정보 등)은 SUPER 전용이다(설계 3.3).
+     * COMPANY_IDX 가 없는 테이블(메타·시스템 정보 등)은 SUPER 전용이다.
      * SecurityConfig 의 URL 허용 목록만으로는 새 화면이 추가될 때 누락될 수 있어
      * 서비스 계층에서도 막는다.
      */

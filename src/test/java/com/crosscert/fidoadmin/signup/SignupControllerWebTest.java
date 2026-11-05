@@ -159,7 +159,7 @@ class SignupControllerWebTest {
 
     /**
      * 중복 아이디는 그 자리에서 폼 오류로 알려준다. 계정 열거를 허용하는 대신
-     * 사용자가 왜 신청이 안 됐는지 알 수 있게 한 의도된 선택이다(설계서 6.1).
+     * 사용자가 왜 신청이 안 됐는지 알 수 있게 한 의도된 선택이다.
      */
     @Test void rejectsDuplicateUserId() throws Exception {
         when(service.existsUserId("kbadmin")).thenReturn(true);
@@ -327,7 +327,7 @@ class SignupControllerWebTest {
 
     /**
      * 신청 사유만 제한이 컬럼 폭과 다르다. ETC 는 2048바이트지만 "신청 사유: " 접두와
-     * 나중에 덧붙는 거절 사유의 여유를 남겨 1700바이트로 잡았다(설계서 6.1).
+     * 나중에 덧붙는 거절 사유의 여유를 남겨 1700바이트로 잡았다.
      * 2048 로 "고쳐지는" 것을 막기 위해 이 값을 고정한다. 한글로 재야 문자 수와
      * 바이트 수의 차이가 실제로 드러난다(한글 1자 = 3바이트).
      */

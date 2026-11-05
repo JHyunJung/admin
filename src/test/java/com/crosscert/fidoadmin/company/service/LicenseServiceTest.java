@@ -54,7 +54,7 @@ class LicenseServiceTest {
      * COMPANY_NAME 은 매 수정마다 CCFA_COMPANY 에서 다시 읽어 온다(생성 때만이 아니라).
      * 예전 테스트는 수정 폼으로 COMPANY_IDX 자체를 바꿔 보았지만, 유효 테넌트가 소유자를
      * 정하는 새 모델에서는 update() 가 companyIdx 를 선택 테넌트로 되돌려 그 경로가 성립하지
-     * 않는다(Task 3). 그래서 소속은 그대로 두고 CCFA_COMPANY 쪽 이름이 바뀐 상황으로 검증한다 —
+     * 않는다. 그래서 소속은 그대로 두고 CCFA_COMPANY 쪽 이름이 바뀐 상황으로 검증한다 —
      * 동기화 의도(폼이 아니라 CCFA_COMPANY 가 이긴다)는 그대로 유지된다.
      */
     @Test void companyNameResyncedFromCompanyOnUpdate() {

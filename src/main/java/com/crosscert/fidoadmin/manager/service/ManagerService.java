@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 /**
  * CCFA_MANAGER — 테넌트 운영자(유효 테넌트의 COMPANY_IDX). SUPER 전용 URL.
  * USER_PW 는 컨트롤러가 SHA-256 으로 인코딩해 넘긴다. 공통 규칙은 {@link ManagerAccountService} 에 있다.
- * 잠금 상태는 CCFA_MANAGER_PW_POLICY 에 있고, 해제는 1부 LoginAttemptService.unlock 이 처리한다.
+ * 잠금 상태는 CCFA_MANAGER_PW_POLICY 에 있고, 해제는 LoginAttemptService.unlock 이 처리한다.
  */
 @Service
 public class ManagerService extends ManagerAccountService {
