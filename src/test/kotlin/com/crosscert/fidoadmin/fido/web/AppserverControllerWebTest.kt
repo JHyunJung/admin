@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler
 import com.crosscert.fidoadmin.auth.LoginFailureHandler
 import com.crosscert.fidoadmin.auth.LoginSuccessHandler
@@ -21,7 +22,6 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
@@ -147,9 +147,9 @@ class AppserverControllerWebTest {
                 .param("memberCode", "TYPED").param("memberId", "kbsvr01").param("type", "use"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/appservers/9"))
-        val captor = ArgumentCaptor.forClass(Appserver::class.java)
+        val captor = argumentCaptor<Appserver>()
         verify(service).create(captor.capture())
-        assertThat(captor.value.memberCode).isNull()
+        assertThat(captor.lastValue.memberCode).isNull()
         verify(service, never()).existsDuplicate(anyOrNull(), anyOrNull(), isNull())
     }
 

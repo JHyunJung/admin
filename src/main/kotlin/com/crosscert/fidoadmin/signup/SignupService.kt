@@ -148,7 +148,7 @@ class SignupService(
          * 거절 사유를 ETC 뒤에 덧붙인다. ETC 는 문자 수가 아니라 바이트로 제한되므로
          * 문자 수로 자르면 한글 입력에서 ORA-12899 로 저장이 실패한다.
          */
-        fun appendReason(etc: String?, reason: String?): String {
+        fun appendReason(etc: String?, reason: String?): String? {
             val added = "거절 사유: " + (if (reason == null || reason.isJavaBlank()) "(사유 없음)" else reason)
             val merged = if (etc == null || etc.isJavaBlank()) added else etc + "\n" + added
             return Utf8.truncateToBytes(merged, ETC_MAX_BYTES)

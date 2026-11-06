@@ -80,7 +80,7 @@ class ManagerUserDetailsServiceTest {
 
         val u = service.loadUserByUsername("kbadmin") as ManagerUserDetails
         assertThat(u.isEnabled()).isFalse()
-        assertThat(u.isSuper()).isTrue()
+        assertThat(u.isSuper).isTrue()
         assertThat(u.companyName).isEqualTo("전역")
     }
 

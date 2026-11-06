@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler
 import com.crosscert.fidoadmin.auth.LoginFailureHandler
 import com.crosscert.fidoadmin.auth.LoginSuccessHandler
@@ -21,7 +22,6 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.any
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -98,10 +98,10 @@ class ChallengeControllerWebTest {
             .andExpect(content().string(not(containsString("name=\"companyIdx\""))))
             .andExpect(content().string(not(containsString("/challenges/new"))))
             .andExpect(content().string(not(containsString("data-confirm-form"))))
-        val captor = ArgumentCaptor.forClass(ChallengeSearchForm::class.java)
+        val captor = argumentCaptor<ChallengeSearchForm>()
         verify(service).search(captor.capture(), any<Pageable>())
-        assertThat(captor.value.userid).isEqualTo("user001")
-        assertThat(captor.value.servicename).isEqualTo("kbstar")
+        assertThat(captor.lastValue.userid).isEqualTo("user001")
+        assertThat(captor.lastValue.servicename).isEqualTo("kbstar")
     }
 
     /**

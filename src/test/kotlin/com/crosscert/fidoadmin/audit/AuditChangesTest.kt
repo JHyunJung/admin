@@ -1,11 +1,11 @@
 package com.crosscert.fidoadmin.audit
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
 import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -106,10 +106,10 @@ class AuditChangesTest {
 
         AuditChanges.record(audit, "CCFA_SYSTEM_PROP", "SMTP_PASSWORD@5", before, row)
 
-        val msg = ArgumentCaptor.forClass(String::class.java)
+        val msg = argumentCaptor<String>()
         verify(audit).log(eq(AuditType.UPDATE), msg.capture())
-        assertThat(msg.value).contains("propValue: ******** → ********")
-        assertThat(msg.value).doesNotContain("old-secret", "new-secret")
+        assertThat(msg.lastValue).contains("propValue: ******** → ********")
+        assertThat(msg.lastValue).doesNotContain("old-secret", "new-secret")
     }
 
     /** 비밀 키가 아닌 시스템 설정은 지금처럼 값이 그대로 남아야 한다(변경 추적이 목적이다). */
@@ -122,9 +122,9 @@ class AuditChangesTest {
 
         AuditChanges.record(audit, "CCFA_SYSTEM_PROP", "SMTP_HOST@5", before, row)
 
-        val msg = ArgumentCaptor.forClass(String::class.java)
+        val msg = argumentCaptor<String>()
         verify(audit).log(eq(AuditType.UPDATE), msg.capture())
-        assertThat(msg.value).contains("propValue: mail.old → mail.new")
+        assertThat(msg.lastValue).contains("propValue: mail.old → mail.new")
     }
 
     @Test fun recordWritesTableIdAndDiff() {
@@ -134,8 +134,8 @@ class AuditChangesTest {
 
         AuditChanges.record(audit, "CCFA_MANAGER", "2", before, r)
 
-        val msg = ArgumentCaptor.forClass(String::class.java)
+        val msg = argumentCaptor<String>()
         verify(audit).log(eq(AuditType.UPDATE), msg.capture())
-        assertThat(msg.value).isEqualTo("CCFA_MANAGER UPDATE 2 | userNm: 홍길동 → 김철수")
+        assertThat(msg.lastValue).isEqualTo("CCFA_MANAGER UPDATE 2 | userNm: 홍길동 → 김철수")
     }
 }

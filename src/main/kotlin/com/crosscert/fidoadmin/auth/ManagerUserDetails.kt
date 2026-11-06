@@ -26,14 +26,13 @@ class ManagerUserDetails(
 
     // null 을 0 으로 바꾸면 ROLE_SUPER 가 되어 권한이 상승한다.
     // CCFA_MANAGER.COMPANY_IDX 는 NOT NULL 이므로 null 은 비정상 상태로 보고 거부한다.
-    // (Java 시절 getter 가 Long 을 돌려줬으므로 JVM 시그니처 유지를 위해 타입은 Long? 로 둔다. 값은 항상 non-null.)
-    val companyIdx: Long? = companyIdx
+    val companyIdx: Long = companyIdx
         ?: throw IllegalArgumentException("COMPANY_IDX 가 없는 계정으로는 로그인할 수 없습니다: $userId")
 
-    fun isSuper(): Boolean = companyIdx == 0L
+    val isSuper: Boolean get() = companyIdx == 0L
 
     override fun getAuthorities(): Collection<GrantedAuthority> =
-        listOf(SimpleGrantedAuthority(if (isSuper()) ROLE_SUPER else ROLE_COMPANY))
+        listOf(SimpleGrantedAuthority(if (isSuper) ROLE_SUPER else ROLE_COMPANY))
     override fun getPassword(): String? = password
     override fun getUsername(): String? = userId
     override fun isAccountNonExpired(): Boolean = true

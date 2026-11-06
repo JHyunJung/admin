@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.audit
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.auth.ManagerUserDetails
 import com.crosscert.fidoadmin.common.MenuRegistry
 import com.crosscert.fidoadmin.common.SelectedTenant
@@ -8,7 +9,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -62,9 +62,9 @@ class AuditReadInterceptorTest {
     @Test fun listViewLeavesOneMenuViewRow() {
         interceptor.afterCompletion(request, response, HANDLER, null)
 
-        val msg = ArgumentCaptor.forClass(String::class.java)
+        val msg = argumentCaptor<String>()
         verify(audit).log(eq(AuditType.MENU_VIEW), msg.capture())
-        assertThat(msg.value).isEqualTo("FIDO 등록자 관리 화면 조회")
+        assertThat(msg.lastValue).isEqualTo("FIDO 등록자 관리 화면 조회")
     }
 
     /** 컨트롤러가 AuditView 로 대상을 적어 두면 그 건수만큼 DATA_VIEW 가 남는다. */
@@ -74,7 +74,7 @@ class AuditReadInterceptorTest {
 
         interceptor.afterCompletion(request, response, HANDLER, null)
 
-        val msg = ArgumentCaptor.forClass(String::class.java)
+        val msg = argumentCaptor<String>()
         verify(audit, times(2)).log(eq(AuditType.DATA_VIEW), msg.capture())
         assertThat(msg.allValues)
             .containsExactly("FIDO 등록자 관리 상세 조회 (ID: 5)", "FIDO 등록자 관리 상세 조회 (ID: 6)")

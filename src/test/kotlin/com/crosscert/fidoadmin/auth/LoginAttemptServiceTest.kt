@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.manager.entity.CcfaManager
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository
@@ -12,7 +13,6 @@ import java.util.Optional
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -80,12 +80,12 @@ class LoginAttemptServiceTest {
 
         service.onFailure("kbadmin")
 
-        val captor = ArgumentCaptor.forClass(CcfaManagerPwPolicy::class.java)
+        val captor = argumentCaptor<CcfaManagerPwPolicy>()
         verify(policies).save(captor.capture())
-        assertThat(captor.value.userId).isEqualTo("kbadmin")
-        assertThat(captor.value.pwFailCnt).isEqualTo(1L)
-        assertThat(captor.value.accountLock).isEqualTo("N")
-        assertThat(captor.value.createdtime).isNotNull()
+        assertThat(captor.lastValue.userId).isEqualTo("kbadmin")
+        assertThat(captor.lastValue.pwFailCnt).isEqualTo(1L)
+        assertThat(captor.lastValue.accountLock).isEqualTo("N")
+        assertThat(captor.lastValue.createdtime).isNotNull()
     }
 
     @Test fun failureForUnknownUserDoesNothing() {

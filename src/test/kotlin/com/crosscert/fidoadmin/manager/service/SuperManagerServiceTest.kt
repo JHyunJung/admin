@@ -26,7 +26,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -264,9 +263,9 @@ class SuperManagerServiceTest {
         val saved = service.update(2L) { e -> e.companyIdx = 7L }
 
         assertThat(saved.companyIdx).isEqualTo(0L)
-        val captor = ArgumentCaptor.forClass(CcfaManager::class.java)
+        val captor = argumentCaptor<CcfaManager>()
         verify(managers).save(captor.capture())
-        assertThat(captor.value.companyIdx).isEqualTo(0L)
+        assertThat(captor.lastValue.companyIdx).isEqualTo(0L)
     }
 
     /**
@@ -280,7 +279,7 @@ class SuperManagerServiceTest {
         val query = mock(CriteriaQuery::class.java) as CriteriaQuery<*>
         val path = mock(Path::class.java) as Path<Any>
         whenever(root.get<Any>("companyIdx")).thenReturn(path)
-        val valueCaptor = ArgumentCaptor.forClass(Any::class.java)
+        val valueCaptor = argumentCaptor<Any>()
         whenever(cb.equal(anyOrNull<Expression<*>>(), valueCaptor.capture())).thenReturn(mock(Predicate::class.java))
         whenever(cb.and(anyVararg<Predicate>()))
             .thenReturn(mock(Predicate::class.java))

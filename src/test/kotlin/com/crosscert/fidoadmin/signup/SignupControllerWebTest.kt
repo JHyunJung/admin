@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.signup
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler
 import com.crosscert.fidoadmin.auth.LoginController
 import com.crosscert.fidoadmin.auth.LoginFailureHandler
@@ -18,7 +19,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -125,16 +125,16 @@ class SignupControllerWebTest {
         // 서비스에 실제로 넘어간 인자 전체를 잡아, 공격자가 실은 값이 어느 자리에도
         // 없음을 확인한다. 필드 이름을 보는 검사와 달리 이름을 바꿔도, 다른 바인딩
         // 경로로 들어와도 잡힌다.
-        val userId = ArgumentCaptor.forClass(String::class.java)
-        val password = ArgumentCaptor.forClass(String::class.java)
-        val userNm = ArgumentCaptor.forClass(String::class.java)
-        val userEmail = ArgumentCaptor.forClass(String::class.java)
-        val userPhone = ArgumentCaptor.forClass(String::class.java)
-        val reason = ArgumentCaptor.forClass(String::class.java)
+        val userId = argumentCaptor<String>()
+        val password = argumentCaptor<String>()
+        val userNm = argumentCaptor<String>()
+        val userEmail = argumentCaptor<String>()
+        val userPhone = argumentCaptor<String>()
+        val reason = argumentCaptor<String>()
         verify(service).apply(userId.capture(), password.capture(), userNm.capture(),
             userEmail.capture(), userPhone.capture(), reason.capture())
-        assertThat(userId.value).isEqualTo("attacker")
-        assertThat(listOf(userId, password, userNm, userEmail, userPhone, reason).map { it.value })
+        assertThat(userId.lastValue).isEqualTo("attacker")
+        assertThat(listOf(userId, password, userNm, userEmail, userPhone, reason).map { it.lastValue })
             .doesNotContain("0", "활성")
     }
 
@@ -210,10 +210,10 @@ class SignupControllerWebTest {
                 .param("reason", "   "))
             .andExpect(status().is3xxRedirection())
 
-        val pw = ArgumentCaptor.forClass(String::class.java)
+        val pw = argumentCaptor<String>()
         verify(service).apply(anyString(), pw.capture(), anyString(), anyString(), anyOrNull(), anyOrNull())
-        assertThat(pw.value).isNotEqualTo("Company1234!")   // 평문이 그대로 가면 안 된다
-        verify(service).apply("newbie", pw.value, "홍길동", "hong@kb.local", null, null)
+        assertThat(pw.lastValue).isNotEqualTo("Company1234!")   // 평문이 그대로 가면 안 된다
+        verify(service).apply("newbie", pw.lastValue, "홍길동", "hong@kb.local", null, null)
     }
 
     /**
@@ -239,14 +239,14 @@ class SignupControllerWebTest {
             .andExpect(redirectedUrl("/login?signup"))
 
         // 저장된 값: 로그인 경로가 나중에 찾아볼 바로 그 형태여야 한다.
-        val stored = ArgumentCaptor.forClass(String::class.java)
+        val stored = argumentCaptor<String>()
         verify(service).apply(stored.capture(), anyString(), anyString(), anyString(), anyOrNull(), anyOrNull())
-        assertThat(stored.value).isEqualTo("newbie")
+        assertThat(stored.lastValue).isEqualTo("newbie")
 
         // 중복 검사가 본 값: 저장된 값과 같아야 한다(두 경로가 갈라지면 안 된다).
-        val checked = ArgumentCaptor.forClass(String::class.java)
+        val checked = argumentCaptor<String>()
         verify(service).existsUserId(checked.capture())
-        assertThat(checked.value).isEqualTo(stored.value)
+        assertThat(checked.lastValue).isEqualTo(stored.lastValue)
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.service
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.auth.ManagerUserDetails
@@ -14,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.ArgumentMatchers.anyString
@@ -107,9 +107,9 @@ class CriteriaQueryServiceTest {
 
         assertThat(service.disabledAaids()).containsExactly("0012#0001")
 
-        val params = ArgumentCaptor.forClass(MapSqlParameterSource::class.java)
+        val params = argumentCaptor<MapSqlParameterSource>()
         verify(jdbc).queryForList(anyString(), params.capture(), eq(String::class.java))
-        assertThat(params.value.getValue("companyIdx")).isEqualTo(7L)
+        assertThat(params.lastValue.getValue("companyIdx")).isEqualTo(7L)
     }
 
     /** 비활성화는 차단 목록에 행을 넣는다. */
@@ -121,9 +121,9 @@ class CriteriaQueryServiceTest {
 
         assertThat(service.changeStatus(1L, false)).isTrue()
 
-        val sql = ArgumentCaptor.forClass(String::class.java)
+        val sql = argumentCaptor<String>()
         verify(jdbc).update(sql.capture(), any<MapSqlParameterSource>())
-        assertThat(sql.value).contains("INSERT INTO CCFA_COMPANY_AAID")
+        assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID")
         verify(audit).log(eq(AuditType.STATUS), anyString())
     }
 
@@ -136,9 +136,9 @@ class CriteriaQueryServiceTest {
 
         assertThat(service.changeStatus(1L, true)).isTrue()
 
-        val sql = ArgumentCaptor.forClass(String::class.java)
+        val sql = argumentCaptor<String>()
         verify(jdbc).update(sql.capture(), any<MapSqlParameterSource>())
-        assertThat(sql.value).contains("DELETE FROM CCFA_COMPANY_AAID")
+        assertThat(sql.lastValue).contains("DELETE FROM CCFA_COMPANY_AAID")
     }
 
     /** 이미 그 상태면 false 를 주고 감사 로그를 남기지 않는다 — 바뀐 것이 없다. */
@@ -180,9 +180,9 @@ class CriteriaQueryServiceTest {
 
         assertThat(service.changeStatusAll(false)).isEqualTo(5)
 
-        val sql = ArgumentCaptor.forClass(String::class.java)
+        val sql = argumentCaptor<String>()
         verify(jdbc).update(sql.capture(), any<MapSqlParameterSource>())
-        assertThat(sql.value).contains("INSERT INTO CCFA_COMPANY_AAID").contains("NOT EXISTS").contains("FROM CRITERIA")
+        assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID").contains("NOT EXISTS").contains("FROM CRITERIA")
         verify(audit).log(eq(AuditType.STATUS), anyString())
     }
 
@@ -193,11 +193,11 @@ class CriteriaQueryServiceTest {
 
         assertThat(service.changeStatusAll(true)).isEqualTo(3)
 
-        val sql = ArgumentCaptor.forClass(String::class.java)
-        val params = ArgumentCaptor.forClass(MapSqlParameterSource::class.java)
+        val sql = argumentCaptor<String>()
+        val params = argumentCaptor<MapSqlParameterSource>()
         verify(jdbc).update(sql.capture(), params.capture())
-        assertThat(sql.value).contains("DELETE FROM CCFA_COMPANY_AAID").doesNotContain("AAID = :aaid")
-        assertThat(params.value.getValue("companyIdx")).isEqualTo(7L)
+        assertThat(sql.lastValue).contains("DELETE FROM CCFA_COMPANY_AAID").doesNotContain("AAID = :aaid")
+        assertThat(params.lastValue.getValue("companyIdx")).isEqualTo(7L)
     }
 
     @Test fun bulkNoChangeSkipsAudit() {
@@ -248,11 +248,11 @@ class CriteriaQueryServiceTest {
     @Test fun disableAllForInsertsForGivenCompanyWithoutAuditOrEvent() {
         whenever(jdbc.update(anyString(), any<MapSqlParameterSource>())).thenReturn(4)
         assertThat(service.disableAllFor(9L)).isEqualTo(4)
-        val sql = ArgumentCaptor.forClass(String::class.java)
-        val params = ArgumentCaptor.forClass(MapSqlParameterSource::class.java)
+        val sql = argumentCaptor<String>()
+        val params = argumentCaptor<MapSqlParameterSource>()
         verify(jdbc).update(sql.capture(), params.capture())
-        assertThat(sql.value).contains("INSERT INTO CCFA_COMPANY_AAID").contains("SELECT DISTINCT").contains("NOT EXISTS")
-        assertThat(params.value.getValue("companyIdx")).isEqualTo(9L)
+        assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID").contains("SELECT DISTINCT").contains("NOT EXISTS")
+        assertThat(params.lastValue.getValue("companyIdx")).isEqualTo(9L)
         verify(audit, never()).log(anyOrNull(), anyString())
         verify(events, never()).publishEvent(anyOrNull<ApplicationEvent>())
     }
@@ -260,9 +260,9 @@ class CriteriaQueryServiceTest {
     @Test fun deleteAllForDeletesGivenCompanyRows() {
         whenever(jdbc.update(anyString(), any<MapSqlParameterSource>())).thenReturn(2)
         assertThat(service.deleteAllFor(9L)).isEqualTo(2)
-        val sql = ArgumentCaptor.forClass(String::class.java)
+        val sql = argumentCaptor<String>()
         verify(jdbc).update(sql.capture(), any<MapSqlParameterSource>())
-        assertThat(sql.value).contains("DELETE FROM CCFA_COMPANY_AAID")
+        assertThat(sql.lastValue).contains("DELETE FROM CCFA_COMPANY_AAID")
     }
 
     @Test fun superCreatesCriteriaBlocksEveryCompanyAndPublishes() {
@@ -277,11 +277,11 @@ class CriteriaQueryServiceTest {
         assertThat(saved.keyprotection).isEqualTo(2L)
         assertThat(saved.createtime).isNotNull()
         assertThat(saved.updatedtime).isEqualTo(saved.createtime)
-        val sql = ArgumentCaptor.forClass(String::class.java)
-        val params = ArgumentCaptor.forClass(MapSqlParameterSource::class.java)
+        val sql = argumentCaptor<String>()
+        val params = argumentCaptor<MapSqlParameterSource>()
         verify(jdbc).update(sql.capture(), params.capture())
-        assertThat(sql.value).contains("INSERT INTO CCFA_COMPANY_AAID").contains("FROM CCFA_COMPANY").contains("NOT EXISTS")
-        assertThat(params.value.getValue("aaid")).isEqualTo("0012#0009")
+        assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID").contains("FROM CCFA_COMPANY").contains("NOT EXISTS")
+        assertThat(params.lastValue.getValue("aaid")).isEqualTo("0012#0009")
         verify(audit).log(AuditType.CREATE, "AAID(정책) 등록 | AAID: 0012#0009 | 차단 고객사 4곳")
         verify(events).publishEvent(FidoConfigChanged("AAID 등록 0012#0009"))
     }

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  *
  * isSuper() 를 두지 않는다. "지금 보는 테넌트가 전역인가"는 이 모델에서
  * 성립하지 않는 질문이고, 남겨 두면 예전 의미(계정이 SUPER 인가)로 오용된다.
- * 계정 성질을 물어야 하는 곳은 `require().isSuper()` 를 쓴다.
+ * 계정 성질을 물어야 하는 곳은 `require().isSuper` 를 쓴다.
  */
 @Component
 class TenantContext(private val selected: SelectedTenant) {

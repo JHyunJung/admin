@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.web
 
+import org.mockito.kotlin.argumentCaptor
 import com.crosscert.fidoadmin.auth.AppLogoutSuccessHandler
 import com.crosscert.fidoadmin.auth.LoginFailureHandler
 import com.crosscert.fidoadmin.auth.LoginSuccessHandler
@@ -23,7 +24,6 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentCaptor
 import org.mockito.kotlin.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.kotlin.never
@@ -129,9 +129,9 @@ class CriteriaControllerWebTest {
             .andExpect(content().string(containsString("data-confirm-form=\"aaidBulkOnForm\"")))
             .andExpect(content().string(containsString("data-confirm-form=\"aaidBulkOffForm\"")))
             .andExpect(content().string(containsString("data-confirm-form=\"aaidForm1\"")))
-        val captor = ArgumentCaptor.forClass(CriteriaSearchForm::class.java)
+        val captor = argumentCaptor<CriteriaSearchForm>()
         verify(service).search(captor.capture(), any<Pageable>())
-        assertThat(captor.value.aaid).isEqualTo("0012")
+        assertThat(captor.lastValue.aaid).isEqualTo("0012")
     }
 
     /** 상세의 JSONDATA 는 JsonPretty 로 정리되어 "key" : "value" 형태(이스케이프된 &quot;)로 나온다. */
