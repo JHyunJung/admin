@@ -1,0 +1,41 @@
+package com.crosscert.fidoadmin.manager.service
+
+import com.crosscert.fidoadmin.audit.AuditLogger
+import com.crosscert.fidoadmin.auth.LoginAttemptService
+import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy
+import com.crosscert.fidoadmin.common.Specs
+import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.manager.entity.CcfaManager
+import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository
+import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository
+import com.crosscert.fidoadmin.manager.web.ManagerSearchForm
+import jakarta.persistence.EntityManager
+import org.springframework.data.jpa.domain.Specification
+import org.springframework.stereotype.Service
+
+/**
+ * CCFA_MANAGER — 테넌트 운영자(유효 테넌트의 COMPANY_IDX). SUPER 전용 URL.
+ * USER_PW 는 컨트롤러가 SHA-256 으로 인코딩해 넘긴다. 공통 규칙은 [ManagerAccountService] 에 있다.
+ * 잠금 상태는 CCFA_MANAGER_PW_POLICY 에 있고, 해제는 LoginAttemptService.unlock 이 처리한다.
+ */
+@Service
+class ManagerService(
+    managers: CcfaManagerRepository,
+    audit: AuditLogger,
+    policies: CcfaManagerPwPolicyRepository,
+    loginAttempts: LoginAttemptService,
+    em: EntityManager,
+    tenant: TenantContext,
+    userIdGuard: ManagerUserIdGuard,
+    expiry: PasswordExpiryPolicy,
+) : ManagerAccountService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard, expiry) {
+
+    override fun toSpecification(f: ManagerSearchForm): Specification<CcfaManager> =
+        Specs.all(
+            Specs.like("userId", f.userId),
+            Specs.like("userNm", f.userNm),
+            Specs.eq("status", f.status))
+
+    /** 유효 테넌트로 거른다. 등록·수정 때 소속도 CrudService 가 유효 테넌트로 강제한다. */
+    override fun companyIdxAttribute(): String? = "companyIdx"
+}
