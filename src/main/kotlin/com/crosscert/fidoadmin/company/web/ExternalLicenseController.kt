@@ -1,0 +1,33 @@
+package com.crosscert.fidoadmin.company.web
+
+import com.crosscert.fidoadmin.company.repository.CcfaLicenseRepository
+import java.nio.charset.StandardCharsets
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RestController
+
+/**
+ * FIDO 서버가 라이선스 원문을 받아 가는 경로. 경로와 응답 형식은 FIDO 서버가 기대하는 그대로다 —
+ * HASHVALUE 로 찾아 LICENSE 를 평문으로 주고, 없으면 200 빈 본문. 로그인·CSRF 없이 열려 있다.
+ * 고객사 구분이 없다(해시가 곧 식별자).
+ */
+@RestController
+class ExternalLicenseController(private val licenses: CcfaLicenseRepository) {
+
+    @Transactional(readOnly = true)
+    @RequestMapping(value = ["/external/license/{filename}"], method = [RequestMethod.GET, RequestMethod.POST])
+    fun license(@PathVariable filename: String): ResponseEntity<String> {
+        val body: String? = licenses.findFirstByHashvalueOrderByIdxAsc(filename)
+            .map { it.license }
+            .orElse("")
+        return ResponseEntity.ok().contentType(TEXT_UTF8).body(body ?: "")
+    }
+
+    companion object {
+        private val TEXT_UTF8 = MediaType("text", "plain", StandardCharsets.UTF_8)
+    }
+}
