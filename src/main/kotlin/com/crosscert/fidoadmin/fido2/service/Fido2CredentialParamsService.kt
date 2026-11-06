@@ -38,8 +38,8 @@ class Fido2CredentialParamsService(
 
     /** DB 기본값: CRED_TYPE 'public-key', STATUS 'T'. */
     override fun applyDefaults(e: Fido2CredentialParams) {
-        if (e.credType.isNullOrBlank()) e.credType = "public-key"
-        if (e.status.isNullOrBlank()) e.status = "T"
+        if (e.credType.let { it == null || it.all(Character::isWhitespace) }) e.credType = "public-key"
+        if (e.status.let { it == null || it.all(Character::isWhitespace) }) e.status = "T"
     }
     override fun touchCreated(e: Fido2CredentialParams, now: LocalDateTime) { e.createdtime = now }
 }

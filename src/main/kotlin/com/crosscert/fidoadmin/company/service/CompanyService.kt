@@ -121,8 +121,8 @@ class CompanyService(
     /** VENDOR_CODE 로 고객사를 찾는다. 중복 검사용 — DB 에 유니크 제약이 없어 화면에서 막는다. */
     @Transactional(readOnly = true)
     fun findByVendorCode(vendorCode: String?): Optional<CcfaCompany> {
-        if (vendorCode == null || vendorCode.isBlank()) return Optional.empty()
-        return (repository as CcfaCompanyRepository).findFirstByVendorCode(vendorCode.trim())
+        if (vendorCode == null || vendorCode.all(Character::isWhitespace)) return Optional.empty()
+        return (repository as CcfaCompanyRepository).findFirstByVendorCode(vendorCode.trim { it <= ' ' })
     }
 
     private fun copyPerCompanyProps(companyIdx: Long?): Int {

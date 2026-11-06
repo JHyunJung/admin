@@ -119,7 +119,7 @@ class StatisticsQueryService(
 
         private fun serviceName(f: DashboardSearchForm): String? {
             val name = f.serviceName
-            return if (name == null || name.isBlank()) null else name
+            return if (name == null || name.all(Character::isWhitespace)) null else name
         }
     }
 }

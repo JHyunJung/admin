@@ -37,6 +37,6 @@ class Fido2DemoAccessCodeService(
 
     /** DB 기본값: STATUS 'E'(활성). */
     override fun applyDefaults(e: Fido2DemoAccessCode) {
-        if (e.status.isNullOrBlank()) e.status = "E"
+        if (e.status.let { it == null || it.all(Character::isWhitespace) }) e.status = "E"
     }
 }
