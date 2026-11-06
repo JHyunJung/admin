@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.service
 
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.common.CrudService
@@ -64,7 +65,7 @@ class CriteriaQueryService(
               FROM CCFA_COMPANY_AAID
              WHERE COMPANY_IDX = :companyIdx
                AND AAID IS NOT NULL
-            """.trimIndent()
+            """.trimIndent() + "\n"
         val params = MapSqlParameterSource("companyIdx", companyIdx)
         return HashSet(jdbc.queryForList(sql, params, String::class.java))
     }
@@ -104,7 +105,7 @@ class CriteriaQueryService(
                  SELECT 1 FROM CCFA_COMPANY_AAID b
                   WHERE b.COMPANY_IDX = c.IDX AND b.AAID = :aaid
              )
-            """.trimIndent(),
+            """.trimIndent() + "\n",
             MapSqlParameterSource("aaid", saved.aaid),
         )
 
@@ -141,7 +142,7 @@ class CriteriaQueryService(
             SELECT IDX FROM CCFA_COMPANY
              WHERE IDX = :companyIdx
                FOR UPDATE
-            """.trimIndent(),
+            """.trimIndent() + "\n",
             params,
             Long::class.javaObjectType,
         )
@@ -152,7 +153,7 @@ class CriteriaQueryService(
                 DELETE FROM CCFA_COMPANY_AAID
                  WHERE COMPANY_IDX = :companyIdx
                    AND AAID = :aaid
-                """.trimIndent(),
+                """.trimIndent() + "\n",
                 params,
             )
         } else {
@@ -164,7 +165,7 @@ class CriteriaQueryService(
                      SELECT 1 FROM CCFA_COMPANY_AAID
                       WHERE COMPANY_IDX = :companyIdx AND AAID = :aaid
                  )
-                """.trimIndent(),
+                """.trimIndent() + "\n",
                 params,
             )
         }
@@ -196,7 +197,7 @@ class CriteriaQueryService(
             SELECT IDX FROM CCFA_COMPANY
              WHERE IDX = :companyIdx
                FOR UPDATE
-            """.trimIndent(),
+            """.trimIndent() + "\n",
             params,
             Long::class.javaObjectType,
         )
@@ -206,7 +207,7 @@ class CriteriaQueryService(
                 """
                 DELETE FROM CCFA_COMPANY_AAID
                  WHERE COMPANY_IDX = :companyIdx
-                """.trimIndent(),
+                """.trimIndent() + "\n",
                 params,
             )
         } else {
@@ -239,7 +240,7 @@ class CriteriaQueryService(
                    SELECT 1 FROM CCFA_COMPANY_AAID b
                     WHERE b.COMPANY_IDX = :companyIdx AND b.AAID = c.AAID
                )
-            """.trimIndent(),
+            """.trimIndent() + "\n",
             MapSqlParameterSource("companyIdx", companyIdx),
         )
 
@@ -250,7 +251,7 @@ class CriteriaQueryService(
             """
             DELETE FROM CCFA_COMPANY_AAID
              WHERE COMPANY_IDX = :companyIdx
-            """.trimIndent(),
+            """.trimIndent() + "\n",
             MapSqlParameterSource("companyIdx", companyIdx),
         )
 

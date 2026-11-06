@@ -219,14 +219,14 @@ class CriteriaQueryServiceTest {
         verify(events).publishEvent(FidoConfigChanged("AAID 상태 변경 0012#0001"))
     }
 
-    // never().publishEvent(any()) 는 Java 원본이 컴파일한 대로 publishEvent(ApplicationEvent) 오버로드를 본다.
+    // FidoConfigChanged 는 ApplicationEvent 가 아니라 publishEvent(Object) 로 발행된다. never() 도 그 오버로드를 본다.
     @Test fun toggleWithNoChangeDoesNotPublish() {
         login(7L)
         whenever(repo.findById(1L)).thenReturn(Optional.of(criteria(1L, "0012#0001")))
         whenever(jdbc.queryForObject(anyString(), any<MapSqlParameterSource>(), eq(boxedLong))).thenReturn(7L)
         whenever(jdbc.update(anyString(), any<MapSqlParameterSource>())).thenReturn(0)
         assertThat(service.changeStatus(1L, false)).isFalse()
-        verify(events, never()).publishEvent(anyOrNull<ApplicationEvent>())
+        verify(events, never()).publishEvent(anyOrNull<Any>())
     }
 
     @Test fun bulkToggleWithChangesPublishes() {
@@ -242,7 +242,7 @@ class CriteriaQueryServiceTest {
         whenever(jdbc.queryForObject(anyString(), any<MapSqlParameterSource>(), eq(boxedLong))).thenReturn(7L)
         whenever(jdbc.update(anyString(), any<MapSqlParameterSource>())).thenReturn(0)
         assertThat(service.changeStatusAll(true)).isZero()
-        verify(events, never()).publishEvent(anyOrNull<ApplicationEvent>())
+        verify(events, never()).publishEvent(anyOrNull<Any>())
     }
 
     @Test fun disableAllForInsertsForGivenCompanyWithoutAuditOrEvent() {
@@ -254,7 +254,7 @@ class CriteriaQueryServiceTest {
         assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID").contains("SELECT DISTINCT").contains("NOT EXISTS")
         assertThat(params.lastValue.getValue("companyIdx")).isEqualTo(9L)
         verify(audit, never()).log(anyOrNull(), anyString())
-        verify(events, never()).publishEvent(anyOrNull<ApplicationEvent>())
+        verify(events, never()).publishEvent(anyOrNull<Any>())
     }
 
     @Test fun deleteAllForDeletesGivenCompanyRows() {
@@ -312,6 +312,6 @@ class CriteriaQueryServiceTest {
             .isInstanceOf(CriteriaMetadataException::class.java)
             .hasMessage(CriteriaMetadataParser.INVALID)
         verify(repo, never()).save(anyOrNull<Criteria>())
-        verify(events, never()).publishEvent(anyOrNull<ApplicationEvent>())
+        verify(events, never()).publishEvent(anyOrNull<Any>())
     }
 }

@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.service
 
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.fido.entity.Criteria
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature

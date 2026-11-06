@@ -1,10 +1,10 @@
 package com.crosscert.fidoadmin.manager.service
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.auth.LoginAttemptService
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy
-import com.crosscert.fidoadmin.auth.isJavaBlank
 import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.common.TenantContext
@@ -50,10 +50,10 @@ abstract class ManagerAccountService protected constructor(
     override fun sortableProperties(): Set<String> = java.util.Set.of("idx", "userId", "userNm", "lastAccess")
 
     override fun applyDefaults(e: CcfaManager) {
-        if (e.status == null || e.status!!.isJavaBlank()) e.status = ManagerStatus.ACTIVE
+        if (e.status == null || e.status!!.javaIsBlank()) e.status = ManagerStatus.ACTIVE
         if (e.login == null) e.login = ManagerStatus.LOGIN_OFFLINE
-        if (e.alramType == null || e.alramType!!.isJavaBlank()) e.alramType = ManagerStatus.ALARM_TYPE_NONE
-        if (e.alramLevel == null || e.alramLevel!!.isJavaBlank()) e.alramLevel = ManagerStatus.ALARM_LEVEL_DEFAULT
+        if (e.alramType == null || e.alramType!!.javaIsBlank()) e.alramType = ManagerStatus.ALARM_TYPE_NONE
+        if (e.alramLevel == null || e.alramLevel!!.javaIsBlank()) e.alramLevel = ManagerStatus.ALARM_LEVEL_DEFAULT
     }
     override fun touchCreated(e: CcfaManager, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
     override fun touchUpdated(e: CcfaManager, now: LocalDateTime) { e.updatedtime = now }

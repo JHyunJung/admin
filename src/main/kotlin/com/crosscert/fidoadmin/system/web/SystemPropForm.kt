@@ -1,10 +1,10 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.system.SecretProps
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
-import com.crosscert.fidoadmin.system.trimJava
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -24,7 +24,7 @@ class SystemPropForm {
     /** 신규 엔티티. 식별자는 여기서만 채운다. companyIdx 는 유효 테넌트다(폼 값이 아니다). */
     fun toNewEntity(companyIdx: Long?): CcfaSystemProp {
         val p = CcfaSystemProp()
-        p.id = CcfaSystemPropId(propKey?.trimJava(), companyIdx)
+        p.id = CcfaSystemPropId(propKey?.javaTrim(), companyIdx)
         applyTo(p)
         return p
     }

@@ -1,8 +1,8 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.system.entity.CcfaCriteria
-import com.crosscert.fidoadmin.system.isBlankJava
 import jakarta.validation.constraints.NotBlank
 
 /** CCFA_CRITERIA 입력 폼. JSONDATA 는 CLOB 이라 길이 제한이 없고 형식만 컨트롤러가 검증한다. */
@@ -21,7 +21,7 @@ class AdminCriteriaForm {
     fun applyTo(c: CcfaCriteria) {
         c.aaid = aaid; c.metahash = metahash
         val json = jsondata
-        c.jsondata = if (json == null || json.isBlankJava()) null else json // EMPTY_CLOB 과 null 을 같게 본다
+        c.jsondata = if (json == null || json.javaIsBlank()) null else json // EMPTY_CLOB 과 null 을 같게 본다
     }
 
     companion object {

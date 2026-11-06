@@ -1,7 +1,7 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
-import com.crosscert.fidoadmin.system.isBlankJava
 import com.crosscert.fidoadmin.system.service.FidoClientService
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -38,7 +38,7 @@ class FidoClientRegistrationController(
         log.info("[ClientAccess] Access IP : {}", request.remoteAddr)
 
         // 둘 중 하나가 비면 조용히 무시한다(응답 본문 없이 반환).
-        if (serverName.isBlankJava() || fsurl == null || fsurl.isBlankJava()) {
+        if (serverName.javaIsBlank() || fsurl == null || fsurl.javaIsBlank()) {
             return ResponseEntity.badRequest().build()
         }
 

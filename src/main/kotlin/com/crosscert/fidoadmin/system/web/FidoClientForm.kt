@@ -1,8 +1,8 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
-import com.crosscert.fidoadmin.system.trimJava
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -20,7 +20,7 @@ class FidoClientForm {
 
     fun toNewEntity(): CcfaFidoclient {
         val c = CcfaFidoclient()
-        c.servercode = servercode?.trimJava()
+        c.servercode = servercode?.javaTrim()
         applyTo(c)
         return c
     }

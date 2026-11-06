@@ -20,16 +20,14 @@ interface UserinfoRepository : AdminRepository<Userinfo, Long> {
      * userid·servicename 은 부분 일치다. null 이면 그 조건을 걸지 않는다.
      */
     @Query(
-        """
-        select new com.crosscert.fidoadmin.fido.service.UserAccountRow(
-            u.userid, u.servicename, count(u), sum(case when u.status = 'O' then 1L else 0L end), max(u.regtime))
-        from Userinfo u
-        where u.companyIdx = :companyIdx
-          and (:userid is null or lower(u.userid) like lower(concat('%', :userid, '%')))
-          and (:servicename is null or lower(u.servicename) like lower(concat('%', :servicename, '%')))
-        group by u.userid, u.servicename
-        order by max(u.regtime) desc, u.userid asc
-        """
+        "select new com.crosscert.fidoadmin.fido.service.UserAccountRow(\n"
+            + "    u.userid, u.servicename, count(u), sum(case when u.status = 'O' then 1L else 0L end), max(u.regtime))\n"
+            + "from Userinfo u\n"
+            + "where u.companyIdx = :companyIdx\n"
+            + "  and (:userid is null or lower(u.userid) like lower(concat('%', :userid, '%')))\n"
+            + "  and (:servicename is null or lower(u.servicename) like lower(concat('%', :servicename, '%')))\n"
+            + "group by u.userid, u.servicename\n"
+            + "order by max(u.regtime) desc, u.userid asc\n"
     )
     fun findUserAccounts(
         @Param("companyIdx") companyIdx: Long?,
@@ -47,14 +45,12 @@ interface UserinfoRepository : AdminRepository<Userinfo, Long> {
      * 건수가 틀린다. 정확도를 택했다.
      */
     @Query(
-        value = """
-        select count(*) from (
-            select 1 from USERINFO
-            where COMPANY_IDX = :companyIdx
-              and (:userid is null or lower(USERID) like lower('%' || :userid || '%'))
-              and (:servicename is null or lower(SERVICENAME) like lower('%' || :servicename || '%'))
-            group by USERID, SERVICENAME)
-        """,
+        value = "select count(*) from (\n"
+            + "    select 1 from USERINFO\n"
+            + "    where COMPANY_IDX = :companyIdx\n"
+            + "      and (:userid is null or lower(USERID) like lower('%' || :userid || '%'))\n"
+            + "      and (:servicename is null or lower(SERVICENAME) like lower('%' || :servicename || '%'))\n"
+            + "    group by USERID, SERVICENAME)\n",
         nativeQuery = true,
     )
     fun countUserAccounts(

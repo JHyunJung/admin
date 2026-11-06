@@ -1,5 +1,7 @@
 package com.crosscert.fidoadmin.log.service
 
+import com.crosscert.fidoadmin.common.javaTrim
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.log.web.FidoLogRow
 import com.crosscert.fidoadmin.log.web.FidoLogSearchForm
@@ -191,7 +193,7 @@ class FidoLogQueryService(
             if (op != null && OPS.contains(op.javaTrim().lowercase(Locale.ROOT))) op.javaTrim() else null
 
         private fun termOrNull(value: String?): String? =
-            if (value == null || value.isJavaBlank()) null else value.javaTrim()
+            if (value == null || value.javaIsBlank()) null else value.javaTrim()
 
         private fun containsIgnoreCase(value: String?, term: String): Boolean =
             value != null && value.lowercase(Locale.ROOT).contains(term.lowercase(Locale.ROOT))

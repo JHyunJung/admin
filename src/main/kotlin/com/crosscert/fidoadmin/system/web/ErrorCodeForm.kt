@@ -1,8 +1,8 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.system.entity.CcfaErrorTable
-import com.crosscert.fidoadmin.system.trimJava
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -20,7 +20,7 @@ class ErrorCodeForm {
 
     fun toNewEntity(): CcfaErrorTable {
         val e = CcfaErrorTable()
-        e.errorCode = errorCode?.trimJava()
+        e.errorCode = errorCode?.javaTrim()
         applyTo(e)
         return e
     }

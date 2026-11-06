@@ -11,3 +11,6 @@ internal fun String.javaTrim(): String = trim { it <= ' ' }
 
 /** Java `String.isBlank()` 와 같다: 비었거나 모두 [Character.isWhitespace] 인 문자. */
 internal fun CharSequence.javaIsBlank(): Boolean = all { Character.isWhitespace(it) }
+
+/** `null` 이거나 Java `String.isBlank()` 기준으로 빈 문자열. */
+internal fun CharSequence?.isNullOrJavaBlank(): Boolean = this == null || javaIsBlank()

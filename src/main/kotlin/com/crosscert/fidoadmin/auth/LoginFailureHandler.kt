@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -21,7 +22,7 @@ class LoginFailureHandler(
     override fun onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse,
                                          exception: AuthenticationException) {
         val userId: String? = request.getParameter("username")
-        if (exception is BadCredentialsException && userId != null && !userId.isJavaBlank()) {
+        if (exception is BadCredentialsException && userId != null && !userId.javaIsBlank()) {
             attempts.onFailure(userId)
         }
         // 잠금·비활성·비밀번호 오류를 화면에서 구분하면 계정 존재 여부와 상태가 노출된다.

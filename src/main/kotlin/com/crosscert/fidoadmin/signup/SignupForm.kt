@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.signup
 
-import com.crosscert.fidoadmin.auth.javaTrim
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank

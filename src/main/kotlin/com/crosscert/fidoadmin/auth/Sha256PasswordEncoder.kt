@@ -1,5 +1,7 @@
 package com.crosscert.fidoadmin.auth
 
+import com.crosscert.fidoadmin.common.javaTrim
+import com.crosscert.fidoadmin.common.javaIsBlank
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -17,7 +19,7 @@ class Sha256PasswordEncoder : PasswordEncoder {
     override fun encode(rawPassword: CharSequence?): String = sha256Hex(rawPassword!!.toString())
 
     override fun matches(rawPassword: CharSequence?, encodedPassword: String?): Boolean {
-        if (rawPassword == null || encodedPassword == null || encodedPassword.isJavaBlank()) {
+        if (rawPassword == null || encodedPassword == null || encodedPassword.javaIsBlank()) {
             return false
         }
         // 상수 시간 비교. 저장값은 대소문자가 섞여 있을 수 있어 소문자로 맞춘 뒤 비교한다(결과는 equalsIgnoreCase 와 같다).

@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository

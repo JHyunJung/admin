@@ -1,8 +1,8 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.system.entity.CcfaSystemInfo
-import com.crosscert.fidoadmin.system.trimJava
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
@@ -18,7 +18,7 @@ class SystemInfoForm {
 
     fun toNewEntity(): CcfaSystemInfo {
         val i = CcfaSystemInfo()
-        i.propKey = propKey?.trimJava()
+        i.propKey = propKey?.javaTrim()
         applyTo(i)
         return i
     }

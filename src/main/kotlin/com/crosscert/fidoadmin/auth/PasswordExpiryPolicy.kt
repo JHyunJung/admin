@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
 import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository
 import java.time.Clock

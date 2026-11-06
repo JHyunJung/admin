@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.fido.service
 
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.Specs

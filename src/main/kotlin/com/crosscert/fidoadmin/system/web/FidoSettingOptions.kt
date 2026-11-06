@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.system.web
 
-import com.crosscert.fidoadmin.system.trimJava
+import com.crosscert.fidoadmin.common.javaTrim
 
 /**
  * FIDO 서버 설정 화면의 위젯 범위·선택지(슬라이더, 저장 기간 드롭다운). 다만 **저장된 값이 범위·목록 밖이어도 깎지 않는다** — 화면을 열고 다른 항목만
@@ -43,7 +43,7 @@ object FidoSettingOptions {
     /** TC 저장 기간 선택지. 저장값이 목록에 없으면 "N일" 로 끼워 넣는다(값을 잃지 않게). */
     @JvmStatic
     fun tcOptions(stored: String?): List<Option> {
-        val v = stored?.trimJava()
+        val v = stored?.javaTrim()
         if (v == null || v.isEmpty() || TC_BASE.any { it.value == v }) return TC_BASE
         val list = ArrayList(TC_BASE)
         list.add(0, Option(v, v + "일"))
@@ -53,7 +53,7 @@ object FidoSettingOptions {
     private fun parse(s: String?): Int? {
         if (s == null) return null
         return try {
-            s.trimJava().toInt()
+            s.javaTrim().toInt()
         } catch (e: NumberFormatException) {
             null
         }

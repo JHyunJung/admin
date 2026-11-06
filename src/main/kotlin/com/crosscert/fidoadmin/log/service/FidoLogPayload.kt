@@ -1,5 +1,7 @@
 package com.crosscert.fidoadmin.log.service
 
+import com.crosscert.fidoadmin.common.javaTrim
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.nio.charset.StandardCharsets
@@ -72,7 +74,7 @@ data class FidoLogPayload(
 
         @JvmStatic
         fun parse(jsondata: String?): FidoLogPayload {
-            if (jsondata == null || jsondata.isJavaBlank()) return EMPTY
+            if (jsondata == null || jsondata.javaIsBlank()) return EMPTY
             val text = jsondata.javaTrim()
             val json = (if (text.startsWith("{")) text else decodeBase64(text)) ?: return EMPTY
             val root: JsonNode = try {
@@ -207,7 +209,7 @@ data class FidoLogPayload(
                 if (node == null) continue
                 for (key in keys) {
                     val v = node.get(key)
-                    if (v != null && v.isValueNode && !v.isNull && !v.asText().isJavaBlank()) return v.asText()
+                    if (v != null && v.isValueNode && !v.isNull && !v.asText().javaIsBlank()) return v.asText()
                 }
             }
             return null
@@ -224,8 +226,3 @@ data class FidoLogPayload(
     }
 }
 
-/** Java `String.trim()` 과 같다(코드값 `' '` 이하만 벗긴다). Kotlin `trim()` 은 유니코드 공백까지 벗겨 결과가 다르다. */
-internal fun String.javaTrim(): String = trim { it <= ' ' }
-
-/** Java `String.isBlank()` 와 같다(`Character.isWhitespace`). Kotlin `isBlank()` 는 NBSP 등도 공백으로 본다. */
-internal fun String.isJavaBlank(): Boolean = all { Character.isWhitespace(it) }

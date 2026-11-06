@@ -1,12 +1,12 @@
 package com.crosscert.fidoadmin.system.service
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.common.AssignedIdCrudService
 import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.common.Utf8
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
-import com.crosscert.fidoadmin.system.isBlankJava
 import com.crosscert.fidoadmin.system.repository.CcfaFidoclientRepository
 import com.crosscert.fidoadmin.system.web.FidoClientSearchForm
 import jakarta.persistence.EntityManager
@@ -44,7 +44,7 @@ class FidoClientService(
 
     override fun applyDefaults(e: CcfaFidoclient) {
         val status = e.status
-        if (status == null || status.isBlankJava()) e.status = "ON"
+        if (status == null || status.javaIsBlank()) e.status = "ON"
     }
     override fun touchCreated(e: CcfaFidoclient, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
     override fun touchUpdated(e: CcfaFidoclient, now: LocalDateTime) { e.updatedtime = now }

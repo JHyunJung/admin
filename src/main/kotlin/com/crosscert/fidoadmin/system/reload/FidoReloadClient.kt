@@ -1,8 +1,8 @@
 package com.crosscert.fidoadmin.system.reload
 
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
 import com.crosscert.fidoadmin.system.repository.CcfaFidoclientRepository
-import com.crosscert.fidoadmin.system.trimJava
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -88,7 +88,7 @@ class FidoReloadClient internal constructor(
     private fun start(c: CcfaFidoclient): Pending {
         val p = Pending(c)
         val raw = c.serverurl
-        val base = raw?.trimJava()?.replace(TRAILING_SLASHES, "") ?: ""
+        val base = raw?.javaTrim()?.replace(TRAILING_SLASHES, "") ?: ""
         val uri: URI? = try {
             if (base.isEmpty()) null else URI.create(base)
         } catch (e: IllegalArgumentException) {
@@ -99,7 +99,7 @@ class FidoReloadClient internal constructor(
             uri.host == null || uri.rawQuery != null ||
             uri.rawFragment != null || uri.rawUserInfo != null
         ) {
-            p.failed = ReloadResult(c.servercode, raw, false, oneLine("지원하지 않는 URL: " + (raw?.trimJava() ?: "")), 0)
+            p.failed = ReloadResult(c.servercode, raw, false, oneLine("지원하지 않는 URL: " + (raw?.javaTrim() ?: "")), 0)
             return p
         }
         try {

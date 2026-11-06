@@ -1,12 +1,12 @@
 package com.crosscert.fidoadmin.system.service
 
+import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.common.AssignedIdCrudService
 import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
-import com.crosscert.fidoadmin.system.isBlankJava
 import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository
 import com.crosscert.fidoadmin.system.web.SystemPropSearchForm
 import jakarta.persistence.EntityManager
@@ -40,7 +40,7 @@ class SystemPropService(
     override fun assignedId(e: CcfaSystemProp): CcfaSystemPropId? {
         val id = e.id
         val key = id?.propKey
-        if (id == null || key == null || key.isBlankJava() || id.companyIdx == null) return null
+        if (id == null || key == null || key.javaIsBlank() || id.companyIdx == null) return null
         return id
     }
     override fun tableName(): String = "CCFA_SYSTEM_PROP"
@@ -49,7 +49,7 @@ class SystemPropService(
 
     override fun applyDefaults(e: CcfaSystemProp) {
         val shareType = e.shareType
-        if (shareType == null || shareType.isBlankJava()) e.shareType = "NO"
+        if (shareType == null || shareType.javaIsBlank()) e.shareType = "NO"
     }
     override fun touchCreated(e: CcfaSystemProp, now: LocalDateTime) { e.updatedtime = now }
     override fun touchUpdated(e: CcfaSystemProp, now: LocalDateTime) { e.updatedtime = now }
