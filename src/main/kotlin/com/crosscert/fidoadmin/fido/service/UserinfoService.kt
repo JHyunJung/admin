@@ -39,7 +39,7 @@ class UserinfoService(
 
     /** 상태 변경. get() 이 테넌트 검사를 한다. 감사 로그 TYPE=STATUS. */
     @Transactional
-    fun changeStatus(id: Long?, status: String?): Userinfo {
+    fun changeStatus(id: Long, status: String?): Userinfo {
         if (status == null || !STATUSES.contains(status)) {
             throw IllegalArgumentException("허용되지 않는 상태입니다: $status")
         }

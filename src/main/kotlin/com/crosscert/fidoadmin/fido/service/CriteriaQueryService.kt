@@ -123,7 +123,7 @@ class CriteriaQueryService(
      * 복합 키에 다른 컬럼이 없는 순수 연결 테이블이라 엔티티로 둘 이득이 없다.
      */
     @Transactional
-    fun changeStatus(id: Long?, enabled: Boolean): Boolean {
+    fun changeStatus(id: Long, enabled: Boolean): Boolean {
         val companyIdx = tenant.companyIdx()
         val criteria = get(id)
         val aaid = criteria.aaid
