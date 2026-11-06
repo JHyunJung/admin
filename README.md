@@ -2,7 +2,7 @@
 
 FIDO 서버 운영을 위한 관리자 웹. KBFIDO Oracle 스키마를 사용한다.
 
-- Java 17, Spring Boot 3.5, Spring Security, Spring Data JPA, Thymeleaf
+- Kotlin 2.1 (JVM 17), Spring Boot 3.5, Spring Security, Spring Data JPA, Thymeleaf
 - Oracle (운영), Docker Oracle Free (로컬·테스트)
 
 ## 목차
