@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component
 class CriteriaMetadataParser {
 
     fun parse(json: String?): Criteria {
-        if (json == null || json.isBlank()) throw CriteriaMetadataException(INVALID)
+        if (json == null || json.isNullOrJavaBlank()) throw CriteriaMetadataException(INVALID)
         val root: JsonNode? = try {
             READER.readTree(json)
         } catch (e: JsonProcessingException) {
@@ -33,7 +33,7 @@ class CriteriaMetadataParser {
         if (root == null || !root.isObject) throw CriteriaMetadataException(INVALID)
 
         val aaidNode = root.get("aaid")
-        if (aaidNode == null || !aaidNode.isTextual || aaidNode.asText().isBlank()) {
+        if (aaidNode == null || !aaidNode.isTextual || aaidNode.asText().isNullOrJavaBlank()) {
             throw CriteriaMetadataException(INVALID)
         }
         // Java String.trim() 과 같은 기준(U+0020 이하 제거). Kotlin trim() 은 유니코드 공백 기준이라 다르다.

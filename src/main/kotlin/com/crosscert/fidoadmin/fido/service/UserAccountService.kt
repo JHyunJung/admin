@@ -45,6 +45,6 @@ class UserAccountService(
         )
 
     private companion object {
-        fun blankToNull(s: String?): String? = if (s == null || s.isBlank()) null else s
+        fun blankToNull(s: String?): String? = if (s.isNullOrJavaBlank()) null else s
     }
 }

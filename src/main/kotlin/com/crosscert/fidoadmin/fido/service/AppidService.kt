@@ -41,8 +41,8 @@ class AppidService(
     override fun sortableProperties(): Set<String> = setOf("idx", "appid", "servicename", "createdtime")
 
     override fun applyDefaults(e: Appid) {
-        if (e.status.isNullOrBlank()) e.status = "use"
-        if (e.deviceDefault.isNullOrBlank()) e.deviceDefault = "F"
+        if (e.status.isNullOrJavaBlank()) e.status = "use"
+        if (e.deviceDefault.isNullOrJavaBlank()) e.deviceDefault = "F"
     }
     override fun touchCreated(e: Appid, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
     override fun touchUpdated(e: Appid, now: LocalDateTime) { e.updatedtime = now }

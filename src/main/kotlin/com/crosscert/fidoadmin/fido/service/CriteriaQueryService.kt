@@ -127,7 +127,7 @@ class CriteriaQueryService(
         val companyIdx = tenant.companyIdx()
         val criteria = get(id)
         val aaid = criteria.aaid
-        if (aaid == null || aaid.isBlank()) {
+        if (aaid.isNullOrJavaBlank()) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "AAID가 없는 정책입니다")
         }
         val params = MapSqlParameterSource()

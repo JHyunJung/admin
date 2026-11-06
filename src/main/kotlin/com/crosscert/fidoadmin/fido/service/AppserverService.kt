@@ -35,7 +35,7 @@ class AppserverService(
      */
     @Transactional(readOnly = true)
     fun existsDuplicate(memberCode: String?, memberId: String?, excludeIdx: Long?): Boolean {
-        if (memberCode.isNullOrBlank() || memberId.isNullOrBlank()) return false
+        if (memberCode.isNullOrJavaBlank() || memberId.isNullOrJavaBlank()) return false
         val r = repository as AppserverRepository
         val company = tenant.companyIdx()
         return if (excludeIdx == null) {
@@ -63,7 +63,7 @@ class AppserverService(
      * 넘겼든 새로 만든다. 수정 경로는 이 훅을 거치지 않으므로 한 번 정한 코드는 바뀌지 않는다.
      */
     override fun applyDefaults(e: Appserver) {
-        if (e.type.isNullOrBlank()) e.type = "use"
+        if (e.type.isNullOrJavaBlank()) e.type = "use"
         e.memberCode = memberCodes.generate()
     }
     override fun touchCreated(e: Appserver, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
