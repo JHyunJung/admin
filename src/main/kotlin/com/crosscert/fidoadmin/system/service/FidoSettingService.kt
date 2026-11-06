@@ -1,0 +1,98 @@
+package com.crosscert.fidoadmin.system.service
+
+import com.crosscert.fidoadmin.audit.AuditChanges
+import com.crosscert.fidoadmin.audit.AuditLogger
+import com.crosscert.fidoadmin.common.Specs
+import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.system.SecretProps
+import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
+import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
+import com.crosscert.fidoadmin.system.reload.FidoConfigChanged
+import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository
+import com.crosscert.fidoadmin.system.web.FidoSettingKey
+import java.time.LocalDateTime
+import java.util.TreeMap
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+/**
+ * FIDO 서버 설정 화면의 읽기·저장. 값은 `CCFA_SYSTEM_PROP` 의
+ * `(PROP_KEY, 유효 테넌트)` 행 하나씩에 들어간다.
+ *
+ * `CrudService` 를 상속하지 않는다. 그쪽은 "행 하나를 CRUD 하는 화면"을 위한
+ * 기반이고, 여기는 **정해진 키 목록을 한 번에 읽고 한 번에 저장하는** 화면이라
+ * 목록·상세·삭제 개념이 없다. 대신 테넌트 경계는 같은 규칙을 직접 지킨다 —
+ * 읽기는 유효 테넌트로 필터하고, 저장은 유효 테넌트로 식별자를 만든다.
+ */
+@Service
+class FidoSettingService(
+    private val repository: CcfaSystemPropRepository,
+    private val audit: AuditLogger,
+    private val tenant: TenantContext,
+    private val events: ApplicationEventPublisher,
+) {
+
+    /**
+     * 화면에 채울 값. 저장된 행이 없는 키는 [FidoSettingKey.defaultValue] 를 쓴다.
+     * 항상 모든 키를 돌려주므로 템플릿이 null 을 만나지 않는다.
+     */
+    @Transactional(readOnly = true)
+    fun load(): Map<String, String?> {
+        val stored = TreeMap<String, String?>()
+        for (p in repository.findAll(Specs.eq<CcfaSystemProp>("id.companyIdx", tenant.companyIdx()))) {
+            val id = p.id
+            if (id != null) stored[id.propKey!!] = p.propValue // TreeMap 은 null 키에서 NPE — Java 와 같다
+        }
+        val values = LinkedHashMap<String, String?>()
+        for (k in FidoSettingKey.entries) {
+            val v = stored[k.key()]
+            // 비밀값은 실제 값을 화면으로 내보내지 않는다. input type=password 는 눈에만 가려 줄 뿐
+            // th:value 로 들어간 값이 HTML 소스에 그대로 실린다.
+            values[k.key()] = SecretProps.forDisplay(k.key(), v ?: k.defaultValue())
+        }
+        return values
+    }
+
+    /**
+     * 받은 값을 저장한다. 행이 있으면 값만 갱신하고 없으면 만든다.
+     *
+     * [FidoSettingKey] 에 없는 키는 **무시한다**. 조작된 POST 로 임의의
+     * PROP_KEY 를 만들지 못하게 하려는 것이다(그 용도는 `/system/props` 화면에 있다).
+     */
+    @Transactional
+    fun save(submitted: Map<String, String?>) {
+        val company = tenant.companyIdx()
+        var changed = 0
+        for (k in FidoSettingKey.entries) {
+            val submittedValue: String = submitted[k.key()] ?: continue
+            // 비밀값은 화면이 실제 값을 모른 채 돌아온다. 빈 값이나 마스크를 그대로 저장하면
+            // 다른 항목만 바꿔 저장했을 때 비밀번호가 지워진다. 입력이 있을 때만 교체한다.
+            if (!SecretProps.shouldSave(k.key(), submittedValue)) continue
+
+            // Oracle 은 빈 문자열을 NULL 로 저장한다. 비교 전에 맞추지 않으면
+            // 빈 값으로 둔 항목이 저장할 때마다 변경으로 잡힌다.
+            val value: String? = submittedValue.ifEmpty { null }
+
+            val id = CcfaSystemPropId(k.key(), company)
+            val row = repository.findById(id).orElseGet {
+                CcfaSystemProp().apply {
+                    this.id = id
+                    shareType = "NO"
+                }
+            }
+            if (row.propValue == value) {
+                continue
+            }
+
+            val before = AuditChanges.snapshot(row)
+            row.propValue = value
+            row.updatedtime = LocalDateTime.now()
+            val saved = repository.save(row)
+
+            AuditChanges.record(audit, "CCFA_SYSTEM_PROP", saved.id!!.toPathValue(), before, saved)
+            changed++
+        }
+        if (changed > 0) events.publishEvent(FidoConfigChanged("FIDO 서버 설정 저장 " + changed + "건"))
+    }
+}
