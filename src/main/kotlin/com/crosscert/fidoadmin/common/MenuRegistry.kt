@@ -1,0 +1,192 @@
+package com.crosscert.fidoadmin.common
+
+import java.util.Optional
+import org.springframework.stereotype.Component
+
+/**
+ * 코드에 고정된 메뉴. CCFA_MENU 는 데이터로만 다룬다.
+ *
+ * COMPANY_IDX 가 없는 테이블(FIDO2_*, 시스템)의 화면은 SUPER 전용이다.
+ * CRITERIA 는 예외다 — 테이블은 전역이지만 화면의 용도가 고객사별 토글이라
+ * TENANT 로 두었다(아래 /criteria 항목의 주석 참고).
+ */
+@Component("menuRegistry")
+class MenuRegistry {
+
+    /**
+     * 화면에 내놓을 메뉴. `hidden` 항목은 뺀다.
+     *
+     * [ALL] 을 직접 쓰지 않는 이유가 여기 있다 — ALL 은 "이 경로가 어느 영역인가" 를
+     * 아는 원본이고(areaOf·listPathFor), 이 메서드는 "사람에게 보여 줄 목록" 이다. 둘을 갈라
+     * 두어야 화면에서 감춘 것이 경로 판정까지 바꾸지 않는다.
+     */
+    fun itemsFor(isSuper: Boolean): List<MenuItem> =
+        ALL.stream()
+            .filter { m -> !m.hidden }
+            .filter { m -> isSuper || !m.superOnly }
+            .toList()
+
+    /**
+     * 영역으로 거른 목록. 사이드바가 영역별로 나눠 그리는 데 쓴다.
+     *
+     * 템플릿의 SpEL 에는 `items.?[area.name() == 'TENANT']` 같은 선택 연산자 전례가
+     * 없어, 필터를 자바로 옮겨 이 오버로드로 둔다. 기존 `itemsFor(boolean)` 시그니처는
+     * sidebar.html 이 그대로 호출하므로 바꾸지 않는다.
+     */
+    fun itemsFor(isSuper: Boolean, area: MenuArea): List<MenuItem> =
+        itemsFor(isSuper).stream().filter { m -> m.area == area }.toList()
+
+    /**
+     * 경로가 속한 영역. 하위 경로(/users/123/edit)는 가장 긴 접두사로 판정한다.
+     *
+     * 가장 긴 접두사여야 하는 이유: /managers 는 TENANT 지만 /managers/super 는
+     * SYSTEM 이다. 짧은 쪽이 먼저 맞으면 슈퍼관리자 계정 화면이 테넌트 선택을 요구한다.
+     *
+     * 메뉴에 없는 경로는 SYSTEM 으로 본다. 테넌트 화면을 메뉴에 등록하지 않은 채
+     * 추가하면 필터가 걸리지 않는데, 그것은 CrudService 가 유효 테넌트로 막는다.
+     */
+    fun areaOf(path: String?): MenuArea {
+        if (path == null) return MenuArea.SYSTEM
+        return matchOf(path)
+            .map { it.area }
+            .orElse(MenuArea.SYSTEM)
+    }
+
+    /**
+     * 경로가 속한 메뉴의 목록 경로. "/users/123/edit" → "/users".
+     * 일치하는 메뉴가 없으면 "/" 다.
+     *
+     * 루트 "/" 는 areaOf 와 같은 이유로 접두사 판정에서 제외한다 — 그대로 두면
+     * 등록되지 않은 경로가 모두 대시보드로 절상되어 버그가 새 자리에서 재발한다.
+     */
+    fun listPathFor(path: String?): String {
+        if (path == null) return "/"
+        return matchOf(path)
+            .map { it.href }
+            .orElse("/")
+    }
+
+    /**
+     * 경로가 속한 메뉴의 화면 이름. "/users/123" → "사용자".
+     * 일치하는 메뉴가 없으면 경로를 그대로 돌려준다 — 감사 로그에 남길 이름이
+     * 비는 것보다 경로라도 남는 편이 낫다.
+     */
+    fun titleFor(path: String?): String {
+        if (path == null) return "/"
+        return matchOf(path)
+            .map { it.title }
+            .orElse(path)
+    }
+
+    /**
+     * 경로가 속한 메뉴의 그룹 이름. "/users/123" → "FIDO 서버 관리".
+     * 상단바 브레드크럼이 쓴다. 메뉴에 없는 경로는 null 이다 — 브레드크럼은 그때 아무것도 그리지 않는다
+     * (titleFor 처럼 경로 문자열을 돌려주면 "/select-tenant" 같은 원시 경로가 화면에 보인다).
+     */
+    fun groupFor(path: String?): String? = matchOf(path).map { it.group }.orElse(null)
+
+    /** 경로가 등록된 메뉴(또는 그 하위 경로)인가. */
+    fun isRegistered(path: String?): Boolean = matchOf(path).isPresent
+
+    /**
+     * areaOf·listPathFor·titleFor·groupFor 가 함께 쓰는 매칭 — 가장 긴 접두사 메뉴.
+     * 한 곳에 두어야 네 메서드의 판정이 갈라지지 않는다. 루트 "/" 는 정확히 일치할 때만 맞는다
+     * (그렇지 않으면 모든 경로가 대시보드로 잡힌다). path 가 null 이면 빈 값이다.
+     */
+    private fun matchOf(path: String?): Optional<MenuItem> {
+        if (path == null) return Optional.empty()
+        return ALL.stream()
+            .filter { m -> path == m.href || (m.href != "/" && path.startsWith(withSlash(m.href))) }
+            .max(Comparator.comparingInt { m: MenuItem -> m.href.length })
+    }
+
+    companion object {
+        /**
+         * 그룹 이름과 순서는 업무 도메인 구분을 따른다(로그·
+         * FIDO 서버 관리·시스템관리. 이상 징후 탐지는 2026-10-05 에 지웠다). 운영자가 업무 흐름대로 찾게 하려는 것이므로,
+         * 테이블 성격이 아니라 **업무 성격**으로 묶는다.
+         *
+         * "통계 → 통계관리"는 두지 않는다. 대시보드가 같은 일을 한다.
+         * 화면 없는 메뉴는 404 나 빈 페이지로 이어지므로, 화면이 생길 때 함께 추가한다.
+         *
+         * "필드 정의"(/system/fields)와 "데모 접근코드"(/fido2/demo-access-codes)는 메뉴에서 뺐다. 화면과 컨트롤러는 남아 있어
+         * URL 로는 열리지만, 운영자의 동선에서는 치운다.
+         *
+         * 필드 정의를 뺀 이유는 메뉴 정의 화면을 제거한 이유와 같다. CCFA_FIELDS 는 화면 필드를
+         * 데이터로 정의하려던 구조인데 이 어드민은 Thymeleaf 템플릿에 직접 쓴다. 즉 이 화면에서
+         * 값을 바꿔도 화면은 바뀌지 않는다 — 반영된 줄 아는 상태가 해롭다는 같은 판단이다.
+         * 데모 접근코드는 이름 그대로 데모용이라 운영 동선에 들어오지 않는다.
+         *
+         * "메일/SMS 큐"(/logs/mailing)도 운영에서 쓰지 않아 뺐다. 어드민은 CCFA_MAILING 을
+         * 읽기만 하고 발송은 다른 시스템이 한다 — 그 발송 주체가 지금도
+         * 동작하는지 확인되지 않은 화면이다. 발송 주체가 살아 있고 큐를 봐야 할
+         * 일이 생기면 그때 되살린다.
+         *
+         * 다만 이것은 목록에서 지우지 않고 `hidden` 으로 감춘다. TENANT 경로라서
+         * 지우면 [areaOf] 가 SYSTEM 으로 판정해 테넌트 선택 인터셉터가 막지 못한다
+         * (자세한 이유는 [MenuItem] 주석에 있다). 위의 두 화면은 SYSTEM 이라 지워도
+         * 판정이 달라지지 않아 그대로 두었다.
+         *
+         * "시스템관리"는 테넌트 항목(운영자·라이선스·시스템 설정)과 전역 항목이 섞인
+         * 유일한 그룹이다. 사이드바가 영역별로 나눠 그리므로 이 제목은 테넌트 구역과
+         * 시스템 구역에 각각 한 번씩 나타난다. 의미상 맞는 표시다 — 위쪽은 선택한 고객사의
+         * 운영자·라이선스, 아래쪽은 고객사와 무관한 전역 설정이다.
+         */
+        @JvmField
+        internal val ALL: List<MenuItem> = java.util.List.of(
+            MenuItem(MenuArea.TENANT, "대시보드", "통계", "/", false, "bi-speedometer2"),
+            MenuItem(MenuArea.TENANT, "로그", "FIDO 로그", "/logs/fido", false, "bi-journal-text"),
+            MenuItem(MenuArea.TENANT, "로그", "감사 로그", "/logs/audit", false, "bi-clipboard-check"),
+            MenuItem(MenuArea.TENANT, "로그", "예외 로그", "/logs/exceptions", false, "bi-exclamation-triangle"),
+            // 메일/SMS 큐는 사이드바에서 감췄다(hidden). 항목을 지우지 않는 이유는 MenuItem 주석에 있다 —
+            // TENANT 경로를 목록에서 빼면 areaOf 가 SYSTEM 으로 판정해 인터셉터가 막지 못한다.
+            MenuItem(MenuArea.TENANT, "로그", "메일/SMS 큐", "/logs/mailing", false, "bi-envelope", true),
+            // 서명(SIGN)은 같은 관례("… 보기")로 맨 끝에 둔다.
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AppID 관리", "/appids", false, "bi-app-indicator"),
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "멤버코드 관리",
+                    "/appservers", false, "bi-hdd-network"),
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "CHALLENGE 보기", "/challenges", false, "bi-patch-question"),
+            // 기준 데이터(CRITERIA)는 COMPANY_IDX 가 없는 전역 테이블이지만, 이 화면이 실제로 하는 일은
+            // 고객사별 활성/비활성 토글이다(CCFA_COMPANY_AAID). 그래서 TENANT 이고 superOnly 가
+            // 아니다 — 같은 이유로 SecurityConfig 의 SUPER 목록에도 /criteria 가 없다.
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "AAID(정책) 보기",
+                    "/criteria", false, "bi-fingerprint"),
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "FIDO 등록자 관리", "/users", false, "bi-people"),
+            // TransactionHash 보기는 운영 요청으로 사이드바에서 감췄다(데이터·화면은 그대로). USERID
+            // 형식이 다른 화면과 달라 혼란을 준다는 피드백이었다. TENANT 판정을 지키려고 지우지 않고 hidden 으로 둔다.
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TransactionHash 보기", "/transaction-hashes", false, "bi-hash", true),
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "TC원문 보기", "/transaction-confirmations", false, "bi-check2-square"),
+            MenuItem(MenuArea.TENANT, "FIDO 서버 관리", "서명 보기", "/signs", false, "bi-pen"),
+            // FIDO2 는 FIDO 서버 관리에 합치면 너무 길어져 따로 둔다.
+            MenuItem(MenuArea.SYSTEM, "FIDO2", "메타데이터", "/fido2/metadata", true, "bi-card-list"),
+            MenuItem(MenuArea.SYSTEM, "FIDO2", "크리덴셜 파라미터", "/fido2/credential-params", true, "bi-shield-lock"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "고객사", "/companies", true, "bi-building"),
+            MenuItem(MenuArea.TENANT, "시스템관리", "운영자", "/managers", true, "bi-person-badge"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "슈퍼관리자 계정", "/managers/super", true, "bi-person-gear"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "가입 승인", "/signups", true, "bi-person-check"),
+            MenuItem(MenuArea.TENANT, "시스템관리", "라이선스", "/licenses", true, "bi-award"),
+            MenuItem(MenuArea.TENANT, "시스템관리", "FIDO 서버 설정", "/system/settings", true, "bi-toggles"),
+            MenuItem(MenuArea.TENANT, "시스템관리", "시스템 설정", "/system/props", true, "bi-sliders"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "시스템 정보", "/system/info", true, "bi-info-circle"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "에러 코드", "/system/error-codes", true, "bi-bug"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "FIDO 서버", "/system/fido-clients", true, "bi-server"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "어드민 기준", "/system/criteria", true, "bi-ui-checks"),
+            MenuItem(MenuArea.SYSTEM, "시스템관리", "코드 그룹/코드", "/system/options", true, "bi-tags"),
+            MenuItem(MenuArea.PERSONAL, "내 정보", "내 비밀번호 변경", "/me/password", false, "bi-key"))
+
+        @JvmStatic
+        fun groups(items: List<MenuItem>): LinkedHashMap<String, MutableList<MenuItem>> {
+            val map = LinkedHashMap<String, MutableList<MenuItem>>()
+            for (m in items) map.computeIfAbsent(m.group) { ArrayList() }.add(m)
+            return map
+        }
+
+        /**
+         * "/users" → "/users/" 로 만들어 /usersfoo 오탐을 막는다.
+         *
+         * 루트 "/" 는 이 헬퍼를 하위 경로 접두사 판정에 쓰지 않는다(areaOf 참고) — 그대로 두면
+         * 모든 경로가 "/" 로 시작하므로 등록되지 않은 경로까지 대시보드(TENANT)로 오판된다.
+         */
+        private fun withSlash(href: String): String = if (href.endsWith("/")) href else "$href/"
+    }
+}
