@@ -35,7 +35,7 @@ class Fido2CredentialParamsService(
     override fun setCompanyIdx(e: Fido2CredentialParams, c: Long?) {}
     override fun idOf(e: Fido2CredentialParams): String = e.idx.toString()
     override fun tableName(): String = "FIDO2_CREDENTIAL_PARAMS"
-    override fun sortableProperties(): Set<String> = java.util.Set.of("idx", "credType", "credAlg", "createdtime")
+    override fun sortableProperties(): Set<String> = SORTABLE
 
     /** DB 기본값: CRED_TYPE 'public-key', STATUS 'T'. */
     override fun applyDefaults(e: Fido2CredentialParams) {
@@ -43,4 +43,9 @@ class Fido2CredentialParamsService(
         if (e.status.isNullOrJavaBlank()) e.status = "T"
     }
     override fun touchCreated(e: Fido2CredentialParams, now: LocalDateTime) { e.createdtime = now }
+
+    private companion object {
+        /** 불변 집합이라 목록 요청마다 새로 만들 필요가 없다. */
+        val SORTABLE: Set<String> = java.util.Set.of("idx", "credType", "credAlg", "createdtime")
+    }
 }
