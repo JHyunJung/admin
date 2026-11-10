@@ -18,6 +18,8 @@ object Utf8 {
     @JvmStatic
     fun truncateToBytes(s: String?, maxBytes: Int): String? {
         if (s == null) return null
+        // UTF-16 문자 1개는 UTF-8 로 최대 3바이트다. 길이가 한도/3 이하면 인코딩하지 않아도 한도 안이다.
+        if (maxBytes >= 0 && s.length <= maxBytes / 3) return s
         val bytes = s.toByteArray(StandardCharsets.UTF_8)
         if (bytes.size <= maxBytes) return s
         val decoder = StandardCharsets.UTF_8.newDecoder()

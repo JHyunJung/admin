@@ -31,7 +31,7 @@ class DbConfigCrypto(base64Key: String?) {
                     "DB_CONFIG_KEY는 Base64 디코딩 후 32바이트여야 합니다.")
             }
 
-            key = SecretKeySpec(decoded, "AES")
+            key = SecretKeySpec(decoded, ALGORITHM)
         }
     }
 
@@ -46,7 +46,7 @@ class DbConfigCrypto(base64Key: String?) {
             val iv = ByteArray(IV_LENGTH)
             random.nextBytes(iv)
 
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(
                 Cipher.ENCRYPT_MODE,
                 key,
@@ -108,7 +108,7 @@ class DbConfigCrypto(base64Key: String?) {
             val encrypted = ByteArray(buffer.remaining())
             buffer.get(encrypted)
 
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(
                 Cipher.DECRYPT_MODE,
                 key,
@@ -139,5 +139,7 @@ class DbConfigCrypto(base64Key: String?) {
         private const val PLAIN_PREFIX = "[plain]"
         private const val IV_LENGTH = 12
         private const val TAG_BITS = 128
+        private const val ALGORITHM = "AES"
+        private const val TRANSFORMATION = "AES/GCM/NoPadding"
     }
 }

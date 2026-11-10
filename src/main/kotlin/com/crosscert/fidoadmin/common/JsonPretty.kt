@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.common
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 
@@ -16,8 +17,8 @@ object JsonPretty {
     fun pretty(raw: String?): String? {
         if (raw == null || raw.javaIsBlank()) return raw
         return try {
-            val node = MAPPER.readTree(raw)
-            if (node == null || !node.isContainerNode) raw
+            val node = containerOrNull(raw)
+            if (node == null) raw
             else MAPPER.writeValueAsString(node)
         } catch (e: Exception) {
             raw
@@ -29,10 +30,15 @@ object JsonPretty {
     fun isValidJson(raw: String?): Boolean {
         if (raw == null || raw.javaIsBlank()) return false
         return try {
-            val node = MAPPER.readTree(raw)
-            node != null && node.isContainerNode
+            containerOrNull(raw) != null
         } catch (e: Exception) {
             false
         }
+    }
+
+    /** 객체·배열 노드면 그 노드, 아니면(스칼라·빈 입력) null. 파싱 예외는 호출부가 처리한다. */
+    private fun containerOrNull(raw: String): JsonNode? {
+        val node: JsonNode? = MAPPER.readTree(raw)
+        return if (node != null && node.isContainerNode) node else null
     }
 }
