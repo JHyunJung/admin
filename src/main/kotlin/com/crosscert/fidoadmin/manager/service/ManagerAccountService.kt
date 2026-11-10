@@ -19,7 +19,6 @@ import jakarta.persistence.LockModeType
 import java.time.LocalDateTime
 import java.util.Objects
 import java.util.Optional
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import org.springframework.transaction.annotation.Transactional
 
@@ -93,9 +92,9 @@ abstract class ManagerAccountService protected constructor(
      */
     @Transactional
     override fun update(id: Long, mutator: Consumer<CcfaManager>): CcfaManager {
-        val pwBefore = AtomicReference<String?>()
+        var pwBefore: String? = null
         val saved = super.update(id) { e ->
-            pwBefore.set(e.userPw)
+            pwBefore = e.userPw
             val before = e.status
             mutator.accept(e)
             normalize(e)
@@ -107,7 +106,7 @@ abstract class ManagerAccountService protected constructor(
                     "가입 신청 상태($before)인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.")
             }
         }
-        if (!Objects.equals(pwBefore.get(), saved.userPw)) {
+        if (!Objects.equals(pwBefore, saved.userPw)) {
             em.flush()
             expiry.touch(saved.userId)
         }
