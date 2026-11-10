@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.fido.service
 
 import com.crosscert.fidoadmin.common.isNullOrJavaBlank
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.fido.entity.Criteria
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -38,7 +39,7 @@ class CriteriaMetadataParser {
             throw CriteriaMetadataException(INVALID)
         }
         // Java String.trim() 과 같은 기준(U+0020 이하 제거). Kotlin trim() 은 유니코드 공백 기준이라 다르다.
-        val aaid = aaidNode.asText().trim { it <= ' ' }
+        val aaid = aaidNode.asText().javaTrim()
         val hash = aaid.indexOf('#')
 
         val c = Criteria()

@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.signup
 
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy
@@ -61,7 +61,7 @@ class SignupService(
         m.login = ManagerStatus.LOGIN_OFFLINE
         m.alramType = ManagerStatus.ALARM_TYPE_NONE
         m.alramLevel = ManagerStatus.ALARM_LEVEL_DEFAULT
-        m.etc = if (reason == null || reason.javaIsBlank()) null else "신청 사유: $reason"
+        m.etc = if (reason.isNullOrJavaBlank()) null else "신청 사유: $reason"
         m.createdtime = now
         m.updatedtime = now
         return userIdGuard.insert(m)
@@ -149,8 +149,8 @@ class SignupService(
          * 문자 수로 자르면 한글 입력에서 ORA-12899 로 저장이 실패한다.
          */
         fun appendReason(etc: String?, reason: String?): String? {
-            val added = "거절 사유: " + (if (reason == null || reason.javaIsBlank()) "(사유 없음)" else reason)
-            val merged = if (etc == null || etc.javaIsBlank()) added else etc + "\n" + added
+            val added = "거절 사유: " + (if (reason.isNullOrJavaBlank()) "(사유 없음)" else reason)
+            val merged = if (etc.isNullOrJavaBlank()) added else etc + "\n" + added
             return Utf8.truncateToBytes(merged, ETC_MAX_BYTES)
         }
     }

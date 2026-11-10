@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.dashboard
 
 import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Optional
@@ -119,7 +120,7 @@ class StatisticsQueryService(
 
         private fun serviceName(f: DashboardSearchForm): String? {
             val name = f.serviceName
-            return if (name == null || name.all(Character::isWhitespace)) null else name
+            return if (name.isNullOrJavaBlank()) null else name
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.crosscert.fidoadmin.manager.web
 
 import com.crosscert.fidoadmin.common.javaTrim
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.manager.entity.CcfaManager
@@ -33,11 +33,11 @@ class ManagerForm {
     fun applyTo(m: CcfaManager) {
         if (m.userId == null) m.userId = userId?.javaTrim()
         m.userNm = userNm; m.userEmail = userEmail; m.userPhone = userPhone
-        m.companyIdx = companyIdx; m.status = status; m.etc = etc
+        m.status = status; m.etc = etc
         m.alramType = alramType; m.alramLevel = alramLevel
     }
 
-    fun hasPassword(): Boolean = password != null && !password!!.javaIsBlank()
+    fun hasPassword(): Boolean = !password.isNullOrJavaBlank()
 
     /**
      * 가입 신청 상태(승인대기·거절)인가. 화면이 상태 입력란을 읽기 전용으로 바꾸는 판단에 쓴다.

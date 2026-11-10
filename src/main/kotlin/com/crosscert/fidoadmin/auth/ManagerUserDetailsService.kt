@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerPwPolicyRepository
@@ -35,7 +35,7 @@ class ManagerUserDetailsService(
         val companyName: String? = if (companyIdx == null) null
             else companies.findById(companyIdx).map { it.companyName }
                 .orElse(if (companyIdx == 0L) "전역" else "고객사 $companyIdx")
-        val name = if (m.userNm == null || m.userNm!!.javaIsBlank()) m.userId else m.userNm
+        val name = if (m.userNm.isNullOrJavaBlank()) m.userId else m.userNm
         return ManagerUserDetails(m.idx, m.userId, m.userPw, name, companyIdx, companyName,
             ManagerStatus.ACTIVE == m.status, !locked)
     }

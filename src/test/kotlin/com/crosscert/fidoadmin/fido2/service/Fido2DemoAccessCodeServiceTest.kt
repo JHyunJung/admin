@@ -76,4 +76,13 @@ class Fido2DemoAccessCodeServiceTest {
         assertThat(service.defaultSort()).isEqualTo(Sort.by(Sort.Direction.ASC, "accesscode"))
         assertThat(service.sortableProperties()).containsExactlyInAnyOrder("accesscode", "vendorname", "status")
     }
+
+    /** 공백뿐인 상태는 기본값 E 로 채우고, NBSP(U+00A0)는 Java 기준 공백이 아니므로 그대로 둔다. */
+    @Test fun whitespaceOnlyStatusGetsDefaultButNbspIsKept() {
+        whenever(repo.existsById(anyString())).thenReturn(false)
+        val blank = code("DEMO-0005"); blank.status = "  "
+        assertThat(service.create(blank).status).isEqualTo("E")
+        val nbsp = code("DEMO-0006"); nbsp.status = "\u00A0"
+        assertThat(service.create(nbsp).status).isEqualTo("\u00A0")
+    }
 }
