@@ -140,8 +140,16 @@ object AuditChanges {
      * 비교 대상 필드. 정적·합성 필드는 뺀다(Lombok·JaCoCo 가 넣는 것들이 섞인다).
      * 컬렉션과 연관 엔티티도 뺀다 — 지연 로딩을 건드리면 세션 밖에서 터지고,
      * toString 이 순환 참조로 스택을 넘길 수 있다.
+     *
+     * 클래스의 선언 필드는 실행 중 바뀌지 않으므로 클래스별로 한 번만 훑어 [FIELDS] 에 둔다.
      */
-    private fun fieldsOf(type: Class<*>): List<Field> {
+    private fun fieldsOf(type: Class<*>): List<Field> = FIELDS.get(type)
+
+    private val FIELDS = object : ClassValue<List<Field>>() {
+        override fun computeValue(type: Class<*>): List<Field> = scanFields(type)
+    }
+
+    private fun scanFields(type: Class<*>): List<Field> {
         val fields = ArrayList<Field>()
         var c: Class<*>? = type
         while (c != null && c != Any::class.java) {
