@@ -44,7 +44,7 @@ object PasswordPolicy {
             return
         }
         if (pw.length < MIN_LENGTH || pw.length > MAX_LENGTH) {
-            binding.rejectValue(pwField, "size", "비밀번호는 8자 이상 64자 이하여야 합니다.")
+            binding.rejectValue(pwField, "size", "비밀번호는 ${MIN_LENGTH}자 이상 ${MAX_LENGTH}자 이하여야 합니다.")
         } else if (!COMPILED.matcher(pw).matches()) {
             binding.rejectValue(pwField, "policy", MESSAGE)
         }

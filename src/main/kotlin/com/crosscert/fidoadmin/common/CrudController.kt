@@ -92,12 +92,10 @@ abstract class CrudController<E : Any, ID : Any, F, S : SearchForm> {
             redirect.addFlashAttribute("flashSuccess", createdMessage(saved))
             return "redirect:" + basePath() + "/" + service().idOf(saved)
         } catch (e: DataIntegrityViolationException) {
-            binding.reject("duplicate", "이미 존재하는 값이거나 제약 조건에 어긋납니다.")
-            return backToForm(model, true)
+            return rejectToForm(e, binding, model, true)
         } catch (e: IllegalStateException) {
             // 서비스가 업무 규칙으로 거부한 경우. update() 와 같이 500 이 아니라 사유를 폼에 돌려준다.
-            binding.reject("rejected", null, e.message)
-            return backToForm(model, true)
+            return rejectToForm(e, binding, model, true)
         }
     }
 
@@ -134,13 +132,11 @@ abstract class CrudController<E : Any, ID : Any, F, S : SearchForm> {
             redirect.addFlashAttribute("flashSuccess", "수정되었습니다.")
             return "redirect:" + basePath() + "/" + id
         } catch (e: DataIntegrityViolationException) {
-            binding.reject("duplicate", "이미 존재하는 값이거나 제약 조건에 어긋납니다.")
-            return backToForm(model, false)
+            return rejectToForm(e, binding, model, false)
         } catch (e: IllegalStateException) {
             // 서비스가 업무 규칙으로 거부한 경우(예: 가입 신청 상태 행의 상태 변경).
             // 500 이 아니라 사유를 그대로 폼에 돌려준다. delete() 의 IllegalStateException 처리와 같은 성격이다.
-            binding.reject("rejected", null, e.message)
-            return backToForm(model, false)
+            return rejectToForm(e, binding, model, false)
         }
     }
 
@@ -154,6 +150,19 @@ abstract class CrudController<E : Any, ID : Any, F, S : SearchForm> {
             redirect.addFlashAttribute("flashError", e.message)
             return "redirect:" + basePath() + "/" + id
         }
+    }
+
+    /**
+     * create·update 의 저장 실패를 폼 오류로 돌려준다. 중복 값(DataIntegrityViolationException)은 고정 문구,
+     * 업무 규칙 거부(IllegalStateException)는 예외 메시지를 그대로 쓴다. 어떤 예외를 잡을지는 호출부의 catch 가 정한다.
+     */
+    private fun rejectToForm(e: RuntimeException, binding: BindingResult, model: Model, isNew: Boolean): String {
+        if (e is DataIntegrityViolationException) {
+            binding.reject("duplicate", "이미 존재하는 값이거나 제약 조건에 어긋납니다.")
+        } else {
+            binding.reject("rejected", null, e.message)
+        }
+        return backToForm(model, isNew)
     }
 
     private fun backToForm(model: Model, isNew: Boolean): String {

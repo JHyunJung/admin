@@ -90,6 +90,19 @@ class SignupAdminControllerWebTest {
             .andExpect(content().string(containsString("업무 담당자입니다")))
     }
 
+    /** 승인 대기 목록 화면에 USER_PW 해시가 나가지 않는다. */
+    @Test fun listDoesNotExposePasswordHash() {
+        val hash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"
+        val m = pending()
+        m.userPw = hash
+        whenever(service.pending()).thenReturn(listOf(m))
+        twoCompanies()
+        mvc.perform(get("/signups").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("newbie")))
+            .andExpect(content().string(not(containsString(hash))))
+    }
+
     @Test fun listShowsEmptyMessageWhenNothingPending() {
         whenever(service.pending()).thenReturn(listOf())
         twoCompanies()

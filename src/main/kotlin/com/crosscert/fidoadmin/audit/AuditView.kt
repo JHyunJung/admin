@@ -64,9 +64,10 @@ object AuditView {
         request.setAttribute(ATTRIBUTE, created)
         return created
     }
+}
 
-    private fun currentRequest(): HttpServletRequest? {
-        val attrs = RequestContextHolder.getRequestAttributes()
-        return if (attrs is ServletRequestAttributes) attrs.request else null
-    }
+/** 현재 스레드에 묶인 HTTP 요청. 요청 밖(배치·테스트)이면 null. [AuditView]·[AuditLogger] 가 함께 쓴다. */
+internal fun currentRequest(): HttpServletRequest? {
+    val attrs = RequestContextHolder.getRequestAttributes()
+    return if (attrs is ServletRequestAttributes) attrs.request else null
 }

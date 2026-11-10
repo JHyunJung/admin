@@ -52,19 +52,24 @@ class FidoReloadClient internal constructor(
         return results
     }
 
-    /** 띄워 둔 요청 하나. URL 이 틀려 보내지 못한 경우는 `failed` 에 결과가 미리 들어 있다. */
-    private inner class Pending(private val client: CcfaFidoclient) {
+    /**
+     * 띄워 둔 요청 하나. URL 이 틀려 보내지 못한 경우는 `failed` 에 결과가 미리 들어 있다.
+     * `startNanos` 는 [start] 가 URL 검증 전에 잰 시작 시각이다.
+     */
+    private inner class Pending(
+        private val client: CcfaFidoclient,
+        private val startNanos: Long,
+        private val future: CompletableFuture<HttpResponse<Void>>?,
+        private val failed: ReloadResult?,
+    ) {
         private val raw: String? = client.serverurl
-        val start: Long = System.nanoTime()
-        var future: CompletableFuture<HttpResponse<Void>>? = null
-        var failed: ReloadResult? = null
 
         fun await(): ReloadResult {
             failed?.let { return it }
             try {
                 // HttpRequest.timeout 은 헤더까지만 본다. 본문을 천천히 흘려 스레드를 붙잡지 못하게 전체를 자른다.
                 // 요청들은 함께 띄웠으므로 각자 자기 시작 시각 기준으로 남은 시간만 기다린다.
-                val remaining = maxOf(0L, responseTimeout.toMillis() - millisSince(start))
+                val remaining = maxOf(0L, responseTimeout.toMillis() - millisSince(startNanos))
                 val code = future!!.get(remaining, TimeUnit.MILLISECONDS).statusCode()
                 return result(code >= 200 && code < 300, "HTTP $code")
             } catch (e: TimeoutException) {
@@ -76,42 +81,38 @@ class FidoReloadClient internal constructor(
                 return result(false, "중단됨")
             } catch (e: Exception) {
                 val t: Throwable = if (e is ExecutionException && e.cause != null) e.cause!! else e
-                val msg = if (t.message == null) t.javaClass.simpleName else t.javaClass.simpleName + ": " + t.message
-                return result(false, oneLine(msg))
+                return result(false, oneLine(describe(t)))
             }
         }
 
         private fun result(ok: Boolean, detail: String): ReloadResult =
-            ReloadResult(client.servercode, raw, ok, detail, millisSince(start))
+            ReloadResult(client.servercode, raw, ok, detail, millisSince(startNanos))
     }
 
     private fun start(c: CcfaFidoclient): Pending {
-        val p = Pending(c)
+        val startNanos = System.nanoTime()
         val raw = c.serverurl
-        val base = raw?.javaTrim()?.replace(TRAILING_SLASHES, "") ?: ""
+        val trimmed = raw?.javaTrim()
+        val base = trimmed?.replace(TRAILING_SLASHES, "") ?: ""
         val uri: URI? = try {
             if (base.isEmpty()) null else URI.create(base)
         } catch (e: IllegalArgumentException) {
             null
         }
-        val scheme = uri?.scheme
-        if (uri == null || scheme == null || !(scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) ||
-            uri.host == null || uri.rawQuery != null ||
-            uri.rawFragment != null || uri.rawUserInfo != null
-        ) {
-            p.failed = ReloadResult(c.servercode, raw, false, oneLine("지원하지 않는 URL: " + (raw?.javaTrim() ?: "")), 0)
-            return p
+        if (!isSupported(uri)) {
+            val failed = ReloadResult(c.servercode, raw, false, oneLine("지원하지 않는 URL: " + (trimmed ?: "")), 0)
+            return Pending(c, startNanos, null, failed)
         }
-        try {
+        val future: CompletableFuture<HttpResponse<Void>>? = try {
             val req = HttpRequest.newBuilder(URI.create("$base/api/command/reload"))
                 .timeout(responseTimeout).GET().build()
-            p.future = http.sendAsync(req, HttpResponse.BodyHandlers.discarding())
+            http.sendAsync(req, HttpResponse.BodyHandlers.discarding())
         } catch (e: RuntimeException) {
             // 요청을 만들거나 띄우는 단계의 오류. 기존처럼 결과로만 돌려주고 다음 서버를 막지 않는다.
-            val msg = if (e.message == null) e.javaClass.simpleName else e.javaClass.simpleName + ": " + e.message
-            p.failed = ReloadResult(c.servercode, raw, false, oneLine(msg), millisSince(p.start))
+            val failed = ReloadResult(c.servercode, raw, false, oneLine(describe(e)), millisSince(startNanos))
+            return Pending(c, startNanos, null, failed)
         }
-        return p
+        return Pending(c, startNanos, future, null)
     }
 
     companion object {
@@ -121,7 +122,19 @@ class FidoReloadClient internal constructor(
         private val TRAILING_SLASHES = Regex("/+$")
         private val LINE_BREAKS = Regex("[\\r\\n]+")
 
+        /** http/https 이고 호스트가 있으며 query·fragment·userinfo 가 없는 URL 만 보낸다. */
+        private fun isSupported(uri: URI?): Boolean {
+            val scheme = uri?.scheme
+            return !(uri == null || scheme == null || !(scheme.equals("http", ignoreCase = true) || scheme.equals("https", ignoreCase = true)) ||
+                uri.host == null || uri.rawQuery != null ||
+                uri.rawFragment != null || uri.rawUserInfo != null)
+        }
+
         private fun millisSince(startNanos: Long): Long = (System.nanoTime() - startNanos) / 1_000_000
+
+        /** 예외를 한 줄 설명으로. 메시지가 없으면 클래스 이름만, 있으면 `클래스: 메시지`. */
+        private fun describe(t: Throwable): String =
+            if (t.message == null) t.javaClass.simpleName else t.javaClass.simpleName + ": " + t.message
 
         @JvmStatic
         internal fun oneLine(s: String?): String {

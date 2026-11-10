@@ -64,10 +64,11 @@ class PasswordExpiryPolicy internal constructor(
     fun expiryDays(): Int =
         props.findById(CcfaSystemPropId(PROP_EXPIRY_DAYS, 0L))
             .map { p ->
+                val raw = p.propValue ?: return@map DEFAULT_DAYS
                 try {
-                    val v = Integer.parseInt(p.propValue!!.javaTrim())
+                    val v = Integer.parseInt(raw.javaTrim())
                     if (v > 0) v else DEFAULT_DAYS
-                } catch (e: RuntimeException) {
+                } catch (e: NumberFormatException) {
                     DEFAULT_DAYS
                 }
             }

@@ -9,7 +9,8 @@ import jakarta.persistence.SequenceGenerator
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
-/** CCFA_MANAGER — 운영자 계정. 컬럼 16개. USER_PW 는 SHA-256 hex, 화면 DTO 에 절대 싣지 않는다. */
+/** CCFA_MANAGER — 운영자 계정. 컬럼 16개. USER_PW 는 SHA-256 hex, 화면 DTO 에 절대 싣지 않는다.
+ *  LAST_PW_CHANGE_DATE 는 일부러 매핑하지 않는다(`auth.PasswordAgeStore` 가 JDBC 로 다룸). */
 @Entity
 @Table(name = "CCFA_MANAGER")
 class CcfaManager {

@@ -29,15 +29,6 @@ class SystemInfoController(
      * 여기서는 예약된 값만 추가로 막는다.
      */
     override fun validate(form: SystemInfoForm, isNew: Boolean, binding: BindingResult) {
-        val key = form.propKey
-        if (isNew && key != null) {
-            if (key.equals("new", ignoreCase = true) || key.matches(DOTS_ONLY)) {
-                binding.rejectValue("propKey", "reserved", "키로 쓸 수 없는 값입니다: $key")
-            }
-        }
-    }
-
-    private companion object {
-        val DOTS_ONLY = Regex("\\.+")
+        rejectReservedPathId(form.propKey, isNew, binding, "propKey", "키")
     }
 }

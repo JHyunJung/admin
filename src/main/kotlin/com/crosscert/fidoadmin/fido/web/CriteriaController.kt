@@ -91,10 +91,7 @@ class CriteriaController(
             "statusMessage",
             if (changed) "상태를 변경했습니다." else "이미 해당 상태입니다.",
         )
-        redirect.addAttribute("aaid", search.aaid)
-        redirect.addAttribute("page", search.page)
-        redirect.addAttribute("size", search.size)
-        return "redirect:/criteria"
+        return backToList(search, redirect)
     }
 
     /** 현재 고객사의 AAID 전체 활성/비활성. 검색·페이지 상태는 단건 토글과 같이 유지한다. */
@@ -113,6 +110,11 @@ class CriteriaController(
                 (if (enabled) "전체 활성: " else "전체 비활성: ") + changed + "건을 변경했습니다."
             },
         )
+        return backToList(search, redirect)
+    }
+
+    /** 검색·페이지 상태(aaid·page·size 순)를 리다이렉트에 실어 목록으로 돌려보낸다. 단건·전체 토글이 같이 쓴다. */
+    private fun backToList(search: CriteriaSearchForm, redirect: RedirectAttributes): String {
         redirect.addAttribute("aaid", search.aaid)
         redirect.addAttribute("page", search.page)
         redirect.addAttribute("size", search.size)

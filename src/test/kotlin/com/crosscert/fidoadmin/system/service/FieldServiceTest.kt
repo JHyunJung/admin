@@ -92,4 +92,20 @@ class FieldServiceTest {
         whenever(options.existsById(999L)).thenReturn(false)
         assertThat(service.optionExists(999L)).isFalse()
     }
+
+    @Test fun optionLooksUpSingleRowById() {
+        login(0L)
+        val o = CcfaOption(); o.idx = 1L; o.optionName = "STATUS"
+        whenever(options.findById(1L)).thenReturn(java.util.Optional.of(o))
+        whenever(options.findById(999L)).thenReturn(java.util.Optional.empty())
+        assertThat(service.option(1L)).isSameAs(o)
+        assertThat(service.option(999L)).isNull()
+        verify(options, never()).findAll(any<Sort>())
+    }
+
+    @Test fun optionIsDeniedForCompanyRole() {
+        login(1L)
+        assertThatThrownBy { service.option(1L) }.isInstanceOf(AccessDeniedException::class.java)
+        verify(options, never()).findById(any())
+    }
 }

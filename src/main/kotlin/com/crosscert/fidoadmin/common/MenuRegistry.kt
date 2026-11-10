@@ -95,9 +95,10 @@ class MenuRegistry {
      */
     private fun matchOf(path: String?): Optional<MenuItem> {
         if (path == null) return Optional.empty()
-        return ALL.stream()
-            .filter { m -> path == m.href || (m.href != "/" && path.startsWith(withSlash(m.href))) }
-            .max(Comparator.comparingInt { m: MenuItem -> m.href.length })
+        return PREFIXED.stream()
+            .filter { p -> path == p.first.href || (p.first.href != "/" && path.startsWith(p.second)) }
+            .max(Comparator.comparingInt { p: Pair<MenuItem, String> -> p.first.href.length })
+            .map { it.first }
     }
 
     companion object {
@@ -173,6 +174,9 @@ class MenuRegistry {
             MenuItem(MenuArea.SYSTEM, "시스템관리", "어드민 기준", "/system/criteria", true, "bi-ui-checks"),
             MenuItem(MenuArea.SYSTEM, "시스템관리", "코드 그룹/코드", "/system/options", true, "bi-tags"),
             MenuItem(MenuArea.PERSONAL, "내 정보", "내 비밀번호 변경", "/me/password", false, "bi-key"))
+
+        /** [ALL] 의 각 항목과 그 하위 경로 접두사([withSlash]). ALL 과 같은 순서다 — matchOf 가 호출마다 접두사를 새로 만들지 않도록 한 번만 계산한다. */
+        private val PREFIXED: List<Pair<MenuItem, String>> = ALL.map { it to withSlash(it.href) }
 
         @JvmStatic
         fun groups(items: List<MenuItem>): LinkedHashMap<String, MutableList<MenuItem>> {

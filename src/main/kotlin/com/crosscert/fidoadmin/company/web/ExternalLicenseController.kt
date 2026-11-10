@@ -21,10 +21,10 @@ class ExternalLicenseController(private val licenses: CcfaLicenseRepository) {
     @Transactional(readOnly = true)
     @RequestMapping(value = ["/external/license/{filename}"], method = [RequestMethod.GET, RequestMethod.POST])
     fun license(@PathVariable filename: String): ResponseEntity<String> {
-        val body: String? = licenses.findFirstByHashvalueOrderByIdxAsc(filename)
-            .map { it.license }
+        val body: String = licenses.findFirstByHashvalueOrderByIdxAsc(filename)
+            .map { it.license ?: "" }
             .orElse("")
-        return ResponseEntity.ok().contentType(TEXT_UTF8).body(body ?: "")
+        return ResponseEntity.ok().contentType(TEXT_UTF8).body(body)
     }
 
     companion object {

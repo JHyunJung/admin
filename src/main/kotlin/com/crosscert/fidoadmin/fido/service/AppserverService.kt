@@ -25,6 +25,9 @@ class AppserverService(
     private val memberCodes: MemberCodeGenerator,
 ) : CrudService<Appserver, Long, AppserverSearchForm>(repository, audit, tenant) {
 
+    /** 기반의 [repository] 는 `AdminRepository` 타입이라, 구체 타입 메서드를 쓰려고 같은 인스턴스를 따로 둔다. */
+    private val appserverRepository: AppserverRepository = repository
+
     /** FIDO 서버가 멤버코드 를 캐시한다. 바뀌면 커밋 뒤 reload 를 보낸다. */
     override fun afterChange(action: String, e: Appserver) {
         events.publishEvent(FidoConfigChanged(tableName() + " " + action + " " + idOf(e)))
@@ -37,7 +40,7 @@ class AppserverService(
     @Transactional(readOnly = true)
     fun existsDuplicate(memberCode: String?, memberId: String?, excludeIdx: Long?): Boolean {
         if (memberCode.isNullOrJavaBlank() || memberId.isNullOrJavaBlank()) return false
-        val r = repository as AppserverRepository
+        val r = appserverRepository
         val company = tenant.companyIdx()
         return if (excludeIdx == null) {
             r.existsByCompanyIdxAndMemberCodeAndMemberId(company, memberCode, memberId)

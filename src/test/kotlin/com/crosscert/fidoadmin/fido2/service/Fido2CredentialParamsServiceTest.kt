@@ -79,4 +79,21 @@ class Fido2CredentialParamsServiceTest {
         service.delete(12L)
         verify(events).publishEvent(FidoConfigChanged("FIDO2_CREDENTIAL_PARAMS DELETE 12"))
     }
+
+    /** 공백뿐인 값은 기본값으로 채우고, NBSP(U+00A0)는 Java 기준 공백이 아니므로 그대로 둔다. */
+    @Test fun whitespaceOnlyGetsDefaultsButNbspIsKept() {
+        login(0L)
+        whenever(repo.save(anyOrNull<Fido2CredentialParams>())).thenAnswer { inv -> inv.getArgument<Fido2CredentialParams>(0) }
+        val blank = Fido2CredentialParams()
+        blank.credType = " "; blank.status = ""
+        val savedBlank = service.create(blank)
+        assertThat(savedBlank.credType).isEqualTo("public-key")
+        assertThat(savedBlank.status).isEqualTo("T")
+
+        val nbsp = Fido2CredentialParams()
+        nbsp.credType = "\u00A0"; nbsp.status = "\u00A0"
+        val savedNbsp = service.create(nbsp)
+        assertThat(savedNbsp.credType).isEqualTo("\u00A0")
+        assertThat(savedNbsp.status).isEqualTo("\u00A0")
+    }
 }

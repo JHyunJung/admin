@@ -15,12 +15,15 @@ data class StatTotals(
     companion object {
         @JvmStatic
         fun of(rows: List<DailyStat>): StatTotals {
-            val s = LongArray(8)
+            var authS = 0L; var authF = 0L; var tcS = 0L; var tcF = 0L
+            var regS = 0L; var regF = 0L; var deregS = 0L; var deregF = 0L
             for (r in rows) {
-                s[0] += r.authS; s[1] += r.authF; s[2] += r.tcS; s[3] += r.tcF
-                s[4] += r.regS; s[5] += r.regF; s[6] += r.deregS; s[7] += r.deregF
+                authS += r.authS; authF += r.authF; tcS += r.tcS; tcF += r.tcF
+                regS += r.regS; regF += r.regF; deregS += r.deregS; deregF += r.deregF
             }
-            return StatTotals(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7])
+            return StatTotals(
+                authS = authS, authF = authF, tcS = tcS, tcF = tcF,
+                regS = regS, regF = regF, deregS = deregS, deregF = deregF)
         }
     }
 }

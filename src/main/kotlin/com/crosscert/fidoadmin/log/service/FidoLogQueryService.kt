@@ -112,10 +112,13 @@ class FidoLogQueryService(
             val scanned: List<FidoLogRow> = jdbc.query(
                 "SELECT * FROM ($select) WHERE rownum <= :cap", params) { rs, _ -> toRow(rs) }
             val cut = scanned.size > SCAN_LIMIT
+            // 검색어 소문자화는 행마다가 아니라 스캔마다 한 번이다.
+            val servicenameLower = servicename?.lowercase(Locale.ROOT)
+            val useridLower = userid?.lowercase(Locale.ROOT)
             val hits = (if (cut) scanned.subList(0, SCAN_LIMIT) else scanned).stream()
                 .filter { r -> op == null || op.equals(r.op, ignoreCase = true) }
-                .filter { r -> servicename == null || containsIgnoreCase(r.servicename, servicename) }
-                .filter { r -> userid == null || containsIgnoreCase(r.userid, userid) }
+                .filter { r -> servicenameLower == null || containsIgnoreCase(r.servicename, servicenameLower) }
+                .filter { r -> useridLower == null || containsIgnoreCase(r.userid, useridLower) }
                 .filter { r -> status == null || status.equals(r.status, ignoreCase = true) }
                 .filter { r -> bioType == null || bioType == r.bioType }
                 .toList()
@@ -182,20 +185,24 @@ class FidoLogQueryService(
         internal val RESULT_TTL: Duration = Duration.ofSeconds(30)
 
         private fun createdtime(rs: ResultSet): LocalDateTime? =
-            if (rs.getTimestamp("CREATEDTIME") == null) null else rs.getTimestamp("CREATEDTIME").toLocalDateTime()
+            rs.getTimestamp("CREATEDTIME")?.toLocalDateTime()
 
         private fun toRow(rs: ResultSet): FidoLogRow =
             FidoLogRow.of(rs.getLong("IDX"), rs.getLong("COMPANY_IDX"), rs.getString("SERVICENAME"),
                 createdtime(rs), FidoLogPayload.parse(rs.getString("JSONDATA")))
 
         /** 아는 구분만 조건이 된다. 그 밖(빈 값 포함)은 조건 없음. */
-        private fun opOrNull(op: String?): String? =
-            if (op != null && OPS.contains(op.javaTrim().lowercase(Locale.ROOT))) op.javaTrim() else null
+        private fun opOrNull(op: String?): String? {
+            if (op == null) return null
+            val trimmed = op.javaTrim()
+            return if (OPS.contains(trimmed.lowercase(Locale.ROOT))) trimmed else null
+        }
 
         private fun termOrNull(value: String?): String? =
             if (value == null || value.javaIsBlank()) null else value.javaTrim()
 
-        private fun containsIgnoreCase(value: String?, term: String): Boolean =
-            value != null && value.lowercase(Locale.ROOT).contains(term.lowercase(Locale.ROOT))
+        /** [lowerTerm] 은 호출자가 미리 `lowercase(Locale.ROOT)` 한 검색어다. */
+        private fun containsIgnoreCase(value: String?, lowerTerm: String): Boolean =
+            value != null && value.lowercase(Locale.ROOT).contains(lowerTerm)
     }
 }

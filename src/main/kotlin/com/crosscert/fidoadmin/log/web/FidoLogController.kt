@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping
  *
  * `ReadOnlyController` 를 상속하지 않는다. 그 기반은 `CrudService`(고정 테이블
  * JPA)를 전제하는데, FIDO 로그는 날짜별로 테이블이 갈려 조회 시점에 대상이 정해진다.
- * 상세 경로에 날짜가 들어가는 것도 그래서다 — `/logs/fido/20260926/1` 처럼
+ * 상세 경로에 날짜가 들어가는 것도 그래서다 — `/logs/fido/2026-09-26/1` 처럼
  * **어느 테이블의** 몇 번인지가 있어야 한 건을 가리킬 수 있다.
  */
 @Controller

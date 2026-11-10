@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.manager.service
 
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.auth.LoginAttemptService
@@ -19,7 +19,6 @@ import jakarta.persistence.LockModeType
 import java.time.LocalDateTime
 import java.util.Objects
 import java.util.Optional
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import org.springframework.transaction.annotation.Transactional
 
@@ -50,10 +49,10 @@ abstract class ManagerAccountService protected constructor(
     override fun sortableProperties(): Set<String> = java.util.Set.of("idx", "userId", "userNm", "lastAccess")
 
     override fun applyDefaults(e: CcfaManager) {
-        if (e.status == null || e.status!!.javaIsBlank()) e.status = ManagerStatus.ACTIVE
+        if (e.status.isNullOrJavaBlank()) e.status = ManagerStatus.ACTIVE
         if (e.login == null) e.login = ManagerStatus.LOGIN_OFFLINE
-        if (e.alramType == null || e.alramType!!.javaIsBlank()) e.alramType = ManagerStatus.ALARM_TYPE_NONE
-        if (e.alramLevel == null || e.alramLevel!!.javaIsBlank()) e.alramLevel = ManagerStatus.ALARM_LEVEL_DEFAULT
+        if (e.alramType.isNullOrJavaBlank()) e.alramType = ManagerStatus.ALARM_TYPE_NONE
+        if (e.alramLevel.isNullOrJavaBlank()) e.alramLevel = ManagerStatus.ALARM_LEVEL_DEFAULT
     }
     override fun touchCreated(e: CcfaManager, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
     override fun touchUpdated(e: CcfaManager, now: LocalDateTime) { e.updatedtime = now }
@@ -93,9 +92,9 @@ abstract class ManagerAccountService protected constructor(
      */
     @Transactional
     override fun update(id: Long, mutator: Consumer<CcfaManager>): CcfaManager {
-        val pwBefore = AtomicReference<String?>()
+        var pwBefore: String? = null
         val saved = super.update(id) { e ->
-            pwBefore.set(e.userPw)
+            pwBefore = e.userPw
             val before = e.status
             mutator.accept(e)
             normalize(e)
@@ -107,7 +106,7 @@ abstract class ManagerAccountService protected constructor(
                     "가입 신청 상태($before)인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.")
             }
         }
-        if (!Objects.equals(pwBefore.get(), saved.userPw)) {
+        if (!Objects.equals(pwBefore, saved.userPw)) {
             em.flush()
             expiry.touch(saved.userId)
         }

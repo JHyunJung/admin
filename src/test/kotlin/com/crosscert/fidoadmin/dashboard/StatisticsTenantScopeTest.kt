@@ -13,6 +13,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.jdbc.core.RowMapper
@@ -138,5 +139,24 @@ class StatisticsTenantScopeTest {
         login(1L)
         whenever(jdbc.queryForObject(anyString(), any<Map<String, *>>(), any<Class<String>>())).thenReturn(null)
         assertThat(service.lastStatDate(form())).isEmpty()
+    }
+
+    /**
+     * 서비스 이름 필터는 null·빈 문자열·Java 기준 공백뿐이면 null(전체)로 바인드하고, 그 밖의 값은 그대로 넘긴다.
+     * NBSP(U+00A0)는 Java Character.isWhitespace 기준 공백이 아니므로 값이 유지된다.
+     */
+    @Test
+    fun 서비스_이름_필터는_Java_기준_공백이면_비운다() {
+        login(1L)
+        stubDailyQuery()
+        val inputs = listOf(null, "", "  ", "\u00A0", "kbstar")
+        for (input in inputs) {
+            val f = form()
+            f.serviceName = input
+            service.daily(f)
+        }
+        val params = argumentCaptor<Map<String, Any?>>()
+        verify(jdbc, times(inputs.size)).query(anyString(), params.capture(), any<RowMapper<Any>>())
+        assertThat(params.allValues.map { it["serviceName"] }).containsExactly(null, null, null, "\u00A0", "kbstar")
     }
 }

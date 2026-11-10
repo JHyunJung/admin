@@ -6,13 +6,10 @@ import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.common.Utf8
 import com.crosscert.fidoadmin.company.service.CompanyLookup
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog
-import jakarta.servlet.http.HttpServletRequest
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.context.request.ServletRequestAttributes
 
 /** CCFA_AUDIT_LOG 기록. 실패해도 호출자 트랜잭션을 깨지 않는다. */
 @Component
@@ -45,19 +42,25 @@ class AuditLogger(
      * 삼켜야 "실패해도 호출자 트랜잭션을 깨지 않는다"는 클래스 불변식이 지켜진다.
      */
     private fun logResolvingTarget(actor: ManagerUserDetails, type: AuditType, message: String?, ip: String?, ua: String?) {
-        try {
-            val targetCompany = if (tenant.hasTenant()) tenant.companyIdx() else actor.companyIdx
-            val targetName = if (tenant.hasTenant()) companies.name(targetCompany) else actor.companyName
+        swallowingFailure(type, message) {
+            val hasTenant = tenant.hasTenant()
+            val targetCompany = if (hasTenant) tenant.companyIdx() else actor.companyIdx
+            val targetName = if (hasTenant) companies.name(targetCompany) else actor.companyName
             writeRow(actor, type, message, targetCompany, targetName, ip, ua)
-        } catch (e: RuntimeException) {
-            log.error("감사 로그 기록 실패: type={} message={}", type, message, e)
         }
     }
 
     /** 로그인·로그아웃처럼 테넌트가 없는 사건용. 행위자 소속을 그대로 쓴다. */
     fun log(actor: ManagerUserDetails, type: AuditType, message: String?, ip: String?, ua: String?) {
-        try {
+        swallowingFailure(type, message) {
             writeRow(actor, type, message, actor.companyIdx, actor.companyName, ip, ua)
+        }
+    }
+
+    /** 기록 실패를 삼키고 남긴다. 호출자 트랜잭션을 깨지 않는다는 클래스 불변식의 한 곳. */
+    private inline fun swallowingFailure(type: AuditType, message: String?, block: () -> Unit) {
+        try {
+            block()
         } catch (e: RuntimeException) {
             log.error("감사 로그 기록 실패: type={} message={}", type, message, e)
         }
@@ -67,13 +70,13 @@ class AuditLogger(
                          companyIdx: Long?, companyName: String?, ip: String?, ua: String?) {
         val row = CcfaAuditLog()
         row.companyIdx = companyIdx
-        row.companyName = cut(companyName, 512)
+        row.companyName = cut(companyName, MAX_COMPANY_NAME_BYTES)
         row.type = type.name
-        row.userId = cut(actor.userId, 64)
-        row.userName = cut(actor.userNm, 32)
-        row.message = cut(message, 4000)
-        row.ip = cut(ip, 15)
-        row.ua = cut(ua, 2048)
+        row.userId = cut(actor.userId, MAX_USER_ID_BYTES)
+        row.userName = cut(actor.userNm, MAX_USER_NAME_BYTES)
+        row.message = cut(message, MAX_MESSAGE_BYTES)
+        row.ip = cut(ip, MAX_IP_BYTES)
+        row.ua = cut(ua, MAX_UA_BYTES)
         // Oracle TIMESTAMP 은 소수점 6자리(마이크로초)까지만 보존한다.
         // 나노초를 그대로 두면 저장 후 읽은 값으로 해시를 재계산할 수 없다.
         row.createdtime = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS)
@@ -83,6 +86,14 @@ class AuditLogger(
 
     companion object {
         private val log = LoggerFactory.getLogger(AuditLogger::class.java)
+
+        // CCFA_AUDIT_LOG 컬럼의 VARCHAR2 바이트 한도(CcfaAuditLog 의 @Column length 와 같다).
+        private const val MAX_COMPANY_NAME_BYTES = 512
+        private const val MAX_USER_ID_BYTES = 64
+        private const val MAX_USER_NAME_BYTES = 32
+        private const val MAX_MESSAGE_BYTES = 4000
+        private const val MAX_IP_BYTES = 15
+        private const val MAX_UA_BYTES = 2048
 
         /**
          * 무결성 해시. 저장된 행에서 동일하게 재계산할 수 있어야 하므로
@@ -118,10 +129,5 @@ class AuditLogger(
          * 문자 수로 자르면 한글 입력에서 ORA-12899 가 나고 감사 기록이 유실된다.
          */
         private fun cut(s: String?, maxBytes: Int): String? = Utf8.truncateToBytes(s, maxBytes)
-
-        private fun currentRequest(): HttpServletRequest? {
-            val attrs = RequestContextHolder.getRequestAttributes()
-            return if (attrs is ServletRequestAttributes) attrs.request else null
-        }
     }
 }

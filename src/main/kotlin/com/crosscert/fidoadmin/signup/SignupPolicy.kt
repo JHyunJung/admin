@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.signup
 
 import com.crosscert.fidoadmin.common.ManagerStatus
+import com.crosscert.fidoadmin.company.entity.CcfaCompany
 
 /**
  * 가입 신청·승인 워크플로 전용 상수.
@@ -34,4 +35,13 @@ object SignupPolicy {
      */
     @JvmStatic
     fun isSignupStatus(status: String?): Boolean = STATUS_PENDING == status || STATUS_REJECTED == status
+
+    /**
+     * 화면에서 고를 수 있는 고객사. 전역([SUPER_COMPANY_IDX])과 IDX 가 없는 행을 뺀다.
+     * 가입 승인 화면과 테넌트 선택 화면이 같은 기준을 쓰도록 한곳에 둔다.
+     */
+    fun selectableCompanies(all: List<CcfaCompany>): List<CcfaCompany> =
+        all.stream()
+            .filter { c -> c.idx != null && c.idx != SUPER_COMPANY_IDX }
+            .toList()
 }

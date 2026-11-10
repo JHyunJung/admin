@@ -20,12 +20,10 @@ class SignupAdminController(
 
     @GetMapping
     fun list(model: Model): String {
-        model.addAttribute("items", service.pending())
+        model.addAttribute("items", service.pending().map(PendingSignupRow::of))
         // 전역(IDX 0)은 선택 목록에서 제외한다. 승인으로 슈퍼 관리자를 만들 수 없게 하기 위해서다.
         // SignupService.approve() 의 거부가 최후 방어선이고, 여기서는 애초에 고를 수 없게 한다.
-        val selectable = companies.all().stream()
-            .filter { c -> c.idx != null && c.idx != SignupPolicy.SUPER_COMPANY_IDX }
-            .toList()
+        val selectable = SignupPolicy.selectableCompanies(companies.all())
         model.addAttribute("companies", selectable)
         return "signup/list"
     }
@@ -41,27 +39,24 @@ class SignupAdminController(
     fun approve(@PathVariable idx: Long,
                 @RequestParam(required = false) companyIdx: Long?,
                 redirect: RedirectAttributes): String {
-        try {
-            service.approve(idx, companyIdx)
-            redirect.addFlashAttribute("flashSuccess", "가입을 승인했습니다.")
-        } catch (e: IllegalArgumentException) {
-            // 입력 거부(IllegalArgumentException)와 상태 거부(IllegalStateException)는
-            // 둘 다 운영자가 고칠 수 있는 상황이다. 500 으로 새지 않게 여기서 잡는다.
-            redirect.addFlashAttribute("flashError", e.message)
-        } catch (e: IllegalStateException) {
-            redirect.addFlashAttribute("flashError", e.message)
-        }
-        return "redirect:/signups"
+        return handle(redirect, "가입을 승인했습니다.") { service.approve(idx, companyIdx) }
     }
 
     @PostMapping("/{idx}/reject")
     fun reject(@PathVariable idx: Long,
                @RequestParam(required = false) reason: String?,
                redirect: RedirectAttributes): String {
+        return handle(redirect, "가입을 거절했습니다.") { service.reject(idx, reason) }
+    }
+
+    /** 처리를 실행하고 결과를 flash 로 옮긴 뒤 목록으로 돌려보낸다. */
+    private inline fun handle(redirect: RedirectAttributes, successMessage: String, action: () -> Unit): String {
         try {
-            service.reject(idx, reason)
-            redirect.addFlashAttribute("flashSuccess", "가입을 거절했습니다.")
+            action()
+            redirect.addFlashAttribute("flashSuccess", successMessage)
         } catch (e: IllegalArgumentException) {
+            // 입력 거부(IllegalArgumentException)와 상태 거부(IllegalStateException)는
+            // 둘 다 운영자가 고칠 수 있는 상황이다. 500 으로 새지 않게 여기서 잡는다.
             redirect.addFlashAttribute("flashError", e.message)
         } catch (e: IllegalStateException) {
             redirect.addFlashAttribute("flashError", e.message)

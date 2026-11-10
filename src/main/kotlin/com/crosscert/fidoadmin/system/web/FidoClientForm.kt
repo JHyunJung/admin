@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Pattern
  */
 class FidoClientForm {
     @field:NotBlank @field:ByteSize(max = 64)
-    @field:Pattern(regexp = "[A-Za-z0-9._-]+", message = "코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
+    @field:Pattern(regexp = PATH_ID_PATTERN, message = "코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
     var servercode: String? = null
     @field:NotBlank @field:ByteSize(max = 1024) var servername: String? = null
     @field:NotBlank @field:ByteSize(max = 2048) var serverurl: String? = null

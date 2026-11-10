@@ -158,6 +158,19 @@ class CriteriaControllerWebTest {
         verify(service).changeStatusAll(false)
     }
 
+    /** 단건 토글 후에도 검색·페이지 상태를 같은 순서로 유지한 채 목록으로 돌아간다. */
+    @Test fun singleStatusRedirectsBackWithSearchStateAndMessage() {
+        whenever(service.changeStatus(7L, true)).thenReturn(true)
+
+        mvc.perform(post("/criteria/7/status").with(user(companyUser)).with(csrf())
+                .param("enabled", "true").param("aaid", "0012").param("page", "1").param("size", "20"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/criteria?aaid=0012&page=1&size=20"))
+            .andExpect(flash().attribute("statusMessage", "상태를 변경했습니다."))
+
+        verify(service).changeStatus(7L, true)
+    }
+
     @Test fun companyDoesNotSeeCreateButton() {
         whenever(service.disabledAaids()).thenReturn(java.util.Set.of())
         whenever(service.defaultSort()).thenReturn(Sort.by("idx"))

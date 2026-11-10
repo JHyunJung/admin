@@ -1,8 +1,9 @@
 package com.crosscert.fidoadmin.manager.web
 
 import com.crosscert.fidoadmin.common.javaTrim
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.common.ByteSize
+import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.manager.entity.CcfaManager
 import com.crosscert.fidoadmin.signup.SignupPolicy
 import jakarta.validation.constraints.NotBlank
@@ -23,20 +24,20 @@ class ManagerForm {
     @field:ByteSize(max = 256) var userEmail: String? = null
     @field:ByteSize(max = 20) var userPhone: String? = null
     var companyIdx: Long? = null
-    @field:NotBlank(message = "상태는 필수입니다.") @field:ByteSize(max = 20) var status: String? = "활성"
+    @field:NotBlank(message = "상태는 필수입니다.") @field:ByteSize(max = 20) var status: String? = ManagerStatus.ACTIVE
     @field:ByteSize(max = 2048) var etc: String? = null
-    @field:ByteSize(max = 32) var alramType: String? = "none"
-    @field:ByteSize(max = 20) var alramLevel: String? = "0"
+    @field:ByteSize(max = 32) var alramType: String? = ManagerStatus.ALARM_TYPE_NONE
+    @field:ByteSize(max = 20) var alramLevel: String? = ManagerStatus.ALARM_LEVEL_DEFAULT
 
     /** USER_ID 는 등록 시에만 채운다(수정 화면에서는 readonly, 로그인 키라 바꾸지 않는다). USER_PW 는 컨트롤러가 채운다. */
     fun applyTo(m: CcfaManager) {
         if (m.userId == null) m.userId = userId?.javaTrim()
         m.userNm = userNm; m.userEmail = userEmail; m.userPhone = userPhone
-        m.companyIdx = companyIdx; m.status = status; m.etc = etc
+        m.status = status; m.etc = etc
         m.alramType = alramType; m.alramLevel = alramLevel
     }
 
-    fun hasPassword(): Boolean = password != null && !password!!.javaIsBlank()
+    fun hasPassword(): Boolean = !password.isNullOrJavaBlank()
 
     /**
      * 가입 신청 상태(승인대기·거절)인가. 화면이 상태 입력란을 읽기 전용으로 바꾸는 판단에 쓴다.

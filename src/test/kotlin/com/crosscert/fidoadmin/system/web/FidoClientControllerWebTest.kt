@@ -159,4 +159,40 @@ class FidoClientControllerWebTest {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: reload")))
     }
+
+    /** 예약값 ".." 거부(특성화). */
+    @Test fun reservedCodeDotsIsRejected() {
+        mvc.perform(post("/system/fido-clients").with(user(superUser)).with(csrf())
+                .param("servercode", "..").param("servername", "n").param("serverurl", "https://x").param("status", "ON"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: ..")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "." 거부(특성화). */
+    @Test fun reservedCodeSingleDotIsRejected() {
+        mvc.perform(post("/system/fido-clients").with(user(superUser)).with(csrf())
+                .param("servercode", ".").param("servername", "n").param("serverurl", "https://x").param("status", "ON"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: .")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "NEW" 거부(특성화). */
+    @Test fun reservedCodeUpperNewIsRejected() {
+        mvc.perform(post("/system/fido-clients").with(user(superUser)).with(csrf())
+                .param("servercode", "NEW").param("servername", "n").param("serverurl", "https://x").param("status", "ON"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: NEW")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "ReLoad" 거부(특성화). */
+    @Test fun reservedCodeMixedReloadIsRejected() {
+        mvc.perform(post("/system/fido-clients").with(user(superUser)).with(csrf())
+                .param("servercode", "ReLoad").param("servername", "n").param("serverurl", "https://x").param("status", "ON"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: ReLoad")))
+        verify(service, never()).create(any())
+    }
 }

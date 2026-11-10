@@ -1,6 +1,6 @@
 package com.crosscert.fidoadmin.signup
 
-import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.common.PasswordPolicy
 import jakarta.validation.Valid
 import org.slf4j.LoggerFactory
@@ -38,7 +38,7 @@ class SignupController(
         // 실제 노출이 작은 반면, 왜 신청이 안 됐는지 모르는 사용자의 비용은 계속 발생한다.
         // 외부에 노출되는 환경으로 바뀌면 이 판단을 다시 해야 한다.
         val userId = form.userId
-        if (userId != null && !userId.javaIsBlank() && service.existsUserId(userId)) {
+        if (!userId.isNullOrJavaBlank() && service.existsUserId(userId)) {
             binding.rejectValue("userId", "duplicate", DUPLICATE_MESSAGE)
         }
 

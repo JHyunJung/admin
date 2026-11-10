@@ -30,12 +30,15 @@ object LogClassifier {
     /** 풀지 못한 로그면 비어 있다(세지 않는다). */
     @JvmStatic
     fun classify(jsondata: String?): Optional<Result> {
-        val p = FidoLogPayload.parse(jsondata)
-        val json = p.json ?: return Optional.empty()
+        // 한 번만 파싱한다 — Auth 판정은 parse 가 읽은 루트를 그대로 쓴다.
+        // 루트가 없다 = 풀지 못했다(payload.json 도 null). parseWithRoot 는 둘을 함께 채운다.
+        val parsed = FidoLogPayload.parseWithRoot(jsondata)
+        val root = parsed.root ?: return Optional.empty()
+        val p = parsed.payload
         val op = p.op
         val kind = when (op) {
             "TC" -> Kind.TC
-            "Auth" -> if (requestHasTransaction(json)) Kind.TC else Kind.AUTH
+            "Auth" -> if (requestHasTransaction(root)) Kind.TC else Kind.AUTH
             "Reg" -> Kind.REG
             "DeReg" -> Kind.DEREG
             else -> Kind.NONE
@@ -54,6 +57,12 @@ object LogClassifier {
         } catch (e: Exception) {
             return false
         } ?: return false
+        return requestHasTransaction(root)
+    }
+
+    /** [requestHasTransaction] 의 이미 읽은 루트 판. 같은 JSON 을 두 번 파싱하지 않으려고 둔다. */
+    @JvmStatic
+    internal fun requestHasTransaction(root: JsonNode): Boolean {
         for (base in arrayOf(root.path("transaction"), root)) {
             val data = base.path("request").path("requestData")
             if (data.isMissingNode || data.isNull) continue

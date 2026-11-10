@@ -13,13 +13,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -42,6 +48,22 @@ class Fido2MetadataServiceTest {
         login(1L)
         assertThatThrownBy { service.search(Fido2MetadataSearchForm(), PageRequest.of(0, 20, Sort.by("idx"))) }
             .isInstanceOf(AccessDeniedException::class.java)
+    }
+
+    /**
+     * 목록은 CLOB(attestationrootcertificates·icon)을 빼고 읽는다. 리포지터리가 PartialFetch 를 직접 상속해야
+     * 이 경로가 열린다 — 상속이 빠지면 search() 가 IllegalStateException 으로 실패한다.
+     */
+    @Test fun superSearchExcludesClobColumns() {
+        login(0L)
+        whenever(repo.findAllExcluding(any<Class<Fido2Metadata>>(), any<Specification<Fido2Metadata>>(), any<Pageable>(), any<Set<String>>()))
+            .thenReturn(PageImpl(listOf()))
+
+        service.search(Fido2MetadataSearchForm(), PageRequest.of(0, 20, service.defaultSort()))
+
+        verify(repo).findAllExcluding(eq(Fido2Metadata::class.java), any<Specification<Fido2Metadata>>(), any<Pageable>(),
+            eq(setOf("attestationrootcertificates", "icon")))
+        verify(repo, never()).findAll(any<Specification<Fido2Metadata>>(), any<Pageable>())
     }
 
     @Test fun createFillsCreatedtime() {

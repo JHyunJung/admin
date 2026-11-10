@@ -101,4 +101,31 @@ class SystemInfoControllerWebTest {
             .andExpect(content().string(containsString("로 쓸 수 없는 값입니다: new")))
         verify(service, never()).create(any())
     }
+
+    /** 예약값 ".." 거부(특성화). */
+    @Test fun reservedKeyDotsIsRejected() {
+        mvc.perform(post("/system/info").with(user(superUser)).with(csrf())
+                .param("propKey", "..").param("propValue", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: ..")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "." 거부(특성화). */
+    @Test fun reservedKeySingleDotIsRejected() {
+        mvc.perform(post("/system/info").with(user(superUser)).with(csrf())
+                .param("propKey", ".").param("propValue", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: .")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "NEW" 거부(특성화). */
+    @Test fun reservedKeyUpperNewIsRejected() {
+        mvc.perform(post("/system/info").with(user(superUser)).with(csrf())
+                .param("propKey", "NEW").param("propValue", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("키로 쓸 수 없는 값입니다: NEW")))
+        verify(service, never()).create(any())
+    }
 }

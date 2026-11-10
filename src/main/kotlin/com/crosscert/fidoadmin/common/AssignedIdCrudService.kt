@@ -36,7 +36,7 @@ abstract class AssignedIdCrudService<E : Any, ID : Any, S : SearchForm> protecte
         if (id == null || (id is String && id.javaIsBlank())) {
             throw IllegalArgumentException(tableName() + " 식별자가 비어 있습니다")
         }
-        em.createNativeQuery("LOCK TABLE " + tableName() + " IN EXCLUSIVE MODE").executeUpdate()
+        lockTable()
         if (repository.existsById(id)) {
             throw DataIntegrityViolationException(tableName() + " " + id + " 은(는) 이미 존재합니다")
         }
@@ -47,5 +47,13 @@ abstract class AssignedIdCrudService<E : Any, ID : Any, S : SearchForm> protecte
             throw DataIntegrityViolationException(tableName() + " " + id + " 저장 실패", e)
         }
         return entity
+    }
+
+    /**
+     * [tableName] 테이블을 배타 잠금한다. 잠금은 호출한 트랜잭션이 커밋·롤백될 때 풀린다.
+     * [insert] 와 하위 클래스의 자체 등록 경로(FidoClientService.register)가 같은 문장을 쓰도록 한 곳에 둔다.
+     */
+    protected fun lockTable() {
+        em.createNativeQuery("LOCK TABLE " + tableName() + " IN EXCLUSIVE MODE").executeUpdate()
     }
 }

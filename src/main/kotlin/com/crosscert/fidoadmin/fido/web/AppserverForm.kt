@@ -14,7 +14,10 @@ class AppserverForm {
     @field:NotBlank @field:ByteSize(max = 32) var memberId: String? = null
     @field:NotBlank @field:ByteSize(max = 10) var type: String? = "use"
     @field:ByteSize(max = 128) var note: String? = null
-    /** SUPER 만 선택. COMPANY 는 서비스가 자기 고객사로 강제한다. */
+    /**
+     * 화면에 입력 칸이 없다. 요청 파라미터로 바인딩은 되지만, CrudService 의 create·update 가
+     * 역할과 관계없이 유효 테넌트로 다시 덮어쓰므로 이 값은 저장에 쓰이지 않는다.
+     */
     var companyIdx: Long? = null
 
     fun applyTo(a: Appserver) {

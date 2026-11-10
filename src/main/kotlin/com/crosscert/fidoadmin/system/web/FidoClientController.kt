@@ -33,12 +33,7 @@ class FidoClientController(
      * 여기서는 예약된 값만 추가로 막는다. "reload" 는 수동 전송 경로(POST /reload)와 겹친다.
      */
     override fun validate(form: FidoClientForm, isNew: Boolean, binding: BindingResult) {
-        val code = form.servercode
-        if (isNew && code != null) {
-            if (code.equals("new", ignoreCase = true) || code.equals("reload", ignoreCase = true) || code.matches(DOTS_ONLY)) {
-                binding.rejectValue("servercode", "reserved", "코드로 쓸 수 없는 값입니다: $code")
-            }
-        }
+        rejectReservedPathId(form.servercode, isNew, binding, "servercode", "코드", "reload")
     }
 
     @PostMapping("/reload")
@@ -57,9 +52,5 @@ class FidoClientController(
             )
         }
         return "redirect:/system/fido-clients"
-    }
-
-    private companion object {
-        val DOTS_ONLY = Regex("\\.+")
     }
 }

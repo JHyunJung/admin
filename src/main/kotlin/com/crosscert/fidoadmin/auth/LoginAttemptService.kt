@@ -37,8 +37,9 @@ class LoginAttemptService(
     private fun intProp(key: String, fallback: Int): Int =
         props.findById(CcfaSystemPropId(key, 0L))
             .map { p ->
-                try { Integer.parseInt(p.propValue!!.javaTrim()) }
-                catch (e: RuntimeException) { fallback }
+                val raw = p.propValue ?: return@map fallback
+                try { Integer.parseInt(raw.javaTrim()) }
+                catch (e: NumberFormatException) { fallback }
             }
             .orElse(fallback)
 
@@ -50,7 +51,7 @@ class LoginAttemptService(
      * 시각이 없으면 언제 잠겼는지 모르므로 잠긴 것으로 둔다(풀어 주는 쪽이 위험하다).
      */
     fun isLocked(policy: CcfaManagerPwPolicy?, now: LocalDateTime): Boolean {
-        if (policy == null || !"Y".equals(policy.accountLock, ignoreCase = true)) return false
+        if (policy == null || !LOCK_YES.equals(policy.accountLock, ignoreCase = true)) return false
         val minutes = lockMinutes()
         if (minutes <= 0) return true
         val lockedAt = policy.updatedtime ?: return true
@@ -70,7 +71,7 @@ class LoginAttemptService(
             managers.save(m)
             val p = policyOrNew(userId, now)
             p.pwFailCnt = 0L
-            p.accountLock = "N"
+            p.accountLock = LOCK_NO
             p.updatedtime = now
             policies.save(p)
         }
@@ -83,7 +84,7 @@ class LoginAttemptService(
             val now = LocalDateTime.now()
             val p = policyOrNew(userId, now)
 
-            if ("Y".equals(p.accountLock, ignoreCase = true)) {
+            if (LOCK_YES.equals(p.accountLock, ignoreCase = true)) {
                 if (isLocked(p, now)) {
                     // 아직 잠겨 있다. 카운터도 시각도 건드리지 않는다 —
                     // 실패할 때마다 시각을 밀면 계속 두드리는 한 영원히 풀리지 않는다.
@@ -92,7 +93,7 @@ class LoginAttemptService(
                 // 잠금이 만료된 뒤의 첫 실패. 처음부터 다시 센다.
                 // 이전 카운터를 이어 가면 만료 직후 한 번만 틀려도 즉시 다시 잠긴다.
                 log.info("계정 잠금 만료로 해제: userId={}", userId)
-                p.accountLock = "N"
+                p.accountLock = LOCK_NO
                 p.pwFailCnt = 0L
                 m.blockTime = null
             }
@@ -102,7 +103,7 @@ class LoginAttemptService(
             p.updatedtime = now
             if (cnt >= failLimit()) {
                 log.warn("계정 잠금: userId={} failCount={} lockMinutes={}", userId, cnt, lockMinutes())
-                p.accountLock = "Y"
+                p.accountLock = LOCK_YES
                 m.blockTime = now
                 m.updatedtime = now
                 managers.save(m)
@@ -129,7 +130,7 @@ class LoginAttemptService(
             val now = LocalDateTime.now()
             val p = policyOrNew(userId, now)
             log.info("계정 잠금 수동 해제: userId={}", userId)
-            p.accountLock = "N"
+            p.accountLock = LOCK_NO
             p.pwFailCnt = 0L
             p.updatedtime = now
             policies.save(p)
@@ -143,7 +144,7 @@ class LoginAttemptService(
         policies.findFirstByUserIdOrderByIdxDesc(userId).orElseGet {
             val p = CcfaManagerPwPolicy()
             p.userId = userId
-            p.accountLock = "N"
+            p.accountLock = LOCK_NO
             p.pwFailCnt = 0L
             p.createdtime = now
             p.updatedtime = now
@@ -155,6 +156,10 @@ class LoginAttemptService(
 
         internal const val PROP_FAIL_LIMIT = "PW_FAIL_LIMIT"
         internal const val PROP_LOCK_MINUTES = "PW_LOCK_MINUTES"
+
+        /** CCFA_MANAGER_PW_POLICY.ACCOUNT_LOCK 값. */
+        private const val LOCK_YES = "Y"
+        private const val LOCK_NO = "N"
 
         /**
          * Spring Security 의 UsernamePasswordAuthenticationFilter 가 username 을 trim 하므로

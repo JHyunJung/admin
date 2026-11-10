@@ -21,14 +21,15 @@ object SecretProps {
     /**
      * 비밀값으로 다룰 키인가.
      *
-     * 이름에 PASSWORD / PASSWD / PW / SECRET / TOKEN 이 들어가면 비밀값으로 본다.
+     * 이름에 PASSWORD / PASSWD / SECRET / TOKEN 이 들어가거나, `_PW` 로 끝나거나 정확히 `PW` 이면 비밀값으로 본다.
+     * PW 를 "들어가면" 으로 넓히지 않는 것은 `PW_FAIL_LIMIT` 같은 비밀번호 정책 키를 가리지 않기 위해서다.
      * 지금 해당하는 키는 SMTP_PASSWORD 하나지만, 나중에 누가 비슷한 키를 넣어도
      * 자동으로 가려지게 넓게 잡는다 — 빠뜨려서 새는 쪽이 과하게 가리는 쪽보다 해롭다.
      */
     @JvmStatic
     fun isSecret(propKey: String?): Boolean {
         if (propKey == null) return false
-        val k = propKey.uppercase(Locale.getDefault()) // Java toUpperCase() 와 같은 기본 로캘
+        val k = propKey.uppercase(Locale.ROOT) // 판별 전용. JVM 기본 로캘(터키어 등)에 따라 결과가 달라지지 않게 ROOT 로 고정한다
         return k.contains("PASSWORD") || k.contains("PASSWD") || k.endsWith("_PW") || k == "PW" ||
             k.contains("SECRET") || k.contains("TOKEN")
     }

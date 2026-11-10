@@ -17,8 +17,6 @@ data class FidoLogView(
     val accessIp: String?, val bioType: Long?, val logtime: String?, val userAgent: String?, val status: String?,
 ) {
 
-    fun bioTypeLabel(): String = FidoLogPayload.bioTypeLabel(bioType)
-
     companion object {
         /** 날짜별 분할 테이블에서 읽은 값으로 만든다(엔티티가 없다 — 테이블 이름이 조회 시점에 정해진다). */
         @JvmStatic

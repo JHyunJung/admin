@@ -45,8 +45,11 @@ class StatHour(start: LocalDateTime?) : Comparable<StatHour> {
         @JvmStatic
         fun of(time: LocalDateTime?): StatHour = StatHour(time)
 
+        /** [parse] 가 `groupby` 뒤에 `/00/00` 을 붙여 읽는 형식. 호출마다 새로 만들지 않는다. */
+        private val PARSE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm/ss")
+
         @JvmStatic
         fun parse(groupby: String): StatHour = StatHour(
-            LocalDateTime.parse("$groupby/00/00", DateTimeFormatter.ofPattern("yyyy/MM/dd/HH/mm/ss")))
+            LocalDateTime.parse("$groupby/00/00", PARSE_FORMAT))
     }
 }

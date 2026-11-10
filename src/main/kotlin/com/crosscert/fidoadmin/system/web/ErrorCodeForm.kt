@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Pattern
  */
 class ErrorCodeForm {
     @field:NotBlank @field:ByteSize(max = 20)
-    @field:Pattern(regexp = "[A-Za-z0-9._-]+", message = "코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
+    @field:Pattern(regexp = PATH_ID_PATTERN, message = "코드는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
     var errorCode: String? = null
     @field:ByteSize(max = 1024) var errorMessage: String? = null
     @field:ByteSize(max = 4000) var errorComment: String? = null

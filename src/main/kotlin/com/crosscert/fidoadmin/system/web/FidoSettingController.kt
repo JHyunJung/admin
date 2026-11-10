@@ -28,7 +28,6 @@ class FidoSettingController(
     fun form(model: Model): String {
         val values = service.load()
         model.addAttribute("values", values)
-        model.addAttribute("sections", FidoSettingKey.bySection())
         // 위젯(슬라이더·드롭다운). 저장값이 범위·목록 밖이어도 깎이지 않게 여기서 넓힌다.
         model.addAttribute("challengeValue", FidoSettingOptions.challengeValue(values["CHALLENGE_TERM"]))
         model.addAttribute("challengeMax", FidoSettingOptions.challengeMax(values["CHALLENGE_TERM"]))

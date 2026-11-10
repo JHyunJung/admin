@@ -10,6 +10,7 @@ import com.crosscert.fidoadmin.system.entity.CcfaFields
 import com.crosscert.fidoadmin.system.entity.CcfaOption
 import com.crosscert.fidoadmin.system.service.FieldService
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
@@ -127,5 +128,50 @@ class FieldControllerWebTest {
 
     @Test fun postWithoutCsrfIsForbidden() {
         mvc.perform(post("/system/fields").with(user(superUser)).param("fieldTable", "x")).andExpect(status().isForbidden())
+    }
+
+    /** 상세는 코드 그룹 이름과 IDX 를 함께 보여준다(특성화). */
+    @Test fun detailShowsOptionNameAndIdx() {
+        whenever(service.get(1L)).thenReturn(field(1L, 1L))
+        whenever(service.option(1L)).thenReturn(option(1L, "STATUS_GROUP"))
+        whenever(service.option(2L)).thenReturn(option(2L, "OTHER_GROUP"))
+        mvc.perform(get("/system/fields/1").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/fields/detail"))
+            .andExpect(content().string(containsString("<th>코드 그룹</th><td>STATUS_GROUP (1)</td>")))
+            .andExpect(content().string(not(containsString("OTHER_GROUP"))))
+        verify(service, never()).options()
+    }
+
+    /** 코드 그룹이 없으면(optionIdx == null) 칸이 비어 있다(특성화). */
+    @Test fun detailWithoutOptionShowsEmptyCell() {
+        whenever(service.get(1L)).thenReturn(field(1L, null))
+        whenever(service.option(1L)).thenReturn(option(1L, "STATUS_GROUP"))
+        mvc.perform(get("/system/fields/1").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("<th>코드 그룹</th><td></td>")))
+            .andExpect(content().string(not(containsString("STATUS_GROUP"))))
+        verify(service, never()).option(any())
+    }
+
+    /** 가리키는 코드 그룹 행이 없으면 이름 없이 IDX 만 보인다(특성화). */
+    @Test fun detailWithMissingOptionShowsIdxOnly() {
+        whenever(service.get(1L)).thenReturn(field(1L, 999L))
+        whenever(service.option(1L)).thenReturn(option(1L, "STATUS_GROUP"))
+        whenever(service.option(999L)).thenReturn(null)
+        mvc.perform(get("/system/fields/1").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("<th>코드 그룹</th><td> (999)</td>")))
+            .andExpect(content().string(not(containsString("STATUS_GROUP"))))
+    }
+
+    /** 코드 그룹 행은 있지만 이름이 null 이면 IDX 만 보인다(특성화). */
+    @Test fun detailWithNullOptionNameShowsIdxOnly() {
+        whenever(service.get(1L)).thenReturn(field(1L, 1L))
+        val nameless = CcfaOption(); nameless.idx = 1L
+        whenever(service.option(1L)).thenReturn(nameless)
+        mvc.perform(get("/system/fields/1").with(user(superUser)))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("<th>코드 그룹</th><td> (1)</td>")))
     }
 }

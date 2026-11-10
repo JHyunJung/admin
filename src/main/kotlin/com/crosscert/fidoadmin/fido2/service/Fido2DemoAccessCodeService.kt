@@ -4,6 +4,7 @@ import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.common.AssignedIdCrudService
 import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.fido2.entity.Fido2DemoAccessCode
 import com.crosscert.fidoadmin.fido2.repository.Fido2DemoAccessCodeRepository
 import com.crosscert.fidoadmin.fido2.web.Fido2DemoAccessCodeSearchForm
@@ -37,6 +38,6 @@ class Fido2DemoAccessCodeService(
 
     /** DB 기본값: STATUS 'E'(활성). */
     override fun applyDefaults(e: Fido2DemoAccessCode) {
-        if (e.status.let { it == null || it.all(Character::isWhitespace) }) e.status = "E"
+        if (e.status.isNullOrJavaBlank()) e.status = "E"
     }
 }

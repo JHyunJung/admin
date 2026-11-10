@@ -4,6 +4,7 @@ import com.crosscert.fidoadmin.audit.AuditLogger
 import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.common.isNullOrJavaBlank
 import com.crosscert.fidoadmin.fido2.entity.Fido2CredentialParams
 import com.crosscert.fidoadmin.fido2.repository.Fido2CredentialParamsRepository
 import com.crosscert.fidoadmin.fido2.web.Fido2CredentialParamsSearchForm
@@ -38,8 +39,8 @@ class Fido2CredentialParamsService(
 
     /** DB 기본값: CRED_TYPE 'public-key', STATUS 'T'. */
     override fun applyDefaults(e: Fido2CredentialParams) {
-        if (e.credType.let { it == null || it.all(Character::isWhitespace) }) e.credType = "public-key"
-        if (e.status.let { it == null || it.all(Character::isWhitespace) }) e.status = "T"
+        if (e.credType.isNullOrJavaBlank()) e.credType = "public-key"
+        if (e.status.isNullOrJavaBlank()) e.status = "T"
     }
     override fun touchCreated(e: Fido2CredentialParams, now: LocalDateTime) { e.createdtime = now }
 }

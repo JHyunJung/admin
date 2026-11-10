@@ -5,6 +5,8 @@ import com.crosscert.fidoadmin.audit.AuditType
 import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
+import com.crosscert.fidoadmin.common.javaIsBlank
+import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.company.entity.CcfaCompany
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository
 import com.crosscert.fidoadmin.company.web.CompanySearchForm
@@ -65,7 +67,7 @@ class CompanyService(
         if (e.maxAppserver == null) e.maxAppserver = 0L
         if (e.maxUser == null) e.maxUser = 0L
         if (e.starttime == null) e.starttime = LocalDateTime.now()
-        if (e.endtime == null) e.endtime = LocalDateTime.of(9999, 12, 31, 23, 59, 59)
+        if (e.endtime == null) e.endtime = DEFAULT_ENDTIME
         if (e.creator == null) e.creator = tenant.require().idx
     }
     override fun touchCreated(e: CcfaCompany, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
@@ -121,8 +123,8 @@ class CompanyService(
     /** VENDOR_CODE 로 고객사를 찾는다. 중복 검사용 — DB 에 유니크 제약이 없어 화면에서 막는다. */
     @Transactional(readOnly = true)
     fun findByVendorCode(vendorCode: String?): Optional<CcfaCompany> {
-        if (vendorCode == null || vendorCode.all(Character::isWhitespace)) return Optional.empty()
-        return (repository as CcfaCompanyRepository).findFirstByVendorCode(vendorCode.trim { it <= ' ' })
+        if (vendorCode == null || vendorCode.javaIsBlank()) return Optional.empty()
+        return (repository as CcfaCompanyRepository).findFirstByVendorCode(vendorCode.javaTrim())
     }
 
     private fun copyPerCompanyProps(companyIdx: Long?): Int {
@@ -157,6 +159,9 @@ class CompanyService(
     companion object {
         /** 고객사별로 따로 갖는 설정. 회사 0 의 이 값들이 새 고객사의 기본값이 된다. */
         internal const val SHARE_TYPE_PER_COMPANY = "NO"
+
+        /** 종료일을 비워 두면 "기한 없음"으로 본다. 스키마 ENDTIME 기본값과 같은 값이다. */
+        private val DEFAULT_ENDTIME: LocalDateTime = LocalDateTime.of(9999, 12, 31, 23, 59, 59)
 
         private fun perCompanyProps(companyIdx: Long?): Specification<CcfaSystemProp> =
             Specs.all(Specs.eq("id.companyIdx", companyIdx), Specs.eq("shareType", SHARE_TYPE_PER_COMPANY))

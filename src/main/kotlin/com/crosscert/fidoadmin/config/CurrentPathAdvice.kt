@@ -25,7 +25,7 @@ class CurrentPathAdvice(
     /** 사이드바 고객사 전환기에 표시할 이름. 미선택이거나 COMPANY 면 null. */
     @ModelAttribute("selectedCompanyName")
     fun selectedCompanyName(): String? {
-        if (tenant.current().isEmpty || !tenant.hasTenant()) return null
+        if (!tenant.hasTenant()) return null
         return companies.name(tenant.companyIdx())
     }
 }

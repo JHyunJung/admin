@@ -103,4 +103,31 @@ class ErrorCodeControllerWebTest {
             .andExpect(content().string(containsString("로 쓸 수 없는 값입니다: new")))
         verify(service, never()).create(any())
     }
+
+    /** 예약값 ".." 거부(특성화). */
+    @Test fun reservedCodeDotsIsRejected() {
+        mvc.perform(post("/system/error-codes").with(user(superUser)).with(csrf())
+                .param("errorCode", "..").param("errorMessage", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: ..")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "." 거부(특성화). */
+    @Test fun reservedCodeSingleDotIsRejected() {
+        mvc.perform(post("/system/error-codes").with(user(superUser)).with(csrf())
+                .param("errorCode", ".").param("errorMessage", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: .")))
+        verify(service, never()).create(any())
+    }
+
+    /** 예약값 "NEW" 거부(특성화). */
+    @Test fun reservedCodeUpperNewIsRejected() {
+        mvc.perform(post("/system/error-codes").with(user(superUser)).with(csrf())
+                .param("errorCode", "NEW").param("errorMessage", "x"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("코드로 쓸 수 없는 값입니다: NEW")))
+        verify(service, never()).create(any())
+    }
 }
