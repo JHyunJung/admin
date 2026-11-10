@@ -19,6 +19,10 @@ class LoginSuccessHandler(
     private val expiry: PasswordExpiryPolicy,
 ) : SavedRequestAwareAuthenticationSuccessHandler() {
 
+    init {
+        setDefaultTargetUrl("/")
+    }
+
     @Throws(ServletException::class, IOException::class)
     override fun onAuthenticationSuccess(request: HttpServletRequest, response: HttpServletResponse,
                                          authentication: Authentication) {
@@ -45,7 +49,6 @@ class LoginSuccessHandler(
         // 세션 고정 방지로 속성이 옮겨 오므로, 만료가 아닌 로그인은 남은 표시를 지운다.
         val old = request.getSession(false)
         old?.removeAttribute(PasswordExpiredInterceptor.SESSION_ATTR)
-        setDefaultTargetUrl("/")
         super.onAuthenticationSuccess(request, response, authentication)
     }
 

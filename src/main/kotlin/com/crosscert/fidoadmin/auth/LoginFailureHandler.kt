@@ -18,6 +18,10 @@ class LoginFailureHandler(
     private val attempts: LoginAttemptService,
 ) : SimpleUrlAuthenticationFailureHandler() {
 
+    init {
+        setDefaultFailureUrl("/login?error")
+    }
+
     @Throws(IOException::class, ServletException::class)
     override fun onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse,
                                          exception: AuthenticationException) {
@@ -28,7 +32,6 @@ class LoginFailureHandler(
         // 잠금·비활성·비밀번호 오류를 화면에서 구분하면 계정 존재 여부와 상태가 노출된다.
         // 원인은 서버 로그에만 남기고 사용자에게는 동일한 메시지를 준다.
         log.info("로그인 실패: userId={} reason={}", forLog(userId), reasonOf(exception))
-        setDefaultFailureUrl("/login?error")
         super.onAuthenticationFailure(request, response, exception)
     }
 

@@ -17,6 +17,10 @@ class AppLogoutSuccessHandler(
     private val audit: AuditLogger,
 ) : SimpleUrlLogoutSuccessHandler() {
 
+    init {
+        setDefaultTargetUrl("/login?logout")
+    }
+
     @Throws(IOException::class, ServletException::class)
     override fun onLogoutSuccess(request: HttpServletRequest, response: HttpServletResponse,
                                  authentication: Authentication?) {
@@ -26,7 +30,6 @@ class AppLogoutSuccessHandler(
             log.info("로그아웃: userId={}", user.userId)
             audit.log(user, AuditType.LOGOUT, "로그아웃", request.remoteAddr, request.getHeader("User-Agent"))
         }
-        setDefaultTargetUrl("/login?logout")
         super.onLogoutSuccess(request, response, authentication)
     }
 
