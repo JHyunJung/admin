@@ -31,12 +31,8 @@ class TenantSelectionController(
     @GetMapping("/select-tenant")
     fun selectForm(model: Model): String {
         if (!tenant.require().isSuper) return "redirect:/"
-        model.addAttribute("companies", companies.all().stream()
-            .filter { c -> c.idx != null && c.idx != SignupPolicy.SUPER_COMPANY_IDX }
-            .toList())
-        model.addAttribute("systemMenus", menus.itemsFor(true).stream()
-            .filter { m -> m.area == MenuArea.SYSTEM }
-            .toList())
+        model.addAttribute("companies", SignupPolicy.selectableCompanies(companies.all()))
+        model.addAttribute("systemMenus", menus.itemsFor(true, MenuArea.SYSTEM))
         return "tenant/select"
     }
 
@@ -45,7 +41,7 @@ class TenantSelectionController(
                @RequestParam(required = false) returnTo: String?,
                redirect: RedirectAttributes): String {
         if (!tenant.require().isSuper) return "redirect:/"
-        if (companyIdx == null || companyIdx == 0L || !repository.existsById(companyIdx)) {
+        if (companyIdx == null || companyIdx == SignupPolicy.SUPER_COMPANY_IDX || !repository.existsById(companyIdx)) {
             redirect.addFlashAttribute("flashError", "선택할 수 없는 고객사입니다.")
             return "redirect:/select-tenant"
         }
