@@ -10,3 +10,7 @@
 - companion `@JvmStatic main` 은 기동 로그 이름이 `.Companion` 이 된다 → `setMainApplicationClass`.
 - 병렬 worktree 에이전트는 main 에서 시작될 수 있다. 시작 커밋을 프롬프트에 명시하고 `git merge --ff-only <branch>` 부터 시키기.
 - 변환 그룹끼리는 nullability 가 어긋난다(non-null `Long` vs `Long?`). 병합 직후 전체 컴파일로 잡는다.
+
+## 스냅숏 트리로 커밋할 때 인덱스 (2026-11-10)
+- 실수: `git commit-tree` 로 만든 커밋으로 `git reset --soft` 한 뒤 `git add <docs> && git commit` 을 했더니, 인덱스가 옛 HEAD 상태라 docs 커밋이 src 변경을 되돌렸다.
+- 규칙: commit-tree 로 브랜치를 옮길 때는 `--soft` 가 아니라 `git reset -q <commit>`(mixed)로 인덱스까지 맞춘다. 다음 커밋 전에 `git diff --cached --stat` 이 의도한 파일만 보이는지 확인한다.
