@@ -20,7 +20,7 @@ class SignupAdminController(
 
     @GetMapping
     fun list(model: Model): String {
-        model.addAttribute("items", service.pending())
+        model.addAttribute("items", service.pending().map(PendingSignupRow::of))
         // 전역(IDX 0)은 선택 목록에서 제외한다. 승인으로 슈퍼 관리자를 만들 수 없게 하기 위해서다.
         // SignupService.approve() 의 거부가 최후 방어선이고, 여기서는 애초에 고를 수 없게 한다.
         val selectable = SignupPolicy.selectableCompanies(companies.all())
