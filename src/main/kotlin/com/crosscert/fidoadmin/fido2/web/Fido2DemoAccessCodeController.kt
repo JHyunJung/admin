@@ -39,9 +39,13 @@ class Fido2DemoAccessCodeController(
          */
         val code = form.accesscode
         if (isNew && code != null) {
-            if (code.equals("new", ignoreCase = true) || code.matches(Regex("\\.+"))) {
+            if (code.equals("new", ignoreCase = true) || code.matches(DOTS_ONLY)) {
                 binding.rejectValue("accesscode", "reserved", "접근코드로 쓸 수 없는 값입니다: $code")
             }
         }
+    }
+
+    private companion object {
+        val DOTS_ONLY = Regex("\\.+")
     }
 }

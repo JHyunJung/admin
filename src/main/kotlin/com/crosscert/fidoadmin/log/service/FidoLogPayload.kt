@@ -53,11 +53,15 @@ data class FidoLogPayload(
         return op
     }
 
+    /** [parseWithRoot] 의 결과. 풀지 못했으면 [payload] 는 모든 값이 null 이고 [root] 도 null 이다. */
+    internal class Parsed(val payload: FidoLogPayload, val root: JsonNode?)
+
     companion object {
         private val MAPPER = ObjectMapper()
         /** base64 안의 줄바꿈·공백. 행마다 호출되므로 한 번만 컴파일한다. */
         private val WHITESPACE: Pattern = Pattern.compile("\\s")
         private val EMPTY = FidoLogPayload(null, null, null, null, null, null, null, null, false, null)
+        private val EMPTY_PARSED = Parsed(EMPTY, null)
 
         private val OP_KEYS = arrayOf("op")
         private val SERVICE_KEYS = arrayOf("serviceName", "servicename")
@@ -73,18 +77,25 @@ data class FidoLogPayload(
         private const val KFIDO_SUFFIX = "_*KF"
 
         @JvmStatic
-        fun parse(jsondata: String?): FidoLogPayload {
-            if (jsondata == null || jsondata.javaIsBlank()) return EMPTY
+        fun parse(jsondata: String?): FidoLogPayload = parseWithRoot(jsondata).payload
+
+        /**
+         * [parse] 결과와 그때 읽은 JSON 루트를 함께 돌려준다. 루트가 필요한 호출자(통계 분류)가
+         * 같은 JSON 을 다시 파싱하지 않게 하려는 진입점이다. [Parsed.root] 는 [Parsed.payload] 의
+         * `json` 이 null 이 아닐 때만 있다(그때 루트는 언제나 객체다).
+         */
+        internal fun parseWithRoot(jsondata: String?): Parsed {
+            if (jsondata == null || jsondata.javaIsBlank()) return EMPTY_PARSED
             val text = jsondata.javaTrim()
-            val json = (if (text.startsWith("{")) text else decodeBase64(text)) ?: return EMPTY
+            val json = (if (text.startsWith("{")) text else decodeBase64(text)) ?: return EMPTY_PARSED
             val root: JsonNode = try {
                 MAPPER.readTree(json)
             } catch (e: Exception) {
-                return EMPTY
-            } ?: return EMPTY
-            if (!root.isObject) return EMPTY
+                return EMPTY_PARSED
+            } ?: return EMPTY_PARSED
+            if (!root.isObject) return EMPTY_PARSED
             val tx: JsonNode? = if (root.path("transaction").isObject) root.get("transaction") else null
-            return FidoLogPayload(
+            return Parsed(FidoLogPayload(
                 text(tx, root, OP_KEYS),
                 text(tx, root, SERVICE_KEYS),
                 text(tx, root, USER_KEYS),
@@ -96,27 +107,37 @@ data class FidoLogPayload(
                 // Auth 인데 요청에 transaction 이 들어 있으면 TC(전자서명 확인)로 센다.
                 // 요청 키 이름을 확인하지 못해 transaction 객체 안 어디든 transaction 필드가 있으면 그렇게 본다.
                 tx != null && tx.findValue("transaction") != null,
-                json)
+                json), root)
         }
+
+        /** 인증장치 코드 하나의 화면 값 — 이름·아이콘·아이콘 색. */
+        private class BioType(val label: String, val icon: String, val color: String)
+
+        /**
+         * 인증장치 코드표. [bioTypeLabel]·[bioIcon]·[bioColor] 가 이 표 하나를 찾아 쓴다.
+         * 손바닥은 맞는 아이콘이 없어 손 모양(hand-index)을 쓴다.
+         * 색은 사람이 고르는 인증 수단(지문·얼굴인식·PIN·패턴·홍채·음성·손바닥)만 값마다 다르고,
+         * PRESENCE·지역기반·없음·ALL 은 모르는 코드와 같은 회색(text-secondary)이다.
+         */
+        private val BIO_TYPES: Map<Int, BioType> = mapOf(
+            1 to BioType("PRESENCE", "bi-hand-index-thumb", "text-secondary"),
+            2 to BioType("지문", "bi-fingerprint", "fa-bio-finger"),
+            4 to BioType("PIN", "bi-123", "fa-bio-pin"),
+            8 to BioType("음성", "bi-mic", "fa-bio-voice"),
+            16 to BioType("얼굴인식", "bi-person-bounding-box", "fa-bio-face"),
+            32 to BioType("지역기반", "bi-geo-alt", "text-secondary"),
+            64 to BioType("홍채", "bi-eye", "fa-bio-iris"),
+            128 to BioType("패턴", "bi-grid-3x3-gap", "fa-bio-pattern"),
+            256 to BioType("손바닥", "bi-hand-index", "fa-bio-palm"),
+            512 to BioType("없음", "bi-dash-circle", "text-secondary"),
+            1024 to BioType("ALL", "bi-collection", "text-secondary"),
+        )
 
         /** 인증장치 코드표. 모르는 코드와 없는 값은 "알수없음". */
         @JvmStatic
         fun bioTypeLabel(bioType: Long?): String {
             if (bioType == null) return "알수없음"
-            return when (bioType.toInt()) {
-                1 -> "PRESENCE"
-                2 -> "지문"
-                4 -> "PIN"
-                8 -> "음성"
-                16 -> "얼굴인식"
-                32 -> "지역기반"
-                64 -> "홍채"
-                128 -> "패턴"
-                256 -> "손바닥"
-                512 -> "없음"
-                1024 -> "ALL"
-                else -> "알수없음"
-            }
+            return BIO_TYPES[bioType.toInt()]?.label ?: "알수없음"
         }
 
         /**
@@ -126,20 +147,7 @@ data class FidoLogPayload(
         @JvmStatic
         fun bioIcon(bioType: Long?): String {
             if (bioType == null) return "bi-question-circle"
-            return when (bioType.toInt()) {
-                1 -> "bi-hand-index-thumb"
-                2 -> "bi-fingerprint"
-                4 -> "bi-123"
-                8 -> "bi-mic"
-                16 -> "bi-person-bounding-box"
-                32 -> "bi-geo-alt"
-                64 -> "bi-eye"
-                128 -> "bi-grid-3x3-gap"
-                256 -> "bi-hand-index"
-                512 -> "bi-dash-circle"
-                1024 -> "bi-collection"
-                else -> "bi-question-circle"
-            }
+            return BIO_TYPES[bioType.toInt()]?.icon ?: "bi-question-circle"
         }
 
         /**
@@ -149,16 +157,7 @@ data class FidoLogPayload(
         @JvmStatic
         fun bioColor(bioType: Long?): String {
             if (bioType == null) return "text-secondary"
-            return when (bioType.toInt()) {
-                2 -> "fa-bio-finger"
-                4 -> "fa-bio-pin"
-                8 -> "fa-bio-voice"
-                16 -> "fa-bio-face"
-                64 -> "fa-bio-iris"
-                128 -> "fa-bio-pattern"
-                256 -> "fa-bio-palm"
-                else -> "text-secondary"
-            }
+            return BIO_TYPES[bioType.toInt()]?.color ?: "text-secondary"
         }
 
         /**
