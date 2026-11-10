@@ -34,9 +34,14 @@ class AuditReadInterceptor(
     private val menus: MenuRegistry,
 ) : HandlerInterceptor {
 
+    // 두 빈 모두 싱글턴이고, 요청은 컨텍스트 기동(웹 서버 시작) 뒤에만 들어오므로
+    // 해석 결과(없으면 null)는 인스턴스 수명 내내 같다. 요청마다 다시 찾지 않는다.
+    private val auditLogger: AuditLogger? by lazy { audit.ifAvailable }
+    private val tenantContext: TenantContext? by lazy { tenant.ifAvailable }
+
     override fun afterCompletion(request: HttpServletRequest, response: HttpServletResponse,
                                  handler: Any, ex: Exception?) {
-        val logger = audit.ifAvailable ?: return
+        val logger = auditLogger ?: return
         if (!shouldRecord(request, response, ex)) return
 
         val menu = menus.titleFor(request.requestURI)
@@ -67,7 +72,7 @@ class AuditReadInterceptor(
         if (!request.isAsyncStarted && request.dispatcherType != DispatcherType.REQUEST) {
             return false
         }
-        val ctx = tenant.ifAvailable
+        val ctx = tenantContext
         return ctx != null && ctx.current().isPresent
     }
 }

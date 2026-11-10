@@ -46,6 +46,19 @@
   - 48번 `listDoesNotExposePasswordHash` 는 HTML 본문만 봐서, 엔티티를 다시 모델에 실어도 통과한다 — 모델 속성 타입 단언으로 보강 필요.
   - 66번 `fido-reload-` 스레드 초기화를 고정하는 상시 테스트가 없다(구현 중 임시 테스트로만 확인).
 
+## 3차 (2026-11-10, 브랜치 refactor/harden-3)
+대상 6건: 3, 32, 38, 47, 51, 52. 방식은 1·2차와 같다. 33·42·44 는 목록 SELECT 원문(SQL_ID)이 바뀌어 "SQL 원문 불변" 원칙 밖이므로 DBA 확인이 필요한 별도 성능 과제로 넘긴다.
+- [x] 15. audit · fido · fido2 — 3, 32, 38 (묶음 13. 리뷰 PASS · Codex 문제 없음)
+- [x] 16. log · manager — 47, 51, 52 (묶음 14. 리뷰 PASS · Codex 문제 없음)
+- [x] 17. 전체 `./gradlew test` 를 2차 결과(986 tests · 0 fail)와 비교 (986 tests · 0 fail · 1 skip — 동일, 로컬 Oracle 기동 상태)
+
+### Review 3차 (2026-11-10)
+- 결과: 6건 전부 적용. 묶음 13·14 모두 동작 동일성 리뷰 PASS · Codex 게이트 "문제 없음", 수정 루프·원복 0건. 누적 70건.
+- 변경 규모: `src` 7파일 (audit/AuditReadInterceptor, fido/web/AppserverController, fido2 서비스 2개, log/web/FidoLogController, manager 서비스 3개). 새 테스트 없음(32번은 임시 WebTest 로 변경 전·후 동일 출력 확인 뒤 삭제).
+- 전체 테스트: 986 tests · 0 fail · 1 skip(`SchemaConformanceTest`).
+- 스냅숏: `snap-13.txt`, `snap-14.txt`. snap-12 는 docs 커밋 전 트리라 diff 는 `-- src` 로 한정해 만들었다.
+- 커밋: 아직 안 함(브랜치 `refactor/harden-3`).
+
 ## 다음
-- 보류: 3, 32, 33, 38, 42, 44, 47, 51, 52 (33·42·44 는 SQL_ID 변경 수용 여부 확인 필요)
+- 별도 성능 과제(DBA 확인 필요): 33, 42, 44 — 목록 SELECT 에서 안 쓰는 큰 컬럼 제외
 - 보고만(74~222): 별도 과제. 우선순위 76 → 88·107·109·111 → 75·84 → 74

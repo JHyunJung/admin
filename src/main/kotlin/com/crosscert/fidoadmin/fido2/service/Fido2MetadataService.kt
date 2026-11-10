@@ -35,9 +35,14 @@ class Fido2MetadataService(
     override fun setCompanyIdx(e: Fido2Metadata, c: Long?) {}
     override fun idOf(e: Fido2Metadata): String = e.idx.toString()
     override fun tableName(): String = "FIDO2_METADATA"
-    override fun sortableProperties(): Set<String> =
-        java.util.Set.of("idx", "description", "aaguid", "protocolfamily", "createdtime")
+    override fun sortableProperties(): Set<String> = SORTABLE
     /** 목록 DTO 가 싣지 않는 CLOB. 목록 조회의 SELECT 절에서 빼 행마다 전송·메모리 적재를 막는다. */
-    override fun listExcludedProperties(): Set<String> = java.util.Set.of("attestationrootcertificates", "icon")
+    override fun listExcludedProperties(): Set<String> = LIST_EXCLUDED
     override fun touchCreated(e: Fido2Metadata, now: LocalDateTime) { e.createdtime = now }
+
+    private companion object {
+        /** 불변 집합이라 목록 요청마다 새로 만들 필요가 없다. */
+        val SORTABLE: Set<String> = java.util.Set.of("idx", "description", "aaguid", "protocolfamily", "createdtime")
+        val LIST_EXCLUDED: Set<String> = java.util.Set.of("attestationrootcertificates", "icon")
+    }
 }

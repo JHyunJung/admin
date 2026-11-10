@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 
+/** 매핑·화면 링크(`basePath`)가 함께 쓰는 경로. 한 곳만 고치면 둘이 어긋나므로 상수 하나로 둔다. */
+private const val BASE_PATH = "/logs/fido"
+
 /**
  * FIDO 로그 화면.
  *
@@ -22,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping
  * **어느 테이블의** 몇 번인지가 있어야 한 건을 가리킬 수 있다.
  */
 @Controller
-@RequestMapping("/logs/fido")
+@RequestMapping(BASE_PATH)
 class FidoLogController(
     private val service: FidoLogQueryService,
     private val companies: CompanyLookup,
@@ -37,7 +40,7 @@ class FidoLogController(
         model.addAttribute("page", result.page)
         model.addAttribute("truncated", result.truncated)
         model.addAttribute("searchQs", search.toQueryString())
-        model.addAttribute("basePath", "/logs/fido")
+        model.addAttribute("basePath", BASE_PATH)
         return "log/fido/list"
     }
 
@@ -56,7 +59,7 @@ class FidoLogController(
         val item = service.get(date, id)
         model.addAttribute("item", item)
         model.addAttribute("logDate", date)
-        model.addAttribute("basePath", "/logs/fido")
+        model.addAttribute("basePath", BASE_PATH)
         model.addAttribute("companyName", companies.name(item.companyIdx))
         AuditView.add(model, "FIDO_LOGS", item.idx.toString())
         return "log/fido/detail"
