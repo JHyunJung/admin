@@ -89,7 +89,7 @@ class RequestLogFilter : OncePerRequestFilter() {
             val auth = authenticationOf(request)
             val user = auth?.principal as? ManagerUserDetails ?: return
             MDC.put(MDC_USER, user.userId)
-            if (user.companyIdx != null) MDC.put(MDC_TENANT, user.companyIdx.toString())
+            MDC.put(MDC_TENANT, user.companyIdx.toString())
         }
 
         /**
@@ -107,6 +107,6 @@ class RequestLogFilter : OncePerRequestFilter() {
 
         /** 8자리면 하루치 로그 안에서 겹칠 일이 없고 눈으로 옮겨 적기에도 짧다. */
         @JvmStatic
-        internal fun newId(): String = UUID.randomUUID().toString().replace("-", "").substring(0, 8)
+        internal fun newId(): String = UUID.randomUUID().toString().substring(0, 8)
     }
 }
