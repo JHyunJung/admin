@@ -44,7 +44,7 @@ class FidoClientService(
 
     override fun applyDefaults(e: CcfaFidoclient) {
         val status = e.status
-        if (status == null || status.javaIsBlank()) e.status = "ON"
+        if (status == null || status.javaIsBlank()) e.status = STATUS_ON
     }
     override fun touchCreated(e: CcfaFidoclient, now: LocalDateTime) { e.createdtime = now; e.updatedtime = now }
     override fun touchUpdated(e: CcfaFidoclient, now: LocalDateTime) { e.updatedtime = now }
@@ -62,7 +62,7 @@ class FidoClientService(
     fun register(serverName: String?, serverUrl: String?): CcfaFidoclient {
         // 존재 검사와 INSERT 사이의 경쟁을 막는다. 이 테이블은 PK 제약이 없어 DB 가 잡아주지 못한다
         // (AssignedIdCrudService.insert 와 같은 방식이다). 잠금은 이 트랜잭션 커밋 때 풀린다.
-        em.createNativeQuery("LOCK TABLE " + tableName() + " IN EXCLUSIVE MODE").executeUpdate()
+        lockTable()
 
         val now = LocalDateTime.now()
         val client = fidoClients.findFirstByServernameOrderByCreatedtimeAsc(serverName)
@@ -70,13 +70,13 @@ class FidoClientService(
                 CcfaFidoclient().apply {
                     // 보내오는 식별자는 하나뿐이라 SERVERCODE 에도 같은 값을 넣는다.
                     // SERVERCODE 는 PK 이자 /system/fido-clients 화면의 URL 경로라 길이를 맞춰 자른다.
-                    servercode = cut(serverName, 64)
-                    servername = cut(serverName, 1024)
+                    servercode = cut(serverName, SERVERCODE_MAX_BYTES)
+                    servername = cut(serverName, SERVERNAME_MAX_BYTES)
                     createdtime = now
                 }
             }
-        client.serverurl = cut(serverUrl, 2048)
-        client.status = "ON"
+        client.serverurl = cut(serverUrl, SERVERURL_MAX_BYTES)
+        client.status = STATUS_ON
         client.updatedtime = now
         return fidoClients.save(client)
     }
@@ -89,12 +89,20 @@ class FidoClientService(
     fun deregister(serverName: String?): Optional<CcfaFidoclient> =
         fidoClients.findFirstByServernameOrderByCreatedtimeAsc(serverName)
             .map { client ->
-                client.status = "OFF"
+                client.status = STATUS_OFF
                 client.updatedtime = LocalDateTime.now()
                 fidoClients.save(client)
             }
 
     companion object {
+        private const val STATUS_ON = "ON"
+        private const val STATUS_OFF = "OFF"
+
+        /** CCFA_FIDOCLIENT 컬럼 길이(BYTE). `CcfaFidoclient` 의 `@Column(length)` 와 같은 값이다. */
+        private const val SERVERCODE_MAX_BYTES = 64
+        private const val SERVERNAME_MAX_BYTES = 1024
+        private const val SERVERURL_MAX_BYTES = 2048
+
         /**
          * 컬럼 길이를 넘는 값이 와도 등록 자체가 실패하지는 않게 한다.
          * 컬럼은 BYTE 의미라 글자 수가 아니라 UTF-8 바이트로 자른다(한글 서버명이 ORA-12899 로 실패하지 않는다).

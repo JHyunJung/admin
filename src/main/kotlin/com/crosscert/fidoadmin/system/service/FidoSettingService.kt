@@ -78,7 +78,7 @@ class FidoSettingService(
             val row = repository.findById(id).orElseGet {
                 CcfaSystemProp().apply {
                     this.id = id
-                    shareType = "NO"
+                    shareType = SHARE_TYPE_DEFAULT
                 }
             }
             if (row.propValue == value) {
@@ -94,5 +94,10 @@ class FidoSettingService(
             changed++
         }
         if (changed > 0) events.publishEvent(FidoConfigChanged("FIDO 서버 설정 저장 " + changed + "건"))
+    }
+
+    companion object {
+        /** 새로 만드는 행의 SHARE_TYPE 기본값. */
+        private const val SHARE_TYPE_DEFAULT = "NO"
     }
 }

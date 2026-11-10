@@ -49,8 +49,13 @@ class SystemPropService(
 
     override fun applyDefaults(e: CcfaSystemProp) {
         val shareType = e.shareType
-        if (shareType == null || shareType.javaIsBlank()) e.shareType = "NO"
+        if (shareType == null || shareType.javaIsBlank()) e.shareType = SHARE_TYPE_DEFAULT
     }
     override fun touchCreated(e: CcfaSystemProp, now: LocalDateTime) { e.updatedtime = now }
     override fun touchUpdated(e: CcfaSystemProp, now: LocalDateTime) { e.updatedtime = now }
+
+    companion object {
+        /** SHARE_TYPE 이 비어 있을 때 넣는 기본값. */
+        private const val SHARE_TYPE_DEFAULT = "NO"
+    }
 }
