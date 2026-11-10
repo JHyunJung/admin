@@ -42,6 +42,9 @@ class CriteriaQueryService(
     private val parser: CriteriaMetadataParser,
 ) : CrudService<Criteria, Long, CriteriaSearchForm>(repository, audit, tenant) {
 
+    /** 기반의 [repository] 는 `AdminRepository` 타입이라, 구체 타입 메서드를 쓰려고 같은 인스턴스를 따로 둔다. */
+    private val criteriaRepository: CriteriaRepository = repository
+
     /**
      * CRITERIA 자체는 전역 기준 데이터지만, 이 화면의 쓸모는 고객사별 활성/비활성
      * 토글에 있다(CCFA_COMPANY_AAID). 그래서 기반의 SUPER 전용 차단을 풀고
@@ -88,7 +91,6 @@ class CriteriaQueryService(
             throw AccessDeniedException("AAID 정책 등록은 최고 관리자 전용입니다")
         }
         val criteria = parser.parse(json)
-        val criteriaRepository = repository as CriteriaRepository
         if (criteriaRepository.existsByAaid(criteria.aaid)) {
             throw CriteriaMetadataException("이미 등록된 AAID 입니다.")
         }
@@ -137,15 +139,7 @@ class CriteriaQueryService(
 
         // 같은 고객사의 상태 변경을 직렬화한다. 이 테이블에는 유니크 제약이 없어
         // 동시 요청이 들어오면 같은 (COMPANY_IDX, AAID) 행이 두 번 들어갈 수 있다.
-        jdbc.queryForObject(
-            """
-            SELECT IDX FROM CCFA_COMPANY
-             WHERE IDX = :companyIdx
-               FOR UPDATE
-            """.trimIndent() + "\n",
-            params,
-            Long::class.javaObjectType,
-        )
+        lockCompany(params)
 
         val changed = if (enabled) {
             jdbc.update(
@@ -192,24 +186,10 @@ class CriteriaQueryService(
         val params = MapSqlParameterSource("companyIdx", companyIdx)
 
         // 단건 토글과 같은 잠금. 전체 비활성과 단건 활성이 겹치면 한쪽이 다른 쪽을 되돌린다.
-        jdbc.queryForObject(
-            """
-            SELECT IDX FROM CCFA_COMPANY
-             WHERE IDX = :companyIdx
-               FOR UPDATE
-            """.trimIndent() + "\n",
-            params,
-            Long::class.javaObjectType,
-        )
+        lockCompany(params)
 
         val changed = if (enabled) {
-            jdbc.update(
-                """
-                DELETE FROM CCFA_COMPANY_AAID
-                 WHERE COMPANY_IDX = :companyIdx
-                """.trimIndent() + "\n",
-                params,
-            )
+            deleteAllFor(companyIdx)
         } else {
             disableAllFor(companyIdx)
         }
@@ -222,6 +202,22 @@ class CriteriaQueryService(
             events.publishEvent(FidoConfigChanged("AAID 전체 " + (if (enabled) "활성" else "비활성") + " " + changed + "건"))
         }
         return changed
+    }
+
+    /**
+     * 고객사 행을 잠가 같은 고객사의 상태 변경을 직렬화한다. 단건 토글([changeStatus])과
+     * 전체 토글([changeStatusAll])이 같은 잠금을 쓴다.
+     */
+    private fun lockCompany(params: MapSqlParameterSource) {
+        jdbc.queryForObject(
+            """
+            SELECT IDX FROM CCFA_COMPANY
+             WHERE IDX = :companyIdx
+               FOR UPDATE
+            """.trimIndent() + "\n",
+            params,
+            Long::class.javaObjectType,
+        )
     }
 
     /**
@@ -244,7 +240,7 @@ class CriteriaQueryService(
             MapSqlParameterSource("companyIdx", companyIdx),
         )
 
-    /** 주어진 고객사의 차단 행을 모두 지운다. 고객사 삭제 때 쓴다. */
+    /** 주어진 고객사의 차단 행을 모두 지운다. 고객사 삭제와 전체 활성([changeStatusAll])이 같이 쓴다. */
     @Transactional
     fun deleteAllFor(companyIdx: Long?): Int =
         jdbc.update(
