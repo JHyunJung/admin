@@ -7,6 +7,7 @@ import com.crosscert.fidoadmin.auth.LoginAttemptService
 import com.crosscert.fidoadmin.auth.PasswordExpiryPolicy
 import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.ManagerStatus
+import com.crosscert.fidoadmin.common.Specs
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.manager.entity.CcfaManager
 import com.crosscert.fidoadmin.manager.entity.CcfaManagerPwPolicy
@@ -20,6 +21,7 @@ import java.time.LocalDateTime
 import java.util.Objects
 import java.util.Optional
 import java.util.function.Consumer
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -46,7 +48,16 @@ abstract class ManagerAccountService protected constructor(
     override fun setCompanyIdx(e: CcfaManager, c: Long?) { e.companyIdx = c }
     override fun idOf(e: CcfaManager): String = e.idx.toString()
     override fun tableName(): String = "CCFA_MANAGER"
-    override fun sortableProperties(): Set<String> = java.util.Set.of("idx", "userId", "userNm", "lastAccess")
+    override fun sortableProperties(): Set<String> = setOf("idx", "userId", "userNm", "lastAccess")
+
+    /**
+     * 두 화면이 같은 검색 조건(아이디·이름 부분 일치, 상태 일치). 하위 클래스가 `Specs.all(…, *commonSearchSpecs(f))`
+     * 로 **평평하게** 펼친다 — `Specs.all` 을 중첩하면 괄호가 달라져 생성 SQL 이 바뀐다.
+     */
+    protected fun commonSearchSpecs(f: ManagerSearchForm): Array<Specification<CcfaManager>?> = arrayOf(
+        Specs.like("userId", f.userId),
+        Specs.like("userNm", f.userNm),
+        Specs.eq("status", f.status))
 
     override fun applyDefaults(e: CcfaManager) {
         if (e.status.isNullOrJavaBlank()) e.status = ManagerStatus.ACTIVE

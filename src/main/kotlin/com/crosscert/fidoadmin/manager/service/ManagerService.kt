@@ -31,10 +31,7 @@ class ManagerService(
 ) : ManagerAccountService(managers, audit, policies, loginAttempts, em, tenant, userIdGuard, expiry) {
 
     override fun toSpecification(f: ManagerSearchForm): Specification<CcfaManager> =
-        Specs.all(
-            Specs.like("userId", f.userId),
-            Specs.like("userNm", f.userNm),
-            Specs.eq("status", f.status))
+        Specs.all(*commonSearchSpecs(f))
 
     /** 유효 테넌트로 거른다. 등록·수정 때 소속도 CrudService 가 유효 테넌트로 강제한다. */
     override fun companyIdxAttribute(): String? = "companyIdx"

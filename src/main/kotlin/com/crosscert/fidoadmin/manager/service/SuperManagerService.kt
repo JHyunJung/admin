@@ -42,9 +42,7 @@ class SuperManagerService(
     override fun toSpecification(f: ManagerSearchForm): Specification<CcfaManager> =
         Specs.all(
             Specs.eq("companyIdx", SignupPolicy.SUPER_COMPANY_IDX),
-            Specs.like("userId", f.userId),
-            Specs.like("userNm", f.userNm),
-            Specs.eq("status", f.status))
+            *commonSearchSpecs(f))
 
     /**
      * 이 테이블에는 실제로 COMPANY_IDX 컬럼이 있다. 그러나 이 화면이 걸어야 하는 값은
