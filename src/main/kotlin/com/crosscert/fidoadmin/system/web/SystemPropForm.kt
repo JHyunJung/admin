@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Pattern
  */
 class SystemPropForm {
     @field:NotBlank @field:ByteSize(max = 128)
-    @field:Pattern(regexp = "[A-Za-z0-9._-]+", message = "키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
+    @field:Pattern(regexp = PATH_ID_PATTERN, message = "키는 영문, 숫자, 마침표(.), 밑줄(_), 하이픈(-) 만 쓸 수 있습니다.")
     var propKey: String? = null
     @field:ByteSize(max = 4000) var propValue: String? = null
     @field:NotBlank @field:ByteSize(max = 20) var shareType: String? = "NO"

@@ -36,7 +36,13 @@ class FieldController(
 
     override fun populateFormModel(model: Model) { model.addAttribute("options", service.options()) }
     override fun populateListModel(model: Model) { model.addAttribute("optionNames", optionNames()) }
-    override fun populateDetailModel(e: CcfaFields, model: Model) { model.addAttribute("optionNames", optionNames()) }
+    /** 상세 템플릿은 item.optionIdx 한 건만 찾으므로 그 코드 그룹 하나만 담는다(없거나 null 이면 빈 Map). */
+    override fun populateDetailModel(e: CcfaFields, model: Model) {
+        val names = LinkedHashMap<Long?, String?>()
+        val idx = e.optionIdx
+        if (idx != null) service.option(idx)?.let { names[it.idx] = it.optionName }
+        model.addAttribute("optionNames", names)
+    }
 
     private fun optionNames(): Map<Long?, String?> {
         val names = LinkedHashMap<Long?, String?>()

@@ -22,7 +22,6 @@ class FidoReloadConfig {
         ex.setThreadNamePrefix("fido-reload-")
         ex.setRejectedExecutionHandler(ThreadPoolExecutor.AbortPolicy())
         ex.setWaitForTasksToCompleteOnShutdown(false)
-        ex.initialize()
         return ex
     }
 }

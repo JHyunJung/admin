@@ -46,6 +46,13 @@ class FieldService(
         return options.findAll(Sort.by("idx"))
     }
 
+    /** 상세의 그룹 이름 표시용: 코드 그룹 한 건. 없으면 null. */
+    @Transactional(readOnly = true)
+    fun option(optionIdx: Long): CcfaOption? {
+        requireSuperForGlobalTable()
+        return options.findById(optionIdx).orElse(null)
+    }
+
     /** optionIdx 가 유효한 코드 그룹 참조인지: 비어 있거나(선택 항목) 실제 존재하는 코드 그룹이어야 한다. */
     @Transactional(readOnly = true)
     fun optionExists(optionIdx: Long?): Boolean = optionIdx == null || options.existsById(optionIdx)
