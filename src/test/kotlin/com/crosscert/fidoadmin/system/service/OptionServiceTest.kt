@@ -52,7 +52,7 @@ class OptionServiceTest {
         val `in` = CcfaOptions(); `in`.optionValue = "unuse"; `in`.optionIdx = 999L // 폼이 무엇을 보내든 경로의 그룹이 이긴다
         val out = service.addItem(1L, `in`)
         assertThat(out.optionIdx).isEqualTo(1L)
-        verify(audit).log(AuditType.CREATE, "CCFA_OPTIONS CREATE 5")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_OPTIONS CREATE 5")
     }
 
     @Test fun addItemToMissingGroupFails() {
@@ -66,7 +66,7 @@ class OptionServiceTest {
         whenever(items.findById(5L)).thenReturn(Optional.of(item(5L, 1L)))
         service.removeItem(1L, 5L)
         verify(items).delete(any<CcfaOptions>())
-        verify(audit).log(AuditType.DELETE, "CCFA_OPTIONS DELETE 5")
+        verify(audit).logGlobal(AuditType.DELETE, "CCFA_OPTIONS DELETE 5")
     }
 
     /** 다른 그룹의 코드를 경로만 바꿔 지우지 못한다. */
@@ -91,7 +91,7 @@ class OptionServiceTest {
         whenever(items.countByOptionIdx(1L)).thenReturn(0L)
         service.delete(1L)
         verify(groups).delete(any<CcfaOption>())
-        verify(audit).log(AuditType.DELETE, "CCFA_OPTION DELETE 1")
+        verify(audit).logGlobal(AuditType.DELETE, "CCFA_OPTION DELETE 1")
     }
 
     @Test fun itemsAreListedInIdxOrder() {

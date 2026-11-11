@@ -1,6 +1,7 @@
 package com.crosscert.fidoadmin.audit
 
 import com.crosscert.fidoadmin.system.SecretProps
+import com.crosscert.fidoadmin.company.entity.CcfaLicense
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -48,11 +49,14 @@ object AuditChanges {
      * 기록하면 실제 변경이 묻힌다. 조회 사실은 DATA_VIEW 가 따로 남긴다.
      */
     @JvmStatic
+    @JvmOverloads
     fun record(audit: AuditLogger, table: String?, id: String?,
-               before: Map<String, String?>, after: Any?) {
+               before: Map<String, String?>, after: Any?, global: Boolean = false) {
         val diff = describe(before, snapshot(after), secretFieldsOf(after))
         if (diff.isEmpty()) return
-        audit.log(AuditType.UPDATE, "$table UPDATE $id | $diff")
+        val message = "$table UPDATE $id | $diff"
+        // 전역 테이블은 선택 고객사가 아니라 행위자 소속으로 남긴다(AuditLogger.logGlobal).
+        if (global) audit.logGlobal(AuditType.UPDATE, message) else audit.log(AuditType.UPDATE, message)
     }
 
     /** 변경 항목을 "필드: 전 → 후" 로 이어 붙인다. 없으면 빈 문자열. */
@@ -110,8 +114,15 @@ object AuditChanges {
             && SecretProps.isSecret(entity.id?.propKey)) {
             return setOf("propValue")
         }
+        if (entity is CcfaLicense) return LICENSE_SECRETS
         return setOf()
     }
+
+    /**
+     * 라이선스 원문과 HASHVALUE(무인증 /external/license/{hash} 의 식별자). 라이선스 화면은 SUPER 전용인데
+     * 라이선스 행은 고객사별이라 감사 행이 그 고객사로 남고, 그 운영자가 /logs/audit 에서 읽는다.
+     */
+    private val LICENSE_SECRETS: Set<String> = setOf("license", "hashvalue")
 
     /**
      * 엔티티 필드명을 컬럼명 꼴로 바꾼다. `userPw` → `USER_PW`.

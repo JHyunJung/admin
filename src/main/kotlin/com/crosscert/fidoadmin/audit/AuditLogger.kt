@@ -50,6 +50,18 @@ class AuditLogger(
         }
     }
 
+    /**
+     * 전역 테이블(고객사 구분이 없는 테이블) 작업용. 고객사를 선택한 채 해도 **행위자 소속**으로 남긴다.
+     * 선택 고객사로 남기면 그 고객사 운영자가 /logs/audit 에서 다른 고객사·슈퍼매니저·시스템 설정의
+     * 변경 내용을 읽는다. 로그인 사용자가 없으면 기록하지 않는다([log] 와 같다).
+     */
+    fun logGlobal(type: AuditType, message: String?) {
+        tenant.current().ifPresent { actor ->
+            val req = currentRequest()
+            log(actor, type, message, req?.remoteAddr, req?.getHeader("User-Agent"))
+        }
+    }
+
     /** 로그인·로그아웃처럼 테넌트가 없는 사건용. 행위자 소속을 그대로 쓴다. */
     fun log(actor: ManagerUserDetails, type: AuditType, message: String?, ip: String?, ua: String?) {
         swallowingFailure(type, message) {

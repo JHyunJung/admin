@@ -107,7 +107,8 @@ class SignupService(
         m.status = ManagerStatus.ACTIVE
         m.updatedtime = LocalDateTime.now()
         val saved = managers.save(m)
-        audit.log(AuditType.STATUS, "CCFA_MANAGER SIGNUP APPROVE " + saved.userId +
+        // 가입 승인·거절은 SUPER 전용 화면의 작업이라 선택 고객사가 아니라 행위자 소속으로 남긴다.
+        audit.logGlobal(AuditType.STATUS, "CCFA_MANAGER SIGNUP APPROVE " + saved.userId +
             " -> COMPANY_IDX " + companyIdx)
         expiry.touch(saved.userId)
         return saved
@@ -121,7 +122,7 @@ class SignupService(
         m.etc = appendReason(m.etc, reason)
         m.updatedtime = LocalDateTime.now()
         val saved = managers.save(m)
-        audit.log(AuditType.STATUS, "CCFA_MANAGER SIGNUP REJECT " + saved.userId)
+        audit.logGlobal(AuditType.STATUS, "CCFA_MANAGER SIGNUP REJECT " + saved.userId)
         return saved
     }
 

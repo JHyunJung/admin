@@ -74,8 +74,17 @@
 - [x] 검증: 통합 테스트 2건은 수정 전 코드에서 200 으로 실패 확인, trickle·대기 작업 테스트도 수정 전 실패 확인. 전체 1001 · 0 fail · 1 skip. Codex 4라운드(1~3라운드 지적 4건 반영) → "문제 없음"
 - 남은 한계: 이미 실행 중인 DNS 해석은 중단할 수 없다(스레드 4개 상한으로 묶음). 해석과 접속 사이 DNS 응답 변경(rebinding)은 막지 못한다 — 앞단 CIDR 허용 목록이 맡는다.
 
+## 보안 75·84 (2026-11-11, 브랜치 fix/audit-attribution)
+결정(사용자): 75 → 전역 테이블 작업은 행위자 소속(SUPER=0), 84 → LICENSE·HASHVALUE 만 마스크(연락처 유지).
+- [x] 75: `AuditLogger.logGlobal` 추가. `CrudService` 의 CREATE·UPDATE·DELETE 는 `companyIdxAttribute()==null` 이면 logGlobal. 전역 서비스의 직접 기록(Option·Company 연쇄, 슈퍼매니저 잠금 해제, reload 수동 전송, AAID 정책 등록)도 logGlobal. Codex 지적으로 가입 승인·거절(SUPER 전용)·자기 비밀번호 변경도 logGlobal
+- [x] 그대로 선택 고객사로 남는 것: 고객사별 테이블 CRUD, FidoSetting, Userinfo 상태, AAID 고객사별 상태 토글, 읽기 감사(MENU_VIEW·DATA_VIEW)
+- [x] 84: `AuditChanges.secretFieldsOf` 가 CcfaLicense 의 license·hashvalue 를 마스크
+- [x] 검증: 새 테스트 4건(logGlobal 귀속·미로그인, 라이선스 마스킹, 비밀번호 변경 귀속), 기대값 20곳 log → logGlobal(의도한 변경). 전체 1005 · 0 fail · 1 skip. Codex 2라운드 "문제 없음"
+- DB: 스키마·DDL·엔티티 매핑 변경 없음(마이그레이션 불필요). 수정 후 쌓이는 전역 작업 감사 행의 COMPANY_IDX·COMPANY_NAME 값만 바뀌고 기존 행은 그대로. 감사 로그를 COMPANY_IDX 로 집계하는 외부 소비처가 있으면 SUPER 전역 작업이 0 쪽으로 모인다
+- 남은 것: 읽기 감사 DATA_VIEW 는 SUPER 가 X 선택 중 /companies/Y 상세를 열면 "고객사 상세 조회 (ID: Y)" 가 X 로 남는다(값은 없음, 범위 밖)
+
 ## 다음
 - 운영 확인(88): 운영·QA 에 `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 가 설정돼 있는지 — 76 수정으로 이제 실제로 동작한다. 비어 있으면 /api/svc·/external 이 누구에게나 열려 있다
 - 별도 성능 과제(DBA 확인 필요): 33, 42, 44 — 목록 SELECT 에서 안 쓰는 큰 컬럼 제외
-- 보안: 75·84 → 74 (76·107·109·111 완료, 88 은 운영 확인)
+- 보안: 74 (75·76·84·107·109·111 완료, 88 은 운영 확인) — 비밀번호 저장 형식(KBFIDO 스키마·타 시스템 호환)이라 별도 합의 과제
 - 보고만(74~222): 별도 과제. 우선순위 76 → 88·107·109·111 → 75·84 → 74

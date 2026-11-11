@@ -149,6 +149,6 @@ abstract class ManagerAccountService protected constructor(
         // 이후 save() 가 동시 로그인으로 바뀐 값(LOGIN, LAST_ACCESS, BLOCK_TIME, UPDATEDTIME)을 덮어쓰지 않는다.
         em.refresh(m, LockModeType.PESSIMISTIC_WRITE)
         loginAttempts.unlock(m.userId)
-        audit.log(AuditType.STATUS, "CCFA_MANAGER UNLOCK " + m.userId)
+        auditLog(AuditType.STATUS, "CCFA_MANAGER UNLOCK " + m.userId)
     }
 }

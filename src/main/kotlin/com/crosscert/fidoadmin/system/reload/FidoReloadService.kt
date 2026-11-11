@@ -14,7 +14,7 @@ class FidoReloadService(
     fun reloadNow(): List<ReloadResult> {
         val results = client.reloadAll()
         val ok = results.count { it.ok }.toLong()
-        audit.log(AuditType.UPDATE, "FIDO 서버 reload 수동 전송 | 성공 " + ok + " / 실패 " + (results.size - ok))
+        audit.logGlobal(AuditType.UPDATE, "FIDO 서버 reload 수동 전송 | 성공 " + ok + " / 실패 " + (results.size - ok))
         return results
     }
 }

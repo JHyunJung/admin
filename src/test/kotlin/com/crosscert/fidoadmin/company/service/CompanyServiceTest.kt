@@ -149,7 +149,7 @@ class CompanyServiceTest {
         service.create(CcfaCompany())
 
         verify(criteria).disableAllFor(7L)
-        verify(audit).log(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 7 (3건)")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 7 (3건)")
         verify(audit, never()).log(eq(AuditType.CREATE), startsWith("CCFA_FDS_POLICY"))
         verify(events).publishEvent(FidoConfigChanged("고객사 생성 7"))
     }
@@ -173,7 +173,7 @@ class CompanyServiceTest {
         service.delete(7L)
 
         verify(criteria).deleteAllFor(7L)
-        verify(audit).log(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 7 (5건)")
+        verify(audit).logGlobal(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 7 (5건)")
         verify(audit, never()).log(eq(AuditType.DELETE), startsWith("CCFA_FDS_POLICY"))
     }
 

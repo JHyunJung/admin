@@ -282,7 +282,7 @@ class CriteriaQueryServiceTest {
         verify(jdbc).update(sql.capture(), params.capture())
         assertThat(sql.lastValue).contains("INSERT INTO CCFA_COMPANY_AAID").contains("FROM CCFA_COMPANY").contains("NOT EXISTS")
         assertThat(params.lastValue.getValue("aaid")).isEqualTo("0012#0009")
-        verify(audit).log(AuditType.CREATE, "AAID(정책) 등록 | AAID: 0012#0009 | 차단 고객사 4곳")
+        verify(audit).logGlobal(AuditType.CREATE, "AAID(정책) 등록 | AAID: 0012#0009 | 차단 고객사 4곳")
         verify(events).publishEvent(FidoConfigChanged("AAID 등록 0012#0009"))
     }
 

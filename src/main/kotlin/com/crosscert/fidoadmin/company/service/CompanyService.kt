@@ -88,13 +88,13 @@ class CompanyService(
         val saved = super.create(entity)
         val copied = copyPerCompanyProps(saved.idx)
         if (copied > 0) {
-            audit.log(AuditType.CREATE,
+            auditLog(AuditType.CREATE,
                 "CCFA_SYSTEM_PROP COPY 고객사 " + saved.idx + " ← 회사 0 (" + copied + "건)")
         }
         // 새 고객사는 인증기를 하나씩 허용하기 전까지 FIDO 등록이 되지 않는다.
         val disabled = criteria.disableAllFor(saved.idx)
         if (disabled > 0) {
-            audit.log(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 " + saved.idx + " (" + disabled + "건)")
+            auditLog(AuditType.CREATE, "CCFA_COMPANY_AAID 전체 차단 고객사 " + saved.idx + " (" + disabled + "건)")
         }
         events.publishEvent(FidoConfigChanged("고객사 생성 " + saved.idx))
         return saved
@@ -112,11 +112,11 @@ class CompanyService(
         val rows = props.findAll(perCompanyProps(id))
         if (rows.isNotEmpty()) {
             props.deleteAll(rows)
-            audit.log(AuditType.DELETE, "CCFA_SYSTEM_PROP DELETE 고객사 " + id + " (" + rows.size + "건)")
+            auditLog(AuditType.DELETE, "CCFA_SYSTEM_PROP DELETE 고객사 " + id + " (" + rows.size + "건)")
         }
         val aaidRows = criteria.deleteAllFor(id)
         if (aaidRows > 0) {
-            audit.log(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 " + id + " (" + aaidRows + "건)")
+            auditLog(AuditType.DELETE, "CCFA_COMPANY_AAID DELETE 고객사 " + id + " (" + aaidRows + "건)")
         }
     }
 

@@ -50,7 +50,7 @@ class AdminCriteriaServiceTest {
         val out = service.create(criteria(0L))
         assertThat(out.createtime).isNotNull()
         assertThat(out.updatedtime).isEqualTo(out.createtime)
-        verify(audit).log(AuditType.CREATE, "CCFA_CRITERIA CREATE 7")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_CRITERIA CREATE 7")
     }
 
     @Test fun updateTouchesOnlyUpdatedtime() {
@@ -62,7 +62,7 @@ class AdminCriteriaServiceTest {
         service.update(7L) { c -> c.metahash = "h2" }
         assertThat(existing.createtime).isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0))
         assertThat(existing.updatedtime).isAfter(existing.createtime)
-        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_CRITERIA UPDATE 7"))
+        verify(audit).logGlobal(eq(AuditType.UPDATE), startsWith("CCFA_CRITERIA UPDATE 7"))
     }
 
     /** COMPANY_IDX 가 없는 테이블은 SUPER 전용. */

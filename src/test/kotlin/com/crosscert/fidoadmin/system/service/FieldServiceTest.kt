@@ -52,7 +52,7 @@ class FieldServiceTest {
         assertThat(out.fk).isZero()
         assertThat(out.editable).isZero()
         assertThat(out.optionIdx).isNull()
-        verify(audit).log(AuditType.CREATE, "CCFA_FIELDS CREATE 3")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_FIELDS CREATE 3")
     }
 
     @Test fun explicitFlagsAreKept() {
