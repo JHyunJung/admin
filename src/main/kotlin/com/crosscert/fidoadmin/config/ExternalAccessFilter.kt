@@ -13,6 +13,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.security.web.util.matcher.IpAddressMatcher
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import org.springframework.web.util.UrlPathHelper
 
 /**
  * 인증 없이 열린 서버 간 경로(/api/svc/\*\* FIDO 서버 자가등록, /external/\*\* 라이선스 수신)의
@@ -37,12 +38,28 @@ class ExternalAccessFilter(@Value("\${" + PROPERTY + ":}") cidrs: String?) : Onc
         }
     }
 
+    /**
+     * 컨트롤러·Spring Security 는 **디코딩·정규화한** 경로로 매핑을 맞춘다. 원문 URI 로만 판정하면
+     * `/%61pi/svc/..` 처럼 접두사를 인코딩한 요청이 이 필터를 건너뛰고 컨트롤러에 닿는다.
+     * 그래서 원문과 정규화 경로(디코딩, `;` 파라미터 제거, `//` 축약) 중 하나라도 서버 간 경로면 거른다 —
+     * 원문 판정에 걸리던 요청은 그대로 걸리므로 거르는 범위는 넓어지기만 한다.
+     */
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val uri = request.requestURI
         val ctx = request.contextPath ?: ""
-        val path = if (uri.startsWith(ctx)) uri.substring(ctx.length) else uri
-        return !(path.startsWith("/api/svc/") || path.startsWith("/external/"))
+        val raw = if (uri.startsWith(ctx)) uri.substring(ctx.length) else uri
+        return !(isServerPath(raw) || isServerPath(normalizedPath(request)))
     }
+
+    private fun isServerPath(path: String): Boolean = path.startsWith("/api/svc/") || path.startsWith("/external/")
+
+    /** 잘못된 인코딩 등으로 정규화가 실패하면 원문 판정만 남는다(그 요청은 뒤의 방화벽·디스패처가 거절한다). */
+    private fun normalizedPath(request: HttpServletRequest): String =
+        try {
+            UrlPathHelper.defaultInstance.getPathWithinApplication(request)
+        } catch (e: IllegalArgumentException) {
+            ""
+        }
 
     @Throws(ServletException::class, IOException::class)
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain) {
