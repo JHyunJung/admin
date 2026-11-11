@@ -49,6 +49,25 @@ class FidoClientRegistrationIntegrationTest : OracleContainerSupport() {
     }
 
     @Test
+    fun 경로_예약값_이름은_400_이고_저장하지_않는다() {
+        mvc.perform(post("/api/svc/reg/new").param("fsurl", "https://reserved.internal:8443"))
+            .andExpect(status().isBadRequest())
+        assertThat(find("new")).isNull()
+    }
+
+    @Test
+    fun 앞_64바이트가_같은_다른_이름은_409_이고_기존_행을_덮지_않는다() {
+        val prefix = "IT_FIDO_CONFLICT_" + "x".repeat(60)   // 77바이트 — SERVERCODE 는 앞 64바이트
+        mvc.perform(post("/api/svc/reg/${prefix}_A").param("fsurl", "https://a.internal:8443"))
+            .andExpect(status().isOk())
+        mvc.perform(post("/api/svc/reg/${prefix}_B").param("fsurl", "https://b.internal:8443"))
+            .andExpect(status().isConflict())
+
+        assertThat(find("${prefix}_A")!!.serverurl).isEqualTo("https://a.internal:8443")
+        assertThat(find("${prefix}_B")).isNull()
+    }
+
+    @Test
     fun 같은_이름으로_다시_등록하면_행이_쌓이지_않고_갱신된다() {
         mvc.perform(post("/api/svc/reg/IT_FIDO_REREG").param("fsurl", "https://old.internal:8443"))
             .andExpect(status().isOk())

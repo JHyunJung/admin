@@ -20,9 +20,11 @@ internal fun rejectReservedPathId(
     noun: String,
     vararg extraReserved: String,
 ) {
-    if (isNew && value != null) {
-        if (value.equals("new", ignoreCase = true) || extraReserved.any { value.equals(it, ignoreCase = true) } || value.matches(DOTS_ONLY)) {
-            binding.rejectValue(field, "reserved", noun + "로 쓸 수 없는 값입니다: " + value)
-        }
+    if (isNew && value != null && isReservedPathId(value, *extraReserved)) {
+        binding.rejectValue(field, "reserved", noun + "로 쓸 수 없는 값입니다: " + value)
     }
 }
+
+/** [rejectReservedPathId] 의 판정만. 폼이 아닌 곳(FIDO 서버 자가등록)도 같은 규칙을 쓴다. */
+internal fun isReservedPathId(value: String, vararg extraReserved: String): Boolean =
+    value.equals("new", ignoreCase = true) || extraReserved.any { value.equals(it, ignoreCase = true) } || value.matches(DOTS_ONLY)

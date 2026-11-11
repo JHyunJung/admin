@@ -2,9 +2,11 @@ package com.crosscert.fidoadmin.system.web
 
 import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
+import com.crosscert.fidoadmin.system.service.FidoClientRegistrationRejected
 import com.crosscert.fidoadmin.system.service.FidoClientService
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -20,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController
  * **인증이 없는 경로다.** FIDO 서버는 로그인 세션 없이 호출하므로 `SecurityConfig` 에서
  * /api/svc/\*\* 를 permitAll + CSRF 제외로 열어 두었고, 테넌트 선택 인터셉터도 지나간다.
  * 따라서 누구나 서버를 등록하거나 OFF 로 내릴 수 있다 — 내부망 전제이며, 추적을 위해 접근 IP 를 남긴다.
+ *
+ * 새 서버의 SERVERCODE 가 경로 예약값(new·reload·점만)이면 400, 다른 이름의 서버가 이미 쓰는 SERVERCODE 면
+ * 409 로 거절한다(기존 행을 덮지 않는다). 응답 본문은 없다.
  */
 @RestController
 @RequestMapping("/api/svc")
@@ -46,7 +51,16 @@ class FidoClientRegistrationController(
         // 어드민 입장에서 그 주소는 자기 자신이 되어 버리므로, 실제로 접속해 온 주소로 바꾼다.
         val serverUrl = fsurl.replace("localhost", urlHost(request.remoteAddr)!!)
 
-        val saved = service.register(serverName, serverUrl)
+        val saved = try {
+            service.register(serverName, serverUrl)
+        } catch (e: FidoClientRegistrationRejected) {
+            log.warn("[ClientAccess] Rejected : {} ({})", e.serverCode, e.reason)
+            val status = when (e.reason) {
+                FidoClientRegistrationRejected.Reason.RESERVED_CODE -> HttpStatus.BAD_REQUEST
+                FidoClientRegistrationRejected.Reason.CODE_CONFLICT -> HttpStatus.CONFLICT
+            }
+            return ResponseEntity.status(status).build()
+        }
         log.info("[ClientAccess] Registered : {} -> {}", saved.servercode, saved.serverurl)
         return ResponseEntity.ok(body(saved))
     }
