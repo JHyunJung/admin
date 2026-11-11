@@ -62,6 +62,53 @@ class FidoClientServiceTest {
         assertThat(saved.servercode).isEqualTo("가".repeat(21))
     }
 
+    /** 잘린 SERVERCODE 가 경로 예약값이면 상세 화면을 열 수 없다. 폼 등록과 같은 규칙으로 저장하지 않는다. */
+    @Test fun registerRejectsReservedCodes() {
+        whenever(repo.findFirstByServernameOrderByCreatedtimeAsc(anyString())).thenReturn(Optional.empty())
+        for (name in listOf("new", "NEW", "reload", "Reload", ".", "..")) {
+            assertThatThrownBy { service.register(name, "https://x") }
+                .isInstanceOfSatisfying(FidoClientRegistrationRejected::class.java) {
+                    assertThat(it.reason).isEqualTo(FidoClientRegistrationRejected.Reason.RESERVED_CODE)
+                    assertThat(it.serverCode).isEqualTo(name)
+                }
+        }
+        verify(repo, never()).save(any<CcfaFidoclient>())
+    }
+
+    /** 앞 64바이트가 같은 다른 이름은 같은 SERVERCODE 가 된다. 그 행을 덮어 reload 대상 URL 을 바꾸지 않는다. */
+    @Test fun registerRejectsCodeAlreadyUsedByAnotherName() {
+        whenever(repo.findFirstByServernameOrderByCreatedtimeAsc(anyString())).thenReturn(Optional.empty())
+        val code = "S".repeat(64)
+        whenever(repo.existsById(code)).thenReturn(true)
+        assertThatThrownBy { service.register(code + "-B", "https://attacker") }
+            .isInstanceOfSatisfying(FidoClientRegistrationRejected::class.java) {
+                assertThat(it.reason).isEqualTo(FidoClientRegistrationRejected.Reason.CODE_CONFLICT)
+                assertThat(it.serverCode).isEqualTo(code)
+            }
+        verify(repo, never()).save(any<CcfaFidoclient>())
+    }
+
+    /** 이미 등록된 이름의 재등록은 예약값·충돌 검사를 거치지 않고 그 행을 갱신한다(과거에 쌓인 행도 그대로 동작). */
+    @Test fun reRegisteringExistingNameSkipsNewRowChecks() {
+        val existing = client("new"); existing.servername = "new"
+        whenever(repo.findFirstByServernameOrderByCreatedtimeAsc("new")).thenReturn(Optional.of(existing))
+        whenever(repo.save(any<CcfaFidoclient>())).thenAnswer { it.getArgument<CcfaFidoclient>(0) }
+        val saved = service.register("new", "https://y")
+        assertThat(saved.serverurl).isEqualTo("https://y")
+        verify(repo, never()).existsById(anyString())
+    }
+
+    /** SERVERNAME 은 1024바이트로 잘라 저장한다. 그보다 긴 이름의 재등록도 잘린 값으로 자기 행을 찾아 갱신한다. */
+    @Test fun reRegisteringOverlongNameFindsItsRowByStoredName() {
+        val long = "A".repeat(1025)
+        val existing = client("A".repeat(64)); existing.servername = "A".repeat(1024)
+        whenever(repo.findFirstByServernameOrderByCreatedtimeAsc("A".repeat(1024))).thenReturn(Optional.of(existing))
+        whenever(repo.save(any<CcfaFidoclient>())).thenAnswer { it.getArgument<CcfaFidoclient>(0) }
+        assertThat(service.register(long, "https://z").serverurl).isEqualTo("https://z")
+        assertThat(service.deregister(long)).isPresent()
+        verify(repo, never()).existsById(anyString())
+    }
+
     @Test fun createRejectsDuplicateCode() {
         whenever(repo.existsById("FIDO01")).thenReturn(true)
         assertThatThrownBy { service.create(client("FIDO01")) }.isInstanceOf(DataIntegrityViolationException::class.java)
