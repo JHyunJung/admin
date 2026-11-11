@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.system
 
+import com.crosscert.fidoadmin.common.javaTrim
 import java.util.Locale
 
 /**
@@ -47,10 +48,26 @@ object SecretProps {
      * 비밀 키는 빈 값이거나 마스크 그대로면 건드리지 않는다. 화면이 실제 값을 모르는 채로
      * 폼을 다시 제출하므로(다른 항목만 바꿔 저장하는 경우가 그렇다), 이 규칙이 없으면
      * 비밀번호가 빈 값이나 "********" 로 덮어써진다.
+     * 앞뒤 공백·개행이 붙어 돌아온 마스크도 마스크로 본다.
+     * 마스크 뒤에 글자를 붙인 값은 여기서 거르지 않는다 — 저장 전에 [isEditedMask] 로 거절한다.
      */
     @JvmStatic
     fun shouldSave(propKey: String?, submitted: String?): Boolean {
         if (!isSecret(propKey)) return true
-        return !submitted.isNullOrEmpty() && MASK != submitted
+        return !submitted.isNullOrEmpty() && MASK != submitted.javaTrim()
     }
+
+    /**
+     * 비밀 키에 마스크를 고친 값("********abc" 등)이 왔는가. 마스크를 지우지 않고 이어 쓴 실수인지
+     * 정말 그 값인지 알 수 없으므로, 그대로 저장하지 않고 화면이 다시 입력하게 한다.
+     */
+    @JvmStatic
+    fun isEditedMask(propKey: String?, submitted: String?): Boolean {
+        if (!isSecret(propKey) || submitted == null) return false
+        val v = submitted.javaTrim()
+        return v.startsWith(MASK) && v != MASK
+    }
+
+    /** [isEditedMask] 일 때 화면에 보이는 문구. */
+    const val EDITED_MASK_MESSAGE = "마스크(********)를 지우고 새 값을 입력하세요. 바꾸지 않으려면 마스크를 그대로 두세요."
 }

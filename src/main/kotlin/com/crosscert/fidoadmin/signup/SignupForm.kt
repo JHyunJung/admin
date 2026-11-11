@@ -4,6 +4,8 @@ import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.common.ByteSize
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+import com.crosscert.fidoadmin.common.UserIdRule
 
 /**
  * 가입 신청 폼.
@@ -38,6 +40,7 @@ class SignupForm {
      */
     @field:NotBlank(message = "아이디는 필수입니다.")
     @field:ByteSize(max = 64)
+    @field:Pattern(regexp = UserIdRule.PATTERN, message = UserIdRule.MESSAGE)
     var userId: String? = null
         set(value) { field = trim(value) }
 

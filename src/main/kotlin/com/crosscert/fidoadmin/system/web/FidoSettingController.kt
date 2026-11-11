@@ -37,7 +37,12 @@ class FidoSettingController(
 
     @PostMapping
     fun save(@RequestParam params: Map<String, String>, redirect: RedirectAttributes): String {
-        service.save(params)
+        try {
+            service.save(params)
+        } catch (e: IllegalArgumentException) {
+            redirect.addFlashAttribute("flashError", e.message)
+            return "redirect:/system/settings"
+        }
         redirect.addFlashAttribute("flashSuccess", "설정을 저장했습니다.")
         return "redirect:/system/settings"
     }

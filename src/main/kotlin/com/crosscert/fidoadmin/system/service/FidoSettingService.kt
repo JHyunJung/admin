@@ -63,6 +63,10 @@ class FidoSettingService(
     @Transactional
     fun save(submitted: Map<String, String?>) {
         val company = tenant.companyIdx()
+        // 하나라도 거절이면 아무것도 저장하지 않는다 — 일부만 저장되면 화면이 무엇이 반영됐는지 알려 줄 수 없다.
+        for (k in FidoSettingKey.entries) {
+            require(!SecretProps.isEditedMask(k.key(), submitted[k.key()])) { SecretProps.EDITED_MASK_MESSAGE }
+        }
         var changed = 0
         for (k in FidoSettingKey.entries) {
             val submittedValue: String = submitted[k.key()] ?: continue

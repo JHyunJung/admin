@@ -219,6 +219,58 @@ class ManagerServiceTest {
         verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_MANAGER UPDATE 2"))
     }
 
+    /**
+     * 반대 방향도 막는다. 정상 행을 승인대기로 바꾸면 가입 승인 화면에서 임의 고객사로 승인해
+     * 소속을 옮길 수 있다(진단 102). 승인대기·거절은 가입 신청만 만드는 상태다.
+     */
+    @Test fun updateCannotMoveNormalRowIntoSignupStatus() {
+        for (target in listOf(SignupPolicy.STATUS_PENDING, SignupPolicy.STATUS_REJECTED)) {
+            val m = manager(2L, "kbadmin")
+            m.status = "활성"
+            whenever(managers.findById(2L)).thenReturn(Optional.of(m))
+
+            assertThatThrownBy { service.update(2L) { e -> e.status = target } }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("가입 신청")
+
+            assertThat(m.status).isEqualTo("활성")
+        }
+        verify(managers, never()).save(anyOrNull<CcfaManager>())
+    }
+
+    /** 등록도 같다 — 승인대기로 만든 뒤 승인 화면에서 소속을 고르는 우회를 막는다. */
+    @Test fun createCannotStartInSignupStatus() {
+        for (target in listOf(SignupPolicy.STATUS_PENDING, SignupPolicy.STATUS_REJECTED)) {
+            val m = manager(null, "newbie")
+            m.status = target
+            assertThatThrownBy { service.create(m) }
+                .isInstanceOf(IllegalStateException::class.java)
+                .hasMessageContaining("가입 신청")
+        }
+        verify(managers, never()).save(anyOrNull<CcfaManager>())
+        verify(lockQuery, never()).executeUpdate()
+    }
+
+    /**
+     * 수정은 대상 행을 FOR UPDATE 로 다시 읽은 뒤 고친다(진단 101). 잠그지 않으면 동시 로그인·비밀번호 변경이
+     * 바꾼 값(USER_PW·LOGIN·BLOCK_TIME 등)을 이 수정의 전 컬럼 UPDATE 가 옛 값으로 덮는다.
+     * 변경 전 스냅숏(감사 diff)도 다시 읽은 값으로 떠야 하므로 mutator 보다 먼저다.
+     */
+    @Test fun updateRefreshesUnderRowLockBeforeMutating() {
+        val m = manager(5L, "kbadmin")
+        whenever(managers.findById(5L)).thenReturn(Optional.of(m))
+        whenever(managers.save(anyOrNull<CcfaManager>())).thenAnswer { it.getArgument<CcfaManager>(0) }
+        var refreshedBeforeMutator = false
+
+        service.update(5L) { e ->
+            refreshedBeforeMutator = Mockito.mockingDetails(em).invocations.any { it.method.name == "refresh" }
+            e.userNm = "새이름"
+        }
+
+        verify(em).refresh(m, LockModeType.PESSIMISTIC_WRITE)
+        assertThat(refreshedBeforeMutator).isTrue()
+    }
+
     @Test fun createTouchesPasswordAge() {
         whenever(managers.findByUserId("newbie")).thenReturn(Optional.empty())
         whenever(managers.save(anyOrNull<CcfaManager>())).thenAnswer { inv -> val m = inv.getArgument<CcfaManager>(0); m.idx = 12L; m }

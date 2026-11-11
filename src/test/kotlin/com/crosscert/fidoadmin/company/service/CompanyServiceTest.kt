@@ -7,6 +7,8 @@ import com.crosscert.fidoadmin.common.SelectedTenant
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.company.entity.CcfaCompany
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository
+import com.crosscert.fidoadmin.company.repository.CcfaLicenseRepository
+import com.crosscert.fidoadmin.fido.repository.AppserverRepository
 import com.crosscert.fidoadmin.fido.repository.AppidRepository
 import com.crosscert.fidoadmin.fido.repository.UserinfoRepository
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService
@@ -46,8 +48,10 @@ class CompanyServiceTest {
     val criteria: CriteriaQueryService = mock()
     val events: ApplicationEventPublisher = mock()
     val lookup: CompanyLookup = mock()
+    val licenses: CcfaLicenseRepository = mock()
+    val appservers: AppserverRepository = mock()
     val service = CompanyService(companies, audit, appids, users, managers, props,
-        TenantContext(SelectedTenant()), criteria, events, lookup)
+        TenantContext(SelectedTenant()), criteria, events, lookup, licenses, appservers)
 
     /** 고객사 이름은 CompanyLookup 이 캐시한다. 이 서비스가 행을 바꾸면 그 캐시를 지워야 이름 변경이 바로 보인다. */
     @Test fun changesEvictTheCachedCompanyName() {
@@ -70,6 +74,19 @@ class CompanyServiceTest {
         whenever(managers.countByCompanyIdx(1L)).thenReturn(0L)
         assertThatThrownBy { service.delete(1L) }.isInstanceOf(IllegalStateException::class.java)
             .hasMessageContaining("앱 ID 2건")
+    }
+
+    /**
+     * 라이선스·앱서버가 남은 고객사도 지우지 않는다(진단 85). 지우면 남은 라이선스를 /external/license 가 계속 내준다.
+     * 다른 하위 데이터와 같은 문구로 함께 알린다.
+     */
+    @Test fun deleteBlockedWhenLicenseOrAppserverRemains() {
+        whenever(companies.findById(1L)).thenReturn(Optional.of(company(1L)))
+        whenever(licenses.countByCompanyIdx(1L)).thenReturn(1L)
+        whenever(appservers.countByCompanyIdx(1L)).thenReturn(3L)
+        assertThatThrownBy { service.delete(1L) }.isInstanceOf(IllegalStateException::class.java)
+            .hasMessage("하위 데이터가 있어 삭제할 수 없습니다: 라이선스 1건, 앱서버 3건")
+        verify(companies, never()).delete(any<CcfaCompany>())
     }
 
     @Test fun deleteGlobalCompanyIsAlwaysBlocked() {

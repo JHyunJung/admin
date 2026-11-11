@@ -160,6 +160,29 @@ class ManagerControllerWebTest {
             .isEqualTo(Sha256PasswordEncoder.sha256Hex("Secret1234!"))
     }
 
+    /** 운영자 등록도 같은 규칙이다 — 아이디 안의 제어문자는 거절, 앞뒤 공백·개행은 지금처럼 떼고 받는다(진단 103). */
+    @Test fun createRejectsControlCharactersInUserId() {
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
+                .param("userId", "new\nop").param("status", "활성")
+                .param("password", "Secret1234!").param("passwordConfirm", "Secret1234!"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("manager/manager/form"))
+            .andExpect(content().string(containsString("제어문자")))
+        verify(service, never()).create(anyOrNull())
+    }
+
+    @Test fun createStillTrimsSurroundingWhitespaceInUserId() {
+        whenever(service.create(anyOrNull())).thenReturn(manager(10L, "newop"))
+        whenever(service.idOf(anyOrNull())).thenReturn("10")
+        mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
+                .param("userId", "\tnewop\n").param("status", "활성")
+                .param("password", "Secret1234!").param("passwordConfirm", "Secret1234!"))
+            .andExpect(status().is3xxRedirection())
+        val captor = argumentCaptor<CcfaManager>()
+        verify(service).create(captor.capture())
+        assertThat(captor.firstValue.userId).isEqualTo("newop")
+    }
+
     @Test fun createWithShortPasswordShowsSizeMessage() {
         mvc.perform(post("/managers").session(session).with(user(superUser)).with(csrf())
                 .param("userId", "newop").param("status", "활성")

@@ -81,4 +81,21 @@ class SecretPropsTest {
         assertThat(SecretProps.shouldSave("SMTP_PASSWORD", "new-secret")).isTrue()
         assertThat(SecretProps.shouldSave("SMTP_PASSWORD", " ")).isTrue()
     }
+
+    /** 앞뒤 공백·개행이 붙어 돌아온 마스크도 미변경으로 본다(진단 106). 그대로 저장하면 비밀번호가 "********\n" 이 된다. */
+    @Test fun shouldSave_앞뒤_공백이_붙은_마스크는_저장하지_않는다() {
+        assertThat(SecretProps.shouldSave("SMTP_PASSWORD", " ********")).isFalse()
+        assertThat(SecretProps.shouldSave("SMTP_PASSWORD", "********\r\n")).isFalse()
+    }
+
+    /** 마스크 뒤에 글자를 붙인 값은 새 값인지 실수인지 알 수 없어 거절 대상이다. */
+    @Test fun isEditedMask_마스크로_시작하는_변형만_참이다() {
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", "********abc")).isTrue()
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", " ********abc\n")).isTrue()
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", SecretProps.MASK)).isFalse()
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", "********\n")).isFalse()
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", "abc********")).isFalse()
+        assertThat(SecretProps.isEditedMask("SMTP_PASSWORD", null)).isFalse()
+        assertThat(SecretProps.isEditedMask("SMTP_HOST", "********abc")).isFalse()
+    }
 }

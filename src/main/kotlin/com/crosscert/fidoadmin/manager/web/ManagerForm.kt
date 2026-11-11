@@ -6,7 +6,9 @@ import com.crosscert.fidoadmin.common.ByteSize
 import com.crosscert.fidoadmin.common.ManagerStatus
 import com.crosscert.fidoadmin.manager.entity.CcfaManager
 import com.crosscert.fidoadmin.signup.SignupPolicy
+import com.crosscert.fidoadmin.common.UserIdRule
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
 
 /**
  * CCFA_MANAGER 입력 폼. 비밀번호는 평문으로 받아 컨트롤러가 인코딩한다.
@@ -17,7 +19,8 @@ import jakarta.validation.constraints.NotBlank
  * 두면 폼에 값이 실려 오지 않는 모든 요청이 `@Valid` 단계에서 막혀, 등록 자체가 불가능해진다.
  */
 class ManagerForm {
-    @field:NotBlank(message = "ID 는 필수입니다.") @field:ByteSize(max = 64) var userId: String? = null
+    @field:NotBlank(message = "ID 는 필수입니다.") @field:ByteSize(max = 64)
+    @field:Pattern(regexp = UserIdRule.PATTERN, message = UserIdRule.MESSAGE) var userId: String? = null
     @field:ByteSize(max = 128) var password: String? = null
     var passwordConfirm: String? = null
     @field:ByteSize(max = 50) var userNm: String? = null
