@@ -14,3 +14,7 @@
 ## 스냅숏 트리로 커밋할 때 인덱스 (2026-11-10)
 - 실수: `git commit-tree` 로 만든 커밋으로 `git reset --soft` 한 뒤 `git add <docs> && git commit` 을 했더니, 인덱스가 옛 HEAD 상태라 docs 커밋이 src 변경을 되돌렸다.
 - 규칙: commit-tree 로 브랜치를 옮길 때는 `--soft` 가 아니라 `git reset -q <commit>`(mixed)로 인덱스까지 맞춘다. 다음 커밋 전에 `git diff --cached --stat` 이 의도한 파일만 보이는지 확인한다.
+
+## 동기 작업을 CompletableFuture 합성으로 옮길 때 (2026-11-11)
+- 실수: DNS 검사를 `supplyAsync → thenCompose(sendAsync)` 로 옮기자 ① 타임아웃 취소가 안쪽 HTTP future 로 전파되지 않았고 ② 실행기가 무제한이었고 ③ 포기한 대기 작업이 나중에 실행됐다. Codex 2~3라운드에서야 잡혔다.
+- 규칙: 합성 future 의 `cancel` 은 안쪽으로 전파되지 않는다 — 안쪽 future 를 따로 들고 함께 취소한다. 블로킹 작업용 실행기는 스레드·대기열 상한과 거절 처리를 같이 정한다. 대기 작업은 실행 직전에 포기 여부를 본다. 이 세 가지를 테스트(연결 종료·대기 작업 미실행)로 고정한 뒤에 검토를 맡긴다.
