@@ -30,6 +30,7 @@ class PasswordChangeService(
         m.updatedtime = LocalDateTime.now()
         managers.save(m)
         expiry.touch(userId)
-        audit.log(AuditType.UPDATE, "CCFA_MANAGER PASSWORD $userId")
+        // 자기 계정의 일이라 선택 고객사가 아니라 행위자 소속으로 남긴다(COMPANY 는 둘이 같다).
+        audit.logGlobal(AuditType.UPDATE, "CCFA_MANAGER PASSWORD $userId")
     }
 }

@@ -54,7 +54,7 @@ class OptionService(
         item.idx = null
         item.optionIdx = group.idx
         val saved = items.save(item)
-        audit.log(AuditType.CREATE, "CCFA_OPTIONS CREATE " + saved.idx)
+        auditLog(AuditType.CREATE, "CCFA_OPTIONS CREATE " + saved.idx)
         return saved
     }
 
@@ -66,6 +66,6 @@ class OptionService(
             .filter { i -> group.idx!! == i.optionIdx }
             .orElseThrow { EntityNotFoundException("CCFA_OPTIONS $itemIdx") }
         items.delete(item)
-        audit.log(AuditType.DELETE, "CCFA_OPTIONS DELETE $itemIdx")
+        auditLog(AuditType.DELETE, "CCFA_OPTIONS DELETE $itemIdx")
     }
 }

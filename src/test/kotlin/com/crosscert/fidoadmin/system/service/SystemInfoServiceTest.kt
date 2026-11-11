@@ -59,7 +59,7 @@ class SystemInfoServiceTest {
         assertThat(saved.updatedtime).isNotNull()
         verify(em).persist(saved)
         verify(em).flush()
-        verify(audit).log(AuditType.CREATE, "CCFA_SYSTEM_INFO CREATE BUILD_NO")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_SYSTEM_INFO CREATE BUILD_NO")
     }
 
     @Test fun updateTouchesTimestamp() {
@@ -68,7 +68,7 @@ class SystemInfoServiceTest {
         val out = service.update("VERSION") { i -> i.propValue = "1.1.0" }
         assertThat(out.propValue).isEqualTo("1.1.0")
         assertThat(out.updatedtime).isNotNull()
-        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_SYSTEM_INFO UPDATE VERSION"))
+        verify(audit).logGlobal(eq(AuditType.UPDATE), startsWith("CCFA_SYSTEM_INFO UPDATE VERSION"))
     }
 
     @Test fun sortDefaultsToKey() {

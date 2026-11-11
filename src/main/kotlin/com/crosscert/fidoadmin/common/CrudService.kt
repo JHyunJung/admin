@@ -169,7 +169,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         applyDefaults(entity)
         touchCreated(entity, LocalDateTime.now())
         val saved = insert(entity)
-        audit.log(AuditType.CREATE, tableName() + " CREATE " + idOf(saved))
+        auditLog(AuditType.CREATE, tableName() + " CREATE " + idOf(saved))
         log.info("{} CREATE id={}", tableName(), idOf(saved))
         afterChange("CREATE", saved)
         return saved
@@ -186,7 +186,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         }
         touchUpdated(e, LocalDateTime.now())
         val saved = repository.save(e)
-        AuditChanges.record(audit, tableName(), idOf(saved), before, saved)
+        AuditChanges.record(audit, tableName(), idOf(saved), before, saved, isGlobalTable())
         log.info("{} UPDATE id={}", tableName(), idOf(saved))
         afterChange("UPDATE", saved)
         return saved
@@ -197,9 +197,20 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         val e = get(id)
         beforeDelete(e)
         repository.delete(e)
-        audit.log(AuditType.DELETE, tableName() + " DELETE " + idOf(e))
+        auditLog(AuditType.DELETE, tableName() + " DELETE " + idOf(e))
         log.info("{} DELETE id={}", tableName(), idOf(e))
         afterChange("DELETE", e)
+    }
+
+    /** 고객사 구분이 없는 테이블인가([companyIdxAttribute] 가 null). */
+    protected fun isGlobalTable(): Boolean = companyIdxAttribute() == null
+
+    /**
+     * 감사 기록. 전역 테이블 작업은 고객사를 선택한 채 해도 행위자 소속으로 남긴다
+     * ([AuditLogger.logGlobal]) — 선택 고객사의 운영자가 다른 고객사·슈퍼매니저의 변경 내용을 읽지 않게 한다.
+     */
+    protected fun auditLog(type: AuditType, message: String) {
+        if (isGlobalTable()) audit.logGlobal(type, message) else audit.log(type, message)
     }
 
     protected open fun checkTenant(e: E) {

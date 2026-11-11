@@ -85,6 +85,26 @@ class AuditLoggerTenantTest {
     }
 
     /** 해시는 저장되는 값으로 계산되므로 재계산이 성립해야 한다. */
+    /**
+     * 전역 테이블(고객사 구분 없음) 작업은 고객사를 선택한 채 해도 그 고객사로 남기지 않는다.
+     * 그 고객사 운영자가 /logs/audit 에서 다른 고객사·슈퍼매니저의 변경 내용을 읽게 되기 때문이다 (진단 75).
+     */
+    @Test fun 전역_테이블_작업은_선택과_상관없이_행위자_소속으로_기록된다() {
+        loginSuperSelecting(9L)
+        logger.logGlobal(AuditType.UPDATE, "CCFA_COMPANY UPDATE 3")
+        verify(writer).write(captor.capture())
+        assertThat(captor.lastValue.companyIdx).isEqualTo(0L)
+        assertThat(captor.lastValue.companyName).isEqualTo("SUPER")
+        assertThat(captor.lastValue.userId).isEqualTo("superuser")
+        assertThat(captor.lastValue.intergrityHash).isEqualTo(AuditLogger.integrityHash(captor.lastValue))
+        verify(companies, never()).name(any())
+    }
+
+    @Test fun 전역_기록도_로그인_사용자가_없으면_남기지_않는다() {
+        logger.logGlobal(AuditType.UPDATE, "CCFA_COMPANY UPDATE 3")
+        verify(writer, never()).write(any())
+    }
+
     @Test fun 무결성_해시가_저장값과_일치한다() {
         loginSuperSelecting(9L)
         logger.log(AuditType.UPDATE, "x")

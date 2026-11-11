@@ -18,6 +18,6 @@ class FidoReloadServiceTest {
             ReloadResult("A", "http://a", true, "HTTP 200", 3),
             ReloadResult("B", "http://b", false, "HTTP 500", 4)))
         assertThat(service.reloadNow()).hasSize(2)
-        verify(audit).log(AuditType.UPDATE, "FIDO 서버 reload 수동 전송 | 성공 1 / 실패 1")
+        verify(audit).logGlobal(AuditType.UPDATE, "FIDO 서버 reload 수동 전송 | 성공 1 / 실패 1")
     }
 }

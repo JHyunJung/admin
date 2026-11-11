@@ -123,7 +123,7 @@ class FidoClientServiceTest {
         assertThat(saved.updatedtime).isNotNull()
         verify(em).persist(saved)
         verify(em).flush()
-        verify(audit).log(AuditType.CREATE, "CCFA_FIDOCLIENT CREATE FIDO03")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_FIDOCLIENT CREATE FIDO03")
     }
 
     @Test fun createKeepsGivenStatus() {
@@ -140,7 +140,7 @@ class FidoClientServiceTest {
         val out = service.update("FIDO01") { c -> c.status = "OFF" }
         assertThat(out.createdtime).isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0))
         assertThat(out.updatedtime).isNotNull()
-        verify(audit).log(eq(AuditType.UPDATE), startsWith("CCFA_FIDOCLIENT UPDATE FIDO01"))
+        verify(audit).logGlobal(eq(AuditType.UPDATE), startsWith("CCFA_FIDOCLIENT UPDATE FIDO01"))
     }
 
     @Test fun sortDefaultsToCode() {

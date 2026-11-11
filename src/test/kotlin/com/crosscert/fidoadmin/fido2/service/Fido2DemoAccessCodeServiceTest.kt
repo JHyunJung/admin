@@ -62,7 +62,7 @@ class Fido2DemoAccessCodeServiceTest {
         verify(em).persist(saved)
         verify(em).flush()
         verify(repo, never()).save(anyOrNull<Fido2DemoAccessCode>())
-        verify(audit).log(AuditType.CREATE, "FIDO2_DEMO_ACCESS_CODE CREATE DEMO-0003")
+        verify(audit).logGlobal(AuditType.CREATE, "FIDO2_DEMO_ACCESS_CODE CREATE DEMO-0003")
     }
 
     @Test fun explicitStatusIsKept() {

@@ -111,7 +111,9 @@ class CriteriaQueryService(
             MapSqlParameterSource("aaid", saved.aaid),
         )
 
-        audit.log(
+        // 정책 등록은 전역(모든 고객사에 차단 행을 만든다) — 선택 고객사가 아니라 행위자 소속으로 남긴다.
+        // 고객사별 상태 변경(changeStatus·changeStatusAll)은 그 고객사로 남는다.
+        audit.logGlobal(
             AuditType.CREATE,
             "AAID(정책) 등록 | AAID: " + saved.aaid + " | 차단 고객사 " + blocked + "곳",
         )

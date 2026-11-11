@@ -73,7 +73,7 @@ class AssignedIdCrudServiceTest {
         verify(em).persist(saved)
         verify(em).flush()
         verify(repo, never()).save(anyOrNull<CcfaSystemInfo>())
-        verify(audit).log(AuditType.CREATE, "CCFA_SYSTEM_INFO CREATE NEW_KEY")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_SYSTEM_INFO CREATE NEW_KEY")
     }
 
     @Test fun createRejectsBlankKey() {

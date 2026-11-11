@@ -156,7 +156,7 @@ class SignupApprovalServiceTest {
 
         service.approve(5L, 7L)
 
-        verify(audit).log(eq(AuditType.STATUS),
+        verify(audit).logGlobal(eq(AuditType.STATUS),
             contains("SIGNUP APPROVE newbie"))
     }
 
@@ -187,7 +187,7 @@ class SignupApprovalServiceTest {
 
         service.reject(5L, "사유")
 
-        verify(audit).log(eq(AuditType.STATUS), contains("SIGNUP REJECT newbie"))
+        verify(audit).logGlobal(eq(AuditType.STATUS), contains("SIGNUP REJECT newbie"))
     }
 
     @Test fun rejectKeepsReasonPlaceholderWhenBlank() {

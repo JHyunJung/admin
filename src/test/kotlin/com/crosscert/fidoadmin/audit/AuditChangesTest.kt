@@ -112,6 +112,26 @@ class AuditChangesTest {
         assertThat(msg.lastValue).doesNotContain("old-secret", "new-secret")
     }
 
+    /**
+     * 라이선스 원문과 HASHVALUE(무인증 /external/license/{hash} 의 식별자)는 라이선스 화면(SUPER 전용)을
+     * 못 보는 고객사 운영자가 감사 로그로 읽으면 안 된다. 바뀌었다는 사실만 남긴다 (진단 84).
+     * 담당자 연락처 등 다른 필드는 지금처럼 남는다.
+     */
+    @Test fun licenseTextAndHashAreMasked() {
+        val row = com.crosscert.fidoadmin.company.entity.CcfaLicense()
+        row.license = "LICENSE-OLD-BODY"; row.hashvalue = "hash-old"; row.contactName = "홍길동"
+        val before = AuditChanges.snapshot(row)
+        row.license = "LICENSE-NEW-BODY"; row.hashvalue = "hash-new"; row.contactName = "김철수"
+
+        AuditChanges.record(audit, "CCFA_LICENSE", "1", before, row)
+
+        val msg = argumentCaptor<String>()
+        verify(audit).log(eq(AuditType.UPDATE), msg.capture())
+        assertThat(msg.lastValue).contains("license: ******** → ********", "hashvalue: ******** → ********")
+        assertThat(msg.lastValue).doesNotContain("LICENSE-OLD-BODY", "LICENSE-NEW-BODY", "hash-old", "hash-new")
+        assertThat(msg.lastValue).contains("contactName: 홍길동 → 김철수")
+    }
+
     /** 비밀 키가 아닌 시스템 설정은 지금처럼 값이 그대로 남아야 한다(변경 추적이 목적이다). */
     @Test fun systemPropWithPlainKeyKeepsItsValue() {
         val row = CcfaSystemProp()

@@ -194,7 +194,7 @@ class SuperManagerServiceTest {
         assertThat(saved.login).isEqualTo("OFF-LINE")
         assertThat(saved.createdtime).isNotNull()
         assertThat(saved.updatedtime).isNotNull()
-        verify(audit).log(AuditType.CREATE, "CCFA_MANAGER CREATE 10")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_MANAGER CREATE 10")
     }
 
     @Test fun createTouchesPasswordAge() {
@@ -229,7 +229,7 @@ class SuperManagerServiceTest {
         service.unlock(2L)
 
         verify(loginAttempts).unlock("superadmin")
-        verify(audit).log(AuditType.STATUS, "CCFA_MANAGER UNLOCK superadmin")
+        verify(audit).logGlobal(AuditType.STATUS, "CCFA_MANAGER UNLOCK superadmin")
     }
 
     /** 승인대기 행의 상태는 이 화면에서도 바꿀 수 없다. ManagerService.update() 와 같은 규칙이다. */

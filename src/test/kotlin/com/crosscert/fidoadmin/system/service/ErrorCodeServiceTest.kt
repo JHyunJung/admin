@@ -55,14 +55,14 @@ class ErrorCodeServiceTest {
         val saved = service.create(code("1499"))
         verify(em).persist(saved)
         verify(em).flush()
-        verify(audit).log(AuditType.CREATE, "CCFA_ERROR_TABLE CREATE 1499")
+        verify(audit).logGlobal(AuditType.CREATE, "CCFA_ERROR_TABLE CREATE 1499")
     }
 
     @Test fun deleteAudits() {
         whenever(repo.findById("1498")).thenReturn(Optional.of(code("1498")))
         service.delete("1498")
         verify(repo).delete(any<CcfaErrorTable>())
-        verify(audit).log(AuditType.DELETE, "CCFA_ERROR_TABLE DELETE 1498")
+        verify(audit).logGlobal(AuditType.DELETE, "CCFA_ERROR_TABLE DELETE 1498")
     }
 
     @Test fun sortDefaultsToCode() {
