@@ -24,6 +24,8 @@ class FidoReloadClientTest {
     lateinit var base: String
     val hits: MutableList<String> = CopyOnWriteArrayList()
     val barrier = CountDownLatch(2)
+    /** trickle 응답을 쓰던 중 클라이언트가 연결을 끊으면 열린다(쓰기 예외). */
+    val trickleAborted = CountDownLatch(1)
     val repo: CcfaFidoclientRepository = mock()
     lateinit var client: FidoReloadClient
 
@@ -41,6 +43,8 @@ class FidoReloadClientTest {
             try {
                 ex.sendResponseHeaders(200, 0)
                 for (i in 0 until 15) { ex.responseBody.write('x'.code); ex.responseBody.flush(); Thread.sleep(200) }
+            } catch (aborted: java.io.IOException) {
+                trickleAborted.countDown()
             } catch (ignored: Exception) {}
             ex.close() }
         // 두 요청이 모두 도착해야 응답한다. 순차 전송이면 첫 요청이 응답 타임아웃(500ms)에 걸려 실패한다.
@@ -107,6 +111,70 @@ class FidoReloadClientTest {
         assertThat(r.detail).containsIgnoringCase("timed out")
     }
 
+    /** 링크로컬(클라우드 메타데이터)·와일드카드 주소로는 보내지 않는다. 숫자 표기·DNS 이름도 풀어서 본다. */
+    @Test fun linkLocalAndWildcardHostsAreBlockedWithoutSending() {
+        val metadata = java.net.InetAddress.getByAddress("metadata.internal", byteArrayOf(169.toByte(), 254.toByte(), 169.toByte(), 254.toByte()))
+        val blocking = FidoReloadClient(repo, HttpClient.newHttpClient(), Duration.ofMillis(500)) { host ->
+            if (host == "metadata.internal") arrayOf(metadata) else java.net.InetAddress.getAllByName(host)
+        }
+        val urls = listOf("http://169.254.169.254", "http://2852039166/latest", "http://[fe80::1]:8080",
+            "http://0.0.0.0:" + server.address.port, "http://metadata.internal/computeMetadata")
+        whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(urls.mapIndexed { i, u -> c("X$i", u) })
+        val r = blocking.reloadAll()
+        assertThat(r).extracting(ok).containsOnly(false)
+        assertThat(r).allSatisfy({ x -> assertThat(x.detail).startsWith("차단된 주소: ") })
+        assertThat(r[0].detail).isEqualTo("차단된 주소: http://169.254.169.254")
+        assertThat(hits).isEmpty()
+    }
+
+    /** FIDO 서버가 어드민과 같은 장비면 루프백으로 등록된다. 루프백은 막지 않는다. */
+    @Test fun loopbackIsStillAllowed() {
+        whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(listOf(c("A", "$base/ok")))
+        assertThat(client.reloadAll()[0].ok).isTrue()
+        assertThat(hits).containsExactly("GET /ok/api/command/reload")
+    }
+
+    /** 호스트 검사(DNS 해석)가 느린 서버가 있어도 다른 서버의 전송은 기다리지 않고, 느린 쪽은 응답 시간 예산에서 끊긴다. */
+    @Test fun slowHostCheckDoesNotDelayOtherServers() {
+        val slowDns = FidoReloadClient(repo, HttpClient.newHttpClient(), Duration.ofMillis(500)) { host ->
+            if (host == "slow-dns.internal") { Thread.sleep(3000); arrayOf() } else java.net.InetAddress.getAllByName(host)
+        }
+        whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(listOf(c("A", "http://slow-dns.internal"), c("B", "$base/ok")))
+        val started = System.nanoTime()
+        val r = slowDns.reloadAll()
+        val tookMs = (System.nanoTime() - started) / 1_000_000
+        assertThat(r[0].ok).isFalse()
+        assertThat(r[0].detail).isEqualTo("request timed out")
+        assertThat(r[1].ok).isTrue()
+        assertThat(tookMs).isLessThan(2000)
+    }
+
+    /**
+     * 검사 실행기는 스레드 4개다. 해석이 멎은 서버 6대면 2대는 대기열에서 기다리다 응답 시간 예산이 끝난다.
+     * 포기한 대기 작업은 나중에 차례가 와도 DNS 를 부르지 않아야 한다(실행기를 붙잡아 뒤 reload 를 막지 않는다).
+     */
+    @Test fun abandonedQueuedHostChecksDoNotResolve() {
+        val release = CountDownLatch(1)
+        val resolved = java.util.concurrent.atomic.AtomicInteger()
+        val stuckDns = FidoReloadClient(repo, HttpClient.newHttpClient(), Duration.ofMillis(300)) { host ->
+            if (host.startsWith("stuck")) { resolved.incrementAndGet(); release.await(5, TimeUnit.SECONDS); arrayOf() }
+            else java.net.InetAddress.getAllByName(host)
+        }
+        whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn((1..6).map { c("S$it", "http://stuck$it.internal") })
+        val r = stuckDns.reloadAll()
+        assertThat(r).extracting(ok).containsOnly(false)
+        release.countDown()
+        Thread.sleep(300)   // 대기 작업이 차례를 받아 빠져나갈 시간
+        assertThat(resolved.get()).isLessThanOrEqualTo(4)
+    }
+
+    @Test fun unresolvableHostIsNotBlockedHereAndFailsAtSendAsBefore() {
+        whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(listOf(c("A", "http://no-such-host.invalid:1")))
+        val r = client.reloadAll()[0]
+        assertThat(r.ok).isFalse()
+        assertThat(r.detail).doesNotStartWith("차단된 주소")
+    }
+
     @Test fun redirectIsNotFollowed() {
         whenever(repo.findByStatusOrderByServercodeAsc("ON")).thenReturn(listOf(c("A", "$base/redirect")))
         val r = client.reloadAll()[0]
@@ -130,6 +198,8 @@ class FidoReloadClientTest {
         assertThat((System.nanoTime() - t0) / 1_000_000).isLessThan(2000)
         assertThat(r.ok).isFalse()
         assertThat(r.detail).containsIgnoringCase("timed out")
+        // 결과만 먼저 돌려주고 연결은 남겨 두면 안 된다 — 실제 전송도 취소돼 서버 쪽 쓰기가 끊겨야 한다.
+        assertThat(trickleAborted.await(2, TimeUnit.SECONDS)).isTrue()
     }
 
     @Test fun queryFragmentUserInfoAndHostlessUrlsAreRejected() {

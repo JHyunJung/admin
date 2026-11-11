@@ -3,15 +3,24 @@ package com.crosscert.fidoadmin.system.reload
 import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
 import com.crosscert.fidoadmin.system.repository.CcfaFidoclientRepository
+import java.net.InetAddress
 import java.net.URI
+import java.net.UnknownHostException
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -19,6 +28,8 @@ import org.springframework.stereotype.Component
  * 등록된 FIDO 서버(STATUS='ON')마다 `GET {SERVERURL}/api/command/reload` 를 보낸다.
  *
  * 서버 목록은 인증 없는 자가등록(/api/svc/reg)으로 채워지므로 http/https 만 보내고 리다이렉트는 따라가지 않는다.
+ * 호스트가 링크로컬(169.254.0.0/16 — 클라우드 메타데이터 주소, fe80::/10)이나 0.0.0.0·:: 으로 풀리면 보내지 않는다.
+ * 루프백·사설망은 막지 않는다 — FIDO 서버가 어드민과 같은 장비면 127.0.0.1·[::1] 로 등록되는 것이 정상이다.
  * 한 서버의 실패가 다음 서버를 막지 않는다. 어떤 경우에도 예외를 던지지 않고 결과로 돌려준다.
  */
 @Component
@@ -26,6 +37,7 @@ class FidoReloadClient internal constructor(
     private val clients: CcfaFidoclientRepository,
     private val http: HttpClient,
     private val responseTimeout: Duration,
+    private val resolve: (String) -> Array<InetAddress> = InetAddress::getAllByName,
 ) {
 
     @Autowired
@@ -61,6 +73,7 @@ class FidoReloadClient internal constructor(
         private val startNanos: Long,
         private val future: CompletableFuture<HttpResponse<Void>>?,
         private val failed: ReloadResult?,
+        private val sending: Sending? = null,
     ) {
         private val raw: String? = client.serverurl
 
@@ -73,20 +86,52 @@ class FidoReloadClient internal constructor(
                 val code = future!!.get(remaining, TimeUnit.MILLISECONDS).statusCode()
                 return result(code >= 200 && code < 300, "HTTP $code")
             } catch (e: TimeoutException) {
-                future?.cancel(true)
+                cancel()
                 return result(false, "request timed out")
             } catch (e: InterruptedException) {
-                future?.cancel(true)
+                cancel()
                 Thread.currentThread().interrupt()
                 return result(false, "중단됨")
             } catch (e: Exception) {
                 val t: Throwable = if (e is ExecutionException && e.cause != null) e.cause!! else e
+                if (t is BlockedHost) return result(false, oneLine("차단된 주소: " + (raw?.javaTrim() ?: "")))
                 return result(false, oneLine(describe(t)))
             }
         }
 
+        /** 합성 future 의 cancel 은 안쪽 전송으로 전파되지 않으므로 실제 전송도 따로 취소한다. */
+        private fun cancel() {
+            future?.cancel(true)
+            sending?.cancel()
+        }
+
         private fun result(ok: Boolean, detail: String): ReloadResult =
             ReloadResult(client.servercode, raw, ok, detail, millisSince(startNanos))
+    }
+
+    /**
+     * 호스트 검사 뒤에 띄우는 실제 전송. [Pending.await] 가 먼저 포기했으면 띄우지 않고, 띄운 직후 포기를 알면 바로 취소한다
+     * (검사 스레드와 대기 스레드 중 어느 쪽이 먼저든 전송이 남지 않는다).
+     */
+    private class Sending {
+        private val cancelled = AtomicBoolean(false)
+        private val sent = AtomicReference<CompletableFuture<HttpResponse<Void>>?>()
+
+        fun start(send: () -> CompletableFuture<HttpResponse<Void>>): CompletableFuture<HttpResponse<Void>> {
+            if (cancelled.get()) return CompletableFuture.failedFuture(TimeoutException())
+            val f = send()
+            sent.set(f)
+            if (cancelled.get()) f.cancel(true)
+            return f
+        }
+
+        /** 검사 스레드가 DNS 해석 전에 본다 — 포기한 요청의 대기 작업은 해석 없이 빠져 실행기를 붙잡지 않는다. */
+        fun isCancelled(): Boolean = cancelled.get()
+
+        fun cancel() {
+            cancelled.set(true)
+            sent.get()?.cancel(true)
+        }
     }
 
     private fun start(c: CcfaFidoclient): Pending {
@@ -103,17 +148,47 @@ class FidoReloadClient internal constructor(
             val failed = ReloadResult(c.servercode, raw, false, oneLine("지원하지 않는 URL: " + (trimmed ?: "")), 0)
             return Pending(c, startNanos, null, failed)
         }
+        val host = uri!!.host
+        val sending = Sending()
         val future: CompletableFuture<HttpResponse<Void>>? = try {
             val req = HttpRequest.newBuilder(URI.create("$base/api/command/reload"))
                 .timeout(responseTimeout).GET().build()
-            http.sendAsync(req, HttpResponse.BodyHandlers.discarding())
+            // 호스트 검사(DNS 해석)도 비동기로 띄운다. 해석이 느린 서버가 뒤 서버의 전송을 막지 않고,
+            // 검사 시간까지 [Pending.await] 의 서버별 응답 시간 예산 안에 든다.
+            CompletableFuture.supplyAsync({ !sending.isCancelled() && isBlockedHost(host) }, DNS_EXECUTOR).thenCompose { blocked ->
+                if (blocked) CompletableFuture.failedFuture(BlockedHost())
+                else sending.start { http.sendAsync(req, HttpResponse.BodyHandlers.discarding()) }
+            }
+        } catch (e: RejectedExecutionException) {
+            // 호스트 검사 대기열이 가득 찼다(DNS 장애 등). 보내지 않고 결과로만 남긴다.
+            val failed = ReloadResult(c.servercode, raw, false, "호스트 검사 대기열이 가득 참", millisSince(startNanos))
+            return Pending(c, startNanos, null, failed)
         } catch (e: RuntimeException) {
             // 요청을 만들거나 띄우는 단계의 오류. 기존처럼 결과로만 돌려주고 다음 서버를 막지 않는다.
             val failed = ReloadResult(c.servercode, raw, false, oneLine(describe(e)), millisSince(startNanos))
             return Pending(c, startNanos, null, failed)
         }
-        return Pending(c, startNanos, future, null)
+        return Pending(c, startNanos, future, null, sending)
     }
+
+    /**
+     * 호스트가 풀리는 주소 중 하나라도 링크로컬·와일드카드면 막는다. 숫자 표기(2852039166 등)나 DNS 이름도 풀어서 본다.
+     * 풀리지 않는 호스트는 여기서 막지 않는다 — 전송 단계에서 지금처럼 실패 결과가 된다.
+     * (해석과 실제 접속 사이에 DNS 응답이 바뀌는 경우는 막지 못한다. 앞단은 서버 간 경로 CIDR 허용 목록이 맡는다.)
+     */
+    private fun isBlockedHost(host: String): Boolean {
+        val addresses = try {
+            resolve(host)
+        } catch (e: UnknownHostException) {
+            return false
+        } catch (e: SecurityException) {
+            return false
+        }
+        return addresses.any { it.isLinkLocalAddress || it.isAnyLocalAddress }
+    }
+
+    /** 호스트 검사에서 막힌 요청. 스택은 필요 없다 — 결과 문구로만 쓴다. */
+    private class BlockedHost : RuntimeException(null, null, false, false)
 
     companion object {
         internal const val STATUS_ON = "ON"
@@ -121,6 +196,16 @@ class FidoReloadClient internal constructor(
         private val RESPONSE_TIMEOUT: Duration = Duration.ofSeconds(5)
         private val TRAILING_SLASHES = Regex("/+$")
         private val LINE_BREAKS = Regex("[\\r\\n]+")
+
+        private val DNS_THREADS = AtomicInteger()
+        /**
+         * 호스트 검사(DNS 해석) 전용. 해석은 블로킹이라 공용 ForkJoinPool 을 쓰지 않는다.
+         * DNS 가 멎어도 스레드가 쌓이지 않게 스레드 4개·대기 64건으로 묶고, 넘치면 거절한다([start] 가 실패 결과로 남긴다).
+         * 쉬는 스레드는 60초 뒤 사라진다.
+         */
+        private val DNS_EXECUTOR: Executor = ThreadPoolExecutor(4, 4, 60, TimeUnit.SECONDS, ArrayBlockingQueue(64)) { r ->
+            Thread(r, "fido-reload-dns-" + DNS_THREADS.incrementAndGet()).apply { isDaemon = true }
+        }.apply { allowCoreThreadTimeOut(true) }
 
         /** http/https 이고 호스트가 있으며 query·fragment·userinfo 가 없는 URL 만 보낸다. */
         private fun isSupported(uri: URI?): Boolean {
