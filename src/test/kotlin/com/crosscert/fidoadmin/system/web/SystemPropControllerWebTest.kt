@@ -192,4 +192,15 @@ class SystemPropControllerWebTest {
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/system/props/PW_FAIL_LIMIT@0"))
     }
+
+    /** 비밀 키 수정에서 마스크 뒤에 글자를 붙이면 폼 오류로 돌려보내고 저장하지 않는다(진단 106). */
+    @Test fun editedMaskOnSecretKeyIsRejected() {
+        whenever(service.get(any())).thenReturn(prop("SMTP_PASSWORD", 0L, "real"))
+        mvc.perform(post("/system/props/SMTP_PASSWORD@0").session(session).with(user(superUser)).with(csrf())
+                .param("propKey", "SMTP_PASSWORD").param("propValue", "********abc").param("shareType", "NO"))
+            .andExpect(status().isOk())
+            .andExpect(view().name("system/props/form"))
+            .andExpect(content().string(containsString("마스크")))
+        verify(service, never()).update(any(), any())
+    }
 }

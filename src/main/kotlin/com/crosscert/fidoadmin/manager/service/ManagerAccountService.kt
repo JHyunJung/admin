@@ -77,6 +77,7 @@ abstract class ManagerAccountService protected constructor(
     /** 새 운영자의 비밀번호 변경일을 기록한다. JDBC 갱신이 행을 보도록 먼저 flush 한다. */
     @Transactional
     override fun create(entity: CcfaManager): CcfaManager {
+        rejectSignupStatus(entity.status)
         val saved = super.create(entity)
         em.flush()
         expiry.touch(saved.userId)
@@ -116,6 +117,11 @@ abstract class ManagerAccountService protected constructor(
                 throw IllegalStateException(
                     "가입 신청 상태($before)인 계정의 상태는 가입 승인 화면에서만 변경할 수 있습니다.")
             }
+            if (!SignupPolicy.isSignupStatus(before) && SignupPolicy.isSignupStatus(e.status)) {
+                val target = e.status
+                e.status = before
+                rejectSignupStatus(target)
+            }
         }
         if (!Objects.equals(pwBefore, saved.userPw)) {
             em.flush()
@@ -129,6 +135,25 @@ abstract class ManagerAccountService protected constructor(
      * (테넌트 운영자 화면은 `CrudService.update()` 가 유효 테넌트로 강제한다).
      */
     protected open fun normalize(e: CcfaManager) {}
+
+    /**
+     * 수정 전에 대상 행을 FOR UPDATE 로 다시 읽는다. 이 수정은 전 컬럼을 UPDATE 하므로, 잠그지 않으면
+     * 그 사이 로그인(LOGIN·LAST_ACCESS·BLOCK_TIME)이나 비밀번호 변경(USER_PW)이 바꾼 값을 옛 값으로 덮는다.
+     * 그 경로들도 같은 행을 잠그고 고치므로([LoginAttemptService], `PasswordChangeService`) 서로 기다린다.
+     */
+    override fun lockForUpdate(e: CcfaManager) {
+        em.refresh(e, LockModeType.PESSIMISTIC_WRITE)
+    }
+
+    /**
+     * 승인대기·거절은 가입 신청만 만드는 상태다. 운영자 화면에서 이 상태로 등록하거나 바꾸면
+     * 가입 승인 화면에서 임의 고객사로 승인해 소속을 옮길 수 있으므로 막는다.
+     */
+    private fun rejectSignupStatus(status: String?) {
+        if (SignupPolicy.isSignupStatus(status)) {
+            throw IllegalStateException("가입 신청 상태($status)는 운영자 화면에서 지정할 수 없습니다.")
+        }
+    }
 
     /** 자기 자신은 삭제할 수 없다. 슈퍼관리자가 자기 계정을 지우면 복구 경로가 없다. */
     override fun beforeDelete(e: CcfaManager) {

@@ -124,6 +124,17 @@ class FidoSettingControllerWebTest {
             .andExpect(status().isForbidden())
     }
 
+    /** 서비스가 입력을 거절하면 오류 알림과 함께 화면으로 돌아간다(진단 106). */
+    @Test fun 거절된_저장은_오류_알림으로_돌아온다() {
+        org.mockito.kotlin.whenever(service.save(org.mockito.kotlin.any())).thenThrow(IllegalArgumentException("마스크 오류"))
+        mvc.perform(post("/system/settings").session(session).with(user(superUser)).with(csrf())
+                .param("SMTP_PASSWORD", "********abc"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/system/settings"))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("flashError", "마스크 오류"))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attributeCount(1))
+    }
+
     @Test fun 저장하면_서비스로_전달되고_되돌아온다() {
         mvc.perform(post("/system/settings").session(session).with(user(superUser)).with(csrf())
                 .param("SMTP_IP", "10.0.0.1").param("CHALLENGE_TERM", "90"))

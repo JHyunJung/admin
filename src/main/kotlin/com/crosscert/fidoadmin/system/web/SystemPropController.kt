@@ -5,6 +5,7 @@ import com.crosscert.fidoadmin.common.CrudService
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.company.service.CompanyLookup
 import com.crosscert.fidoadmin.system.entity.CcfaSystemProp
+import com.crosscert.fidoadmin.system.SecretProps
 import com.crosscert.fidoadmin.system.entity.CcfaSystemPropId
 import com.crosscert.fidoadmin.system.service.SystemPropService
 import org.springframework.stereotype.Controller
@@ -45,6 +46,14 @@ class SystemPropController(
      */
     override fun validate(form: SystemPropForm, isNew: Boolean, binding: BindingResult) {
         rejectReservedPathId(form.propKey, isNew, binding, "propKey", "키")
+    }
+
+    /** 수정은 경로의 키가 기준이다(폼의 propKey 는 수정 화면에서 바꿀 수 없다 — [SystemPropForm.applyTo] 와 같은 기준). */
+    override fun validate(form: SystemPropForm, id: CcfaSystemPropId?, binding: BindingResult) {
+        super.validate(form, id, binding)
+        if (SecretProps.isEditedMask(id?.propKey ?: form.propKey, form.propValue)) {
+            binding.rejectValue("propValue", "editedMask", SecretProps.EDITED_MASK_MESSAGE)
+        }
     }
 
     override fun populateDetailModel(e: CcfaSystemProp, model: Model) {

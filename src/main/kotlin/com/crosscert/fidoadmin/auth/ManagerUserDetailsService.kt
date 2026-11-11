@@ -20,7 +20,10 @@ class ManagerUserDetailsService(
     private val attempts: LoginAttemptService,
 ) : UserDetailsService {
 
-    @Transactional(readOnly = true)
+    // 로그인은 SerializedLoginAuthenticationProvider 의 트랜잭션에 참여해 이 메서드를 부른다. 없는 계정 예외가
+    // 그 트랜잭션을 rollback-only 로 만들면 커밋이 UnexpectedRollbackException 으로 바뀌어, 비밀번호 오류와
+    // 응답이 달라지고 계정 존재 여부가 드러난다. 읽기 전용이라 되돌릴 쓰기도 없다.
+    @Transactional(readOnly = true, noRollbackFor = [UsernameNotFoundException::class])
     override fun loadUserByUsername(username: String?): UserDetails {
         val m = managers.findByUserId(username)
             .orElseThrow { UsernameNotFoundException("운영자 없음: $username") }

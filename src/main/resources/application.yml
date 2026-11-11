@@ -40,6 +40,11 @@ spring:
 # 프로파일을 지정하지 않은 기동은 어느 환경인지 모르므로 운영 설정을 쓴다.
 logging:
   config: classpath:logback/logback-prod.xml
+  level:
+    # 로그인은 SerializedLoginAuthenticationProvider(진단 78)를 일부러 쓴다. Spring Security 가 기동 때
+    # "AuthenticationProvider 빈이 있어 UserDetailsService 를 자동 구성에 쓰지 않는다" 고 WARN 을 남기는데,
+    # 그 경고가 안내하는 대로 이 로거만 ERROR 로 올린다.
+    org.springframework.security.config.annotation.authentication.configuration.InitializeUserDetailsBeanManagerConfigurer: ERROR
 server:
   port: 8080
   servlet:

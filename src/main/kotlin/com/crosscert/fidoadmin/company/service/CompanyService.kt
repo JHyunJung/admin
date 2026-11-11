@@ -9,8 +9,10 @@ import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.common.javaTrim
 import com.crosscert.fidoadmin.company.entity.CcfaCompany
 import com.crosscert.fidoadmin.company.repository.CcfaCompanyRepository
+import com.crosscert.fidoadmin.company.repository.CcfaLicenseRepository
 import com.crosscert.fidoadmin.company.web.CompanySearchForm
 import com.crosscert.fidoadmin.fido.repository.AppidRepository
+import com.crosscert.fidoadmin.fido.repository.AppserverRepository
 import com.crosscert.fidoadmin.fido.repository.UserinfoRepository
 import com.crosscert.fidoadmin.fido.service.CriteriaQueryService
 import com.crosscert.fidoadmin.manager.repository.CcfaManagerRepository
@@ -37,6 +39,8 @@ class CompanyService(
     private val criteria: CriteriaQueryService,
     private val events: ApplicationEventPublisher,
     private val lookup: CompanyLookup,
+    private val licenses: CcfaLicenseRepository,
+    private val appservers: AppserverRepository,
 ) : CrudService<CcfaCompany, Long, CompanySearchForm>(repository, audit, tenant) {
 
     /**
@@ -153,6 +157,9 @@ class CompanyService(
         val a = appids.countByCompanyIdx(e.idx); if (a > 0) deps.add("앱 ID " + a + "건")
         val u = users.countByCompanyIdx(e.idx); if (u > 0) deps.add("사용자 " + u + "건")
         val m = managers.countByCompanyIdx(e.idx); if (m > 0) deps.add("운영자 " + m + "건")
+        // 라이선스가 남으면 /external/license 가 지운 고객사의 라이선스를 계속 내준다. 지우지 않고 막는다(되살릴 수 없다).
+        val l = licenses.countByCompanyIdx(e.idx); if (l > 0) deps.add("라이선스 " + l + "건")
+        val s = appservers.countByCompanyIdx(e.idx); if (s > 0) deps.add("앱서버 " + s + "건")
         if (deps.isNotEmpty()) throw IllegalStateException("하위 데이터가 있어 삭제할 수 없습니다: " + deps.joinToString(", "))
     }
 

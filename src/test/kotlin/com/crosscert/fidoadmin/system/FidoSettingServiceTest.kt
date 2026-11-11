@@ -12,6 +12,7 @@ import com.crosscert.fidoadmin.system.repository.CcfaSystemPropRepository
 import com.crosscert.fidoadmin.system.service.FidoSettingService
 import com.crosscert.fidoadmin.system.web.FidoSettingKey
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -118,6 +119,13 @@ class FidoSettingServiceTest {
         // 마스크가 그대로 돌아온 경우도 같다.
         service.save(mapOf("SMTP_PASSWORD" to SecretProps.MASK))
         assertThat(saved.propValue).isEqualTo("SuperSecret!234")
+    }
+
+    /** 마스크 뒤에 글자를 붙인 값은 거절하고, 같이 보낸 다른 항목도 저장하지 않는다(진단 106). */
+    @Test fun 마스크를_고친_비밀번호는_거절하고_아무것도_저장하지_않는다() {
+        assertThatThrownBy { service.save(mapOf("CHALLENGE_TERM" to "300", "SMTP_PASSWORD" to "********abc")) }
+            .isInstanceOf(IllegalArgumentException::class.java).hasMessageContaining("마스크")
+        verify(repo, never()).save(any<CcfaSystemProp>())
     }
 
     /** 새 값을 입력하면 교체된다 — 위 규칙이 변경 자체를 막아서는 안 된다. */

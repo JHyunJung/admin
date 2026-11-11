@@ -11,6 +11,7 @@ import java.time.LocalDateTime
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 /** 로그인 성공/실패에 따른 CCFA_MANAGER, CCFA_MANAGER_PW_POLICY 갱신. */
@@ -57,6 +58,20 @@ class LoginAttemptService(
         val lockedAt = policy.updatedtime ?: return true
         return lockedAt.plusMinutes(minutes.toLong()).isAfter(now)
     }
+
+    /**
+     * 로그인 시도 동안 계정 행을 잠근다. 호출자 트랜잭션이 끝날 때까지 같은 계정의 다른 시도·집계는 기다린다
+     * ([SerializedLoginAuthenticationProvider]). 계정이 없으면 잠글 행이 없다.
+     */
+    @Transactional(propagation = Propagation.MANDATORY)
+    fun lockForAttempt(rawUserId: String?) {
+        managers.findByUserIdForUpdate(normalize(rawUserId))
+    }
+
+    /** 이 계정이 지금 잠겨 있는가. 최신 정책 행으로 [isLocked] 를 본다. */
+    fun isLockedNow(rawUserId: String?, now: LocalDateTime): Boolean =
+        policies.findFirstByUserIdOrderByIdxDesc(normalize(rawUserId))
+            .map { p -> isLocked(p, now) }.orElse(false)
 
     @Transactional
     fun onSuccess(rawUserId: String?) {

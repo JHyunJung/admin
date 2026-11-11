@@ -178,6 +178,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
     @Transactional
     open fun update(id: ID, mutator: Consumer<E>): E {
         val e = get(id)
+        lockForUpdate(e)
         // 변경 전 값을 떠 둔다. mutator 가 같은 객체를 고치므로 이 시점이어야 한다.
         val before = AuditChanges.snapshot(e)
         mutator.accept(e)
@@ -201,6 +202,12 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         log.info("{} DELETE id={}", tableName(), idOf(e))
         afterChange("DELETE", e)
     }
+
+    /**
+     * [update] 가 행을 읽은 직후, 변경 전 스냅숏과 mutator 보다 먼저 부르는 자리. 기본은 아무것도 하지 않는다.
+     * 다른 경로(로그인 등)가 같은 행을 동시에 고치는 테이블은 여기서 행을 잠그고 다시 읽는다.
+     */
+    protected open fun lockForUpdate(e: E) {}
 
     /** 고객사 구분이 없는 테이블인가([companyIdxAttribute] 가 null). */
     protected fun isGlobalTable(): Boolean = companyIdxAttribute() == null

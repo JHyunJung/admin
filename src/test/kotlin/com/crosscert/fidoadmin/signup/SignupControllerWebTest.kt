@@ -138,6 +138,21 @@ class SignupControllerWebTest {
             .doesNotContain("0", "활성")
     }
 
+    /** 아이디 안의 개행·제어문자는 로그·감사 메시지를 위조하므로 거절한다(진단 103). 앞뒤 공백은 지금처럼 떼고 받는다. */
+    @Test fun rejectsControlCharactersInUserId() {
+        for (bad in listOf("new\nbie", "new\rbie", "new\u0000bie", "new\u0085bie", "new\u2028bie")) {
+            mvc.perform(post("/signup").with(csrf())
+                    .param("userId", bad)
+                    .param("password", "Secret1234!")
+                    .param("passwordConfirm", "Secret1234!")
+                    .param("userNm", "홍길동")
+                    .param("userEmail", "hong@kb.local"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("form", "userId"))
+        }
+        verify(service, never()).apply(anyString(), anyString(), anyString(), anyString(), anyOrNull(), anyOrNull())
+    }
+
     @Test fun rejectsWeakPassword() {
         mvc.perform(post("/signup").with(csrf())
                 .param("userId", "newbie")

@@ -18,3 +18,9 @@
 ## 동기 작업을 CompletableFuture 합성으로 옮길 때 (2026-11-11)
 - 실수: DNS 검사를 `supplyAsync → thenCompose(sendAsync)` 로 옮기자 ① 타임아웃 취소가 안쪽 HTTP future 로 전파되지 않았고 ② 실행기가 무제한이었고 ③ 포기한 대기 작업이 나중에 실행됐다. Codex 2~3라운드에서야 잡혔다.
 - 규칙: 합성 future 의 `cancel` 은 안쪽으로 전파되지 않는다 — 안쪽 future 를 따로 들고 함께 취소한다. 블로킹 작업용 실행기는 스레드·대기열 상한과 거절 처리를 같이 정한다. 대기 작업은 실행 직전에 포기 여부를 본다. 이 세 가지를 테스트(연결 종료·대기 작업 미실행)로 고정한 뒤에 검토를 맡긴다.
+
+## 바깥 트랜잭션에 참여하는 @Transactional 의 예외 (2026-11-11)
+- 실수: 로그인을 TransactionTemplate 으로 감쌌더니, 안에서 부른 `@Transactional(readOnly=true)` loadUserByUsername 의 UsernameNotFoundException 이 참여 트랜잭션을 rollback-only 로 만들어 커밋이 UnexpectedRollbackException(500)이 됐다. 목 기반 단위 테스트로는 프록시를 안 거쳐 못 잡았다.
+- 규칙: 기존 @Transactional 메서드를 새 바깥 트랜잭션 안으로 옮기면, 그 메서드가 던지고 바깥에서 잡는 예외마다 rollback-only 여부를 확인한다(noRollbackFor 또는 바깥에서 잡지 않기). 실제 프록시를 거치는 통합 테스트로 예외 경로까지 본다.
+- 규칙: 프레임워크 경계(인증 필터 등) 앞에 새 호출을 끼우면, 그 호출의 예외가 원래 경계의 예외 변환(InternalAuthenticationServiceException 등) 안에 드는지 확인한다.
+
