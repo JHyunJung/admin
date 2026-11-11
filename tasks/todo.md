@@ -80,6 +80,7 @@
 - [x] 그대로 선택 고객사로 남는 것: 고객사별 테이블 CRUD, FidoSetting, Userinfo 상태, AAID 고객사별 상태 토글, 읽기 감사(MENU_VIEW·DATA_VIEW)
 - [x] 84: `AuditChanges.secretFieldsOf` 가 CcfaLicense 의 license·hashvalue 를 마스크
 - [x] 검증: 새 테스트 4건(logGlobal 귀속·미로그인, 라이선스 마스킹, 비밀번호 변경 귀속), 기대값 20곳 log → logGlobal(의도한 변경). 전체 1005 · 0 fail · 1 skip. Codex 2라운드 "문제 없음"
+- DB: 스키마·DDL·엔티티 매핑 변경 없음(마이그레이션 불필요). 수정 후 쌓이는 전역 작업 감사 행의 COMPANY_IDX·COMPANY_NAME 값만 바뀌고 기존 행은 그대로. 감사 로그를 COMPANY_IDX 로 집계하는 외부 소비처가 있으면 SUPER 전역 작업이 0 쪽으로 모인다
 - 남은 것: 읽기 감사 DATA_VIEW 는 SUPER 가 X 선택 중 /companies/Y 상세를 열면 "고객사 상세 조회 (ID: Y)" 가 X 로 남는다(값은 없음, 범위 밖)
 
 ## 다음
