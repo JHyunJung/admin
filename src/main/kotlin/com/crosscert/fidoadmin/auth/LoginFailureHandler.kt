@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.auth
 
+import com.crosscert.fidoadmin.common.LogText
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -33,12 +34,10 @@ class LoginFailureHandler : SimpleUrlAuthenticationFailureHandler() {
 
     private companion object {
         private val log = LoggerFactory.getLogger(LoginFailureHandler::class.java)
-        private val NEWLINES = Regex("[\\r\\n]")
 
-        /** 사용자 입력이므로 개행을 제거해 로그 위조를 막는다. */
+        /** 사용자 입력이므로 개행·제어문자를 지워 로그 위조를 막는다([LogText]). */
         fun forLog(value: String?): String? {
-            if (value == null) return null
-            val cleaned = value.replace(NEWLINES, "_")
+            val cleaned = LogText.oneLine(value) ?: return null
             return if (cleaned.length <= 64) cleaned else cleaned.substring(0, 64)
         }
 

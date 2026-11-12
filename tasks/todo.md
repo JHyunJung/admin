@@ -100,4 +100,17 @@
 - 운영 확인(88): 운영·QA 에 `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 가 설정돼 있는지 — 76 수정으로 이제 실제로 동작한다. 비어 있으면 /api/svc·/external 이 누구에게나 열려 있다
 - 별도 성능 과제(DBA 확인 필요): 33, 42, 44 — 목록 SELECT 에서 안 쓰는 큰 컬럼 제외
 - 보안: 74 (75·76·84·107·109·111 완료, Medium 78·80·85·101·102·103·106 완료, 88 은 운영 확인) — 비밀번호 저장 형식(KBFIDO 스키마·타 시스템 호환)이라 별도 합의 과제
+- 103 나머지(로그 개행 정제) 완료. 남은 103 범위 밖: 다른 폼 STATUS 허용값(운영 DB 값 확인 필요)
+- 정리 항목(@ConfigurationProperties·basePath 보일러플레이트·FQN import)은 Kotlin 전환 뒤 실익 없음으로 닫음: @Value 4곳뿐, basePath 는 이미 CrudController/ReadOnlyController 로 모임, 남은 java.util.Set.of 등은 Java 동작(불변·null 거부) 유지를 위한 의도
 - 보고만(74~222): 별도 과제. 우선순위 76 → 88·107·109·111 → 75·84 → 74
+
+## 보안 103 나머지 — 로그 개행 정제 (2026-11-12, 브랜치 fix/log-injection)
+결정(기술): 저장되는 감사 메시지(CCFA_AUDIT_LOG.MESSAGE)는 바꾸지 않는다(저장 데이터 형식 유지). 텍스트 로그에 들어가는 외부·사용자 값만 한 줄로 만든다. AAID 는 규격상 제어문자가 나올 수 없으므로 JSON 업로드에서 거절한다.
+- [x] common/LogText.oneLine: 제어문자(Cc)·U+2028·U+2029 → "_" (LoginFailureHandler.forLog 가 이것을 쓴다)
+- [x] FidoClientRegistrationController: serverName·fsurl·serverurl·serverCode 로그 정제(인증 없는 서버 간 API, fsurl 은 방화벽이 검사하지 않는 파라미터)
+- [x] AuditLogger·AuditLogWriter 실패 로그의 message 정제
+- [x] FidoReloadListener reason·servercode·serverurl·detail 정제, CrudService CREATE/UPDATE/DELETE id 정제
+- [x] CriteriaMetadataParser: aaid 안쪽 제어문자면 INVALID
+- [x] 검증: 실패 테스트 먼저(새 테스트 11건, 수정 전 6건 실패 확인), 전체 1039 · 0 fail · 1 skip. Codex 2라운드(1: reload 실패 로그의 serverurl·detail 이 기존 oneLine(CR/LF 만)을 거쳐 NEL·U+2028 이 남음 → 출력 지점에 LogText 덧씌움) → "문제 없음"
+- 확인: Spring Security 6.5 StrictHttpFirewall 은 경로·헤더의 제어문자는 막지만 파라미터 값은 검사하지 않는다(기본 predicate true) — 파라미터로 들어온 값은 직접 정제해야 한다
+- DB 영향 없음: 스키마·저장값·감사 메시지·무결성 해시 그대로. AAID JSON 업로드만 안쪽 제어문자면 "유효하지 않은 metadata 형식입니다. (aaid)" 로 거절

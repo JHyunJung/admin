@@ -170,7 +170,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         touchCreated(entity, LocalDateTime.now())
         val saved = insert(entity)
         auditLog(AuditType.CREATE, tableName() + " CREATE " + idOf(saved))
-        log.info("{} CREATE id={}", tableName(), idOf(saved))
+        log.info("{} CREATE id={}", tableName(), LogText.oneLine(idOf(saved)))
         afterChange("CREATE", saved)
         return saved
     }
@@ -188,7 +188,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         touchUpdated(e, LocalDateTime.now())
         val saved = repository.save(e)
         AuditChanges.record(audit, tableName(), idOf(saved), before, saved, isGlobalTable())
-        log.info("{} UPDATE id={}", tableName(), idOf(saved))
+        log.info("{} UPDATE id={}", tableName(), LogText.oneLine(idOf(saved)))
         afterChange("UPDATE", saved)
         return saved
     }
@@ -199,7 +199,7 @@ abstract class CrudService<E : Any, ID : Any, S : SearchForm> protected construc
         beforeDelete(e)
         repository.delete(e)
         auditLog(AuditType.DELETE, tableName() + " DELETE " + idOf(e))
-        log.info("{} DELETE id={}", tableName(), idOf(e))
+        log.info("{} DELETE id={}", tableName(), LogText.oneLine(idOf(e)))
         afterChange("DELETE", e)
     }
 
