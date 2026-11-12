@@ -2,6 +2,7 @@ package com.crosscert.fidoadmin.audit
 
 import com.crosscert.fidoadmin.auth.ManagerUserDetails
 import com.crosscert.fidoadmin.auth.Sha256PasswordEncoder
+import com.crosscert.fidoadmin.common.LogText
 import com.crosscert.fidoadmin.common.TenantContext
 import com.crosscert.fidoadmin.common.Utf8
 import com.crosscert.fidoadmin.company.service.CompanyLookup
@@ -74,7 +75,7 @@ class AuditLogger(
         try {
             block()
         } catch (e: RuntimeException) {
-            log.error("감사 로그 기록 실패: type={} message={}", type, message, e)
+            log.error("감사 로그 기록 실패: type={} message={}", type, LogText.oneLine(message), e)
         }
     }
 

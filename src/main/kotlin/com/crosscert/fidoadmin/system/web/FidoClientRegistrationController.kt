@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.system.web
 
+import com.crosscert.fidoadmin.common.LogText
 import com.crosscert.fidoadmin.common.javaIsBlank
 import com.crosscert.fidoadmin.system.entity.CcfaFidoclient
 import com.crosscert.fidoadmin.system.service.FidoClientRegistrationRejected
@@ -38,8 +39,8 @@ class FidoClientRegistrationController(
         @RequestParam(name = "fsurl", required = false) fsurl: String?,
         request: HttpServletRequest,
     ): ResponseEntity<Map<String, String?>> {
-        log.info("[ClientAccess] Registration : {}", serverName)
-        log.info("[ClientAccess] FS URL : {}", fsurl)
+        log.info("[ClientAccess] Registration : {}", LogText.oneLine(serverName))
+        log.info("[ClientAccess] FS URL : {}", LogText.oneLine(fsurl))
         log.info("[ClientAccess] Access IP : {}", request.remoteAddr)
 
         // 둘 중 하나가 비면 조용히 무시한다(응답 본문 없이 반환).
@@ -54,14 +55,14 @@ class FidoClientRegistrationController(
         val saved = try {
             service.register(serverName, serverUrl)
         } catch (e: FidoClientRegistrationRejected) {
-            log.warn("[ClientAccess] Rejected : {} ({})", e.serverCode, e.reason)
+            log.warn("[ClientAccess] Rejected : {} ({})", LogText.oneLine(e.serverCode), e.reason)
             val status = when (e.reason) {
                 FidoClientRegistrationRejected.Reason.RESERVED_CODE -> HttpStatus.BAD_REQUEST
                 FidoClientRegistrationRejected.Reason.CODE_CONFLICT -> HttpStatus.CONFLICT
             }
             return ResponseEntity.status(status).build()
         }
-        log.info("[ClientAccess] Registered : {} -> {}", saved.servercode, saved.serverurl)
+        log.info("[ClientAccess] Registered : {} -> {}", LogText.oneLine(saved.servercode), LogText.oneLine(saved.serverurl))
         return ResponseEntity.ok(body(saved))
     }
 
@@ -70,7 +71,7 @@ class FidoClientRegistrationController(
         @PathVariable serverName: String,
         request: HttpServletRequest,
     ): ResponseEntity<Map<String, String?>> {
-        log.info("[ClientAccess] Deregistration : {} (Access IP : {})", serverName, request.remoteAddr)
+        log.info("[ClientAccess] Deregistration : {} (Access IP : {})", LogText.oneLine(serverName), request.remoteAddr)
 
         return service.deregister(serverName)
             .map { saved -> ResponseEntity.ok(body(saved)) }

@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.audit
 
+import com.crosscert.fidoadmin.common.LogText
 import com.crosscert.fidoadmin.log.entity.CcfaAuditLog
 import com.crosscert.fidoadmin.log.repository.CcfaAuditLogRepository
 import jakarta.annotation.PreDestroy
@@ -61,7 +62,7 @@ class AuditLogWriter internal constructor(
         try {
             requiresNew.executeWithoutResult { repository.save(row) }
         } catch (e: RuntimeException) {
-            log.error("감사 로그 저장 실패: type={} message={}", row.type, row.message, e)
+            log.error("감사 로그 저장 실패: type={} message={}", row.type, LogText.oneLine(row.message), e)
         }
     }
 

@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.system.reload
 
+import com.crosscert.fidoadmin.common.LogText
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,7 +30,7 @@ class FidoReloadListener(
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     fun on(event: FidoConfigChanged) {
         if (!pending.compareAndSet(false, true)) {
-            log.debug("FIDO 서버 reload 가 이미 대기 중이라 합칩니다: reason={}", event.reason)
+            log.debug("FIDO 서버 reload 가 이미 대기 중이라 합칩니다: reason={}", LogText.oneLine(event.reason))
             return
         }
         try {
@@ -37,7 +38,7 @@ class FidoReloadListener(
         } catch (e: RejectedExecutionException) {
             pending.set(false)
             // reload 는 멱등이다. 다음 변경이나 수동 전송이 대신한다.
-            log.warn("FIDO 서버 reload 대기열이 가득 차 버립니다: reason={}", event.reason)
+            log.warn("FIDO 서버 reload 대기열이 가득 차 버립니다: reason={}", LogText.oneLine(event.reason))
         }
     }
 
@@ -46,13 +47,14 @@ class FidoReloadListener(
         try {
             for (r in client.reloadAll()) {
                 if (r.ok) {
-                    log.info("FIDO 서버 reload 성공: reason={} server={} {} {}ms", event.reason, r.servercode, r.detail, r.elapsedMs)
+                    log.info("FIDO 서버 reload 성공: reason={} server={} {} {}ms", LogText.oneLine(event.reason), LogText.oneLine(r.servercode), LogText.oneLine(r.detail), r.elapsedMs)
                 } else {
-                    log.warn("FIDO 서버 reload 실패: reason={} server={} url={} {}", event.reason, r.servercode, FidoReloadClient.oneLine(r.serverurl), r.detail)
+                    log.warn("FIDO 서버 reload 실패: reason={} server={} url={} {}", LogText.oneLine(event.reason), LogText.oneLine(r.servercode),
+                        LogText.oneLine(FidoReloadClient.oneLine(r.serverurl)), LogText.oneLine(r.detail))
                 }
             }
         } catch (e: RuntimeException) {
-            log.warn("FIDO 서버 reload 중 오류: reason={}", event.reason, e)
+            log.warn("FIDO 서버 reload 중 오류: reason={}", LogText.oneLine(event.reason), e)
         }
     }
 

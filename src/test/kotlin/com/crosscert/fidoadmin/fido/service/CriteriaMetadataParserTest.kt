@@ -139,3 +139,23 @@ class CriteriaMetadataParserTest {
             .hasMessage(CriteriaMetadataParser.INVALID)
     }
 }
+
+/** AAID 는 "VVVV#MMMM" 형식이라 제어문자가 나올 수 없다. 안쪽 개행은 로그·감사 메시지에 가짜 줄을 만든다. */
+class CriteriaMetadataParserControlCharTest {
+
+    private val parser = CriteriaMetadataParser()
+
+    @Test fun rejectsAaidWithInnerLineBreak() {
+        assertThatThrownBy { parser.parse("""{"aaid":"0012#0001\nINFO fake"}""") }
+            .isInstanceOf(CriteriaMetadataException::class.java)
+    }
+
+    @Test fun rejectsAaidWithInnerLineSeparator() {
+        assertThatThrownBy { parser.parse("{\"aaid\":\"0012#0001 x\"}") }
+            .isInstanceOf(CriteriaMetadataException::class.java)
+    }
+
+    @Test fun stillTrimsSurroundingWhitespace() {
+        assertThat(parser.parse("""{"aaid":" 0012#0001\n"}""").aaid).isEqualTo("0012#0001")
+    }
+}

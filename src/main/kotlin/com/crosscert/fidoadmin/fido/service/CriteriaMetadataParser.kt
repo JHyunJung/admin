@@ -40,6 +40,8 @@ class CriteriaMetadataParser {
         }
         // Java String.trim() 과 같은 기준(U+0020 이하 제거). Kotlin trim() 은 유니코드 공백 기준이라 다르다.
         val aaid = aaidNode.asText().javaTrim()
+        // AAID 는 "VVVV#MMMM" 형식이다. 안쪽 개행·제어문자는 로그·감사 메시지에 가짜 줄을 만든다.
+        if (CONTROL.containsMatchIn(aaid)) throw CriteriaMetadataException("$INVALID (aaid)")
         val hash = aaid.indexOf('#')
 
         val c = Criteria()
@@ -68,6 +70,7 @@ class CriteriaMetadataParser {
 
     companion object {
         const val INVALID = "유효하지 않은 metadata 형식입니다."
+        private val CONTROL = Regex("[\\p{Cc}\\u2028\\u2029]")
 
         /** 첫 JSON 값 뒤에 남은 글자가 있으면 실패시킨다. 끄면 두 문을 붙여 넣었을 때 첫 문만 읽고 원문 전체를 저장한다. */
         private val READER: ObjectReader = ObjectMapper().reader()
