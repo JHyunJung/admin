@@ -176,4 +176,22 @@ class AppserverControllerWebTest {
             .andExpect(content().string(containsString("스타뱅킹 서버")))
             .andExpect(content().string(containsString("KB국민은행")))
     }
+
+    /** 상태가 use·unuse 가 아니면 배지에 저장된 값을 그대로 보인다(목록·상세). 값이 없을 때만 "미확인". */
+    @Test fun unknownTypeShowsStoredValueOnBadge() {
+        val odd = server(3L).also { it.type = "hold" }
+        val none = server(4L).also { it.type = null }
+        whenever(service.defaultSort()).thenReturn(Sort.by("idx"))
+        whenever(service.search(any(), any<Pageable>())).thenReturn(PageImpl(listOf(odd, none)))
+        whenever(companies.names()).thenReturn(mapOf(1L to "KB국민은행"))
+        val list = mvc.perform(get("/appservers").with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().response.contentAsString
+        assertThat(list).contains("text-bg-secondary\">hold<").contains("text-bg-secondary\">미확인<")
+
+        whenever(service.get(3L)).thenReturn(odd)
+        whenever(companies.name(1L)).thenReturn("KB국민은행")
+        val detail = mvc.perform(get("/appservers/3").with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().response.contentAsString
+        assertThat(detail).contains("text-bg-secondary\">hold<").doesNotContain("미확인")
+    }
 }

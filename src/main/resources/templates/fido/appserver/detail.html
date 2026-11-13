@@ -8,9 +8,7 @@
       <a class="fa-back" th:href="@{/appservers}"><i class="bi bi-arrow-left" aria-hidden="true"></i>목록</a>
       <div class="fa-title-row">
         <h1 class="h4" th:text="|멤버코드 #${item.idx}|"></h1>
-        <span class="badge"
-              th:classappend="${item.type == 'use' ? 'text-bg-success' : (item.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
-              th:text="${item.type == 'use' ? '활성' : (item.type == 'unuse' ? '비활성' : '미확인')}"></span>
+        <span th:replace="~{fragments/use-badge :: badge(${item.type})}"></span>
       </div>
     </div>
     <div class="fa-page-actions">
@@ -33,9 +31,7 @@
   <tr>
     <th>상태</th>
     <td>
-      <span class="badge"
-            th:classappend="${item.type == 'use' ? 'text-bg-success' : (item.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
-            th:text="${item.type == 'use' ? '활성' : (item.type == 'unuse' ? '비활성' : '미확인')}"></span>
+      <span th:replace="~{fragments/use-badge :: badge(${item.type})}"></span>
     </td>
   </tr>
   <tr><th>생성일</th><td class="fa-mono" th:text="${item.createdtime == null ? '-' : #temporals.format(item.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td></tr>

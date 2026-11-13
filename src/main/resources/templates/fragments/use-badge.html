@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* APPID.STATUS · APPSERVER.TYPE 배지. use·unuse 는 활성·비활성으로, 그 밖의 값은 저장된 그대로 보인다. 값이 없을 때만 "미확인". */-->
+<span th:fragment="badge(value)" class="badge text-nowrap"
+      th:classappend="${value == 'use' ? 'text-bg-success' : (value == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
+      th:text="${value == 'use' ? '활성' : (value == 'unuse' ? '비활성' : (#strings.isEmpty(value) ? '미확인' : value))}"></span>
+</body>
+</html>

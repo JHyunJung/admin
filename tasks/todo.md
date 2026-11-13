@@ -114,3 +114,13 @@
 - [x] 검증: 실패 테스트 먼저(새 테스트 11건, 수정 전 6건 실패 확인), 전체 1039 · 0 fail · 1 skip. Codex 2라운드(1: reload 실패 로그의 serverurl·detail 이 기존 oneLine(CR/LF 만)을 거쳐 NEL·U+2028 이 남음 → 출력 지점에 LogText 덧씌움) → "문제 없음"
 - 확인: Spring Security 6.5 StrictHttpFirewall 은 경로·헤더의 제어문자는 막지만 파라미터 값은 검사하지 않는다(기본 predicate true) — 파라미터로 들어온 값은 직접 정제해야 한다
 - DB 영향 없음: 스키마·저장값·감사 메시지·무결성 해시 그대로. AAID JSON 업로드만 안쪽 제어문자면 "유효하지 않은 metadata 형식입니다. (aaid)" 로 거절
+
+## 결정 정리 (2026-11-13)
+사용자 결정: DBA 요청서 적용·성능 33·42·44·보안 74·다른 폼 STATUS 허용값은 **보류**. 로그인 390px 는 모바일로 볼 일이 없어 **안 한다**. 88 은 운영 서버의 `scripts/fido-admin-<프로파일>.env` 에 값을 넣는 일만 남음.
+
+### 상태 배지 원값 표시 (브랜치 fix/status-badge-raw-value)
+- [x] fragments/use-badge.html: use·unuse 는 활성·비활성, 그 밖은 저장된 값 그대로, 값이 없을 때만 "미확인"
+- [x] AppID·멤버코드 목록·상세 6곳을 조각으로 교체
+- [x] 실패 테스트 먼저(2건 추가, 수정 전 실패 확인) → 통과. 통합 테스트 제외 983건 · 0 fail · 1 skip
+- [ ] 통합 테스트 58건 중 56건은 Oracle 컨테이너가 못 떠서 미검증 — Docker 디스크 97%(No space left on device). 공간 확보 뒤 재실행하고 머지
+- V2 일러스트 원본 PNG 커밋: `docs/design/v2-illustrations/` 가 이 PC 에 없다(저장소에는 변환본 webp 10장만). 원본 위치 확인 필요
