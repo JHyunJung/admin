@@ -123,4 +123,4 @@
 - [x] AppID·멤버코드 목록·상세 6곳을 조각으로 교체
 - [x] 실패 테스트 먼저(2건 추가, 수정 전 실패 확인) → 통과. 통과
 - [x] 전체 재검증: Docker 빌드 캐시 17GB 를 비운 뒤(디스크 97% → 62%) 1041 · 0 fail · 1 skip. 앞선 통합 테스트 56건 실패는 Oracle 컨테이너가 공간 부족(No space left on device)으로 못 뜬 것
-- V2 일러스트 원본 PNG 커밋: `docs/design/v2-illustrations/` 가 이 PC 에 없다(저장소에는 변환본 webp 10장만). 원본 위치 확인 필요
+- V2 일러스트 원본 PNG 커밋: 닫음 — `docs/design/v2-illustrations/` 원본을 찾지 못했다(2026-11-13). 화면이 쓰는 변환본 `static/img/ill/*.webp` 10장은 저장소에 있어 앱에는 영향 없음. 다시 그릴 일이 생기면 webp 를 기준으로 삼는다
