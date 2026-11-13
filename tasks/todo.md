@@ -121,6 +121,6 @@
 ### 상태 배지 원값 표시 (브랜치 fix/status-badge-raw-value)
 - [x] fragments/use-badge.html: use·unuse 는 활성·비활성, 그 밖은 저장된 값 그대로, 값이 없을 때만 "미확인"
 - [x] AppID·멤버코드 목록·상세 6곳을 조각으로 교체
-- [x] 실패 테스트 먼저(2건 추가, 수정 전 실패 확인) → 통과. 통합 테스트 제외 983건 · 0 fail · 1 skip
-- [ ] 통합 테스트 58건 중 56건은 Oracle 컨테이너가 못 떠서 미검증 — Docker 디스크 97%(No space left on device). 공간 확보 뒤 재실행하고 머지
+- [x] 실패 테스트 먼저(2건 추가, 수정 전 실패 확인) → 통과. 통과
+- [x] 전체 재검증: Docker 빌드 캐시 17GB 를 비운 뒤(디스크 97% → 62%) 1041 · 0 fail · 1 skip. 앞선 통합 테스트 56건 실패는 Oracle 컨테이너가 공간 부족(No space left on device)으로 못 뜬 것
 - V2 일러스트 원본 PNG 커밋: `docs/design/v2-illustrations/` 가 이 PC 에 없다(저장소에는 변환본 webp 10장만). 원본 위치 확인 필요
