@@ -234,6 +234,24 @@ class AppidControllerWebTest {
             .andExpect(content().string(not(containsString("bi-android2"))))
     }
 
+    /** 상태가 use·unuse 가 아니면 배지에 저장된 값을 그대로 보인다(목록·상세). 값이 없을 때만 "미확인". */
+    @Test fun unknownStatusShowsStoredValueOnBadge() {
+        val odd = appid(3L).also { it.status = "hold" }
+        val none = appid(4L).also { it.status = null }
+        whenever(service.defaultSort()).thenReturn(Sort.by("idx"))
+        whenever(service.search(any(), any<Pageable>())).thenReturn(PageImpl(listOf(odd, none)))
+        whenever(companies.names()).thenReturn(mapOf(1L to "KB국민은행"))
+        val list = mvc.perform(get("/appids").with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().response.contentAsString
+        assertThat(list).contains("text-bg-secondary\">hold<").contains("text-bg-secondary\">미확인<")
+
+        whenever(service.get(3L)).thenReturn(odd)
+        whenever(companies.name(1L)).thenReturn("KB국민은행")
+        val detail = mvc.perform(get("/appids/3").with(user(companyUser)))
+            .andExpect(status().isOk()).andReturn().response.contentAsString
+        assertThat(detail).contains("text-bg-secondary\">hold<").doesNotContain("미확인")
+    }
+
     @Test fun postWithoutCsrfIsForbidden() {
         mvc.perform(post("/appids").with(user(companyUser)).param("appid", "x")).andExpect(status().isForbidden())
     }

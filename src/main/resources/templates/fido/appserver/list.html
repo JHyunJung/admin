@@ -45,9 +45,7 @@
             <td class="fa-mono" th:text="${r.memberId}"></td>
             <td class="fa-wrap" th:text="${r.note}"></td>
             <td>
-              <span class="badge text-nowrap"
-                    th:classappend="${r.type == 'use' ? 'text-bg-success' : (r.type == 'unuse' ? 'text-bg-danger' : 'text-bg-secondary')}"
-                    th:text="${r.type == 'use' ? '활성' : (r.type == 'unuse' ? '비활성' : '미확인')}"></span>
+              <span th:replace="~{fragments/use-badge :: badge(${r.type})}"></span>
             </td>
             <td class="text-nowrap fa-mono"
                 th:text="${r.createdtime == null ? '-' : #temporals.format(r.createdtime, 'yyyy-MM-dd HH:mm:ss')}"></td>
