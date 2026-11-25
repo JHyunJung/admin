@@ -34,6 +34,13 @@ class MonitoringViewTest {
         assertThat(MonitoringView.pct(null)).isEqualTo("-")
     }
 
+    @Test fun 큰_비율도_천_단위_쉼표를_붙인다() {
+        assertThat(MonitoringView.pct(1200.0)).isEqualTo("+1,200.0%")
+        assertThat(MonitoringView.pct(-1234.5)).isEqualTo("-1,234.5%")
+        assertThat(MonitoringView.points(1200.0)).isEqualTo("+1,200.0%p")
+        assertThat(MonitoringView.rate(1200.0)).isEqualTo("1,200.0%")
+    }
+
     @Test fun 변화는_부호와_퍼센트포인트를_붙인다() {
         assertThat(MonitoringView.points(-6.4)).isEqualTo("-6.4%p")
         assertThat(MonitoringView.points(2.0)).isEqualTo("+2.0%p")

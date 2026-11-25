@@ -31,7 +31,7 @@ object MonitoringView {
     /** 성공률 변화: 부호와 `%p`. */
     fun points(v: Double?): String = if (v == null) NONE else sign(v) + "%p"
 
-    fun rate(v: Double?): String = if (v == null) NONE else String.format(Locale.US, "%.1f%%", v)
+    fun rate(v: Double?): String = if (v == null) NONE else String.format(Locale.US, "%,.1f%%", v)
 
     /** 순증: 부호를 붙인 천 단위 숫자. */
     fun signed(v: Long): String = if (v > 0) "+" + comma(v) else comma(v)
@@ -41,7 +41,7 @@ object MonitoringView {
 
     private fun comma(v: Long): String = String.format(Locale.US, "%,d", v)
 
-    private fun sign(v: Double): String = (if (v > 0) "+" else "") + String.format(Locale.US, "%.1f", v)
+    private fun sign(v: Double): String = (if (v > 0) "+" else "") + String.format(Locale.US, "%,.1f", v)
 
     private fun missing(state: ColumnState): String = when (state) {
         ColumnState.FAILED -> "확인 불가"
