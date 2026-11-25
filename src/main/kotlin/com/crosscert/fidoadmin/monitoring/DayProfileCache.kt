@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component
  * `@Synchronized` 라 동시 요청이 와도 조회는 한 번이다.
  */
 @Component
-class DayProfileCache internal constructor(
+internal class DayProfileCache(
     private val reader: DayProfileReader,
     private val props: MonitoringProperties,
     private val clock: Clock,

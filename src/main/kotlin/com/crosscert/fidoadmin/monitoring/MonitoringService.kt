@@ -33,7 +33,7 @@ class MonitoringService internal constructor(
 ) {
 
     @Autowired
-    constructor(
+    internal constructor(
         cache: DayProfileCache,
         exceptions: ExceptionCountCache,
         stats: StatBoardReader,

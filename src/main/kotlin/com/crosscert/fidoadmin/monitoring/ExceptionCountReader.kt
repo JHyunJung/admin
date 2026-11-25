@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Component
 
-/** 고객사별 ERROR 예외 건수. [recent] 는 최근 60분, [today] 는 오늘 0시부터. */
+/** 고객사별 ERROR 예외 건수. [recent] 는 최근 60분 `[now-60분, now)`, [today] 는 오늘 0시부터 지금 분까지. */
 data class ErrorCounts(val recent: Long, val today: Long)
 
 /**
@@ -16,9 +16,12 @@ data class ErrorCounts(val recent: Long, val today: Long)
  * CREATEDTIME 은 `yyyy-MM-dd HH:mm:ss` 문자열(VARCHAR2)이라 범위 비교도 문자열로 한다. NULL 은 어느 범위에도
  * 들지 않는다. 한 번의 조회로 두 구간을 세려고 더 넓은 쪽(`min(오늘 0시, now-60분)`)부터 읽고
  * `SUM(CASE …)` 로 나눈다: 자정 직후에는 최근 60분이 어제까지 걸치기 때문이다.
+ *
+ * 최근 구간은 로그의 최근 구간과 같이 `[now-60분, now)` 다(now 는 분으로 내림, 지금 분은 빼서 60개 분).
+ * 오늘은 누계라 지금 분까지 넣는다.
  */
 @Component
-class ExceptionCountReader(dataSource: DataSource, props: MonitoringProperties) {
+internal class ExceptionCountReader(dataSource: DataSource, props: MonitoringProperties) {
 
     private val jdbc = NamedParameterJdbcTemplate(JdbcTemplate(dataSource).also {
         it.fetchSize = DayProfileReader.FETCH_SIZE
@@ -34,10 +37,11 @@ class ExceptionCountReader(dataSource: DataSource, props: MonitoringProperties) 
             "start" to format(minOf(dayStart, recentFrom)),
             "end" to format(minute.plusMinutes(1)),
             "recentFrom" to format(recentFrom),
+            "recentEnd" to format(minute),
             "dayStart" to format(dayStart),
         )
         val sql = "SELECT NVL(COMPANY_IDX, 0) AS CIDX," +
-            " SUM(CASE WHEN CREATEDTIME >= :recentFrom THEN 1 ELSE 0 END) AS RECENT," +
+            " SUM(CASE WHEN CREATEDTIME >= :recentFrom AND CREATEDTIME < :recentEnd THEN 1 ELSE 0 END) AS RECENT," +
             " SUM(CASE WHEN CREATEDTIME >= :dayStart THEN 1 ELSE 0 END) AS TODAY" +
             " FROM CCFA_EXCEPTIONS" +
             " WHERE E_LEVEL = 'ERROR' AND CREATEDTIME >= :start AND CREATEDTIME < :end" +

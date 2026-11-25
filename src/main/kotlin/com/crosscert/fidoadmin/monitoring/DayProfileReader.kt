@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
  * `HourlyAggregator` 처럼 자기 `JdbcTemplate` 을 쓰며, 여기서는 조회 제한 시간도 건다.
  */
 @Component
-class DayProfileReader(dataSource: DataSource, private val tables: FidoLogTable, props: MonitoringProperties) {
+internal class DayProfileReader(dataSource: DataSource, private val tables: FidoLogTable, props: MonitoringProperties) {
 
     private val jdbc: JdbcTemplate = JdbcTemplate(dataSource).also {
         it.fetchSize = FETCH_SIZE

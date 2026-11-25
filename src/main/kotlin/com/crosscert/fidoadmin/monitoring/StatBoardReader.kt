@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
  * 읽기만 하며, GROUPBY 의 시간 형식 규칙은 [StatisticsQueryService] 와 같다.
  */
 @Component
-class StatBoardReader(private val jdbc: NamedParameterJdbcTemplate) {
+internal class StatBoardReader(private val jdbc: NamedParameterJdbcTemplate) {
 
     /** 시간 형식(yyyy/MM/dd/HH) GROUPBY 의 최댓값. 없으면 null. `day` 같은 옛 값은 형식 필터로 뺀다. */
     fun latestGroupby(): String? = jdbc.queryForObject(

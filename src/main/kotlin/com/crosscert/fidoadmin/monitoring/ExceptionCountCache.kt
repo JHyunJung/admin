@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * `@Synchronized` 라 동시 요청이 와도 조회는 한 번이다.
  */
 @Component
-class ExceptionCountCache internal constructor(
+internal class ExceptionCountCache(
     private val reader: ExceptionCountReader,
     private val props: MonitoringProperties,
     private val clock: Clock,

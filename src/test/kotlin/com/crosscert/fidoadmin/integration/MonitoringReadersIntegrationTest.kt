@@ -22,9 +22,9 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("test")
 class MonitoringReadersIntegrationTest : OracleContainerSupport() {
 
-    @Autowired lateinit var reader: DayProfileReader
-    @Autowired lateinit var exceptions: ExceptionCountReader
-    @Autowired lateinit var stats: StatBoardReader
+    @Autowired internal lateinit var reader: DayProfileReader
+    @Autowired internal lateinit var exceptions: ExceptionCountReader
+    @Autowired internal lateinit var stats: StatBoardReader
     @Autowired lateinit var jdbc: JdbcTemplate
 
     @AfterEach
@@ -100,6 +100,19 @@ class MonitoringReadersIntegrationTest : OracleContainerSupport() {
 
         assertThat(m[1L]).isEqualTo(ErrorCounts(recent = 1, today = 2))
         assertThat(m[0L]).isEqualTo(ErrorCounts(recent = 2, today = 2))
+    }
+
+    @Test
+    fun 최근은_로그와_같은_60분이고_오늘은_지금_분까지_센다() {
+        // now 14:30 → 최근 [13:30, 14:30), 오늘 [00:00, 14:31)
+        ex(9311, 1, "ERROR", "2021-01-02 13:30:00") // 최근 구간의 첫 분: 최근에 든다
+        ex(9312, 1, "ERROR", "2021-01-02 13:29:59") // 그 직전: 최근이 아니고 오늘에만 든다
+        ex(9313, 1, "ERROR", "2021-01-02 14:30:20") // 지금 분: 최근이 아니고 오늘에는 든다
+        ex(9314, 1, "ERROR", "2021-01-02 14:31:00") // 다음 분: 어디에도 들지 않는다
+
+        val m = exceptions.read(LocalDateTime.of(2021, 1, 2, 14, 30, 40))
+
+        assertThat(m[1L]).isEqualTo(ErrorCounts(recent = 1, today = 3))
     }
 
     @Test
