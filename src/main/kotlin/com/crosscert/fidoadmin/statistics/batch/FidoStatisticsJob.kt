@@ -1,9 +1,7 @@
 package com.crosscert.fidoadmin.statistics.batch
 
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -21,9 +19,10 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(prefix = "fido-admin.statistics", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class FidoStatisticsJob(
     private val props: StatisticsBatchProperties,
-    private val aggregator: HourlyAggregator,
-    private val writer: StatisticsWriter,
+    aggregator: HourlyAggregator,
+    writer: StatisticsWriter,
 ) {
+    private val filler = StatisticsFiller(aggregator, writer)
     private val running = AtomicBoolean()
 
     @Scheduled(cron = "\${fido-admin.statistics.cron:0 15 * * * *}", zone = "Asia/Seoul")
@@ -47,35 +46,7 @@ class FidoStatisticsJob(
     private fun process(now: LocalDateTime): Int {
         val latest = StatHour.of(now).plusHours(-DELAY_HOURS.toLong())
         val oldest = latest.plusHours(-(props.catchUpHours - 1L))
-        val done = writer.loadedGroupbys(oldest, latest)
-
-        val missing = TreeMap<LocalDate, MutableList<StatHour>>()
-        var h = oldest
-        while (h <= latest) {
-            if (!done.contains(h.groupby())) missing.computeIfAbsent(h.date()) { ArrayList() }.add(h)
-            h = h.plusHours(1)
-        }
-        if (missing.isEmpty()) return 0
-
-        var total = 0
-        for ((date, hours) in missing) {
-            val byHour = try {
-                aggregator.aggregate(date, hours)
-            } catch (ex: RuntimeException) {
-                log.error("statistics: {} 로그 집계 실패", date, ex)
-                continue
-            }
-            for (hour in hours) {
-                val counts = byHour[hour]
-                if (counts == null || counts.isEmpty()) continue
-                try {
-                    total += writer.write(hour, counts)
-                } catch (ex: RuntimeException) {
-                    log.error("statistics: {} 적재 실패", hour.groupby(), ex)
-                }
-            }
-        }
-        return total
+        return filler.fill(oldest, latest).rows
     }
 
     companion object {
