@@ -56,7 +56,9 @@ internal class DayProfileCache(
             log.warn("monitoring: {} 조회 실패 — {}", tables.nameFor(date), e.javaClass.simpleName)
             null
         }
-        entries[date] = Entry(profile, now, today)
+        // 보관 기준은 조회가 끝난 때다. 시작 때로 잡으면 타임아웃이 보관 시간보다 길 때 저장하자마자 만료돼
+        // 기다리던 요청마다 다시 읽는다. 읽은 날은 시작 때의 날짜로 둔다 — 자정을 걸친 조회는 덜 찬 값이다.
+        entries[date] = Entry(profile, clock.instant(), today)
         return profile
     }
 

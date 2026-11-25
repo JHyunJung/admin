@@ -166,7 +166,7 @@ class MonitoringControllerWebTest {
         )
         val page = html(b)
         assertThat(cells(page, "공통(고객사 없음)"))
-            .containsExactly("공통(고객사 없음)", "", "-", "-", "-", "-", "확인 불가", "확인 불가")
+            .containsExactly("공통(고객사 없음)", "-", "-", "-", "-", "-", "확인 불가", "확인 불가")
         assertThat(cells(page, "A은행"))
             .containsExactly("A은행", "정상", "0", "412", "1,500", "13:02:00", "확인 불가", "확인 불가")
     }
@@ -178,7 +178,7 @@ class MonitoringControllerWebTest {
         )
         val page = html(b)
         assertThat(cells(page, "공통(고객사 없음)"))
-            .containsExactly("공통(고객사 없음)", "", "-", "-", "-", "-", "사용 안 함", "사용 안 함")
+            .containsExactly("공통(고객사 없음)", "-", "-", "-", "-", "-", "사용 안 함", "사용 안 함")
         assertThat(cells(page, "A은행").takeLast(2)).containsExactly("사용 안 함", "사용 안 함")
         assertThat(page).doesNotContain("확인 불가")
     }
@@ -226,9 +226,9 @@ class MonitoringControllerWebTest {
         val page = html(b)
         assertThat(Regex("집계된 통계가 없습니다.").findAll(page).count()).isEqualTo(1)
         assertThat(page).contains("표시할 통계가 없습니다.")
-        assertThat(page).contains("어제까지 (통계)")
+        assertThat(page).contains("최근 7일 (통계)")
         assertThat(cells(page, "A은행")).containsExactly("A은행", "-", "0", "-", "0", "-", "0", "0")
-        assertThat(cells(page, "공통(고객사 없음)")).containsExactly("공통(고객사 없음)", "", "-", "-", "-", "-", "0", "0")
+        assertThat(cells(page, "공통(고객사 없음)")).containsExactly("공통(고객사 없음)", "-", "-", "-", "-", "-", "0", "0")
         assertThat(page).contains("기준일 없음 — 끊김·감소를 판정하지 않습니다.")
     }
 

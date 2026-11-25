@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -71,6 +72,37 @@ class ExceptionCountCacheTest {
 
         clock.advance(Duration.ofSeconds(2))
         assertThat(cache.get(t1430)).isEqualTo(counts)
+        verify(reader, times(2)).read(any())
+    }
+
+    /** 보관 기준 시각은 조회가 끝난 때다. 시작 때로 잡으면 조회가 보관 시간보다 오래 걸릴 때 저장하자마자 만료된다. */
+    @Test
+    fun 조회가_보관_시간보다_오래_걸려도_끝난_뒤부터_보관한다() {
+        val short = MonitoringProperties(true, true, 20, 0.5, 10, 5.0, 100, 3, 5, 10)
+        val slow = ExceptionCountCache(reader, short, clock)
+        whenever(reader.read(any())).doAnswer {
+            clock.advance(Duration.ofSeconds(10))
+            throw QueryTimeoutException("timeout")
+        }
+
+        assertThat(slow.get(t1430)).isNull()
+        clock.advance(Duration.ofSeconds(4))
+        assertThat(slow.get(t1430)).isNull()
+
+        verify(reader, times(1)).read(any())
+    }
+
+    /** '예외 오늘'은 날짜에 묶인 값이라, 자정을 넘기면 보관 시간이 남아도 전날 누계를 주지 않는다. */
+    @Test
+    fun 자정을_넘기면_보관_시간_안이어도_다시_읽는다() {
+        val night = MutableClock(Instant.parse("2026-11-25T23:59:30Z"))
+        val c = ExceptionCountCache(reader, props, night)
+        whenever(reader.read(any())).doReturn(counts)
+
+        c.get(LocalDateTime.of(2026, 11, 25, 23, 59))
+        night.advance(Duration.ofSeconds(40))
+        c.get(LocalDateTime.of(2026, 11, 26, 0, 0))
+
         verify(reader, times(2)).read(any())
     }
 }

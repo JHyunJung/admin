@@ -36,6 +36,7 @@
             <td>공통(고객사 없음)</td>
             <td>
               <span class="badge text-bg-danger" th:if="${board.common?.spike == true}">예외 급증</span>
+              <th:block th:unless="${board.common?.spike == true}">-</th:block>
             </td>
             <td class="text-end">-</td><td class="text-end">-</td><td class="text-end">-</td>
             <td>-</td>
@@ -65,7 +66,8 @@
 
   <section class="fa-table-card" aria-labelledby="week-title">
     <div class="fa-section-head">
-      <h2 id="week-title" class="fa-section-title">어제까지 (통계)</h2>
+      <!--/* "어제까지"라고 쓰지 않는다. 기간은 통계가 다 찬 마지막 날에서 끝나 보통 그제까지다(오른쪽 부제에 날짜) */-->
+      <h2 id="week-title" class="fa-section-title">최근 7일 (통계)</h2>
       <span class="fa-section-note" th:if="${board.week != null}" th:text="|${board.week.from} ~ ${board.week.to}, 직전 7일 대비|"></span>
     </div>
     <div class="table-responsive">
