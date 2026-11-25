@@ -21,7 +21,6 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
-import org.springframework.dao.QueryTimeoutException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -37,7 +36,7 @@ class MonitoringServiceTest {
     private val yesterday = LocalDate.of(2026, 11, 24)
 
     private val cache = mock<DayProfileCache>()
-    private val exceptions = mock<ExceptionCountReader>()
+    private val exceptions = mock<ExceptionCountCache>()
     private val stats = mock<StatBoardReader>()
     private val companies = mock<CompanyLookup>()
     private val selected = SelectedTenant()
@@ -54,7 +53,7 @@ class MonitoringServiceTest {
             val d = it.getArgument<LocalDate>(0)
             if (days.containsKey(d)) days[d] else DayProfile.empty(d)
         }
-        whenever(exceptions.read(any())).thenReturn(emptyMap())
+        whenever(exceptions.get(any())).thenReturn(emptyMap())
         whenever(stats.latestGroupby()).thenReturn("2026/11/25/13")
         whenever(stats.totals(any(), any())).thenReturn(emptyMap())
     }
@@ -226,7 +225,7 @@ class MonitoringServiceTest {
     fun 로그_조회가_실패해도_예외와_통계는_나온다() {
         days[today] = null
         days[weekAgo] = day(weekAgo, log(1, "13:45", 412))
-        whenever(exceptions.read(any())).thenReturn(mapOf(1L to ErrorCounts(3, 7)))
+        whenever(exceptions.get(any())).thenReturn(mapOf(1L to ErrorCounts(3, 7)))
 
         val board = service().board()
 
@@ -250,7 +249,7 @@ class MonitoringServiceTest {
     fun 예외_조회가_실패하면_확인_불가이고_로그_판정은_한다() {
         days[today] = day(today, log(1, "10:00", 5), log(2, "14:00", 300))
         days[weekAgo] = day(weekAgo, log(1, "13:45", 412), log(2, "14:00", 301))
-        whenever(exceptions.read(any())).thenThrow(QueryTimeoutException("timeout"))
+        whenever(exceptions.get(any())).thenReturn(null) // 조회 실패
 
         val board = service().board()
 
@@ -266,7 +265,7 @@ class MonitoringServiceTest {
 
     @Test
     fun 목록에_없는_고객사의_예외는_공통으로_모은다() {
-        whenever(exceptions.read(any())).thenReturn(
+        whenever(exceptions.get(any())).thenReturn(
             mapOf(0L to ErrorCounts(2, 2), 999L to ErrorCounts(9, 9), 1L to ErrorCounts(3, 4)))
 
         val board = service().board()
@@ -276,7 +275,7 @@ class MonitoringServiceTest {
         assertThat(board.row("A은행").todayErrors).isEqualTo(4L)
         assertThat(board.row("B카드").recentErrors).isEqualTo(0L)
         assertThat(board.row("B카드").todayErrors).isEqualTo(0L)
-        verify(exceptions).read(LocalDateTime.of(2026, 11, 25, 14, 30))
+        verify(exceptions).get(LocalDateTime.of(2026, 11, 25, 14, 30))
     }
 
     @Test

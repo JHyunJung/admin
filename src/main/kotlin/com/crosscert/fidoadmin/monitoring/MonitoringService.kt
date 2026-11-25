@@ -8,9 +8,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.dao.DataAccessException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.stereotype.Service
 
@@ -25,7 +23,7 @@ import org.springframework.stereotype.Service
 @Service
 class MonitoringService internal constructor(
     private val cache: DayProfileCache,
-    private val exceptions: ExceptionCountReader,
+    private val exceptions: ExceptionCountCache,
     private val stats: StatBoardReader,
     private val companies: CompanyLookup,
     private val tenant: TenantContext,
@@ -36,7 +34,7 @@ class MonitoringService internal constructor(
     @Autowired
     constructor(
         cache: DayProfileCache,
-        exceptions: ExceptionCountReader,
+        exceptions: ExceptionCountCache,
         stats: StatBoardReader,
         companies: CompanyLookup,
         tenant: TenantContext,
@@ -124,15 +122,11 @@ class MonitoringService internal constructor(
         return Logs(ColumnState.OK, profile, baseline)
     }
 
-    /** 예외 맵. 꺼져 있거나 실패하면 null 이다. */
+    /** 예외 맵. 꺼져 있거나 실패하면 null 이다. 꺼져 있으면 보관소도 부르지 않는다(조회가 없다). */
     private fun readExceptions(now: LocalDateTime): Pair<ColumnState, Map<Long, ErrorCounts>?> {
         if (!props.exceptionsEnabled) return ColumnState.DISABLED to null
-        return try {
-            ColumnState.OK to exceptions.read(now)
-        } catch (e: DataAccessException) {
-            log.warn("monitoring: 예외 건수 조회 실패 — {}", e.javaClass.simpleName)
-            ColumnState.FAILED to null
-        }
+        val counts = exceptions.get(now) ?: return ColumnState.FAILED to null
+        return ColumnState.OK to counts
     }
 
     /**
@@ -192,8 +186,6 @@ class MonitoringService internal constructor(
     }
 
     private companion object {
-        val log = LoggerFactory.getLogger(MonitoringService::class.java)
-
         const val RECENT_MINUTES = 60L
 
         /** 기준일 후보(며칠 전). 같은 요일을 먼저 본다. */

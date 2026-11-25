@@ -87,13 +87,32 @@ class DayProfileCacheTest {
     }
 
     @Test
-    fun 실패는_null이고_보관하지_않는다() {
+    fun 실패는_null이고_보관_시간_동안은_다시_읽지_않는다() {
+        // 제한 시간에 걸리는 큰 테이블을 화면을 열 때마다 다시 훑지 않게 한다
         whenever(reader.read(today)).doThrow(QueryTimeoutException("timeout"))
 
         assertThat(cache.get(today)).isNull()
+        clock.advance(Duration.ofSeconds(59))
         assertThat(cache.get(today)).isNull()
+        verify(reader, times(1)).read(today)
 
+        clock.advance(Duration.ofSeconds(2))    // 보관 시간이 지나면 다시 시도한다
+        assertThat(cache.get(today)).isNull()
         verify(reader, times(2)).read(today)
+    }
+
+    @Test
+    fun 지난_날짜의_실패도_보관_시간이_지나면_다시_읽는다() {
+        val yesterday = today.minusDays(1)
+        whenever(reader.read(yesterday)).doThrow(QueryTimeoutException("timeout")).thenReturn(profile(yesterday))
+
+        assertThat(cache.get(yesterday)).isNull()
+        assertThat(cache.get(yesterday)).isNull()
+        verify(reader, times(1)).read(yesterday)
+
+        clock.advance(Duration.ofSeconds(61))
+        assertThat(cache.get(yesterday)).isNotNull
+        verify(reader, times(2)).read(yesterday)
     }
 
     @Test
