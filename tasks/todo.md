@@ -6,6 +6,14 @@
 - 진단표(번호의 출처): `.superpowers/refactor-harden/20261110-1600/diagnosis.md`
 
 ## 남은 일
+- [ ] SUPER 관제 화면(`/monitoring`) — 설계 `docs/superpowers/specs/2026-11-25-super-monitoring-design.md`, 계획 `docs/superpowers/plans/2026-11-25-super-monitoring.md` (2026-11-25 계획 작성, 구현 전)
+  - [ ] 1 설정·상태 판정·주간 계산
+  - [ ] 2 DayProfile
+  - [ ] 3 날짜 테이블 조회와 보관
+  - [ ] 4 예외 건수·통계 조회
+  - [ ] 5 MonitoringService
+  - [ ] 6 화면·메뉴·접근 제어
+  - [ ] 7 전체 검증과 기록
 - [ ] 운영 확인(88): 운영·QA 서버의 `scripts/fido-admin-<프로파일>.env` 에 `FIDO_ADMIN_EXTERNAL_ALLOWED_CIDRS` 를 넣는다. 76 수정으로 이제 실제로 동작하며, 비어 있으면 `/api/svc`·`/external` 이 누구에게나 열려 있다
 
 ## 보류 (사용자 결정 2026-11-13)
