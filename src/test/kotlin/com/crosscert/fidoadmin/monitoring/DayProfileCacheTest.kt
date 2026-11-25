@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.doThrow
+import org.mockito.kotlin.doAnswer
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -155,5 +156,22 @@ class DayProfileCacheTest {
         clock.advance(Duration.ofDays(1))       // 9일 전: 버려지고 다시 읽는다
         cache.get(d)
         verify(reader, times(2)).read(d)
+    }
+
+    /** 보관 기준 시각은 조회가 끝난 때다. 시작 때로 잡으면 타임아웃이 보관 시간보다 길 때 실패를 기억하지 못한다. */
+    @Test
+    fun 조회가_보관_시간보다_오래_걸려도_실패를_끝난_뒤부터_기억한다() {
+        val short = MonitoringProperties(true, true, 20, 0.5, 10, 5.0, 100, 3, 5, 10)
+        val slow = DayProfileCache(reader, short, clock, tables)
+        whenever(reader.read(today)).doAnswer {
+            clock.advance(Duration.ofSeconds(10))
+            throw QueryTimeoutException("timeout")
+        }
+
+        assertThat(slow.get(today)).isNull()
+        clock.advance(Duration.ofSeconds(4))
+        assertThat(slow.get(today)).isNull()
+
+        verify(reader, times(1)).read(today)
     }
 }
