@@ -26,6 +26,11 @@ class MonitoringReadersIntegrationTest : OracleContainerSupport() {
         jdbc.update("DELETE FROM FIDO_LOGS_20210101 WHERE IDX BETWEEN 9300 AND 9399")
     }
 
+    private fun logWithoutTime(idx: Int, company: Long) {
+        jdbc.update("INSERT INTO FIDO_LOGS_20210101 (IDX, COMPANY_IDX, SERIALCODE, SERVICENAME, JSONDATA, CREATEDTIME) " +
+            "VALUES (?, ?, 'S', 'svc', 'x', NULL)", idx, company)
+    }
+
     private fun log(idx: Int, company: Long, time: String) {
         jdbc.update("INSERT INTO FIDO_LOGS_20210101 (IDX, COMPANY_IDX, SERIALCODE, SERVICENAME, JSONDATA, CREATEDTIME) " +
             "VALUES (?, ?, 'S', 'svc', 'x', TIMESTAMP '" + time + "')", idx, company)
@@ -52,5 +57,15 @@ class MonitoringReadersIntegrationTest : OracleContainerSupport() {
     @Test
     fun 테이블이_없는_날짜는_null() {
         assertThat(reader.read(LocalDate.of(2019, 1, 1))).isNull()
+    }
+
+    @Test
+    fun 생성시각이_없는_행은_세지_않고_조회도_깨지_않는다() {
+        log(9311, 1, "2021-01-01 10:00:00")
+        logWithoutTime(9312, 1) // CREATEDTIME 은 NULL 이 허용된다. 어느 분에도 넣을 수 없다
+
+        val p = reader.read(LocalDate.of(2021, 1, 1))!!
+
+        assertThat(p.total(1)).isEqualTo(1)
     }
 }

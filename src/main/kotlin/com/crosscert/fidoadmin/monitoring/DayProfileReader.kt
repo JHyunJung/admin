@@ -30,7 +30,8 @@ class DayProfileReader(dataSource: DataSource, private val tables: FidoLogTable,
         // 테이블 이름은 FidoLogTable.nameFor 가 LocalDate 로만 만든다(신뢰 경계). 나머지는 상수다.
         val sql = "SELECT COMPANY_IDX, TO_CHAR(CREATEDTIME,'HH24:MI') AS HM, COUNT(*) AS N, MAX(CREATEDTIME) AS LAST_AT" +
             " FROM " + table +
-            " WHERE COMPANY_IDX IN (SELECT IDX FROM CCFA_COMPANY)" +
+            // CREATEDTIME 은 NULL 이 허용된다. 분을 알 수 없는 행은 어느 구간에도 넣을 수 없어 세지 않는다.
+            " WHERE CREATEDTIME IS NOT NULL AND COMPANY_IDX IN (SELECT IDX FROM CCFA_COMPANY)" +
             " GROUP BY COMPANY_IDX, TO_CHAR(CREATEDTIME,'HH24:MI')"
         val builder = DayProfile.Builder(date)
         jdbc.query(sql, RowCallbackHandler { rs ->

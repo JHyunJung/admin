@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.monitoring
 
+import com.crosscert.fidoadmin.log.service.FidoLogTable
 import com.crosscert.fidoadmin.statistics.batch.FidoStatisticsJob
 import java.time.Clock
 import java.time.Instant
@@ -22,11 +23,12 @@ class DayProfileCache internal constructor(
     private val reader: DayProfileReader,
     private val props: MonitoringProperties,
     private val clock: Clock,
+    private val tables: FidoLogTable,
 ) {
 
     @Autowired
-    constructor(reader: DayProfileReader, props: MonitoringProperties) :
-        this(reader, props, Clock.system(FidoStatisticsJob.ZONE))
+    constructor(reader: DayProfileReader, props: MonitoringProperties, tables: FidoLogTable) :
+        this(reader, props, Clock.system(FidoStatisticsJob.ZONE), tables)
 
     /** @param readOn 읽은 날(오늘). 날짜가 이보다 앞서야 그날이 끝난 뒤에 읽은 완전한 값이다 */
     private class Entry(val profile: DayProfile, val readAt: Instant, val readOn: LocalDate)
@@ -41,20 +43,21 @@ class DayProfileCache internal constructor(
         entries.keys.removeIf { it.isBefore(today.minusDays(RETAIN_DAYS)) }
 
         val cached = entries[date]
-        if (cached != null && usable(cached, date, now)) return cached.profile
+        if (cached != null && usable(cached, date, today, now)) return cached.profile
 
         val profile = try {
             reader.read(date) ?: DayProfile.empty(date)
         } catch (e: DataAccessException) {
-            log.warn("monitoring: {} 날짜 테이블 조회 실패 — {}", date, e.javaClass.simpleName)
+            log.warn("monitoring: {} 조회 실패 — {}", tables.nameFor(date), e.javaClass.simpleName)
             return null
         }
         entries[date] = Entry(profile, now, today)
         return profile
     }
 
-    private fun usable(e: Entry, date: LocalDate, now: Instant): Boolean =
-        date.isBefore(e.readOn) || now.isBefore(e.readAt.plusSeconds(props.cacheSeconds))
+    /** 그날이 끝난 뒤 읽은 값이거나, 읽은 날이 아직 오늘이면서 보관 시간 안일 때만 쓴다. 자정을 넘기면 보관 시간이 남아도 다시 읽는다. */
+    private fun usable(e: Entry, date: LocalDate, today: LocalDate, now: Instant): Boolean =
+        date.isBefore(e.readOn) || (e.readOn == today && now.isBefore(e.readAt.plusSeconds(props.cacheSeconds)))
 
     companion object {
         private val log = LoggerFactory.getLogger(DayProfileCache::class.java)

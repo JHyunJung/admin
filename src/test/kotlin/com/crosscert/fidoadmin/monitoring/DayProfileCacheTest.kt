@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.monitoring
 
+import com.crosscert.fidoadmin.log.service.FidoLogTable
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -33,7 +34,8 @@ class DayProfileCacheTest {
     private val clock = MutableClock(Instant.parse("2026-11-25T12:00:00Z"))
     private val reader = mock<DayProfileReader>()
     private val props = MonitoringProperties(true, true, 20, 0.5, 10, 5.0, 100, 3, 60, 10)
-    private val cache = DayProfileCache(reader, props, clock)
+    private val tables = mock<FidoLogTable> { on { nameFor(any()) } doReturn "FIDO_LOGS_TEST" }
+    private val cache = DayProfileCache(reader, props, clock, tables)
 
     private fun profile(date: LocalDate) = DayProfile.empty(date)
 
@@ -104,6 +106,19 @@ class DayProfileCacheTest {
         cache.get(today)                        // 그 뒤로는 다시 읽지 않는다
         clock.advance(Duration.ofDays(1))
         cache.get(today)
+
+        verify(reader, times(2)).read(today)
+    }
+
+    @Test
+    fun 자정을_넘기면_보관_시간_안이어도_당일_보관본을_다시_읽는다() {
+        clock.now = Instant.parse("2026-11-25T23:59:50Z")
+        whenever(reader.read(any())).thenAnswer { profile(it.getArgument(0)) }
+
+        cache.get(today)
+        clock.advance(Duration.ofSeconds(20))   // 00:00:10, 보관 시간(60초) 안이지만 날짜가 바뀌었다
+        cache.get(today)
+        cache.get(today)                        // 그 뒤로는 다시 읽지 않는다
 
         verify(reader, times(2)).read(today)
     }
