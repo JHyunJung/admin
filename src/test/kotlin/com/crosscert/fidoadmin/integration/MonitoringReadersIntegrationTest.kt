@@ -1,6 +1,10 @@
 package com.crosscert.fidoadmin.integration
 
 import com.crosscert.fidoadmin.monitoring.DayProfileReader
+import com.crosscert.fidoadmin.monitoring.ErrorCounts
+import com.crosscert.fidoadmin.monitoring.ExceptionCountReader
+import com.crosscert.fidoadmin.monitoring.StatBoardReader
+import com.crosscert.fidoadmin.monitoring.WeekTotals
 import java.time.LocalDate
 import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
@@ -19,11 +23,15 @@ import org.springframework.test.context.ActiveProfiles
 class MonitoringReadersIntegrationTest : OracleContainerSupport() {
 
     @Autowired lateinit var reader: DayProfileReader
+    @Autowired lateinit var exceptions: ExceptionCountReader
+    @Autowired lateinit var stats: StatBoardReader
     @Autowired lateinit var jdbc: JdbcTemplate
 
     @AfterEach
     fun clear() {
         jdbc.update("DELETE FROM FIDO_LOGS_20210101 WHERE IDX BETWEEN 9300 AND 9399")
+        jdbc.update("DELETE FROM CCFA_EXCEPTIONS WHERE IDX BETWEEN 9300 AND 9399")
+        jdbc.update("DELETE FROM FIDO_STATISTICS WHERE SERVICE_NAME LIKE 'montest%'")
     }
 
     private fun logWithoutTime(idx: Int, company: Long) {
@@ -67,5 +75,73 @@ class MonitoringReadersIntegrationTest : OracleContainerSupport() {
         val p = reader.read(LocalDate.of(2021, 1, 1))!!
 
         assertThat(p.total(1)).isEqualTo(1)
+    }
+
+    private fun ex(idx: Int, company: Long?, level: String, time: String) {
+        jdbc.update("INSERT INTO CCFA_EXCEPTIONS (IDX, COMPANY_IDX, E_TYPE, E_LEVEL, CREATEDTIME) VALUES (?, ?, 'T', ?, ?)",
+            idx, company, level, time)
+    }
+
+    /** 서비스 이름에는 항상 montest- 를 붙인다. 정리와 다른 테스트 행 보호를 위해서다. */
+    private fun stat(company: Long, service: String, groupby: String,
+                     authS: Long = 0, authF: Long = 0, regS: Long = 0, regF: Long = 0, deregS: Long = 0) {
+        jdbc.update("INSERT INTO FIDO_STATISTICS (COMPANY_IDX, SERVICE_NAME, GROUPBY, AUTH_S, AUTH_F, REG_S, REG_F, DEREG_S) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", company, "montest-$service", groupby, authS, authF, regS, regF, deregS)
+    }
+
+    @Test
+    fun 예외는_ERROR만_최근과_오늘로_센다() {
+        val now = LocalDateTime.of(2021, 1, 2, 14, 30)
+        ex(9301, 1, "ERROR", "2021-01-02 13:45:00"); ex(9302, 1, "ERROR", "2021-01-02 09:00:00")
+        ex(9303, 1, "WARN", "2021-01-02 14:00:00"); ex(9304, 1, "ERROR", "2021-01-01 23:00:00")
+        ex(9305, 0, "ERROR", "2021-01-02 14:29:00"); ex(9306, null, "ERROR", "2021-01-02 14:10:00")
+
+        val m = exceptions.read(now)
+
+        assertThat(m[1L]).isEqualTo(ErrorCounts(recent = 1, today = 2))
+        assertThat(m[0L]).isEqualTo(ErrorCounts(recent = 2, today = 2))
+    }
+
+    @Test
+    fun 자정_직후에는_전날_꼬리가_최근에_들어간다() {
+        ex(9307, 1, "ERROR", "2021-01-01 23:40:00"); ex(9308, 1, "ERROR", "2021-01-02 00:05:00")
+
+        val m = exceptions.read(LocalDateTime.of(2021, 1, 2, 0, 20))
+
+        assertThat(m[1L]).isEqualTo(ErrorCounts(recent = 2, today = 1))
+    }
+
+    @Test
+    fun 생성시각이_없는_예외는_세지_않는다() {
+        ex(9309, 1, "ERROR", "2021-01-02 10:00:00")
+        jdbc.update("INSERT INTO CCFA_EXCEPTIONS (IDX, COMPANY_IDX, E_TYPE, E_LEVEL, CREATEDTIME) VALUES (9310, 1, 'T', 'ERROR', NULL)")
+
+        val m = exceptions.read(LocalDateTime.of(2021, 1, 2, 14, 30))
+
+        assertThat(m[1L]).isEqualTo(ErrorCounts(recent = 0, today = 1))
+    }
+
+    @Test
+    fun 최신_GROUPBY는_시간_형식만_본다() {
+        stat(1, "kbstar", "2021/01/05/13", authS = 1); stat(1, "kbstar", "day", authS = 1)
+
+        val latest = stats.latestGroupby()
+
+        // 공용 DB 에 더 새로운 통계가 있을 수 있어 하한과 형식만 본다
+        assertThat(latest).isNotEqualTo("day")
+        assertThat(latest).matches("\\d{4}/\\d{2}/\\d{2}/\\d{2}")
+        assertThat(latest).isGreaterThanOrEqualTo("2021/01/05/13")
+    }
+
+    @Test
+    fun 기간_합계는_양끝_날짜를_포함하고_서비스를_합친다() {
+        stat(1, "kbstar", "2021/01/03/00", authS = 10, authF = 1); stat(1, "kbpay", "2021/01/04/23", authS = 5, regS = 2, deregS = 1)
+        stat(1, "kbstar", "2021/01/05/00", authS = 100) // 범위 밖
+        stat(999999, "x", "2021/01/03/10", authS = 7) // 없는 고객사
+
+        val m = stats.totals(LocalDate.of(2021, 1, 3), LocalDate.of(2021, 1, 4))
+
+        assertThat(m[1L]).isEqualTo(WeekTotals(15, 1, 2, 0, 1))
+        assertThat(m).doesNotContainKey(999999L)
     }
 }
