@@ -193,6 +193,22 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
 > `~/.docker-java.properties` 에 `api.version=1.41` 을 넣는다.
 > Docker Desktop 의 최소 API 버전과 docker-java 기본값이 어긋나는 경우가 있다.
 
+### 폐쇄망 빌드
+
+Maven Central 을 프록시하는 Nexus 만 있으면 빌드된다. 플러그인(Spring Boot·Kotlin·dependency-management)도 Maven Central 에 있어 Gradle Plugin Portal 은 필요 없다.
+
+`~/.gradle/gradle.properties` 에 저장소 주소를 넣는다(한 번 실행할 때는 `-PmavenRepoUrl=...`).
+
+```
+mavenRepoUrl=https://<nexus>/repository/maven-central/
+```
+
+속성이 있으면 플러그인과 라이브러리를 그 저장소에서만 받고, 없으면 Maven Central·Plugin Portal 을 쓴다.
+PC 에 저장소를 바꿔 주는 Gradle init 스크립트가 이미 있으면 이 속성은 필요 없다.
+
+Docker 가 없는 폐쇄망 PC 에서는 Oracle 을 쓰는 테스트(통합 13개 클래스 + 로컬 Oracle 5개 클래스)가 건너뛰어지고 나머지만 돈다.
+DB 를 거치는 검증은 Docker 가 있는 환경에서 따로 돌려야 한다.
+
 ## 개발 규칙
 
 ### 공통

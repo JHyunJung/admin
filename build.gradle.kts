@@ -23,7 +23,18 @@ allOpen {
     annotation("jakarta.persistence.Embeddable")
 }
 
-repositories { mavenCentral() }
+// 폐쇄망 빌드: mavenRepoUrl 속성이 있으면 그 저장소(Nexus 의 Maven Central 프록시)만 쓴다. settings.gradle.kts 참고.
+repositories {
+    val mavenRepoUrl = providers.gradleProperty("mavenRepoUrl").orNull
+    if (mavenRepoUrl != null) {
+        maven {
+            url = uri(mavenRepoUrl)
+            isAllowInsecureProtocol = mavenRepoUrl.startsWith("http://")
+        }
+    } else {
+        mavenCentral()
+    }
+}
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
