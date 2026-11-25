@@ -37,6 +37,9 @@ data class MonitoringProperties(
         require(minBaseline >= 1) { "fido-admin.monitoring.min-baseline 은 1 이상이어야 합니다" }
         require(dropRatio > 0.0 && dropRatio < 1.0) { "fido-admin.monitoring.drop-ratio 는 0 초과 1 미만이어야 합니다" }
         require(exceptionThreshold >= 1) { "fido-admin.monitoring.exception-threshold 는 1 이상이어야 합니다" }
+        // 0 이하면 성공률이 그대로여도 모든 줄이 하락이 된다
+        require(successDropPoints > 0.0) { "fido-admin.monitoring.success-drop-points 는 0 보다 커야 합니다" }
+        require(minAuth >= 0) { "fido-admin.monitoring.min-auth 는 0 이상이어야 합니다" }
         require(staleHours >= 0) { "fido-admin.monitoring.stale-hours 는 0 이상이어야 합니다" }
         require(cacheSeconds >= 1) { "fido-admin.monitoring.cache-seconds 는 1 이상이어야 합니다" }
         require(queryTimeoutSeconds >= 1) { "fido-admin.monitoring.query-timeout-seconds 는 1 이상이어야 합니다" }

@@ -52,6 +52,18 @@ class DayProfileTest {
         assertThat(b.build().total(1)).isEqualTo(8)
     }
 
+    @Test fun 분이_순서_없이_와도_마지막_로그는_가장_늦은_시각이다() {
+        // GROUP BY 는 분 순서를 보장하지 않는다(해시 집계). 늦은 분이 먼저 와도 마지막 로그가 바뀌면 안 된다
+        val b = DayProfile.Builder(d)
+            .add(1, 15 * 60, 7, d.atTime(15, 0, 9))
+            .add(1, 9 * 60, 2, d.atTime(9, 0, 50))
+            .add(1, 14 * 60 + 59, 1, d.atTime(14, 59, 59))
+            .build()
+
+        assertThat(b.lastLog(1)).isEqualTo(d.atTime(15, 0, 9))
+        assertThat(b.total(1)).isEqualTo(10)
+    }
+
     @Test fun 빈_프로필은_모두_0이다() {
         assertThat(DayProfile.empty(d).total(1)).isEqualTo(0)
         assertThat(DayProfile.empty(d).anyBetween(d.atStartOfDay(), d.plusDays(1).atStartOfDay())).isFalse()

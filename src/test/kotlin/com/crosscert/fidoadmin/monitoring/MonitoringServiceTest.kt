@@ -488,6 +488,18 @@ class MonitoringServiceTest {
     }
 
     @Test
+    fun 직전_주에만_합계가_있는_고객사도_줄이_있고_이번_주는_0이다() {
+        whenever(stats.totals(LocalDate.of(2026, 11, 11), LocalDate.of(2026, 11, 17)))
+            .thenReturn(mapOf(2L to week(900, 100)))
+
+        val rows = service().board().week!!.rows
+
+        assertThat(rows).containsExactly(WeekRow(2, "B카드", WeekTotals(0, 0, 0, 0, 0), week(900, 100), false))
+        assertThat(rows[0].cur.authChangePct(rows[0].prev)).isEqualTo(-100.0)
+        assertThat(rows[0].cur.authRatePointChange(rows[0].prev)).isNull()
+    }
+
+    @Test
     fun 하락한_고객사가_주간_표_맨_위에_온다() {
         // A은행: 표본이 적어(50 < 100) 하락이 아니지만 변화는 -20%p. B카드: 90 → 80%, 하락
         whenever(stats.totals(LocalDate.of(2026, 11, 18), LocalDate.of(2026, 11, 24)))
