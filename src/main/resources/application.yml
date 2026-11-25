@@ -81,3 +81,14 @@ fido-admin:
     # 최근 몇 시간 안의 빠진 구간을 채울지. 멈춘 구간을 한 번에 채울 때만 잠시 올린다.
     #   FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS
     catch-up-hours: ${FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS:72}
+  monitoring:
+    # SUPER 관제 화면. 아래 세 값만 환경변수로 연다. 나머지(min-baseline·drop-ratio 등)는 기본값을 쓴다.
+    # 오늘의 FIDO_LOGS 를 읽어 실시간 상태를 낼지. 끄면 화면에 "사용 안 함"으로 보인다.
+    #   FIDO_ADMIN_MONITORING_LIVE_LOGS_ENABLED
+    live-logs-enabled: ${FIDO_ADMIN_MONITORING_LIVE_LOGS_ENABLED:true}
+    # 예외 로그를 읽을지.
+    #   FIDO_ADMIN_MONITORING_EXCEPTIONS_ENABLED
+    exceptions-enabled: ${FIDO_ADMIN_MONITORING_EXCEPTIONS_ENABLED:true}
+    # 조회 결과 캐시 시간(초).
+    #   FIDO_ADMIN_MONITORING_CACHE_SECONDS
+    cache-seconds: ${FIDO_ADMIN_MONITORING_CACHE_SECONDS:60}
