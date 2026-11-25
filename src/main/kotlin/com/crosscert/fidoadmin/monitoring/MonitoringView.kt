@@ -16,6 +16,7 @@ import java.util.Locale
 object MonitoringView {
 
     private const val NONE = "-"
+    private const val NOT_JUDGED = "끊김·감소를 판정하지 않습니다."
     private val CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     fun count(v: Long?, state: ColumnState): String = if (v == null) missing(state) else comma(v)
@@ -38,6 +39,26 @@ object MonitoringView {
 
     /** `2026-11-24 (화)` */
     fun day(d: LocalDate): String = "$d (${d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.KOREAN)})"
+
+    /**
+     * 상태 칸을 배지 없이 글자로만 쓸 때의 글자. null 이면 상태 배지를 쓴다.
+     * 로그가 없는 줄(NONE)은 배지가 아니라 "-" 다. 로그 열을 꺼서 모르는 상태는 고장이 아니므로
+     * "확인 불가" 배지 대신 "사용 안 함" 이다 — "확인 불가" 배지는 실제로 읽지 못했을 때만 쓴다.
+     */
+    fun plainStatus(status: LiveStatus, logs: ColumnState): String? = when {
+        status == LiveStatus.NONE -> NONE
+        status == LiveStatus.UNKNOWN && logs == ColumnState.DISABLED -> missing(ColumnState.DISABLED)
+        else -> null
+    }
+
+    /** 표 아래 기준일 문구. 기준일이 없을 때는 찾아보고 없었는지, 찾을 수 없었는지를 가른다. */
+    fun baselineNote(logs: ColumnState, baseline: ColumnState, date: LocalDate?): String = when {
+        logs == ColumnState.DISABLED -> "로그 조회 사용 안 함 — $NOT_JUDGED"
+        logs == ColumnState.FAILED -> "로그 확인 불가 — $NOT_JUDGED"
+        date != null -> "기준일: ${day(date)}"
+        baseline == ColumnState.FAILED -> "기준일 확인 불가 — $NOT_JUDGED"
+        else -> "기준일 없음 — $NOT_JUDGED"
+    }
 
     private fun comma(v: Long): String = String.format(Locale.US, "%,d", v)
 

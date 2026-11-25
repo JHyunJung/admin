@@ -7,6 +7,7 @@ import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.access.AccessDeniedException
@@ -41,8 +42,23 @@ class MonitoringService internal constructor(
         props: MonitoringProperties,
     ) : this(cache, exceptions, stats, companies, tenant, props, Clock.system(FidoStatisticsJob.ZONE))
 
-    /** 판정 한 번에 쓰는 로그 값. [today] 가 null 이면 로그 열이 OK 가 아니다. */
-    private class Logs(val state: ColumnState, val today: DayProfile?, val baseline: DayProfile?)
+    /**
+     * 판정 한 번에 쓰는 로그 값. 값이 null 이면 옆의 상태가 이유다.
+     * [today] 가 null 이면 로그 열이 OK 가 아니고, 그때는 두 구간도 같은 상태다.
+     */
+    private class Logs(
+        val state: ColumnState,
+        val today: DayProfile?,
+        val recentState: ColumnState,
+        val recent: Window?,
+        val baselineState: ColumnState,
+        val baseline: Window?,
+        val baselineDate: LocalDate?,
+    ) {
+        companion object {
+            fun unread(state: ColumnState) = Logs(state, null, state, null, state, null, null)
+        }
+    }
 
     /** SUPER 가 아니면 AccessDeniedException. */
     fun board(): MonitoringBoard {
@@ -55,20 +71,13 @@ class MonitoringService internal constructor(
             .filter { it.idx != null && it.idx != 0L }
             .associate { it.idx!! to (it.companyName ?: "#${it.idx}") }
 
-        val logs = readLogs(now.toLocalDate())
+        val logs = readLogs(recentFrom, now)
         val (exState, errors) = readExceptions(now)
 
         val today = logs.today
-        val recentWindow = today?.let { window(it, recentFrom, now) }
-        // 기준 구간은 최근 구간을 기준일까지 같은 일수만큼 뒤로 민 것이다
-        val baselineWindow = logs.baseline?.let { b ->
-            val days = ChronoUnit.DAYS.between(b.date, now.toLocalDate())
-            window(b, recentFrom.minusDays(days), now.minusDays(days))
-        }
-
         val live = names.map { (idx, name) ->
-            val recent = recentWindow?.count(idx)
-            val baseline = baselineWindow?.count(idx)
+            val recent = logs.recent?.count(idx)
+            val baseline = logs.baseline?.count(idx)
             val todayTotal = today?.total(idx)
             val err = errors?.let { it[idx] ?: ErrorCounts(0, 0) }
             LiveRow(
@@ -93,34 +102,66 @@ class MonitoringService internal constructor(
             CommonRow(recent, others.sumOf { it.today }, recent >= props.exceptionThreshold)
         }
 
-        val latest = stats.latestGroupby()?.let { LocalDateTime.parse(it, GROUPBY) }
+        // GROUPBY 형식 필터를 지나도 13월 같은 값은 해석되지 않는다. 그 한 줄 때문에 화면 전체가 깨지지 않게 한다
+        val raw = stats.latestGroupby()
+        val latest = raw?.let { parseGroupby(it) }
+        val unparsed = raw != null && latest == null
 
         return MonitoringBoard(
             asOf = now,
             cacheSeconds = props.cacheSeconds,
             logs = logs.state,
+            recentLogs = logs.recentState,
+            baselineLogs = logs.baselineState,
             exceptions = exState,
-            baselineDate = logs.baseline?.date,
+            baselineDate = logs.baselineDate,
             common = common,
             live = live,
-            staleNotice = staleNotice(latest, now, logs.state),
+            staleNotice = if (unparsed) "통계의 최신 집계 시각을 해석하지 못했습니다: $raw" else staleNotice(latest, now, logs.state),
             // 최신 통계 날짜는 아직 다 차지 않았을 수 있으니 그 전날에서 끝낸다
             week = latest?.let { weekTable(it.toLocalDate().minusDays(1), names) },
         )
     }
 
+    private fun parseGroupby(v: String): LocalDateTime? =
+        try {
+            LocalDateTime.parse(v, GROUPBY)
+        } catch (e: DateTimeParseException) {
+            null
+        }
+
     /**
-     * 당일 프로파일과 기준일 프로파일. 기준일은 7일 전에 로그가 있으면 그날, 없으면 전일이다.
-     * "없다"는 테이블 없음과 조회 실패를 모두 포함한다. 당일을 못 읽으면 기준일도 읽지 않는다(쓸 값이 없다).
+     * 당일 프로파일, 최근 구간 `[recentFrom, now)`, 기준 구간. 당일을 못 읽으면 나머지도 읽지 않는다(쓸 값이 없다).
+     *
+     * 기준 구간은 최근 구간을 기준일 후보(7일 전, 다음 전일)까지 같은 일수만큼 뒤로 민 것이다. 후보는 그 구간이
+     * 걸친 날짜(자정 직후면 전날까지)를 모두 읽었고 그중 하루라도 로그가 있을 때 쓴다 — 기준일 자체가 비어도
+     * 자정 전 꼬리에 로그가 있으면 끊김을 판정할 수 있다. 읽지 못한 날짜가 있는 후보는 건너뛰고,
+     * 쓸 후보가 없을 때 그런 후보가 있었으면 기준은 "확인 불가", 없었으면 "기준일 없음" 이다.
      */
-    private fun readLogs(today: LocalDate): Logs {
-        if (!props.liveLogsEnabled) return Logs(ColumnState.DISABLED, null, null)
-        val profile = cache.get(today) ?: return Logs(ColumnState.FAILED, null, null)
-        val baseline = BASELINE_DAYS.asSequence()
-            .mapNotNull { cache.get(today.minusDays(it)) }
-            .firstOrNull { it.anyBetween(it.date.atStartOfDay(), it.date.plusDays(1).atStartOfDay()) }
-        return Logs(ColumnState.OK, profile, baseline)
+    private fun readLogs(recentFrom: LocalDateTime, now: LocalDateTime): Logs {
+        if (!props.liveLogsEnabled) return Logs.unread(ColumnState.DISABLED)
+        val today = now.toLocalDate()
+        val profile = cache.get(today) ?: return Logs.unread(ColumnState.FAILED)
+        val recent = window(profile, recentFrom, now)
+        val recentState = if (recent == null) ColumnState.FAILED else ColumnState.OK
+
+        var failed = false
+        for (days in BASELINE_DAYS) {
+            val date = today.minusDays(days)
+            val w = cache.get(date)?.let { window(it, recentFrom.minusDays(days), now.minusDays(days)) }
+            if (w == null) {
+                failed = true
+                continue
+            }
+            if (w.days.any { it.hasAnyLog() }) {
+                return Logs(ColumnState.OK, profile, recentState, recent, ColumnState.OK, w, date)
+            }
+        }
+        val baselineState = if (failed) ColumnState.FAILED else ColumnState.OK
+        return Logs(ColumnState.OK, profile, recentState, recent, baselineState, null, null)
     }
+
+    private fun DayProfile.hasAnyLog(): Boolean = anyBetween(date.atStartOfDay(), date.plusDays(1).atStartOfDay())
 
     /** 예외 맵. 꺼져 있거나 실패하면 null 이다. 꺼져 있으면 보관소도 부르지 않는다(조회가 없다). */
     private fun readExceptions(now: LocalDateTime): Pair<ColumnState, Map<Long, ErrorCounts>?> {
@@ -146,6 +187,8 @@ class MonitoringService internal constructor(
 
     /**
      * 통계가 `정각 - 24시간 - staleHours`(due 칸) 보다 늦고, 통계가 빠진 칸에 원본 로그가 있으면 알린다.
+     * 빠진 칸의 원본을 하루라도 읽지 못했고 읽은 날에는 로그가 없으면, 멈췄는지 모른다는 것을 따로 알린다
+     * (모르는 것을 "괜찮다"로 보이지 않게).
      *
      * latest·due 는 GROUPBY 시간 칸이다. 빠진 칸은 latest < H <= due 이므로 시각으로는 `[latest+1시간, due+1시간)` 이다:
      * latest 칸은 이미 집계됐고, due 칸은 집계됐어야 한다. 원본은 그 구간의 가장 최근 [STALE_LOOKBACK_DAYS] 일만 본다.
@@ -163,10 +206,14 @@ class MonitoringService internal constructor(
         // 끝이 자정이면 그날은 구간에 들지 않으니 1분 앞의 날짜가 마지막 날이다
         val last = to.minusMinutes(1).toLocalDate()
         val start = maxOf(from.toLocalDate(), last.minusDays(STALE_LOOKBACK_DAYS - 1))
-        val hasLogs = generateSequence(start) { it.plusDays(1) }
-            .takeWhile { !it.isAfter(last) }
-            .any { cache.get(it)?.anyBetween(from, to) == true }
-        return if (hasLogs) notice else null
+        var unreadable = false
+        for (date in generateSequence(start) { it.plusDays(1) }.takeWhile { !it.isAfter(last) }) {
+            val day = cache.get(date)
+            if (day == null) unreadable = true
+            else if (day.anyBetween(from, to)) return notice
+        }
+        if (unreadable) return "통계 집계가 ${latest.format(NOTICE)}시 이후 확인되지 않습니다. 원본 로그를 읽지 못해 멈춤 여부는 확인 불가입니다."
+        return null
     }
 
     /** 최근 주 `[end-6, end]` 와 직전 주. 어느 쪽이든 합계가 있는 고객사만 줄을 만든다. */

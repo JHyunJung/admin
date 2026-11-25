@@ -172,15 +172,61 @@ class MonitoringServiceTest {
 
     @Test
     fun 기준일이_전혀_없으면_판정하지_않는다() {
-        days[today] = day(today, log(1, "10:00", 5)) // 최근 60분은 0 건
+        days[today] = day(today, log(1, "10:00", 5)) // 최근 60분은 0 건. 7일 전·전일은 테이블 없음
+
+        val board = service().board()
+
+        assertThat(board.baselineDate).isNull()
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.OK) // 읽었는데 없다 = 기준일 없음
+        assertThat(board.row("A은행").baseline).isNull()
+        assertThat(board.row("A은행").recent).isEqualTo(0L)
+        assertThat(board.row("A은행").status).isEqualTo(LiveStatus.OK)
+    }
+
+    @Test
+    fun 기준일_후보를_읽지_못해_기준일이_없으면_기준은_확인_불가다() {
+        days[today] = day(today, log(1, "10:00", 5))
         days[yesterday] = null // 7일 전은 테이블 없음, 전일은 조회 실패
 
         val board = service().board()
 
         assertThat(board.baselineDate).isNull()
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.FAILED)
+        assertThat(board.recentLogs).isEqualTo(ColumnState.OK)
         assertThat(board.row("A은행").baseline).isNull()
         assertThat(board.row("A은행").recent).isEqualTo(0L)
-        assertThat(board.row("A은행").status).isEqualTo(LiveStatus.OK)
+    }
+
+    @Test
+    fun 자정_직후_기준일에_로그가_없어도_그_전날_꼬리에_있으면_기준으로_쓴다() {
+        val clock = clockAt("2026-11-25T00:20:40") // 기준 구간 11-17 23:20 ~ 11-18 00:20
+        val dayBeforeWeekAgo = weekAgo.minusDays(1)
+        days[dayBeforeWeekAgo] = day(dayBeforeWeekAgo, log(1, "23:40", 100))
+        days[weekAgo] = DayProfile.empty(weekAgo) // 테이블은 있지만 비었다
+
+        val board = service(clock = clock).board()
+
+        assertThat(board.baselineDate).isEqualTo(weekAgo)
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.OK)
+        assertThat(board.row("A은행").baseline).isEqualTo(100L)
+        assertThat(board.row("A은행").recent).isEqualTo(0L)
+        assertThat(board.row("A은행").status).isEqualTo(LiveStatus.DOWN)
+    }
+
+    @Test
+    fun 자정_직후_기준_구간의_전날을_못_읽으면_다음_후보로_넘어간다() {
+        val clock = clockAt("2026-11-25T00:20:40")
+        val dayBeforeWeekAgo = weekAgo.minusDays(1)
+        val dayBeforeYesterday = yesterday.minusDays(1)
+        days[weekAgo] = day(weekAgo, log(1, "00:05", 50))
+        days[dayBeforeWeekAgo] = null                                     // 7일 전 구간은 읽을 수 없다
+        days[dayBeforeYesterday] = day(dayBeforeYesterday, log(1, "23:30", 40)) // 전일 구간 11-23 23:20 ~ 11-24 00:20
+
+        val board = service(clock = clock).board()
+
+        assertThat(board.baselineDate).isEqualTo(yesterday)
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.OK)
+        assertThat(board.row("A은행").baseline).isEqualTo(40L)
     }
 
     @Test
@@ -207,6 +253,12 @@ class MonitoringServiceTest {
         assertThat(unknown.recent).isNull()
         assertThat(unknown.baseline).isNull()
         assertThat(unknown.todayTotal).isEqualTo(53L)
+        // 읽지 못한 것이지 없는 것이 아니다: 열 상태로 구분한다
+        val board = service(clock = clock).board()
+        assertThat(board.logs).isEqualTo(ColumnState.OK)
+        assertThat(board.recentLogs).isEqualTo(ColumnState.FAILED)
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.FAILED)
+        assertThat(board.baselineDate).isNull()
     }
 
     @Test
@@ -230,6 +282,8 @@ class MonitoringServiceTest {
         val board = service().board()
 
         assertThat(board.logs).isEqualTo(ColumnState.FAILED)
+        assertThat(board.recentLogs).isEqualTo(ColumnState.FAILED)
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.FAILED)
         assertThat(board.baselineDate).isNull()
         for (r in board.live) {
             assertThat(r.recent).isNull()
@@ -287,6 +341,8 @@ class MonitoringServiceTest {
 
         verifyNoInteractions(cache, exceptions)
         assertThat(board.logs).isEqualTo(ColumnState.DISABLED)
+        assertThat(board.recentLogs).isEqualTo(ColumnState.DISABLED)
+        assertThat(board.baselineLogs).isEqualTo(ColumnState.DISABLED)
         assertThat(board.exceptions).isEqualTo(ColumnState.DISABLED)
         assertThat(board.baselineDate).isNull()
         assertThat(board.common).isNull()
@@ -347,6 +403,38 @@ class MonitoringServiceTest {
         days[LocalDate.of(2026, 11, 23)] = day(LocalDate.of(2026, 11, 23), log(1, "23:59", 1))
 
         assertThat(service(clock = clock).board().staleNotice).isEqualTo("통계 집계가 2026-11-10 00시에서 멈췄습니다.")
+    }
+
+    @Test
+    fun 통계가_늦은데_빠진_구간의_원본을_못_읽으면_확인_불가라고_알린다() {
+        whenever(stats.latestGroupby()).thenReturn("2026/11/23/09")
+        days[yesterday] = null // 빠진 구간 [11-23 10:00, 11-24 12:00) 중 11-24 를 읽지 못했다. 11-23 은 로그 없음
+
+        assertThat(service().board().staleNotice)
+            .isEqualTo("통계 집계가 2026-11-23 09시 이후 확인되지 않습니다. 원본 로그를 읽지 못해 멈춤 여부는 확인 불가입니다.")
+    }
+
+    @Test
+    fun 빠진_구간_중_읽은_날에_로그가_있으면_멈춤을_알린다() {
+        whenever(stats.latestGroupby()).thenReturn("2026/11/23/09")
+        val nov23 = LocalDate.of(2026, 11, 23)
+        days[nov23] = day(nov23, log(1, "10:00", 1))
+        days[yesterday] = null
+
+        assertThat(service().board().staleNotice).isEqualTo("통계 집계가 2026-11-23 09시에서 멈췄습니다.")
+    }
+
+    @Test
+    fun 최신_GROUPBY를_해석하지_못하면_주간_표_없이_알리고_지금_구간은_보인다() {
+        whenever(stats.latestGroupby()).thenReturn("2026/13/45/99")
+        days[today] = day(today, log(1, "14:00", 5))
+
+        val board = service().board()
+
+        assertThat(board.week).isNull()
+        assertThat(board.staleNotice).isEqualTo("통계의 최신 집계 시각을 해석하지 못했습니다: 2026/13/45/99")
+        assertThat(board.row("A은행").recent).isEqualTo(5L)
+        verify(stats, never()).totals(any(), any())
     }
 
     @Test

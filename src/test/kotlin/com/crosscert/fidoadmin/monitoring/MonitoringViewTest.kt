@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.monitoring
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -57,5 +58,32 @@ class MonitoringViewTest {
         assertThat(MonitoringView.signed(-3L)).isEqualTo("-3")
         assertThat(MonitoringView.signed(0L)).isEqualTo("0")
         assertThat(MonitoringView.signed(1234L)).isEqualTo("+1,234")
+    }
+
+    @Test fun 상태_칸은_NONE이면_배지_없이_대시다() {
+        assertThat(MonitoringView.plainStatus(LiveStatus.NONE, ColumnState.OK)).isEqualTo("-")
+    }
+
+    @Test fun 로그를_껐을_때의_UNKNOWN은_배지_없이_사용_안_함이다() {
+        assertThat(MonitoringView.plainStatus(LiveStatus.UNKNOWN, ColumnState.DISABLED)).isEqualTo("사용 안 함")
+        // 실제 실패는 확인 불가 배지다
+        assertThat(MonitoringView.plainStatus(LiveStatus.UNKNOWN, ColumnState.FAILED)).isNull()
+        assertThat(MonitoringView.plainStatus(LiveStatus.UNKNOWN, ColumnState.OK)).isNull()
+        // 로그를 꺼도 예외로 낸 판정은 배지다
+        assertThat(MonitoringView.plainStatus(LiveStatus.EXCEPTION_SPIKE, ColumnState.DISABLED)).isNull()
+        assertThat(MonitoringView.plainStatus(LiveStatus.OK, ColumnState.OK)).isNull()
+    }
+
+    @Test fun 기준일_문구는_왜_판정하지_않는지를_말한다() {
+        val d = LocalDate.of(2026, 11, 18)
+        assertThat(MonitoringView.baselineNote(ColumnState.OK, ColumnState.OK, d)).isEqualTo("기준일: 2026-11-18 (수)")
+        assertThat(MonitoringView.baselineNote(ColumnState.OK, ColumnState.OK, null))
+            .isEqualTo("기준일 없음 — 끊김·감소를 판정하지 않습니다.")
+        assertThat(MonitoringView.baselineNote(ColumnState.OK, ColumnState.FAILED, null))
+            .isEqualTo("기준일 확인 불가 — 끊김·감소를 판정하지 않습니다.")
+        assertThat(MonitoringView.baselineNote(ColumnState.FAILED, ColumnState.FAILED, null))
+            .isEqualTo("로그 확인 불가 — 끊김·감소를 판정하지 않습니다.")
+        assertThat(MonitoringView.baselineNote(ColumnState.DISABLED, ColumnState.DISABLED, null))
+            .isEqualTo("로그 조회 사용 안 함 — 끊김·감소를 판정하지 않습니다.")
     }
 }

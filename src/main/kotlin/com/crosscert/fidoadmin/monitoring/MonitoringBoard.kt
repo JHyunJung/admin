@@ -40,10 +40,17 @@ data class WeekTable(val from: LocalDate, val to: LocalDate, val rows: List<Week
 /**
  * SUPER 관제 화면 한 장의 모델.
  *
+ * 로그 값은 셋으로 나눠 상태를 둔다. 최근 구간과 기준 구간은 자정 직후 전날 테이블까지 읽어야 해서
+ * 당일([logs])을 읽었어도 따로 실패할 수 있다. 모든 줄이 같은 구간을 쓰므로 상태는 화면에 하나씩이면 된다.
+ *
  * @param asOf         판정 기준 시각(분으로 내림)
  * @param cacheSeconds 당일 로그를 보관하는 시간. 화면에 "최대 N초 전 값"으로 알린다
- * @param baselineDate 비교에 쓴 날짜. null = 기준일 없음(끊김·감소를 판정하지 않았다)
- * @param common       공통 예외 줄. 예외를 모르면 null
+ * @param logs         당일 로그(오늘 누계·마지막 로그)의 상태
+ * @param recentLogs   최근 구간의 상태. FAILED = 구간이 걸친 전날을 읽지 못했다
+ * @param baselineLogs 기준 구간의 상태. OK 인데 [baselineDate] 가 null 이면 기준일이 정말 없다.
+ *                     FAILED = 기준일 후보를 읽지 못해 정하지 못했다
+ * @param baselineDate 비교에 쓴 날짜. null = 기준일을 쓰지 않았다(끊김·감소를 판정하지 않았다)
+ * @param common       공통 예외 줄. 예외를 모르면 null(화면에는 줄을 두고 칸에 이유를 쓴다)
  * @param staleNotice  통계 집계 멈춤 알림. null = 알림 없음
  * @param week         주간 비교 표. null = 통계 없음
  */
@@ -51,6 +58,8 @@ data class MonitoringBoard(
     val asOf: LocalDateTime,
     val cacheSeconds: Long,
     val logs: ColumnState,
+    val recentLogs: ColumnState,
+    val baselineLogs: ColumnState,
     val exceptions: ColumnState,
     val baselineDate: LocalDate?,
     val common: CommonRow?,
