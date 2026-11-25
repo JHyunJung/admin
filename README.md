@@ -140,6 +140,10 @@ SPRING_DATASOURCE_PASSWORD='ENC(...)' java -jar fido-admin.jar --spring.profiles
   `GROUPBY = 'yyyy/MM/dd/HH'`(로그 시간) 행을 넣는다. 구 어드민 배치와 같은 행 모양·세는 규칙이다.
 - 매 실행마다 최근 `catch-up-hours` 안에서 `GROUPBY` 가 없는 시간을 모두 채운다. 오래 멈췄던 구간은
   `FIDO_ADMIN_STATISTICS_CATCH_UP_HOURS` 를 잠시 올려(예: 600) 한 번 돌린 뒤 되돌린다.
+- 재시작 없이 기간을 지정해 채우려면 `scripts/fido-admin.sh backfill-statistics <시작일> <끝일> [프로파일]` 을 쓴다
+  (예: `backfill-statistics 2026-10-20 2026-11-23 prod`). 서비스 중인 어드민과 따로 뜨는 일회용 프로세스가
+  그 기간에서 통계가 없는 시간만 채우고 끝난다. 24시간이 지나지 않은 시간은 세지 않고, 여러 번 돌려도 중복되지 않는다.
+  종료 코드는 0 끝까지 돎, 1 일부 실패(다시 돌리면 빠진 것만 채운다), 2 기간·설정 오류다. 로그는 `logs/backfill/` 에 남는다.
 - 서버가 여러 대여도 한 시간은 한 번만 쌓인다(`LOCK TABLE FIDO_STATISTICS IN EXCLUSIVE MODE` 후 없는 회사만 넣는다).
   구 어드민 배치가 함께 돌면 이 잠금을 잡지 않으므로 중복이 생긴다. 구 배치를 모두 내린 뒤 켠다.
 - 적재 결과는 `statistics:` 로 시작하는 INFO 로그, 디코드하지 못한 로그 건수는 WARN 으로 남는다.

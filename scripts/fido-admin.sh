@@ -5,6 +5,12 @@
 #   scripts/fido-admin.sh restart [프로파일]   프로파일을 빼면 실행 중인 프로파일 그대로 다시 띄운다
 #   scripts/fido-admin.sh stop
 #   scripts/fido-admin.sh status
+#   scripts/fido-admin.sh backfill-statistics <시작일> <끝일> [프로파일]
+#       예) backfill-statistics 2026-10-20 2026-11-23 prod
+#       그 기간(양끝 포함, yyyy-MM-dd)에서 통계가 없는 시간만 채우고 끝난다. 통계 배치가 오래 멈췄을 때 쓴다.
+#       서비스 중인 어드민과 따로 뜨는 일회용 프로세스라 재시작이 필요 없다(같은 서버·같은 설정 파일을 쓴다).
+#       24시간이 지나지 않은 시간은 세지 않는다. 여러 번 돌려도 중복되지 않는다.
+#       종료 코드: 0 끝까지 돎, 1 일부 실패(다시 돌리면 빠진 것만 채운다), 2 기간·설정 오류
 #
 # 프로파일은 인자 > SPRING_PROFILES_ACTIVE 환경 변수 > fido-admin.env 의 값 > prod 순으로 정한다.
 # 설정 파일은 같은 디렉터리에서 읽는다(디렉터리는 FIDO_ADMIN_ENV_DIR 로 바꿀 수 있다).
@@ -43,6 +49,12 @@ profile_in_common_env() {
 
 COMMAND="${1:-}"
 PROFILE_ARG="${2:-}"
+# backfill-statistics 는 날짜 두 개 뒤에 프로파일이 온다.
+if [[ "${COMMAND}" == "backfill-statistics" ]]; then
+  BACKFILL_FROM="${2:-}"
+  BACKFILL_TO="${3:-}"
+  PROFILE_ARG="${4:-}"
+fi
 
 PID_FILE="${PID_FILE:-${APP_HOME}/fido-admin.pid}"
 PROFILE_FILE="${PID_FILE}.profile"
@@ -132,6 +144,20 @@ warn_unknown_profiles() {
   done
 }
 
+# local 은 로컬 도커 DB 가 설정에 고정돼 있다. 그 밖의 프로파일은 DB 접속 정보가 반드시 있어야 한다.
+require_datasource() {
+  has_profile local && return 0
+  local missing=() v
+  for v in SPRING_DATASOURCE_URL SPRING_DATASOURCE_USERNAME SPRING_DATASOURCE_PASSWORD; do
+    [[ -n "${!v:-}" ]] || missing+=("${v}")
+  done
+  if (( ${#missing[@]} > 0 )); then
+    echo "환경 변수가 없습니다: ${missing[*]}" >&2
+    echo "  ${ENV_DIR}/fido-admin-${PROFILES[0]}.env 또는 ${COMMON_ENV} 에 적거나 환경에 지정하세요." >&2
+    return 1
+  fi
+}
+
 start() {
   local pid
   if pid="$(running_pid)"; then
@@ -147,18 +173,7 @@ start() {
   fi
   warn_unknown_profiles "${jar}"
 
-  # local 은 로컬 도커 DB 가 설정에 고정돼 있다. 그 밖의 프로파일은 DB 접속 정보가 반드시 있어야 한다.
-  if ! has_profile local; then
-    local missing=() v
-    for v in SPRING_DATASOURCE_URL SPRING_DATASOURCE_USERNAME SPRING_DATASOURCE_PASSWORD; do
-      [[ -n "${!v:-}" ]] || missing+=("${v}")
-    done
-    if (( ${#missing[@]} > 0 )); then
-      echo "환경 변수가 없습니다: ${missing[*]}" >&2
-      echo "  ${ENV_DIR}/fido-admin-${PROFILES[0]}.env 또는 ${COMMON_ENV} 에 적거나 환경에 지정하세요." >&2
-      return 1
-    fi
-  fi
+  require_datasource || return 1
 
   mkdir -p "${LOG_PATH}"
   echo "시작: ${jar} (profile=${PROFILE})"
@@ -210,13 +225,45 @@ status() {
   fi
 }
 
+# 기간을 지정해 통계를 한 번 채운다. 앞에서 돌고(끝날 때까지 기다린다) PID 파일은 건드리지 않는다.
+backfill_statistics() {
+  local d
+  for d in "${BACKFILL_FROM}" "${BACKFILL_TO}"; do
+    if [[ ! "${d}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+      echo "사용법: $0 backfill-statistics <시작일> <끝일> [프로파일]   날짜는 yyyy-MM-dd (예: 2026-10-20 2026-11-23)" >&2
+      return 2
+    fi
+  done
+
+  local jar
+  jar="$(find_jar)"
+  if [[ -z "${jar}" || ! -f "${jar}" ]]; then
+    echo "실행할 jar 를 찾지 못했습니다. ./gradlew bootJar 로 빌드하거나 APP_JAR 를 지정하세요." >&2
+    return 2
+  fi
+  require_datasource || return 2
+
+  # 서비스 중인 어드민과 같은 로그 파일에 두 프로세스가 쓰지 않도록 로그 디렉터리를 따로 둔다.
+  local log_dir="${LOG_PATH}/backfill"
+  mkdir -p "${log_dir}"
+  echo "통계 채우기: ${BACKFILL_FROM} ~ ${BACKFILL_TO} (profile=${PROFILE}). 로그: ${log_dir}"
+  # 정시 배치는 끄고(이 프로세스에서는 기간 지정 실행만), 웹 포트는 서비스 포트와 겹치지 않게 내부 임의 포트로 띄운다.
+  # shellcheck disable=SC2086
+  LOGGING_FILE_PATH="${log_dir}" "${JAVA_BIN}" ${JAVA_OPTS} -jar "${jar}" --spring.profiles.active="${PROFILE}" \
+    --fido-admin.statistics.enabled=false \
+    --fido-admin.statistics.backfill.from="${BACKFILL_FROM}" \
+    --fido-admin.statistics.backfill.to="${BACKFILL_TO}" \
+    --server.port=0 --server.address=127.0.0.1
+}
+
 case "${COMMAND}" in
+  backfill-statistics) backfill_statistics ;;
   start)   start ;;
   stop)    stop ;;
   restart) stop; start ;;
   status)  status ;;
   *)
-    echo "사용법: $0 {start [프로파일]|restart [프로파일]|stop|status}" >&2
+    echo "사용법: $0 {start [프로파일]|restart [프로파일]|stop|status|backfill-statistics <시작일> <끝일> [프로파일]}" >&2
     echo "  프로파일 예: prod, qa, local, qa,debug (생략하면 SPRING_PROFILES_ACTIVE 또는 fido-admin.env, 기본 prod)" >&2
     exit 2
     ;;
