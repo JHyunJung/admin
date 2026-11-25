@@ -136,6 +136,9 @@ class MenuRegistry {
         @JvmField
         internal val ALL: List<MenuItem> = java.util.List.of(
             MenuItem(MenuArea.TENANT, "대시보드", "통계", "/", false, "bi-speedometer2"),
+            // 관제는 모든 고객사를 한 화면에 모아 보므로 고객사를 고르지 않은 SUPER 도 열어야 한다 — 그래서 SYSTEM 이다.
+            // TENANT 이면 테넌트 선택 인터셉터가 /select-tenant 로 돌려 보낸다.
+            MenuItem(MenuArea.SYSTEM, "대시보드", "관제", "/monitoring", true, "bi-activity"),
             MenuItem(MenuArea.TENANT, "로그", "FIDO 로그", "/logs/fido", false, "bi-journal-text"),
             MenuItem(MenuArea.TENANT, "로그", "감사 로그", "/logs/audit", false, "bi-clipboard-check"),
             MenuItem(MenuArea.TENANT, "로그", "예외 로그", "/logs/exceptions", false, "bi-exclamation-triangle"),

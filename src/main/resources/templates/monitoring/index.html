@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::main})}">
+<head><title>관제</title></head>
+<body>
+<main class="d-flex flex-column gap-4">
+  <div class="fa-page-head">
+    <div>
+      <h1 class="h4">관제</h1>
+      <p class="fa-page-desc" th:text="|기준 시각 ${#temporals.format(board.asOf, 'yyyy-MM-dd HH:mm')} · ${board.cacheSeconds}초마다 갱신된 값입니다.|"></p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning mb-0" role="alert" th:if="${board.staleNotice != null}">
+    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+    <span th:text="${board.staleNotice}"></span>
+  </div>
+
+  <section class="fa-table-card" aria-labelledby="live-title">
+    <div class="fa-section-head">
+      <h2 id="live-title" class="fa-section-title">지금 (당일 원본)</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>고객사</th><th>상태</th>
+            <th class="text-end">최근 1시간</th><th class="text-end">기준일 같은 시간</th><th class="text-end">오늘 누계</th>
+            <th>마지막 로그</th>
+            <th class="text-end">예외 1시간</th><th class="text-end">예외 오늘</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--/* 공통 줄은 장애 신호로 가장 중요해 예외를 모를 때도 남기고, 칸에 이유(확인 불가·사용 안 함)를 쓴다 */-->
+          <tr>
+            <td>공통(고객사 없음)</td>
+            <td>
+              <span class="badge text-bg-danger" th:if="${board.common?.spike == true}">예외 급증</span>
+            </td>
+            <td class="text-end">-</td><td class="text-end">-</td><td class="text-end">-</td>
+            <td>-</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(board.common?.recentErrors, board.exceptions)}">0</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(board.common?.todayErrors, board.exceptions)}">0</td>
+          </tr>
+          <tr th:each="r : ${board.live}">
+            <td th:text="${r.name}">고객사</td>
+            <td th:with="plain=${fmt.plainStatus(r.status, board.logs)}">
+              <span th:if="${plain != null}" th:text="${plain}">-</span>
+              <span th:if="${plain == null}" class="badge" th:classappend="${r.status.badge}" th:text="${r.status.label}">정상</span>
+            </td>
+            <td class="text-end fa-mono" th:text="${fmt.count(r.recent, board.recentLogs)}">0</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(r.baseline, board.baselineLogs)}">0</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(r.todayTotal, board.logs)}">0</td>
+            <td class="fa-mono" th:text="${fmt.time(r.lastLog, board.logs)}">-</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(r.recentErrors, board.exceptions)}">0</td>
+            <td class="text-end fa-mono" th:text="${fmt.count(r.todayErrors, board.exceptions)}">0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="fa-table-foot">
+      <span th:text="${fmt.baselineNote(board.logs, board.baselineLogs, board.baselineDate)}">기준일</span>
+    </div>
+  </section>
+
+  <section class="fa-table-card" aria-labelledby="week-title">
+    <div class="fa-section-head">
+      <h2 id="week-title" class="fa-section-title">어제까지 (통계)</h2>
+      <span class="fa-section-note" th:if="${board.week != null}" th:text="|${board.week.from} ~ ${board.week.to}, 직전 7일 대비|"></span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover fa-table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>고객사</th><th class="text-end">인증량</th><th class="text-end">증감</th>
+            <th class="text-end">인증 성공률</th><th class="text-end">변화</th>
+            <th class="text-end">등록 성공률</th><th class="text-end">순증 등록</th>
+          </tr>
+        </thead>
+        <tbody>
+          <th:block th:if="${board.week != null}">
+            <tr th:each="w : ${board.week.rows}">
+              <td th:text="${w.name}">고객사</td>
+              <td class="text-end fa-mono" th:text="${fmt.number(w.cur.authTotal())}">0</td>
+              <td class="text-end fa-mono" th:text="${fmt.pct(w.cur.authChangePct(w.prev))}">-</td>
+              <td class="text-end fa-mono" th:text="${fmt.rate(w.cur.authRate())}">-</td>
+              <td class="text-end fa-mono">
+                <span th:if="${w.dropped}" class="badge text-bg-danger" th:text="${fmt.points(w.cur.authRatePointChange(w.prev))}"></span>
+                <span th:unless="${w.dropped}" th:text="${fmt.points(w.cur.authRatePointChange(w.prev))}"></span>
+              </td>
+              <td class="text-end fa-mono" th:text="${fmt.rate(w.cur.regRate())}">-</td>
+              <td class="text-end fa-mono" th:text="${fmt.signed(w.cur.netReg())}">0</td>
+            </tr>
+            <th:block th:if="${#lists.isEmpty(board.week.rows)}"><tr th:replace="~{fragments/empty-state :: row(7, '데이터가 없습니다.')}"></tr></th:block>
+          </th:block>
+          <!--/* 통계가 없다는 안내는 위 알림이 한다. 여기서는 표 자리만 채운다 */-->
+          <th:block th:if="${board.week == null}"><tr th:replace="~{fragments/empty-state :: row(7, '표시할 통계가 없습니다.')}"></tr></th:block>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+</body>
+</html>
