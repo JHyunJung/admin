@@ -51,7 +51,7 @@
               <form method="post" th:action="@{/select-tenant}" class="m-0" th:if="${fmt.selectable(r.companyIdx)}">
                 <input type="hidden" name="companyIdx" th:value="${r.companyIdx}">
                 <input type="hidden" name="returnTo" value="/">
-                <button type="submit" class="btn btn-link p-0 text-start align-baseline" th:text="${r.name}"
+                <button type="submit" class="btn btn-link p-0 border-0 text-start align-baseline" th:text="${r.name}"
                         th:attr="aria-label=|${r.name} 고객사 화면으로 이동|">고객사</button>
               </form>
               <th:block th:unless="${fmt.selectable(r.companyIdx)}" th:text="${r.name}">고객사</th:block>
@@ -97,7 +97,7 @@
                 <form method="post" th:action="@{/select-tenant}" class="m-0" th:if="${fmt.selectable(w.companyIdx)}">
                   <input type="hidden" name="companyIdx" th:value="${w.companyIdx}">
                   <input type="hidden" name="returnTo" value="/">
-                  <button type="submit" class="btn btn-link p-0 text-start align-baseline" th:text="${w.name}"
+                  <button type="submit" class="btn btn-link p-0 border-0 text-start align-baseline" th:text="${w.name}"
                           th:attr="aria-label=|${w.name} 고객사 화면으로 이동|">고객사</button>
                 </form>
                 <th:block th:unless="${fmt.selectable(w.companyIdx)}" th:text="${w.name}">고객사</th:block>
