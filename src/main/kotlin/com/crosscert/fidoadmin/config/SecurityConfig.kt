@@ -79,7 +79,8 @@ class SecurityConfig {
          */
         @JvmField
         internal val SUPER_PATHS: Array<String> = arrayOf(
-            "/companies/**", "/licenses/**", "/managers/**", "/system/**", "/fido2/**", "/signups", "/signups/**"
+            "/companies/**", "/licenses/**", "/managers/**", "/system/**", "/fido2/**", "/signups", "/signups/**",
+            "/monitoring", "/monitoring/**"
         )
 
         private val PATHS = AntPathMatcher()
