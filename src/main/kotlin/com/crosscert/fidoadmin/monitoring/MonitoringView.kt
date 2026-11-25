@@ -1,5 +1,6 @@
 package com.crosscert.fidoadmin.monitoring
 
+import com.crosscert.fidoadmin.signup.SignupPolicy
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -59,6 +60,9 @@ object MonitoringView {
         baseline == ColumnState.FAILED -> "기준일 확인 불가 — $NOT_JUDGED"
         else -> "기준일 없음 — $NOT_JUDGED"
     }
+
+    /** 이름을 눌러 고객사 화면으로 갈 수 있는 줄인가. 전역(IDX 0)은 고를 수 없는 고객사다. */
+    fun selectable(companyIdx: Long): Boolean = companyIdx != SignupPolicy.SUPER_COMPANY_IDX
 
     private fun comma(v: Long): String = String.format(Locale.US, "%,d", v)
 

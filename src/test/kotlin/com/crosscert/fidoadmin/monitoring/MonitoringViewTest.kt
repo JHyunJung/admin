@@ -86,4 +86,9 @@ class MonitoringViewTest {
         assertThat(MonitoringView.baselineNote(ColumnState.DISABLED, ColumnState.DISABLED, null))
             .isEqualTo("로그 조회 사용 안 함 — 끊김·감소를 판정하지 않습니다.")
     }
+
+    @Test fun 전역_고객사는_고를_수_없다() {
+        assertThat(MonitoringView.selectable(0L)).isFalse()
+        assertThat(MonitoringView.selectable(10L)).isTrue()
+    }
 }

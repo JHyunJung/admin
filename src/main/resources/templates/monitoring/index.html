@@ -24,7 +24,8 @@
       <table class="table table-hover fa-table mb-0">
         <thead class="table-light">
           <tr>
-            <th>고객사</th><th>상태</th>
+            <!--/* 고객사 열 너비는 아래 통계 표와 같게 둔다. 열 수가 달라 그냥 두면 위아래가 어긋난다 */-->
+            <th class="w-25">고객사</th><th>상태</th>
             <th class="text-end">최근 1시간</th><th class="text-end">기준일 같은 시간</th><th class="text-end">오늘 누계</th>
             <th>마지막 로그</th>
             <th class="text-end">예외 1시간</th><th class="text-end">예외 오늘</th>
@@ -44,7 +45,17 @@
             <td class="text-end fa-mono" th:text="${fmt.count(board.common?.todayErrors, board.exceptions)}">0</td>
           </tr>
           <tr th:each="r : ${board.live}">
-            <td th:text="${r.name}">고객사</td>
+            <!--/* 이름을 누르면 그 고객사를 골라 고객사 대시보드로 간다. 고객사 선택은 세션을 바꾸므로
+                   링크가 아니라 POST 폼이다(고객사 선택 화면과 같은 방식). 전역(IDX 0)은 글자로만 쓴다 */-->
+            <td>
+              <form method="post" th:action="@{/select-tenant}" class="m-0" th:if="${fmt.selectable(r.companyIdx)}">
+                <input type="hidden" name="companyIdx" th:value="${r.companyIdx}">
+                <input type="hidden" name="returnTo" value="/">
+                <button type="submit" class="btn btn-link p-0 text-start align-baseline" th:text="${r.name}"
+                        th:attr="aria-label=|${r.name} 고객사 화면으로 이동|">고객사</button>
+              </form>
+              <th:block th:unless="${fmt.selectable(r.companyIdx)}" th:text="${r.name}">고객사</th:block>
+            </td>
             <td th:with="plain=${fmt.plainStatus(r.status, board.logs)}">
               <span th:if="${plain != null}" th:text="${plain}">-</span>
               <span th:if="${plain == null}" class="badge" th:classappend="${r.status.badge}" th:text="${r.status.label}">정상</span>
@@ -74,7 +85,7 @@
       <table class="table table-hover fa-table mb-0">
         <thead class="table-light">
           <tr>
-            <th>고객사</th><th class="text-end">인증량</th><th class="text-end">증감</th>
+            <th class="w-25">고객사</th><th class="text-end">인증량</th><th class="text-end">증감</th>
             <th class="text-end">인증 성공률</th><th class="text-end">변화</th>
             <th class="text-end">등록 성공률</th><th class="text-end">순증 등록</th>
           </tr>
@@ -82,12 +93,20 @@
         <tbody>
           <th:block th:if="${board.week != null}">
             <tr th:each="w : ${board.week.rows}">
-              <td th:text="${w.name}">고객사</td>
+              <td>
+                <form method="post" th:action="@{/select-tenant}" class="m-0" th:if="${fmt.selectable(w.companyIdx)}">
+                  <input type="hidden" name="companyIdx" th:value="${w.companyIdx}">
+                  <input type="hidden" name="returnTo" value="/">
+                  <button type="submit" class="btn btn-link p-0 text-start align-baseline" th:text="${w.name}"
+                          th:attr="aria-label=|${w.name} 고객사 화면으로 이동|">고객사</button>
+                </form>
+                <th:block th:unless="${fmt.selectable(w.companyIdx)}" th:text="${w.name}">고객사</th:block>
+              </td>
               <td class="text-end fa-mono" th:text="${fmt.number(w.cur.authTotal())}">0</td>
               <td class="text-end fa-mono" th:text="${fmt.pct(w.cur.authChangePct(w.prev))}">-</td>
               <td class="text-end fa-mono" th:text="${fmt.rate(w.cur.authRate())}">-</td>
               <td class="text-end fa-mono">
-                <span th:if="${w.dropped}" class="badge text-bg-danger" th:text="${fmt.points(w.cur.authRatePointChange(w.prev))}"></span>
+                <span th:if="${w.dropped}" class="badge text-bg-danger" th:text="|하락 ${fmt.points(w.cur.authRatePointChange(w.prev))}|"></span>
                 <span th:unless="${w.dropped}" th:text="${fmt.points(w.cur.authRatePointChange(w.prev))}"></span>
               </td>
               <td class="text-end fa-mono" th:text="${fmt.rate(w.cur.regRate())}">-</td>
