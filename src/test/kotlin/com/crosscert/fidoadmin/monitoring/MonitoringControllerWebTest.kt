@@ -84,7 +84,11 @@ class MonitoringControllerWebTest {
         Regex("<tr>(.*?)</tr>", RegexOption.DOT_MATCHES_ALL)
             .findAll(page.substringAfter("id=\"live-title\"").substringBefore("id=\"week-title\""))
             .map { it.groupValues[1] }
-            .single { it.contains(Regex("<td>\\s*" + Regex.escape(name) + "\\s*</td>")) }
+            // 이름 칸은 고객사 화면으로 가는 폼(버튼)일 수도 있어 태그를 걷어 낸 글자로 찾는다
+            .single { tr ->
+                Regex("<td[^>]*>(.*?)</td>", RegexOption.DOT_MATCHES_ALL).find(tr)
+                    ?.groupValues?.get(1)?.replace(Regex("<[^>]+>"), "")?.trim() == name
+            }
 
     /** 첫 칸이 [name] 인 줄의 칸 글자들. 태그를 걷어 내고 앞뒤 공백을 뺀다. */
     private fun cells(page: String, name: String): List<String> =
@@ -238,6 +242,12 @@ class MonitoringControllerWebTest {
         assertThat(page).containsPattern("<div class=\"fa-section-head\">\\s*<h2 id=\"week-title\" class=\"fa-section-title\">")
     }
 
+    @Test fun 두_표의_고객사_열은_너비가_같다() {
+        // 열 수가 달라(8열·7열) 그냥 두면 고객사 열 너비가 표마다 달라져 위아래 줄이 어긋난다
+        val page = html(board())
+        assertThat(Regex("<th class=\"w-25\">고객사</th>").findAll(page).count()).isEqualTo(2)
+    }
+
     @Test fun 하락은_부호와_단위를_붙여_보여_준다() {
         // 두 번째 줄: 인증량 900 → 직전 1,000 대비 -10.0%
         val shrunk = WeekRow(11L, "B은행", WeekTotals(800, 100, 0, 0, 0), prev, false)
@@ -247,13 +257,31 @@ class MonitoringControllerWebTest {
         assertThat(page).contains("91.2%")
         assertThat(page).contains("-6.4%p")
         // 하락 판정(dropped)인 줄만 변화 칸이 위험 배지다
-        assertThat(page).contains("<span class=\"badge text-bg-danger\">-6.4%p</span>")
-        assertThat(Regex("text-bg-danger\">-").findAll(page).count()).isEqualTo(1)
+        // 색만으로 알리지 않도록 배지에 "하락" 글자를 같이 쓴다
+        assertThat(page).contains("<span class=\"badge text-bg-danger\">하락 -6.4%p</span>")
+        assertThat(Regex("text-bg-danger\">하락 -").findAll(page).count()).isEqualTo(1)
         assertThat(page).contains("+77")
         assertThat(page).contains("1,000")
         assertThat(page).contains("0.0%")
         assertThat(page).contains("-10.0%")
         assertThat(page).contains("2026-11-17 ~ 2026-11-23, 직전 7일 대비")
+    }
+
+    @Test fun 고객사_이름을_누르면_그_고객사를_골라_고객사_화면으로_간다() {
+        val page = html(board())
+        // "지금" 표와 통계 표 양쪽에 있다. 고객사 선택은 세션을 바꾸므로 링크가 아니라 POST 폼이다
+        assertThat(Regex("<form method=\"post\" action=\"/select-tenant\"").findAll(page).count()).isEqualTo(2)
+        assertThat(Regex("<input type=\"hidden\" name=\"companyIdx\" value=\"10\"").findAll(page).count()).isEqualTo(2)
+        assertThat(Regex("name=\"_csrf\"").findAll(page).count()).isGreaterThanOrEqualTo(2)
+        assertThat(page).contains("aria-label=\"A은행 고객사 화면으로 이동\"")
+    }
+
+    @Test fun 전역_고객사_줄은_이름을_글자로만_쓴다() {
+        // IDX 0(전역)은 고를 수 없는 고객사라 눌러도 갈 곳이 없다
+        val global = LiveRow(0L, "전역", LiveStatus.OK, 1, 1, 1, null, 0, 0)
+        val page = html(board(live = listOf(global), week = null))
+        assertThat(page).doesNotContain("action=\"/select-tenant\"")
+        assertThat(cells(page, "전역")).first().isEqualTo("전역")
     }
 
     @Test fun 고객사_이름은_이스케이프된다() {
