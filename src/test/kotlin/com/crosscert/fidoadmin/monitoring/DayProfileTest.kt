@@ -41,6 +41,17 @@ class DayProfileTest {
         assertThat(p.anyBetween(d.atTime(16, 0), d.atTime(23, 0))).isFalse()
     }
 
+    @Test fun build_이후_빌더에_더해도_이미_만든_프로필은_바뀌지_않는다() {
+        val b = DayProfile.Builder(d).add(1, 10, 3, d.atTime(0, 10))
+        val built = b.build()
+
+        b.add(1, 10, 5, d.atTime(0, 11))
+
+        assertThat(built.total(1)).isEqualTo(3)
+        assertThat(built.lastLog(1)).isEqualTo(d.atTime(0, 10))
+        assertThat(b.build().total(1)).isEqualTo(8)
+    }
+
     @Test fun 빈_프로필은_모두_0이다() {
         assertThat(DayProfile.empty(d).total(1)).isEqualTo(0)
         assertThat(DayProfile.empty(d).anyBetween(d.atStartOfDay(), d.plusDays(1).atStartOfDay())).isFalse()

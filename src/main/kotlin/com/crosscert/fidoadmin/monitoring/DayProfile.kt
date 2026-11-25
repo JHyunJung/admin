@@ -57,7 +57,9 @@ class DayProfile(
             return this
         }
 
-        fun build(): DayProfile = DayProfile(date, counts.toMap(), lasts.toMap())
+        /** 배열까지 복사한다: 이후 빌더를 더 써도 이미 만든 프로필은 바뀌지 않는다. */
+        fun build(): DayProfile =
+            DayProfile(date, counts.mapValues { it.value.copyOf() }, lasts.toMap())
     }
 
     companion object {
