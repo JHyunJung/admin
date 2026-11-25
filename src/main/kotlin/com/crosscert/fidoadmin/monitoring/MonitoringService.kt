@@ -151,8 +151,11 @@ class MonitoringService internal constructor(
     }
 
     /**
-     * 통계가 `정각 - 24시간 - staleHours` 보다 늦고, 집계되지 않은 구간 `[latest+1시간, due)` 에 원본 로그가 있으면 알린다.
-     * 원본은 그 구간의 가장 최근 [STALE_LOOKBACK_DAYS] 일만 본다. 로그 열을 껐으면 원본을 보지 않고 늦었다는 것만으로 알린다.
+     * 통계가 `정각 - 24시간 - staleHours`(due 칸) 보다 늦고, 통계가 빠진 칸에 원본 로그가 있으면 알린다.
+     *
+     * latest·due 는 GROUPBY 시간 칸이다. 빠진 칸은 latest < H <= due 이므로 시각으로는 `[latest+1시간, due+1시간)` 이다:
+     * latest 칸은 이미 집계됐고, due 칸은 집계됐어야 한다. 원본은 그 구간의 가장 최근 [STALE_LOOKBACK_DAYS] 일만 본다.
+     * 로그 열을 껐으면 원본을 보지 않고 늦었다는 것만으로 알린다.
      */
     private fun staleNotice(latest: LocalDateTime?, now: LocalDateTime, logs: ColumnState): String? {
         if (latest == null) return "집계된 통계가 없습니다."
@@ -162,13 +165,13 @@ class MonitoringService internal constructor(
         if (logs == ColumnState.DISABLED) return notice
 
         val from = latest.plusHours(1)
-        if (!from.isBefore(due)) return null
-        val first = from.toLocalDate()
-        val last = due.minusMinutes(1).toLocalDate()
-        val start = maxOf(first, last.minusDays(STALE_LOOKBACK_DAYS - 1))
+        val to = due.plusHours(1) // latest < due 이므로 from <= due < to: 구간은 비지 않는다
+        // 끝이 자정이면 그날은 구간에 들지 않으니 1분 앞의 날짜가 마지막 날이다
+        val last = to.minusMinutes(1).toLocalDate()
+        val start = maxOf(from.toLocalDate(), last.minusDays(STALE_LOOKBACK_DAYS - 1))
         val hasLogs = generateSequence(start) { it.plusDays(1) }
             .takeWhile { !it.isAfter(last) }
-            .any { cache.get(it)?.anyBetween(from, due) == true }
+            .any { cache.get(it)?.anyBetween(from, to) == true }
         return if (hasLogs) notice else null
     }
 

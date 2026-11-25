@@ -303,24 +303,51 @@ class MonitoringServiceTest {
         assertThat(board.staleNotice).isEqualTo("통계 집계가 2026-11-23 09시에서 멈췄습니다.")
     }
 
+    /**
+     * latest·due 는 시간 칸이다. due = 14시 - 24시간 - 3시간 = 11-24 11시 칸.
+     * 통계가 빠진 칸은 latest < H <= due 이므로 시각으로는 [11-23 10:00, 11-24 12:00) 이다.
+     */
+    private fun staleWithOnlyLogAt(date: LocalDate, hm: String): String? {
+        days.clear()
+        days[date] = day(date, log(1, hm, 1))
+        return service().board().staleNotice
+    }
+
     @Test
     fun 통계가_늦고_그_구간에_로그가_있으면_멈춤을_알린다() {
-        // due = 14:00 - 24시간 - 3시간 = 11-24 11:00. 미집계 구간은 11-23 10:00 ~ 11-24 11:00
         whenever(stats.latestGroupby()).thenReturn("2026/11/23/09")
-        days[yesterday] = day(yesterday, log(1, "08:00", 1))
+        val notice = "통계 집계가 2026-11-23 09시에서 멈췄습니다."
+        val nov23 = LocalDate.of(2026, 11, 23)
 
-        assertThat(service().board().staleNotice).isEqualTo("통계 집계가 2026-11-23 09시에서 멈췄습니다.")
+        assertThat(staleWithOnlyLogAt(yesterday, "08:00")).isEqualTo(notice)
+        assertThat(staleWithOnlyLogAt(nov23, "10:00")).isEqualTo(notice)    // latest+1시간: 첫 미집계 칸
+        assertThat(staleWithOnlyLogAt(yesterday, "11:00")).isEqualTo(notice) // due 칸의 시작
+        assertThat(staleWithOnlyLogAt(yesterday, "11:59")).isEqualTo(notice) // due 칸의 끝
     }
 
     @Test
     fun 통계가_늦어도_그_구간에_로그가_없으면_알리지_않는다() {
         whenever(stats.latestGroupby()).thenReturn("2026/11/23/09")
-        // 09시 칸은 이미 집계됐고, 11-24 11:00 부터는 아직 집계할 때가 아니다
-        days[LocalDate.of(2026, 11, 23)] = day(LocalDate.of(2026, 11, 23), log(1, "09:59", 1))
-        days[yesterday] = day(yesterday, log(1, "11:00", 1))
-        days[today] = day(today, log(1, "14:00", 1))
+        val nov23 = LocalDate.of(2026, 11, 23)
 
-        assertThat(service().board().staleNotice).isNull()
+        assertThat(staleWithOnlyLogAt(nov23, "09:59")).isNull()     // latest 칸은 이미 집계됐다
+        assertThat(staleWithOnlyLogAt(yesterday, "12:00")).isNull() // due+1시간 칸은 아직 집계할 때가 아니다
+        assertThat(staleWithOnlyLogAt(today, "14:00")).isNull()
+    }
+
+    @Test
+    fun 멈춤_구간이_자정에서_끝나도_그날까지_본다() {
+        // 02:10 → due = 11-23 23시 칸, 구간 끝 = 11-24 00:00. 최근 3일은 11-21·22·23 이다(11-24 가 아니다)
+        val clock = clockAt("2026-11-25T02:10:00")
+        whenever(stats.latestGroupby()).thenReturn("2026/11/10/00")
+        days[LocalDate.of(2026, 11, 21)] = day(LocalDate.of(2026, 11, 21), log(1, "12:00", 1))
+
+        assertThat(service(clock = clock).board().staleNotice).isEqualTo("통계 집계가 2026-11-10 00시에서 멈췄습니다.")
+
+        days.clear()
+        days[LocalDate.of(2026, 11, 23)] = day(LocalDate.of(2026, 11, 23), log(1, "23:59", 1))
+
+        assertThat(service(clock = clock).board().staleNotice).isEqualTo("통계 집계가 2026-11-10 00시에서 멈췄습니다.")
     }
 
     @Test
